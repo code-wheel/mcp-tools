@@ -1,0 +1,4 @@
+mcp_tools use cron:
+  title: 'Use MCP cron and queue tools'
+  description: 'Run cron, run queue workers, and update cron settings via MCP.'
+  restrict access: true

@@ -1,0 +1,4 @@
+mcp_tools use analysis:
+  title: 'Use MCP analysis tools'
+  description: 'Run site/content analysis tools (security audit, performance, broken links, accessibility checks) via MCP.'
+  restrict access: true

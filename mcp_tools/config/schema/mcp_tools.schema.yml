@@ -9,12 +9,27 @@ mcp_tools.settings:
         read_only_mode:
           type: boolean
           label: 'Global read-only mode'
+        allowed_scopes:
+          type: sequence
+          label: 'Allowed scopes'
+          sequence:
+            type: string
+            label: 'Scope'
         default_scopes:
           type: sequence
           label: 'Default scopes'
           sequence:
             type: string
             label: 'Scope'
+        trust_scopes_via_header:
+          type: boolean
+          label: 'Trust scopes via HTTP header'
+        trust_scopes_via_query:
+          type: boolean
+          label: 'Trust scopes via query parameter'
+        trust_scopes_via_env:
+          type: boolean
+          label: 'Trust scopes via environment variable'
         audit_logging:
           type: boolean
           label: 'Enable audit logging'
@@ -93,6 +108,12 @@ mcp_tools.settings:
         secret:
           type: string
           label: 'Webhook secret for HMAC signing'
+        allowed_hosts:
+          type: sequence
+          label: 'Allowed webhook destination hosts'
+          sequence:
+            type: string
+            label: 'Host pattern'
         timeout:
           type: integer
           label: 'Request timeout in seconds'

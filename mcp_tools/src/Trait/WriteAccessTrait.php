@@ -48,11 +48,13 @@ trait WriteAccessTrait {
       $this->accessManager = \Drupal::service('mcp_tools.access_manager');
     }
 
-    if (!$this->accessManager->canAdmin()) {
+    $access = $this->accessManager->checkWriteAccess('admin', 'admin');
+    if (!$access['allowed']) {
       return [
         'success' => FALSE,
-        'error' => 'Admin operations not allowed for this connection.',
-        'code' => 'INSUFFICIENT_SCOPE',
+        'error' => $access['reason'],
+        'code' => $access['code'] ?? 'ACCESS_DENIED',
+        'retry_after' => $access['retry_after'] ?? NULL,
       ];
     }
 

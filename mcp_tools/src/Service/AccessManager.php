@@ -175,31 +175,59 @@ class AccessManager {
       return $this->currentScopes;
     }
 
+    $config = $this->configFactory->get('mcp_tools.settings');
+
+    // Maximum allowed scopes are always enforced.
+    $allowedScopes = $config->get('access.allowed_scopes')
+      ?? $config->get('access.default_scopes')
+      ?? [self::SCOPE_READ, self::SCOPE_WRITE];
+    $allowedScopes = array_values(array_intersect($allowedScopes, self::ALL_SCOPES));
+    if (empty($allowedScopes)) {
+      // Always allow at least read; prevents accidental lockout.
+      $allowedScopes = [self::SCOPE_READ];
+    }
+
+    // Default scopes (used when no trusted override is present).
+    $defaultScopes = $config->get('access.default_scopes') ?? [self::SCOPE_READ, self::SCOPE_WRITE];
+    $defaultScopes = array_values(array_intersect($defaultScopes, $allowedScopes));
+    if (empty($defaultScopes)) {
+      $defaultScopes = $allowedScopes;
+    }
+
     // Check for scope in request header (for HTTP transport).
     $request = $this->requestStack->getCurrentRequest();
-    if ($request && $request->headers->has('X-MCP-Scope')) {
+    if ($request && $config->get('access.trust_scopes_via_header') && $request->headers->has('X-MCP-Scope')) {
       $scopeHeader = $request->headers->get('X-MCP-Scope');
-      $this->currentScopes = $this->parseScopes($scopeHeader);
-      return $this->currentScopes;
+      $requestedScopes = array_values(array_intersect($this->parseScopes($scopeHeader), $allowedScopes));
+      if (!empty($requestedScopes)) {
+        $this->currentScopes = $requestedScopes;
+        return $this->currentScopes;
+      }
     }
 
     // Check for scope in query parameter.
-    if ($request && $request->query->has('mcp_scope')) {
+    if ($request && $config->get('access.trust_scopes_via_query') && $request->query->has('mcp_scope')) {
       $scopeParam = $request->query->get('mcp_scope');
-      $this->currentScopes = $this->parseScopes($scopeParam);
-      return $this->currentScopes;
+      $requestedScopes = array_values(array_intersect($this->parseScopes($scopeParam), $allowedScopes));
+      if (!empty($requestedScopes)) {
+        $this->currentScopes = $requestedScopes;
+        return $this->currentScopes;
+      }
     }
 
     // Check environment variable (for STDIO transport via drush).
-    $envScope = getenv('MCP_SCOPE');
-    if ($envScope) {
-      $this->currentScopes = $this->parseScopes($envScope);
-      return $this->currentScopes;
+    if ($config->get('access.trust_scopes_via_env')) {
+      $envScope = getenv('MCP_SCOPE');
+      if ($envScope) {
+        $requestedScopes = array_values(array_intersect($this->parseScopes($envScope), $allowedScopes));
+        if (!empty($requestedScopes)) {
+          $this->currentScopes = $requestedScopes;
+          return $this->currentScopes;
+        }
+      }
     }
 
-    // Default scopes from config.
-    $config = $this->configFactory->get('mcp_tools.settings');
-    $this->currentScopes = $config->get('access.default_scopes') ?? [self::SCOPE_READ, self::SCOPE_WRITE];
+    $this->currentScopes = $defaultScopes;
 
     return $this->currentScopes;
   }
@@ -212,6 +240,81 @@ class AccessManager {
    */
   public function setScopes(array $scopes): void {
     $this->currentScopes = array_intersect($scopes, self::ALL_SCOPES);
+  }
+
+  /**
+   * Convenience access check for write/admin tools.
+   *
+   * Some submodules call this helper to return a normalized access result.
+   *
+   * @param string $operation
+   *   A high-level operation label (e.g., create, update, delete, clear, admin).
+   * @param string $entityType
+   *   The entity type being modified (used for context only).
+   *
+   * @return array
+   *   Array with keys:
+   *   - allowed: bool
+   *   - reason: string|null
+   *   - code: string|null
+   *   - retry_after: int|null
+   */
+  public function checkWriteAccess(string $operation, string $entityType): array {
+    $operationLower = strtolower(trim($operation));
+
+    // Treat explicit "admin" operations as requiring admin scope.
+    if ($operationLower === 'admin') {
+      if ($this->canAdmin('admin')) {
+        return ['allowed' => TRUE, 'reason' => NULL, 'code' => NULL, 'retry_after' => NULL];
+      }
+
+      // Mirror getWriteAccessDenied() semantics, but with admin wording.
+      if ($this->lastRateLimitError) {
+        $error = $this->lastRateLimitError;
+        $this->lastRateLimitError = NULL;
+        return [
+          'allowed' => FALSE,
+          'reason' => $error['error'] ?? 'Rate limit exceeded.',
+          'code' => $error['code'] ?? 'RATE_LIMIT_EXCEEDED',
+          'retry_after' => $error['retry_after'] ?? NULL,
+        ];
+      }
+
+      if ($this->configFactory->get('mcp_tools.settings')->get('access.read_only_mode')) {
+        return [
+          'allowed' => FALSE,
+          'reason' => 'Admin operations are disabled. Site is in read-only mode.',
+          'code' => 'READ_ONLY_MODE',
+          'retry_after' => NULL,
+        ];
+      }
+
+      return [
+        'allowed' => FALSE,
+        'reason' => "Admin operations not allowed for this connection. Scope: " . implode(',', $this->getCurrentScopes()),
+        'code' => 'INSUFFICIENT_SCOPE',
+        'retry_after' => NULL,
+      ];
+    }
+
+    // Map common operations to rate-limit buckets.
+    $operationType = match ($operationLower) {
+      'delete' => 'delete',
+      // For now, treat everything else as a generic write operation.
+      default => 'write',
+    };
+
+    if ($this->canWrite($operationType)) {
+      return ['allowed' => TRUE, 'reason' => NULL, 'code' => NULL, 'retry_after' => NULL];
+    }
+
+    $denied = $this->getWriteAccessDenied();
+    return [
+      'allowed' => FALSE,
+      'reason' => $denied['error'] ?? "Write operations are not allowed for {$entityType}.",
+      'code' => $denied['code'] ?? 'ACCESS_DENIED',
+      'retry_after' => $denied['retry_after'] ?? NULL,
+    ];
   }
 
   /**
@@ -271,7 +374,7 @@ class AccessManager {
    */
   protected function parseScopes(string $scopeString): array {
     $scopes = array_map('trim', explode(',', $scopeString));
-    return array_intersect($scopes, self::ALL_SCOPES);
+    return array_values(array_intersect($scopes, self::ALL_SCOPES));
   }
 
 }

@@ -44,7 +44,11 @@ class AuditLogger {
     $config = $this->configFactory->get('mcp_tools.settings');
 
     // Check if audit logging is enabled (default TRUE for write operations).
-    if (!$config->get('audit_logging') ?? TRUE) {
+    $enabled = $config->get('access.audit_logging');
+    if ($enabled === NULL) {
+      $enabled = TRUE;
+    }
+    if (!$enabled) {
       return;
     }
 

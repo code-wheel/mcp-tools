@@ -10,11 +10,10 @@ Batteries-included MCP tools for AI assistants working with Drupal sites.
 
 | Drupal Version | PHP Version | Status | Notes |
 |----------------|-------------|--------|-------|
-| **10.2.x** | 8.2 | ✅ Tested | Minimum supported version |
-| **10.3.x** | 8.3 | ✅ Tested | Fully supported |
+| **10.3.x** | 8.3 | ✅ Tested | Minimum supported version |
 | **11.0.x** | 8.4, 8.5 | ✅ Tested | Fully supported |
 
-**PHP Support:** 8.2, 8.3, 8.4, 8.5 (PHP 8.1 is EOL as of December 2025)
+**PHP Support:** 8.3, 8.4, 8.5
 
 CI runs tests against all supported Drupal versions on every push.
 
@@ -57,9 +56,9 @@ AI:   Creates content type, fields, vocabularies, role, and permissions
 
 ## Requirements
 
-- Drupal 10.2+ or Drupal 11
-- [MCP Server](https://www.drupal.org/project/mcp_server) module
+- Drupal 10.3+ or Drupal 11
 - [Tool API](https://www.drupal.org/project/tool) module
+- [MCP Server](https://www.drupal.org/project/mcp_server) module (optional; required to expose tools over MCP)
 
 ## Installation
 
@@ -165,7 +164,9 @@ $config['mcp_tools.settings']['access']['read_only_mode'] = TRUE;
 ```
 
 ### 3. Connection Scopes
-Per-connection access levels via header, query param, or environment variable:
+Per-connection access levels (read/write/admin).
+
+**Security default:** HTTP scope overrides are disabled by default. Enable them only if you have a trusted reverse proxy stripping/overwriting client-supplied scope headers/params.
 
 ```bash
 # Via HTTP header
@@ -177,6 +178,8 @@ X-MCP-Scope: read,write
 # Via environment (for STDIO transport)
 MCP_SCOPE=read,write drush mcp:serve
 ```
+
+Scopes are always limited by `access.allowed_scopes`. When no trusted override is present, `access.default_scopes` are used.
 
 Available scopes:
 - `read` - Read-only operations
@@ -658,6 +661,7 @@ Available scopes:
 - **Three-layer access control** - Modules, global toggle, connection scopes
 - **Permission-based** - Each category has its own Drupal permission
 - **Audit logging** - All write operations logged with user info
+- **Read operation throttling** - Expensive read operations are rate-limited (broken links, content search)
 - **Sensitive data redaction** - Passwords and secrets never logged
 - **Protected entities** - uid 1, administrator role, core views/menus protected
 - **Dangerous permissions blocked** - Cannot grant site admin permissions via MCP
@@ -772,6 +776,7 @@ MCP Tools can send notifications to external systems (Slack, audit logs, etc.) w
 $config['mcp_tools.settings']['webhooks']['enabled'] = TRUE;
 $config['mcp_tools.settings']['webhooks']['url'] = 'https://hooks.slack.com/...';
 $config['mcp_tools.settings']['webhooks']['secret'] = 'your-hmac-secret';
+$config['mcp_tools.settings']['webhooks']['allowed_hosts'] = ['hooks.slack.com']; // optional allowlist
 ```
 
 Webhook payloads include:

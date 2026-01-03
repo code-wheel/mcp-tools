@@ -81,12 +81,14 @@ AI:  Creates content type, taxonomy vocabularies, fields, role, and permissions
 ### Additional Requirements
 
 **Required:**
-- Drupal 10.2+ or Drupal 11
-- [MCP Server](https://www.drupal.org/project/mcp_server) module
+- Drupal 10.3+ or Drupal 11
 - [Tool API](https://www.drupal.org/project/tool) module
 
+**Optional (to expose tools over MCP):**
+- [MCP Server](https://www.drupal.org/project/mcp_server) module
+
 **PHP:**
-- PHP 8.2, 8.3, 8.4, or 8.5
+- PHP 8.3, 8.4, or 8.5
 
 ### Recommended Modules/Libraries
 
@@ -130,7 +132,6 @@ This module is developed and maintained by [Code Wheel](https://github.com/code-
 
 | Drupal | PHP | Status |
 |--------|-----|--------|
-| 10.2.x | 8.2 | Tested |
 | 10.3.x | 8.3 | Tested |
 | 11.0.x | 8.4, 8.5 | Tested |
 

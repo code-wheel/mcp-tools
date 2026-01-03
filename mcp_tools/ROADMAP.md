@@ -67,7 +67,7 @@ MCP Tools provides **curated, high-value tools** that solve real problems—not 
 ```
 mcp_tools/                           # Base module (22 read-only tools)
 ├── src/
-│   ├── Plugin/Tool/                 # 22 read-only Tool plugins
+│   ├── Plugin/tool/Tool/            # Tool API plugins (read-only tools)
 │   ├── Form/SettingsForm.php        # Admin UI
 │   ├── Controller/StatusController.php  # Status page
 │   └── Service/

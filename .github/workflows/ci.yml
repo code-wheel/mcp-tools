@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        php-version: ['8.2', '8.3', '8.4', '8.5']
+        php-version: ['8.3', '8.4', '8.5']
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -53,7 +53,7 @@ jobs:
 
       - name: Run PHPCS
         run: |
-          phpcs --standard=Drupal,DrupalPractice src --extensions=php,module,install,inc --ignore=*/tests/*
+          phpcs --standard=Drupal,DrupalPractice mcp_tools --extensions=php,module,install,inc --ignore=*/tests/*
         continue-on-error: true
 
   phpunit:
@@ -63,8 +63,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - drupal-version: '10.2'
-            php-version: '8.2'
           - drupal-version: '10.3'
             php-version: '8.3'
           - drupal-version: '11.0'
@@ -111,30 +109,15 @@ jobs:
           cd drupal
           composer require --dev drupal/core-dev:^${{ matrix.drupal-version }} phpspec/prophecy-phpunit:^2 drush/drush --no-interaction
 
-      - name: Create stub modules for dependencies
+      - name: Install Tool API dependency
         run: |
-          mkdir -p drupal/web/modules/contrib/mcp_server
-          cat > drupal/web/modules/contrib/mcp_server/mcp_server.info.yml << 'EOF'
-          name: MCP Server (Stub)
-          type: module
-          description: 'Stub module for testing MCP Tools.'
-          package: Testing
-          core_version_requirement: ^10 || ^11
-          EOF
-
-          mkdir -p drupal/web/modules/contrib/tool
-          cat > drupal/web/modules/contrib/tool/tool.info.yml << 'EOF'
-          name: Tool (Stub)
-          type: module
-          description: 'Stub module for testing MCP Tools.'
-          package: Testing
-          core_version_requirement: ^10 || ^11
-          EOF
+          cd drupal
+          composer require drupal/tool:1.0.0-alpha9 --no-interaction
 
       - name: Copy MCP Tools module
         run: |
           mkdir -p drupal/web/modules/contrib/mcp_tools
-          rsync -av --exclude='.git' --exclude='.github' . drupal/web/modules/contrib/mcp_tools/
+          rsync -av --exclude='.git' --exclude='.github' mcp_tools/ drupal/web/modules/contrib/mcp_tools/
 
       - name: Install Drupal site
         run: |
@@ -149,7 +132,7 @@ jobs:
       - name: Enable required modules
         run: |
           cd drupal
-          ./vendor/bin/drush en mcp_server tool dblog update -y
+          ./vendor/bin/drush en tool dblog update -y
           ./vendor/bin/drush en mcp_tools -y
           ./vendor/bin/drush cr
 
@@ -256,30 +239,15 @@ jobs:
           cd drupal
           composer require --dev drupal/core-dev:^10.3 phpspec/prophecy-phpunit:^2 drush/drush --no-interaction
 
-      - name: Create stub modules for dependencies
+      - name: Install Tool API dependency
         run: |
-          mkdir -p drupal/web/modules/contrib/mcp_server
-          cat > drupal/web/modules/contrib/mcp_server/mcp_server.info.yml << 'EOF'
-          name: MCP Server (Stub)
-          type: module
-          description: 'Stub module for testing MCP Tools.'
-          package: Testing
-          core_version_requirement: ^10 || ^11
-          EOF
-
-          mkdir -p drupal/web/modules/contrib/tool
-          cat > drupal/web/modules/contrib/tool/tool.info.yml << 'EOF'
-          name: Tool (Stub)
-          type: module
-          description: 'Stub module for testing MCP Tools.'
-          package: Testing
-          core_version_requirement: ^10 || ^11
-          EOF
+          cd drupal
+          composer require drupal/tool:1.0.0-alpha9 --no-interaction
 
       - name: Copy MCP Tools module
         run: |
           mkdir -p drupal/web/modules/contrib/mcp_tools
-          rsync -av --exclude='.git' --exclude='.github' . drupal/web/modules/contrib/mcp_tools/
+          rsync -av --exclude='.git' --exclude='.github' mcp_tools/ drupal/web/modules/contrib/mcp_tools/
 
       - name: Install Drupal site
         run: |
@@ -294,7 +262,7 @@ jobs:
       - name: Enable required modules
         run: |
           cd drupal
-          ./vendor/bin/drush en mcp_server tool dblog update -y
+          ./vendor/bin/drush en tool dblog update -y
           ./vendor/bin/drush en mcp_tools -y
           ./vendor/bin/drush cr
 
@@ -387,22 +355,17 @@ jobs:
 
       - name: Install Drupal with all submodules
         run: |
-          composer create-project drupal/recommended-project:^10.2 drupal --no-interaction
+          composer create-project drupal/recommended-project:^10.3 drupal --no-interaction
           cd drupal
           composer require drush/drush --no-interaction
-
-      - name: Create stub modules
-        run: |
-          mkdir -p drupal/web/modules/contrib/mcp_server
-          echo -e "name: MCP Server (Stub)\ntype: module\ncore_version_requirement: ^10 || ^11" > drupal/web/modules/contrib/mcp_server/mcp_server.info.yml
-
-          mkdir -p drupal/web/modules/contrib/tool
-          echo -e "name: Tool (Stub)\ntype: module\ncore_version_requirement: ^10 || ^11" > drupal/web/modules/contrib/tool/tool.info.yml
+          composer require drupal/tool:1.0.0-alpha9 --no-interaction
+          composer config repositories.mcp_server vcs https://git.drupalcode.org/project/mcp_server.git
+          composer require drupal/mcp_server:1.x-dev --no-interaction
 
       - name: Copy module
         run: |
           mkdir -p drupal/web/modules/contrib/mcp_tools
-          rsync -av --exclude='.git' --exclude='.github' . drupal/web/modules/contrib/mcp_tools/
+          rsync -av --exclude='.git' --exclude='.github' mcp_tools/ drupal/web/modules/contrib/mcp_tools/
 
       - name: Install Drupal
         run: |
@@ -415,18 +378,17 @@ jobs:
       - name: Enable all MCP Tools modules
         run: |
           cd drupal
-          ./vendor/bin/drush en mcp_server tool dblog update -y
+          ./vendor/bin/drush en tool dblog update -y
           ./vendor/bin/drush en mcp_tools -y
 
           # Enable all submodules (skip those with unmet dependencies)
-          for module in mcp_tools_content mcp_tools_structure mcp_tools_users mcp_tools_menus \
-                        mcp_tools_views mcp_tools_blocks mcp_tools_media mcp_tools_theme \
-                        mcp_tools_config mcp_tools_cache mcp_tools_cron mcp_tools_batch \
-                        mcp_tools_queue mcp_tools_devel mcp_tools_webform mcp_tools_paragraphs \
-                        mcp_tools_layout_builder mcp_tools_workflows mcp_tools_search \
-                        mcp_tools_commerce mcp_tools_seo mcp_tools_multilingual \
-                        mcp_tools_feeds mcp_tools_migrate mcp_tools_analysis \
-                        mcp_tools_json_api mcp_tools_recipes mcp_tools_ai; do
+          for module in mcp_tools_analysis mcp_tools_batch mcp_tools_blocks mcp_tools_cache mcp_tools_config \
+                        mcp_tools_content mcp_tools_cron mcp_tools_entity_clone mcp_tools_image_styles \
+                        mcp_tools_layout_builder mcp_tools_media mcp_tools_menus mcp_tools_metatag \
+                        mcp_tools_migration mcp_tools_moderation mcp_tools_paragraphs mcp_tools_pathauto \
+                        mcp_tools_recipes mcp_tools_redirect mcp_tools_scheduler mcp_tools_search_api \
+                        mcp_tools_sitemap mcp_tools_structure mcp_tools_templates mcp_tools_theme \
+                        mcp_tools_ultimate_cron mcp_tools_users mcp_tools_views mcp_tools_webform; do
             ./vendor/bin/drush en $module -y 2>/dev/null || echo "Skipping $module (optional dependency not met)"
           done
           ./vendor/bin/drush cr
@@ -434,17 +396,16 @@ jobs:
       - name: Count and verify registered tools
         run: |
           cd drupal
-          TOOL_COUNT=$(./vendor/bin/drush eval "echo count(\Drupal::service('plugin.manager.tool')->getDefinitions());" 2>/dev/null || echo "0")
+          TOOL_COUNT=$(./vendor/bin/drush eval "echo count(\\Drupal::service('plugin.manager.tool')->getDefinitions());" 2>/dev/null || echo "0")
           echo "========================================"
           echo "Registered tools: $TOOL_COUNT"
           echo "========================================"
 
-          if [ "$TOOL_COUNT" -lt 200 ]; then
-            echo "WARNING: Expected at least 200 tools, found $TOOL_COUNT"
-            echo "Some submodules may have unmet dependencies"
-          else
-            echo "✓ All tools registered successfully ($TOOL_COUNT tools)"
+          if [ "$TOOL_COUNT" -lt 20 ]; then
+            echo "ERROR: Expected at least 20 tools, found $TOOL_COUNT"
+            exit 1
           fi
+          echo "✓ Tool registration looks healthy ($TOOL_COUNT tools)"
 
   dependency-audit:
     name: Dependency Audit
@@ -461,7 +422,7 @@ jobs:
 
       - name: Create test Drupal project
         run: |
-          composer create-project drupal/recommended-project:^10.2 drupal --no-interaction
+          composer create-project drupal/recommended-project:^10.3 drupal --no-interaction
 
       - name: Check for security vulnerabilities
         run: |
@@ -483,7 +444,7 @@ jobs:
           cd drupal
           echo "=== Drupal Security Advisories ==="
           # Check if there are any security updates available
-          composer require --dev drupal/core-dev:^10.2 --no-interaction 2>/dev/null || true
+          composer require --dev drupal/core-dev:^10.3 --no-interaction 2>/dev/null || true
           ./vendor/bin/drush pm:security 2>/dev/null || echo "Drush not available for security check"
         continue-on-error: true
 

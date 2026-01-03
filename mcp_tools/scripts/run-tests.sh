@@ -12,7 +12,7 @@ echo "=== MCP Tools Test Runner ==="
 echo ""
 
 # Use official Drupal PHP image
-DOCKER_IMAGE="drupal:10-php8.2-apache"
+DOCKER_IMAGE="drupal:10-php8.3-apache"
 
 echo "Pulling Docker image..."
 docker pull $DOCKER_IMAGE -q

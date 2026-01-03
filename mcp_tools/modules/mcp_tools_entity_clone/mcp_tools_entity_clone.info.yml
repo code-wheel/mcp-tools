@@ -2,7 +2,7 @@ name: 'MCP Tools - Entity Clone'
 type: module
 description: 'Entity Clone integration: clone entities with references and configurable options.'
 package: MCP Tools
-core_version_requirement: ^10.2 || ^11
+core_version_requirement: ^10.3 || ^11
 dependencies:
   - mcp_tools:mcp_tools
   - entity_clone:entity_clone

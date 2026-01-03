@@ -82,17 +82,15 @@ jobs:
           cd drupal
           composer require --dev drupal/core-dev:^10.3 phpspec/prophecy-phpunit:^2 drush/drush --no-interaction
 
-      - name: Create stub modules
+      - name: Install Tool API dependency
         run: |
-          mkdir -p drupal/web/modules/contrib/mcp_server
-          echo -e "name: MCP Server (Stub)\ntype: module\ncore_version_requirement: ^10 || ^11" > drupal/web/modules/contrib/mcp_server/mcp_server.info.yml
-          mkdir -p drupal/web/modules/contrib/tool
-          echo -e "name: Tool (Stub)\ntype: module\ncore_version_requirement: ^10 || ^11" > drupal/web/modules/contrib/tool/tool.info.yml
+          cd drupal
+          composer require drupal/tool:1.0.0-alpha9 --no-interaction
 
       - name: Copy module
         run: |
           mkdir -p drupal/web/modules/contrib/mcp_tools
-          rsync -av --exclude='.git' --exclude='.github' . drupal/web/modules/contrib/mcp_tools/
+          rsync -av --exclude='.git' --exclude='.github' mcp_tools/ drupal/web/modules/contrib/mcp_tools/
 
       - name: Install Drupal
         run: |
@@ -107,7 +105,7 @@ jobs:
       - name: Enable modules and run tests
         run: |
           cd drupal
-          ./vendor/bin/drush en mcp_server tool dblog update -y
+          ./vendor/bin/drush en tool dblog update -y
           ./vendor/bin/drush en mcp_tools -y
           ./vendor/bin/drush cr
 
@@ -176,8 +174,8 @@ jobs:
 
           ### Compatibility
 
-          - Drupal 10.2.x, 10.3.x, 11.0.x
-          - PHP 8.2, 8.3, 8.4, 8.5
+          - Drupal 10.3.x, 11.0.x
+          - PHP 8.3, 8.4, 8.5
 
           ### Links
 

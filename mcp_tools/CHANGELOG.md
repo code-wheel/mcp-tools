@@ -4,6 +4,31 @@ All notable changes to the MCP Tools module will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.0.0-alpha2] - 2026-01-03
+
+### Added
+
+- Tool API plugin implementations for all MCP Tools (205 tools) using PHP attributes (`#[Tool(...)]`) and `Plugin/tool/Tool` discovery.
+- `Drupal\\mcp_tools\\Tool\\McpToolsToolBase` wrapper to adapt legacy MCP Tools responses into Tool API `ExecutableResult` objects and enforce category permissions + MCP scopes.
+- Access configuration hardening: `access.allowed_scopes` plus trust toggles for reading scopes from headers, query params, and environment variables.
+- Webhook host allowlist via `webhooks.allowed_hosts`.
+- Read-operation rate limiting helpers and expanded kernel coverage.
+- Kernel coverage for Tool API discovery/registration.
+
+### Changed
+
+- Minimum requirements: Drupal `^10.3 || ^11`, PHP `>=8.3`.
+- MCP Server is optional (only required when exposing tools over MCP).
+
+### Fixed
+
+- Drupal 11 / Symfony 7 test compatibility and Tool API listing compatibility.
+
+### Security
+
+- Scope override values are intersected with `access.allowed_scopes` to prevent accidental privilege escalation via scope injection.
+- Configuration analysis and audit logging redact sensitive values by default.
+
 ## [1.0.0-alpha1] - 2025-01-02
 
 ### Added
