@@ -1,0 +1,13 @@
+#!/bin/bash
+
+## Description: Run PHPUnit tests for mcp_tools module
+## Usage: test [filter]
+## Example: "ddev test" or "ddev test AccessManager"
+
+FILTER=""
+if [ -n "$1" ]; then
+    FILTER="--filter=$1"
+fi
+
+echo "Running mcp_tools PHPUnit tests..."
+ddev exec ./vendor/bin/phpunit -c web/modules/contrib/mcp_tools/phpunit.xml $FILTER
