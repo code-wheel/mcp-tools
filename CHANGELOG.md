@@ -4,6 +4,17 @@ All notable changes to the MCP Tools module will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.0.0-alpha6] - 2026-01-03
+
+### Added
+
+- Unit coverage for `TemplateService` and `WebhookNotifier` (signature + redaction + SSRF blocking).
+
+### Fixed
+
+- Functional UI tests now grant `access administration pages` and assert anonymous access denial robustly across login/403 configurations.
+- CI now installs Drupal dev dependencies with `--with-all-dependencies` to avoid Drupal 11 Composer lock conflicts (e.g. `sebastian/diff` vs PHPUnit).
+
 ## [1.0.0-alpha5] - 2026-01-03
 
 ### Added

@@ -41,6 +41,7 @@ class StatusControllerTest extends BrowserTestBase {
   protected function setUp(): void {
     parent::setUp();
     $this->adminUser = $this->drupalCreateUser([
+      'access administration pages',
       'administer site configuration',
       'mcp_tools administer',
     ]);
@@ -52,7 +53,12 @@ class StatusControllerTest extends BrowserTestBase {
   public function testStatusPageAccess(): void {
     // Anonymous user should not have access.
     $this->drupalGet('/admin/config/services/mcp-tools/status');
-    $this->assertSession()->statusCodeEquals(403);
+    $this->assertSession()->pageTextNotContains('MCP Tools Status');
+    $text = $this->getSession()->getPage()->getText();
+    $this->assertTrue(
+      str_contains($text, 'Access denied') || str_contains($text, 'Log in'),
+      'Anonymous user should see access denied or a login prompt.'
+    );
 
     // Admin user should have access.
     $this->drupalLogin($this->adminUser);
