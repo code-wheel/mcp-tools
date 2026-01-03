@@ -4,6 +4,20 @@ All notable changes to the MCP Tools module will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.0.0-alpha9] - 2026-01-03
+
+### Added
+
+- Config-only mode (restrict write tools to configuration changes) with configurable allowed write kinds.
+
+### Fixed
+
+- Corrected multiple Tool API operation declarations so write tools are not incorrectly exposed as read operations.
+
+### Security
+
+- Enforced correct write-scope gating for tools that mutate configuration or operational state (e.g., block placement, pathauto alias generation, Search API indexing).
+
 ## [1.0.0-alpha8] - 2026-01-03
 
 ### Added
