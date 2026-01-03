@@ -88,7 +88,7 @@ AI:  Creates content type, taxonomy vocabularies, fields, role, and permissions
 - [MCP Server](https://www.drupal.org/project/mcp_server) module
 
 **PHP:**
-- PHP 8.3, 8.4, or 8.5
+- PHP 8.3 or 8.4
 
 ### Recommended Modules/Libraries
 
@@ -133,7 +133,7 @@ This module is developed and maintained by [Code Wheel](https://github.com/code-
 | Drupal | PHP | Status |
 |--------|-----|--------|
 | 10.3.x | 8.3 | Tested |
-| 11.0.x | 8.4, 8.5 | Tested |
+| 11.0.x | 8.3, 8.4 | Tested |
 
 ---
 
