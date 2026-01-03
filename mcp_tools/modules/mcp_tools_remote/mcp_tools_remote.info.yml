@@ -1,0 +1,10 @@
+name: MCP Tools Remote Server
+type: module
+description: 'Expose MCP Tools over HTTP with API key authentication (experimental; intended for trusted internal networks).'
+package: AI
+core_version_requirement: ^10.3 || ^11
+lifecycle: experimental
+
+dependencies:
+  - mcp_tools:mcp_tools
+

@@ -1,0 +1,7 @@
+mcp_tools_remote.settings:
+  title: 'Remote Server'
+  description: 'Configure the MCP Tools HTTP endpoint and API keys.'
+  route_name: mcp_tools_remote.settings
+  parent: mcp_tools.settings
+  weight: 20
+

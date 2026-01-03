@@ -46,6 +46,7 @@ jobs:
           cd drupal
           composer require drush/drush --no-interaction
           composer require drupal/tool:1.0.0-alpha9 --no-interaction
+          composer require mcp/sdk:^0.2.2 --no-interaction
 
           # Optional contrib dependencies for all submodules.
           composer require \
@@ -88,6 +89,7 @@ jobs:
           cd drupal
           ./vendor/bin/drush en tool dblog update -y
           ./vendor/bin/drush en mcp_tools -y
+          ./vendor/bin/drush en mcp_tools_stdio mcp_tools_remote -y
 
           # Enable all submodules.
           for module in mcp_tools_analysis mcp_tools_batch mcp_tools_blocks mcp_tools_cache mcp_tools_config \
@@ -112,4 +114,3 @@ jobs:
             exit 1
           fi
           echo "✓ All tools registered (205)"
-

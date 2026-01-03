@@ -1,0 +1,19 @@
+services:
+  logger.channel.mcp_tools_remote:
+    parent: logger.channel_base
+    arguments: ['mcp_tools_remote']
+
+  mcp_tools_remote.api_key_manager:
+    class: Drupal\mcp_tools_remote\Service\ApiKeyManager
+    arguments:
+      - '@state'
+      - '@private_key'
+      - '@datetime.time'
+
+  mcp_tools_remote.commands:
+    class: Drupal\mcp_tools_remote\Commands\McpToolsRemoteCommands
+    arguments:
+      - '@mcp_tools_remote.api_key_manager'
+    tags:
+      - { name: drush.command }
+

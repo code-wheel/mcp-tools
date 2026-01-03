@@ -1,0 +1,19 @@
+mcp_tools_remote.handle:
+  path: '/_mcp_tools'
+  defaults:
+    _controller: '\Drupal\mcp_tools_remote\Controller\McpToolsRemoteController::handle'
+    _title: 'MCP Tools Remote'
+  requirements:
+    _access: 'TRUE'
+  methods: [GET, POST]
+  options:
+    no_cache: TRUE
+
+mcp_tools_remote.settings:
+  path: '/admin/config/services/mcp-tools/remote'
+  defaults:
+    _form: '\Drupal\mcp_tools_remote\Form\RemoteSettingsForm'
+    _title: 'MCP Tools Remote Server'
+  requirements:
+    _permission: 'mcp_tools administer'
+
