@@ -58,8 +58,12 @@ AI:   Creates content type, fields, vocabularies, role, and permissions
 
 - Drupal 10.3+ or Drupal 11
 - [Tool API](https://www.drupal.org/project/tool) module
-- [MCP Server](https://www.drupal.org/project/mcp_server) module (optional; required to expose tools over MCP)
-  - Note: `drupal/mcp_server` currently has an upstream Composer metadata issue; see https://www.drupal.org/project/mcp_server/issues/3560993 for the workaround.
+
+### MCP Transports (choose one)
+
+- **Recommended (local dev):** `mcp_tools_stdio` — runs an MCP server over STDIO via Drush.
+- **Experimental (remote HTTP):** `mcp_tools_remote` — exposes an HTTP endpoint with API key authentication.
+- **Alternative:** [MCP Server](https://www.drupal.org/project/mcp_server) (optional). Note: `drupal/mcp_server` currently has an upstream Composer metadata issue; see https://www.drupal.org/project/mcp_server/issues/3560993 for the workaround.
 
 ## Installation
 
@@ -67,6 +71,24 @@ AI:   Creates content type, fields, vocabularies, role, and permissions
 composer require drupal/mcp_tools
 drush en mcp_tools
 ```
+
+### Local MCP (STDIO) setup (recommended)
+
+```bash
+drush en mcp_tools_stdio
+drush mcp-tools:serve
+```
+
+### Remote MCP (HTTP) setup (experimental)
+
+```bash
+drush en mcp_tools_remote
+drush mcp-tools:remote-key-create --label="My Key" --scopes=read
+```
+
+Configure the endpoint at `/_mcp_tools` in your MCP client, and send the key as `Authorization: Bearer …` or `X-MCP-Api-Key: …`.
+
+Only use this on trusted internal networks; configure a dedicated execution user (not uid 1) and keep keys read-only unless absolutely necessary.
 
 ## Architecture: Granular Submodules
 
@@ -177,7 +199,7 @@ X-MCP-Scope: read,write
 ?mcp_scope=read,write
 
 # Via environment (for STDIO transport)
-MCP_SCOPE=read,write drush mcp:serve
+MCP_SCOPE=read,write drush mcp-tools:serve
 ```
 
 Scopes are always limited by `access.allowed_scopes`. When no trusted override is present, `access.default_scopes` are used.
@@ -790,18 +812,35 @@ Signature verification: When a secret is configured, requests include an `X-MCP-
 
 ## Usage
 
-With MCP Server configured:
+### Local (STDIO via Drush) — recommended
 
 ```bash
-# STDIO transport (Claude Desktop, Claude Code)
-drush mcp:serve
+# Enable the transport.
+drush en mcp_tools_stdio -y
 
-# With specific scopes
-MCP_SCOPE=read,write drush mcp:serve
+# Run the MCP server over STDIO (Claude Desktop, Claude Code, etc).
+drush mcp-tools:serve
 
-# HTTP transport
-# Endpoint available at /_mcp after configuration
+# With specific scopes (local only)
+MCP_SCOPE=read,write drush mcp-tools:serve
+# or: drush mcp-tools:serve --scope=read,write
 ```
+
+### Remote (HTTP) — experimental
+
+```bash
+# Enable the transport.
+drush en mcp_tools_remote -y
+
+# Create a read-only API key (shown once).
+drush mcp-tools:remote-key-create --label="My Key" --scopes=read
+```
+
+Configure your MCP client to use `/_mcp_tools` and send the key as `Authorization: Bearer …` or `X-MCP-Api-Key: …`.
+
+### Alternative: drupal/mcp_server
+
+If you choose to use [MCP Server](https://www.drupal.org/project/mcp_server) instead of the built-in transports, it provides its own Drush commands (e.g. `drush mcp:serve`).
 
 ## Contributing
 

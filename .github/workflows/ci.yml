@@ -114,6 +114,11 @@ jobs:
           cd drupal
           composer require drupal/tool:1.0.0-alpha9 --no-interaction
 
+      - name: Install MCP SDK dependency
+        run: |
+          cd drupal
+          composer require mcp/sdk:^0.2.2 --no-interaction
+
       - name: Copy MCP Tools module
         run: |
           mkdir -p drupal/web/modules/contrib/mcp_tools
@@ -143,6 +148,7 @@ jobs:
           cd drupal
           ./vendor/bin/drush en tool dblog update -y
           ./vendor/bin/drush en mcp_tools -y
+          ./vendor/bin/drush en mcp_tools_stdio mcp_tools_remote -y
           ./vendor/bin/drush cr
 
       - name: Create phpunit.xml
@@ -253,6 +259,11 @@ jobs:
           cd drupal
           composer require drupal/tool:1.0.0-alpha9 --no-interaction
 
+      - name: Install MCP SDK dependency
+        run: |
+          cd drupal
+          composer require mcp/sdk:^0.2.2 --no-interaction
+
       - name: Copy MCP Tools module
         run: |
           mkdir -p drupal/web/modules/contrib/mcp_tools
@@ -282,6 +293,7 @@ jobs:
           cd drupal
           ./vendor/bin/drush en tool dblog update -y
           ./vendor/bin/drush en mcp_tools -y
+          ./vendor/bin/drush en mcp_tools_stdio mcp_tools_remote -y
           ./vendor/bin/drush cr
 
       - name: Create phpunit.xml with coverage
@@ -380,6 +392,7 @@ jobs:
           cd drupal
           composer require drush/drush --no-interaction
           composer require drupal/tool:1.0.0-alpha9 --no-interaction
+          composer require mcp/sdk:^0.2.2 --no-interaction
 
       - name: Copy module
         run: |
@@ -408,6 +421,7 @@ jobs:
           cd drupal
           ./vendor/bin/drush en tool dblog update -y
           ./vendor/bin/drush en mcp_tools -y
+          ./vendor/bin/drush en mcp_tools_stdio mcp_tools_remote -y
 
           # Enable all submodules (skip those with unmet dependencies)
           for module in mcp_tools_analysis mcp_tools_batch mcp_tools_blocks mcp_tools_cache mcp_tools_config \

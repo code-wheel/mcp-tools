@@ -1,0 +1,8 @@
+name: MCP Tools STDIO Server
+type: module
+description: 'Expose MCP Tools over STDIO via Drush (recommended for local development).'
+package: AI
+core_version_requirement: ^10.3 || ^11
+
+dependencies:
+  - mcp_tools:mcp_tools

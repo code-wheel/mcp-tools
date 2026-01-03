@@ -85,7 +85,9 @@ AI:  Creates content type, taxonomy vocabularies, fields, role, and permissions
 - [Tool API](https://www.drupal.org/project/tool) module
 
 **Optional (to expose tools over MCP):**
-- [MCP Server](https://www.drupal.org/project/mcp_server) module
+- **Recommended (local dev):** `mcp_tools_stdio` submodule (STDIO via Drush)
+- **Experimental (remote HTTP):** `mcp_tools_remote` submodule (API key auth)
+- **Alternative:** [MCP Server](https://www.drupal.org/project/mcp_server) module (note: upstream Composer metadata issue: https://www.drupal.org/project/mcp_server/issues/3560993)
 
 **PHP:**
 - PHP 8.3 or 8.4
@@ -109,7 +111,7 @@ AI:  Creates content type, taxonomy vocabularies, fields, role, and permissions
 
 ### Similar Projects
 
-**MCP Server** - The underlying protocol handler. MCP Tools builds on top of MCP Server to provide the actual Drupal-specific tools.
+**MCP Server** - Another Drupal MCP transport implementation. MCP Tools can be used with MCP Server, or via the built-in `mcp_tools_stdio` / `mcp_tools_remote` transports.
 
 **ECA (Event-Condition-Action)** - Automates Drupal tasks via rules. MCP Tools differs by enabling real-time AI interaction rather than predefined automation rules.
 

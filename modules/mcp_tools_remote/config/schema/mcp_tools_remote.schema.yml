@@ -1,0 +1,23 @@
+mcp_tools_remote.settings:
+  type: config_object
+  label: 'MCP Tools Remote Server settings'
+  mapping:
+    enabled:
+      type: boolean
+      label: 'Enable HTTP endpoint'
+    uid:
+      type: integer
+      label: 'Drupal user ID for execution'
+    server_name:
+      type: string
+      label: 'Server name'
+    server_version:
+      type: string
+      label: 'Server version'
+    pagination_limit:
+      type: integer
+      label: 'Pagination limit'
+    include_all_tools:
+      type: boolean
+      label: 'Expose all Tool API tools'
+
