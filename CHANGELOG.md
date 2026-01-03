@@ -4,6 +4,20 @@ All notable changes to the MCP Tools module will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.0.0-alpha3] - 2026-01-03
+
+### Added
+
+- Kernel smoke coverage to instantiate all core tools (144) and ensure `access()` never throws.
+
+### Changed
+
+- CI tool registration check now enforces a minimum of 144 MCP Tools tools (core-only install).
+
+### Fixed
+
+- `SystemStatusService` no longer references non-existent `SystemManager::REQUIREMENT_INFO` (Drupal 10/11).
+
 ## [1.0.0-alpha2] - 2026-01-03
 
 ### Added
