@@ -4,6 +4,19 @@ All notable changes to the MCP Tools module will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.0.0-alpha7] - 2026-01-03
+
+### Added
+
+- End-to-end MCP transport checks (STDIO + HTTP) wired into CI and release workflows.
+
+### Fixed
+
+- `drush mcp-tools:serve` no longer writes human output to STDOUT (prevents corrupting the STDIO JSON-RPC stream).
+- `mcp_tools_remote` HTTP transport now uses a persistent session store (prevents 404 "session not found" after `initialize`).
+- Drush command registration moved to per-submodule `drush.services.yml` files (avoids runtime dependency on Drush and fixes command discovery).
+- Tool execution output handling now tolerates incomplete Tool API output contexts (prevents MCP tool calls failing with "provided context ... is not valid").
+
 ## [1.0.0-alpha6] - 2026-01-03
 
 ### Added

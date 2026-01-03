@@ -1,0 +1,12 @@
+services:
+  mcp_tools_stdio.commands:
+    class: Drupal\mcp_tools_stdio\Commands\McpToolsStdioCommands
+    arguments:
+      - '@plugin.manager.tool'
+      - '@mcp_tools.access_manager'
+      - '@entity_type.manager'
+      - '@account_switcher'
+      - '@event_dispatcher'
+      - '@logger.channel.mcp_tools_stdio'
+    tags:
+      - { name: drush.command }
