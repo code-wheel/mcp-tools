@@ -87,6 +87,11 @@ jobs:
           cd drupal
           composer require drupal/tool:1.0.0-alpha9 --no-interaction
 
+      - name: Install MCP SDK dependency
+        run: |
+          cd drupal
+          composer require mcp/sdk:^0.2.2 --no-interaction
+
       - name: Copy module
         run: |
           mkdir -p drupal/web/modules/contrib/mcp_tools
@@ -116,6 +121,7 @@ jobs:
           cd drupal
           ./vendor/bin/drush en tool dblog update -y
           ./vendor/bin/drush en mcp_tools -y
+          ./vendor/bin/drush en mcp_tools_stdio -y
           ./vendor/bin/drush cr
 
           cat > phpunit.xml << 'EOF'
@@ -138,6 +144,11 @@ jobs:
           EOF
 
           ./vendor/bin/phpunit --testsuite unit,kernel --colors=always
+
+      - name: MCP transport E2E
+        run: |
+          python3 scripts/mcp_stdio_e2e.py --drupal-root drupal
+          python3 scripts/mcp_http_e2e.py --drupal-root drupal --base-url http://localhost:8888
 
   release:
     name: Create GitHub Release

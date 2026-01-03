@@ -1,0 +1,7 @@
+services:
+  mcp_tools_remote.commands:
+    class: Drupal\mcp_tools_remote\Commands\McpToolsRemoteCommands
+    arguments:
+      - '@mcp_tools_remote.api_key_manager'
+    tags:
+      - { name: drush.command }

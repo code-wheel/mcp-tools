@@ -8,6 +8,7 @@ use Drupal\Component\Plugin\PluginManagerInterface;
 use Drupal\tool\Tool\ToolDefinition;
 use Mcp\Schema\ToolAnnotations;
 use Mcp\Server;
+use Mcp\Server\Session\SessionStoreInterface;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Log\LoggerInterface;
 
@@ -35,16 +36,24 @@ final class McpToolsServerFactory {
    * @param bool $includeAllTools
    *   If TRUE, expose all Tool API tools. If FALSE, only expose tools whose
    *   provider starts with "mcp_tools".
+   * @param \Mcp\Server\Session\SessionStoreInterface|null $sessionStore
+   *   Optional session store to use (required for Streamable HTTP across requests).
+   * @param int $sessionTtl
+   *   Session TTL in seconds.
    *
    * @return \Mcp\Server
    *   MCP server instance.
    */
-  public function create(string $serverName, string $serverVersion, int $paginationLimit = 50, bool $includeAllTools = FALSE): Server {
+  public function create(string $serverName, string $serverVersion, int $paginationLimit = 50, bool $includeAllTools = FALSE, ?SessionStoreInterface $sessionStore = NULL, int $sessionTtl = 3600): Server {
     $builder = Server::builder()
       ->setServerInfo($serverName, $serverVersion)
       ->setPaginationLimit($paginationLimit)
       ->setLogger($this->logger)
       ->setEventDispatcher($this->eventDispatcher);
+
+    if ($sessionStore) {
+      $builder->setSession($sessionStore, ttl: $sessionTtl);
+    }
 
     // Intercept tool calls and execute Tool API tools directly.
     $builder->addRequestHandler(new ToolApiCallToolHandler(

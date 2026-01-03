@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Drupal\mcp_tools_remote\Controller;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
-use Drupal\Core\Controller\ControllerBase;
+use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Session\AccountSwitcherInterface;
 use Drupal\mcp_tools\Mcp\McpToolsServerFactory;
@@ -14,6 +14,7 @@ use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools_remote\Service\ApiKeyManager;
 use Drupal\tool\Tool\ToolManager;
 use GuzzleHttp\Psr7\HttpFactory;
+use Mcp\Server\Session\FileSessionStore;
 use Mcp\Server\Transport\StreamableHttpTransport;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Log\LoggerInterface;
@@ -27,22 +28,19 @@ use Symfony\Component\HttpFoundation\Response;
 /**
  * HTTP endpoint for MCP Tools remote transport.
  */
-final class McpToolsRemoteController extends ControllerBase {
+final class McpToolsRemoteController implements ContainerInjectionInterface {
 
   public function __construct(
     private readonly ConfigFactoryInterface $configFactory,
     private readonly ApiKeyManager $apiKeyManager,
     private readonly AccessManager $accessManager,
     private readonly ToolManager $toolManager,
-    private readonly EntityTypeManagerInterface $entityTypeManager,
+    private readonly EntityTypeManagerInterface $entityTypeManagerService,
     private readonly AccountSwitcherInterface $accountSwitcher,
     private readonly EventDispatcherInterface $eventDispatcher,
     private readonly LoggerInterface $logger,
   ) {}
 
-  /**
-   * {@inheritdoc}
-   */
   public static function create(ContainerInterface $container): static {
     return new static(
       $container->get('config.factory'),
@@ -89,7 +87,7 @@ final class McpToolsRemoteController extends ControllerBase {
 
     // Execute as configured user for consistent attribution.
     $uid = (int) ($remoteConfig->get('uid') ?? 1);
-    $account = $this->entityTypeManager->getStorage('user')->load($uid);
+    $account = $this->entityTypeManagerService->getStorage('user')->load($uid);
     if (!$account) {
       return new Response('Invalid execution user.', 500);
     }
@@ -109,6 +107,11 @@ final class McpToolsRemoteController extends ControllerBase {
         (string) ($remoteConfig->get('server_version') ?? '1.0.0'),
         (int) ($remoteConfig->get('pagination_limit') ?? 50),
         (bool) ($remoteConfig->get('include_all_tools') ?? FALSE),
+        new FileSessionStore(
+          rtrim(sys_get_temp_dir(), \DIRECTORY_SEPARATOR) . \DIRECTORY_SEPARATOR . 'mcp_tools_remote_sessions_' . substr(hash('sha256', \Drupal::root()), 0, 12),
+          3600,
+        ),
+        3600,
       );
 
       $httpFactory = new HttpFactory();
@@ -146,4 +149,3 @@ final class McpToolsRemoteController extends ControllerBase {
   }
 
 }
-

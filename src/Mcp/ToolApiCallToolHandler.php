@@ -119,7 +119,15 @@ final class ToolApiCallToolHandler implements RequestHandlerInterface {
       }
 
       $output = [];
-      if ($toolOutput = $tool->getOutputValues()) {
+      $toolOutput = NULL;
+      try {
+        $toolOutput = $tool->getOutputValues();
+      }
+      catch (\Throwable) {
+        $toolOutput = NULL;
+      }
+
+      if (!empty($toolOutput)) {
         $output = $toolOutput;
       }
       elseif ($contextValues = $result->getContextValues()) {
