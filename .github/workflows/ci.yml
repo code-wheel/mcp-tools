@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        php-version: ['8.3', '8.4', '8.5']
+        php-version: ['8.3', '8.4']
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -42,7 +42,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.5'
+          php-version: '8.4'
           tools: phpcs
 
       - name: Install Drupal Coding Standards
@@ -66,9 +66,9 @@ jobs:
           - drupal-version: '10.3'
             php-version: '8.3'
           - drupal-version: '11.0'
-            php-version: '8.4'
+            php-version: '8.3'
           - drupal-version: '11.0'
-            php-version: '8.5'
+            php-version: '8.4'
 
     services:
       mysql:
@@ -370,7 +370,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.5'
+          php-version: '8.4'
           extensions: mbstring, pdo_mysql, gd, dom, xml
           tools: composer
 
@@ -449,7 +449,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.5'
+          php-version: '8.4'
           tools: composer
 
       - name: Create test Drupal project
