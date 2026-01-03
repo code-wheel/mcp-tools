@@ -19,7 +19,9 @@ class SystemStatusService {
    * Severity level labels.
    */
   protected const SEVERITY_LABELS = [
-    SystemManager::REQUIREMENT_INFO => 'info',
+    // REQUIREMENT_INFO is a global constant defined in core/includes/install.inc.
+    // It is not available as a SystemManager class constant in Drupal 10/11.
+    -1 => 'info',
     SystemManager::REQUIREMENT_OK => 'ok',
     SystemManager::REQUIREMENT_WARNING => 'warning',
     SystemManager::REQUIREMENT_ERROR => 'error',
@@ -65,7 +67,7 @@ class SystemStatusService {
     ];
 
     foreach ($requirements as $key => $requirement) {
-      $severity = $requirement['severity'] ?? SystemManager::REQUIREMENT_OK;
+      $severity = $requirement['severity'] ?? (defined('REQUIREMENT_INFO') ? REQUIREMENT_INFO : -1);
       $severityLabel = self::SEVERITY_LABELS[$severity] ?? 'unknown';
 
       $summary[$severityLabel] = ($summary[$severityLabel] ?? 0) + 1;

@@ -422,15 +422,23 @@ jobs:
         run: |
           cd drupal
           TOOL_COUNT=$(./vendor/bin/drush eval "echo count(\\Drupal::service('plugin.manager.tool')->getDefinitions());" 2>/dev/null || echo "0")
+          MCP_TOOL_COUNT=$(./vendor/bin/drush eval "
+            \\$defs = \\Drupal::service('plugin.manager.tool')->getDefinitions();
+            \\$defs = array_filter(\\$defs, static fn(\\$def): bool => str_starts_with(\\$def->getProvider(), 'mcp_tools'));
+            echo count(\\$defs);
+          " 2>/dev/null || echo "0")
           echo "========================================"
-          echo "Registered tools: $TOOL_COUNT"
+          echo "Registered tools (total): $TOOL_COUNT"
+          echo "Registered tools (mcp_tools* providers): $MCP_TOOL_COUNT"
           echo "========================================"
 
-          if [ "$TOOL_COUNT" -lt 20 ]; then
-            echo "ERROR: Expected at least 20 tools, found $TOOL_COUNT"
+          # Core-only install (no contrib deps) should still register all core tools:
+          # base module + core-only submodules = 144 tools.
+          if [ "$MCP_TOOL_COUNT" -lt 144 ]; then
+            echo "ERROR: Expected at least 144 MCP Tools tools, found $MCP_TOOL_COUNT"
             exit 1
           fi
-          echo "✓ Tool registration looks healthy ($TOOL_COUNT tools)"
+          echo "✓ Tool registration looks healthy ($MCP_TOOL_COUNT MCP Tools tools)"
 
   dependency-audit:
     name: Dependency Audit
