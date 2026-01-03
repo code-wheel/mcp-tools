@@ -1,0 +1,4 @@
+mcp_tools use cache:
+  title: 'Use MCP cache tools'
+  description: 'Clear and rebuild caches via MCP.'
+  restrict access: true

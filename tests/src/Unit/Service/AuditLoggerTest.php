@@ -66,7 +66,7 @@ class AuditLoggerTest extends UnitTestCase {
    */
   public function testLogSuccessLogsNotice(): void {
     $this->config->method('get')
-      ->with('audit_logging')
+      ->with('access.audit_logging')
       ->willReturn(TRUE);
 
     $this->logger->expects($this->once())
@@ -92,7 +92,7 @@ class AuditLoggerTest extends UnitTestCase {
    */
   public function testLogFailureLogsError(): void {
     $this->config->method('get')
-      ->with('audit_logging')
+      ->with('access.audit_logging')
       ->willReturn(TRUE);
 
     $this->logger->expects($this->once())
@@ -115,7 +115,7 @@ class AuditLoggerTest extends UnitTestCase {
    */
   public function testLogWithDetails(): void {
     $this->config->method('get')
-      ->with('audit_logging')
+      ->with('access.audit_logging')
       ->willReturn(TRUE);
 
     $this->logger->expects($this->once())
@@ -140,7 +140,7 @@ class AuditLoggerTest extends UnitTestCase {
    */
   public function testLogDisabledByConfig(): void {
     $this->config->method('get')
-      ->with('audit_logging')
+      ->with('access.audit_logging')
       ->willReturn(FALSE);
 
     $this->logger->expects($this->never())->method('notice');
@@ -155,7 +155,7 @@ class AuditLoggerTest extends UnitTestCase {
    */
   public function testSanitizeDetailsRedactsPassword(): void {
     $this->config->method('get')
-      ->with('audit_logging')
+      ->with('access.audit_logging')
       ->willReturn(TRUE);
 
     $this->logger->expects($this->once())
@@ -184,7 +184,7 @@ class AuditLoggerTest extends UnitTestCase {
    */
   public function testSanitizeDetailsRedactsMultipleSensitiveKeys(): void {
     $this->config->method('get')
-      ->with('audit_logging')
+      ->with('access.audit_logging')
       ->willReturn(TRUE);
 
     $this->logger->expects($this->once())
@@ -219,7 +219,7 @@ class AuditLoggerTest extends UnitTestCase {
    */
   public function testSanitizeDetailsHandlesNestedArrays(): void {
     $this->config->method('get')
-      ->with('audit_logging')
+      ->with('access.audit_logging')
       ->willReturn(TRUE);
 
     $this->logger->expects($this->once())
@@ -266,7 +266,7 @@ class AuditLoggerTest extends UnitTestCase {
     );
 
     $this->config->method('get')
-      ->with('audit_logging')
+      ->with('access.audit_logging')
       ->willReturn(TRUE);
 
     $this->logger->expects($this->once())

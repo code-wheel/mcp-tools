@@ -19,7 +19,6 @@ class RateLimiterKernelTest extends KernelTestBase {
    */
   protected static $modules = [
     'mcp_tools',
-    'mcp_server',
     'tool',
     'user',
     'system',
@@ -209,6 +208,27 @@ class RateLimiterKernelTest extends KernelTestBase {
     $result = $this->rateLimiter->checkLimit('structure');
     $this->assertFalse($result['allowed']);
     $this->assertStringContainsString('structure', $result['error']);
+  }
+
+  /**
+   * Tests read operation limits can be configured and enforced.
+   */
+  public function testReadLimitEnforcement(): void {
+    $config = $this->config('mcp_tools.settings');
+    $config->set('rate_limits.content_search.max_per_minute', 1)->save();
+
+    $this->rateLimiter = new RateLimiter(
+      $this->container->get('config.factory'),
+      $this->container->get('state'),
+      $this->container->get('request_stack')
+    );
+
+    $result1 = $this->rateLimiter->checkReadLimit('content_search');
+    $this->assertTrue($result1['allowed']);
+
+    $result2 = $this->rateLimiter->checkReadLimit('content_search');
+    $this->assertFalse($result2['allowed']);
+    $this->assertArrayHasKey('retry_after', $result2);
   }
 
 }

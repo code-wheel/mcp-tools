@@ -15,9 +15,8 @@
     "issues": "https://www.drupal.org/project/issues/mcp_tools"
   },
   "require": {
-    "php": ">=8.1",
-    "drupal/core": "^10.2 || ^11",
-    "drupal/mcp_server": "^1.0",
-    "drupal/tool": "^1.0"
+    "php": ">=8.3",
+    "drupal/core": "^10.3 || ^11",
+    "drupal/tool": "^1.0@alpha"
   }
 }

@@ -1,0 +1,4 @@
+mcp_tools use entity_clone:
+  title: 'Use MCP entity cloning tools'
+  description: 'Clone entities (optionally with references) via MCP.'
+  restrict access: true

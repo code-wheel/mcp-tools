@@ -2,12 +2,24 @@ mcp_tools use site_tools:
   title: 'Use MCP site health tools'
   description: 'Access site status, system requirements, security updates, cron status, watchdog, queues, and file system status via MCP.'
 
+mcp_tools use site_health:
+  title: 'Use MCP site health tools (category: site_health)'
+  description: 'Access site status, system requirements, security updates, cron status, watchdog, queues, and file system status via MCP.'
+
 mcp_tools use content_tools:
   title: 'Use MCP content analysis tools'
   description: 'Access content types, content search, recent content, taxonomies, and file management via MCP.'
 
+mcp_tools use content:
+  title: 'Use MCP content tools (category: content)'
+  description: 'Access content types, content search, recent content, taxonomies, and file management via MCP.'
+
 mcp_tools use config_tools:
   title: 'Use MCP configuration tools'
+  description: 'Access configuration status, config viewing, and config listing via MCP.'
+
+mcp_tools use config:
+  title: 'Use MCP configuration tools (category: config)'
   description: 'Access configuration status, config viewing, and config listing via MCP.'
 
 mcp_tools use user_tools:
@@ -15,9 +27,22 @@ mcp_tools use user_tools:
   description: 'Access user listings, roles, and permissions via MCP.'
   restrict access: true
 
+mcp_tools use users:
+  title: 'Use MCP user tools (category: users)'
+  description: 'Access user listings, roles, and permissions via MCP.'
+  restrict access: true
+
 mcp_tools use structure_tools:
   title: 'Use MCP structure tools'
   description: 'Access menu structure and site navigation via MCP.'
+
+mcp_tools use structure:
+  title: 'Use MCP structure tools (category: structure)'
+  description: 'Access menu structure and site navigation via MCP.'
+
+mcp_tools use discovery:
+  title: 'Use MCP tool discovery'
+  description: 'List available MCP tools and categories via MCP.'
 
 mcp_tools administer:
   title: 'Administer MCP Tools'

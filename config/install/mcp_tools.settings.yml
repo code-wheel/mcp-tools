@@ -6,11 +6,23 @@ access:
   # Use this to quickly disable all writes without uninstalling modules.
   read_only_mode: false
 
+  # Maximum scopes that can ever be granted to an MCP connection.
+  # Any requested scopes (header/query/env) are intersected with this list.
+  allowed_scopes:
+    - read
+    - write
+
   # Default scopes for connections that don't specify a scope.
   # Available scopes: read, write, admin
   default_scopes:
     - read
     - write
+
+  # Whether to trust scope overrides from various sources.
+  # SECURITY: HTTP header and query parameter scopes are untrusted by default.
+  trust_scopes_via_header: false
+  trust_scopes_via_query: false
+  trust_scopes_via_env: true
 
   # Audit logging for all operations.
   audit_logging: true
@@ -62,6 +74,9 @@ webhooks:
   url: ''
   # Secret for HMAC signing (recommended for security).
   secret: ''
+  # Optional allowlist of destination hosts for webhook URLs.
+  # When empty, any public (non-private) host is allowed.
+  allowed_hosts: []
   # Request timeout in seconds.
   timeout: 5
   # Batch notifications and send on shutdown (better performance).

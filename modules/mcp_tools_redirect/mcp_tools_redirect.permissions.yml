@@ -1,0 +1,4 @@
+mcp_tools use redirect:
+  title: 'Use MCP redirect tools'
+  description: 'Create, update, delete, and import redirects via MCP.'
+  restrict access: true

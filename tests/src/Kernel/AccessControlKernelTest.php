@@ -19,7 +19,6 @@ class AccessControlKernelTest extends KernelTestBase {
    */
   protected static $modules = [
     'mcp_tools',
-    'mcp_server',
     'tool',
     'user',
     'system',
@@ -111,6 +110,7 @@ class AccessControlKernelTest extends KernelTestBase {
     $this->assertFalse($this->accessManager->canAdmin());
 
     $config = $this->config('mcp_tools.settings');
+    $config->set('access.allowed_scopes', ['read', 'write', 'admin']);
     $config->set('access.default_scopes', ['read', 'write', 'admin'])->save();
 
     $this->accessManager = new AccessManager(
