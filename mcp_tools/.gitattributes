@@ -23,9 +23,10 @@
 /behat.yml               export-ignore
 /behat.yml.dist          export-ignore
 
-# Documentation (keep README, exclude dev docs)
+# Documentation (keep README and CHANGELOG, exclude dev docs)
 /CONTRIBUTING.md         export-ignore
 /ROADMAP.md              export-ignore
+/DRUPAL_ORG_DESCRIPTION.md export-ignore
 /docs                    export-ignore
 
 # Scripts
