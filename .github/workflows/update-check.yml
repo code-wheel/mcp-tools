@@ -1,0 +1,80 @@
+# =============================================================================
+# Weekly Update Check
+# Runs weekly to check for Drupal updates and security advisories
+# =============================================================================
+
+name: Update Check
+
+on:
+  schedule:
+    # Run every Monday at 9am UTC
+    - cron: '0 9 * * 1'
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  check-updates:
+    name: Check for Updates
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          tools: composer
+
+      - name: Check Drupal 10.2 updates
+        run: |
+          echo "=== Drupal 10.2 ==="
+          composer create-project drupal/recommended-project:^10.2 drupal102 --no-interaction
+          cd drupal102
+          echo "Current version:"
+          composer show drupal/core | grep versions
+          echo "Outdated packages:"
+          composer outdated --direct || echo "All up to date"
+
+      - name: Check Drupal 10.3 updates
+        run: |
+          echo "=== Drupal 10.3 ==="
+          composer create-project drupal/recommended-project:^10.3 drupal103 --no-interaction
+          cd drupal103
+          echo "Current version:"
+          composer show drupal/core | grep versions
+          echo "Outdated packages:"
+          composer outdated --direct || echo "All up to date"
+
+      - name: Check Drupal 11 updates
+        run: |
+          echo "=== Drupal 11 ==="
+          composer create-project drupal/recommended-project:^11 drupal11 --no-interaction
+          cd drupal11
+          echo "Current version:"
+          composer show drupal/core | grep versions
+          echo "Outdated packages:"
+          composer outdated --direct || echo "All up to date"
+
+      - name: Security audit all versions
+        run: |
+          echo "=== Security Audit: Drupal 10.2 ==="
+          cd drupal102 && composer audit || true
+          echo ""
+          echo "=== Security Audit: Drupal 10.3 ==="
+          cd ../drupal103 && composer audit || true
+          echo ""
+          echo "=== Security Audit: Drupal 11 ==="
+          cd ../drupal11 && composer audit || true
+
+      - name: Summary
+        run: |
+          echo "========================================"
+          echo "Update Check Complete"
+          echo "========================================"
+          echo ""
+          echo "If there are security updates, please:"
+          echo "1. Test the module against the new Drupal version"
+          echo "2. Update the version compatibility matrix if needed"
+          echo "3. Tag a new release if required"
+          echo ""
+          echo "Drupal releases: https://www.drupal.org/project/drupal/releases"

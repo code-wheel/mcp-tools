@@ -301,6 +301,47 @@ jobs:
             echo "✓ All tools registered successfully ($TOOL_COUNT tools)"
           fi
 
+  dependency-audit:
+    name: Dependency Audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          tools: composer
+
+      - name: Create test Drupal project
+        run: |
+          composer create-project drupal/recommended-project:^10.2 drupal --no-interaction
+
+      - name: Check for security vulnerabilities
+        run: |
+          cd drupal
+          echo "=== Security Audit ==="
+          composer audit --format=plain || true
+
+      - name: Check for outdated packages
+        run: |
+          cd drupal
+          echo "=== Outdated Packages ==="
+          composer outdated --direct --format=list || true
+          echo ""
+          echo "=== Drupal Core Version ==="
+          composer show drupal/core | grep -E "^(name|versions)" || true
+
+      - name: Check Drupal security advisories
+        run: |
+          cd drupal
+          echo "=== Drupal Security Advisories ==="
+          # Check if there are any security updates available
+          composer require --dev drupal/core-dev:^10.2 --no-interaction 2>/dev/null || true
+          ./vendor/bin/drush pm:security 2>/dev/null || echo "Drush not available for security check"
+        continue-on-error: true
+
   documentation:
     name: Documentation Check
     runs-on: ubuntu-latest
