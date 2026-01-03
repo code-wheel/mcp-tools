@@ -20,7 +20,7 @@ use Drupal\tool\TypedData\InputDefinition;
   id: 'mcp_upload_file',
   label: new TranslatableMarkup('Upload File'),
   description: new TranslatableMarkup('Upload a file from base64 encoded data.'),
-  operation: ToolOperation::Read,
+  operation: ToolOperation::Write,
   input_definitions: [
     'filename' => new InputDefinition(
       data_type: 'string',

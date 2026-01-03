@@ -4,6 +4,18 @@ All notable changes to the MCP Tools module will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.0.0-alpha10] - 2026-01-03
+
+### Added
+
+- Tool metadata lint test to prevent read/write operation regressions.
+- Kernel coverage for config-only mode gating by write kind.
+
+### Fixed
+
+- `mcp_upload_file` now correctly declares a write operation (requires write scope).
+- Status page now shows config-only mode status.
+
 ## [1.0.0-alpha9] - 2026-01-03
 
 ### Added

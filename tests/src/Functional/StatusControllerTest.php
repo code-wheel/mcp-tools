@@ -76,6 +76,7 @@ class StatusControllerTest extends BrowserTestBase {
 
     $this->assertSession()->pageTextContains('Access Status');
     $this->assertSession()->pageTextContains('Read-only mode:');
+    $this->assertSession()->pageTextContains('Config-only mode:');
     $this->assertSession()->pageTextContains('Current scopes:');
     $this->assertSession()->pageTextContains('Can read:');
     $this->assertSession()->pageTextContains('Can write:');

@@ -49,6 +49,9 @@ class StatusController extends ControllerBase {
       $this->t('Read-only mode: @status', [
         '@status' => $this->accessManager->isReadOnlyMode() ? $this->t('ENABLED') : $this->t('Disabled'),
       ]),
+      $this->t('Config-only mode: @status', [
+        '@status' => $this->accessManager->isConfigOnlyMode() ? $this->t('ENABLED') : $this->t('Disabled'),
+      ]),
       $this->t('Current scopes: @scopes', [
         '@scopes' => implode(', ', $this->accessManager->getCurrentScopes()),
       ]),
