@@ -23,7 +23,7 @@ DRY_RUN=false
 # Drupal.org Git remote
 DRUPAL_ORG_REMOTE="git@git.drupal.org:project/mcp_tools.git"
 # GitHub mirror remote (update this after creating the repo)
-GITHUB_MIRROR_REMOTE="git@github.com:code-wheel/mcp_tools.git"
+GITHUB_MIRROR_REMOTE="git@github.com:code-wheel/mcp-tools.git"
 
 show_help() {
     echo "MCP Tools Release Script"
