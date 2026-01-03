@@ -4,11 +4,11 @@ All notable changes to the MCP Tools module will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [Unreleased]
+## [1.0.0-alpha1] - 2025-01-02
 
 ### Added
 
-#### Core Module (mcp_tools) - 22 read-only tools
+#### Core Module (mcp_tools) - 23 read-only tools
 - **Site Health:** GetSiteStatus, GetSystemStatus, CheckSecurityUpdates, CheckCronStatus, AnalyzeWatchdog, GetQueueStatus, GetFileSystemStatus
 - **Content:** ListContentTypes, GetRecentContent, SearchContent, GetVocabularies, GetTerms, GetFiles, FindOrphanedFiles
 - **Configuration:** GetConfigStatus, GetConfig, ListConfig
@@ -117,4 +117,4 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 | mcp_tools_batch | 6 |
 | mcp_tools_templates | 5 |
 | mcp_tools_migration | 7 |
-| **Total** | **204** |
+| **Total** | **205** |
