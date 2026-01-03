@@ -71,7 +71,7 @@ class SettingsFormTest extends BrowserTestBase {
 
     // Check that form elements exist.
     $this->assertSession()->fieldExists('read_only_mode');
-    $this->assertSession()->fieldExists('rate_limiting_enabled');
+    $this->assertSession()->fieldExists('enabled');
 
     // Submit the form with read-only mode enabled.
     $this->submitForm([
