@@ -9,9 +9,11 @@ Batteries-included MCP tools for AI assistants working with Drupal sites.
 
 | Drupal Version | PHP Version | Status | Notes |
 |----------------|-------------|--------|-------|
-| **10.2.x** | 8.1, 8.2 | ✅ Tested | Primary development version |
-| **10.3.x** | 8.2, 8.3 | ✅ Tested | Fully supported |
-| **11.0.x** | 8.3 | ✅ Tested | Fully supported |
+| **10.2.x** | 8.2 | ✅ Tested | Minimum supported version |
+| **10.3.x** | 8.3 | ✅ Tested | Fully supported |
+| **11.0.x** | 8.4, 8.5 | ✅ Tested | Fully supported |
+
+**PHP Support:** 8.2, 8.3, 8.4, 8.5 (PHP 8.1 is EOL as of December 2025)
 
 CI runs tests against all supported Drupal versions on every push.
 
