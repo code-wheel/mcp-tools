@@ -63,6 +63,7 @@ AI:   Creates content type, fields, vocabularies, role, and permissions
 
 - **Recommended (local dev):** `mcp_tools_stdio` — runs an MCP server over STDIO via Drush.
 - **Experimental (remote HTTP):** `mcp_tools_remote` — exposes an HTTP endpoint with API key authentication.
+- **Optional (MCP Server bridge):** `mcp_tools_mcp_server` — generates MCP Server tool configs for MCP Tools (only relevant if you install `drupal/mcp_server`).
 - **Alternative:** [MCP Server](https://www.drupal.org/project/mcp_server) (optional). Note: `drupal/mcp_server` currently has an upstream Composer metadata issue; see https://www.drupal.org/project/mcp_server/issues/3560993 for the workaround.
 
 ## Installation
@@ -840,7 +841,17 @@ Configure your MCP client to use `/_mcp_tools` and send the key as `Authorizatio
 
 ### Alternative: drupal/mcp_server
 
-If you choose to use [MCP Server](https://www.drupal.org/project/mcp_server) instead of the built-in transports, it provides its own Drush commands (e.g. `drush mcp:serve`).
+If you choose to use [MCP Server](https://www.drupal.org/project/mcp_server) instead of the built-in transports, it provides its own Drush commands (e.g. `drush mcp:server`).
+
+To prepare MCP Server tool configs for MCP Tools, enable the optional bridge and sync:
+
+```bash
+drush en mcp_tools_mcp_server -y
+drush mcp-tools:mcp-server-sync --enable-read
+```
+
+This intentionally does **not** replace the recommended default (`mcp_tools_stdio`). It is a compatibility option for when upstream `mcp_server` is stable.
+
 
 ## Contributing
 
