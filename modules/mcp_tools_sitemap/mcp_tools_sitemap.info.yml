@@ -1,0 +1,9 @@
+name: 'MCP Tools - Sitemap'
+type: module
+description: 'Simple XML Sitemap integration: manage sitemap variants, settings, entity inclusion, and regeneration.'
+package: MCP Tools
+core_version_requirement: ^10.2 || ^11
+dependencies:
+  - mcp_tools:mcp_tools
+  - simple_sitemap:simple_sitemap
+lifecycle: experimental

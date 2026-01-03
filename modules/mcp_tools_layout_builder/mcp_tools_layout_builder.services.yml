@@ -1,0 +1,10 @@
+services:
+  mcp_tools_layout_builder.layout_builder:
+    class: Drupal\mcp_tools_layout_builder\Service\LayoutBuilderService
+    arguments:
+      - '@entity_type.manager'
+      - '@entity_display.repository'
+      - '@plugin.manager.core.layout'
+      - '@plugin.manager.block'
+      - '@mcp_tools.access_manager'
+      - '@mcp_tools.audit_logger'

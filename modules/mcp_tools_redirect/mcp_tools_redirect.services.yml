@@ -1,0 +1,7 @@
+services:
+  mcp_tools_redirect.redirect:
+    class: Drupal\mcp_tools_redirect\Service\RedirectService
+    arguments:
+      - '@entity_type.manager'
+      - '@mcp_tools.access_manager'
+      - '@mcp_tools.audit_logger'

@@ -1,0 +1,23 @@
+{
+  "name": "drupal/mcp_tools",
+  "description": "Batteries-included MCP tools for AI assistants working with Drupal sites.",
+  "type": "drupal-module",
+  "license": "GPL-2.0-or-later",
+  "homepage": "https://www.drupal.org/project/mcp_tools",
+  "keywords": [
+    "Drupal",
+    "MCP",
+    "Model Context Protocol",
+    "AI",
+    "Tools"
+  ],
+  "support": {
+    "issues": "https://www.drupal.org/project/issues/mcp_tools"
+  },
+  "require": {
+    "php": ">=8.1",
+    "drupal/core": "^10.2 || ^11",
+    "drupal/mcp_server": "^1.0",
+    "drupal/tool": "^1.0"
+  }
+}

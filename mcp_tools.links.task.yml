@@ -1,0 +1,10 @@
+mcp_tools.settings:
+  title: 'Settings'
+  route_name: mcp_tools.settings
+  base_route: mcp_tools.settings
+
+mcp_tools.status:
+  title: 'Status'
+  route_name: mcp_tools.status
+  base_route: mcp_tools.settings
+  weight: 10

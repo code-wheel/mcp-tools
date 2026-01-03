@@ -1,0 +1,4 @@
+mcp_tools use content:
+  title: 'Use MCP content tools'
+  description: 'Create, update, delete, and publish content via MCP.'
+  restrict access: true

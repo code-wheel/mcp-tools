@@ -1,0 +1,6 @@
+services:
+  mcp_tools_image_styles.image_style_service:
+    class: Drupal\mcp_tools_image_styles\Service\ImageStyleService
+    arguments:
+      - '@entity_type.manager'
+      - '@plugin.manager.image.effect'

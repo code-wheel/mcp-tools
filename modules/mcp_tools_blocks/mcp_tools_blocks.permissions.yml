@@ -1,0 +1,4 @@
+mcp_tools use blocks:
+  title: 'Use MCP block tools'
+  description: 'Place, remove, configure, and list blocks via MCP.'
+  restrict access: true

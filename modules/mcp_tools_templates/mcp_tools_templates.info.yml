@@ -1,0 +1,8 @@
+name: 'MCP Tools - Templates'
+type: module
+description: 'MCP tools for site configuration templates - apply pre-built site configurations for common use cases.'
+package: MCP
+core_version_requirement: ^10.3 || ^11
+dependencies:
+  - mcp_tools:mcp_tools
+lifecycle: experimental

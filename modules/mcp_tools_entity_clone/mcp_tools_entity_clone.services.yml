@@ -1,0 +1,9 @@
+services:
+  mcp_tools_entity_clone.entity_clone:
+    class: Drupal\mcp_tools_entity_clone\Service\EntityCloneService
+    arguments:
+      - '@entity_type.manager'
+      - '@entity_field.manager'
+      - '@config.factory'
+      - '@mcp_tools.access_manager'
+      - '@mcp_tools.audit_logger'

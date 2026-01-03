@@ -1,0 +1,10 @@
+services:
+  mcp_tools_metatag.metatag:
+    class: Drupal\mcp_tools_metatag\Service\MetatagService
+    arguments:
+      - '@entity_type.manager'
+      - '@plugin.manager.metatag.tag'
+      - '@plugin.manager.metatag.group'
+      - '@metatag.manager'
+      - '@mcp_tools.access_manager'
+      - '@mcp_tools.audit_logger'
