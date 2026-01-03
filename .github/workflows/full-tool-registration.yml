@@ -1,0 +1,115 @@
+# =============================================================================
+# Full Tool Registration Workflow
+# Installs optional contrib dependencies and verifies all 205 tools register.
+# Intended for scheduled/manual runs (not every PR) to keep CI fast and stable.
+# =============================================================================
+
+name: Full Tool Registration
+
+on:
+  workflow_dispatch: {}
+  schedule:
+    - cron: '0 3 * * 0'
+
+jobs:
+  all-tools-register:
+    name: Verify All 205 Tools Register
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: drupal
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, pdo_mysql, gd, dom, xml
+          tools: composer
+
+      - name: Install Drupal + dependencies
+        run: |
+          composer create-project drupal/recommended-project:^10.3 drupal --no-interaction
+          cd drupal
+          composer require drush/drush --no-interaction
+          composer require drupal/tool:1.0.0-alpha9 --no-interaction
+
+          # Optional contrib dependencies for all submodules.
+          composer require \
+            drupal/entity_clone \
+            drupal/metatag \
+            drupal/paragraphs \
+            drupal/pathauto \
+            drupal/redirect \
+            drupal/scheduler \
+            drupal/search_api \
+            drupal/simple_sitemap \
+            drupal/ultimate_cron \
+            drupal/webform \
+            --no-interaction
+
+      - name: Copy MCP Tools module
+        run: |
+          mkdir -p drupal/web/modules/contrib/mcp_tools
+          rsync -av \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='.ddev' \
+            --exclude='docs' \
+            --exclude='scripts' \
+            --exclude='drupal' \
+            --exclude='vendor' \
+            --exclude='.phpunit.cache' \
+            ./ drupal/web/modules/contrib/mcp_tools/
+
+      - name: Install Drupal
+        run: |
+          cd drupal
+          ./vendor/bin/drush site:install minimal \
+            --db-url=mysql://root:root@127.0.0.1/drupal \
+            --site-name="MCP Tools Test" \
+            -y
+
+      - name: Enable MCP Tools + all submodules
+        run: |
+          cd drupal
+          ./vendor/bin/drush en tool dblog update -y
+          ./vendor/bin/drush en mcp_tools -y
+
+          # Enable all submodules.
+          for module in mcp_tools_analysis mcp_tools_batch mcp_tools_blocks mcp_tools_cache mcp_tools_config \
+                        mcp_tools_content mcp_tools_cron mcp_tools_entity_clone mcp_tools_image_styles \
+                        mcp_tools_layout_builder mcp_tools_media mcp_tools_menus mcp_tools_metatag \
+                        mcp_tools_migration mcp_tools_moderation mcp_tools_paragraphs mcp_tools_pathauto \
+                        mcp_tools_recipes mcp_tools_redirect mcp_tools_scheduler mcp_tools_search_api \
+                        mcp_tools_sitemap mcp_tools_structure mcp_tools_templates mcp_tools_theme \
+                        mcp_tools_ultimate_cron mcp_tools_users mcp_tools_views mcp_tools_webform; do
+            ./vendor/bin/drush en "$module" -y
+          done
+          ./vendor/bin/drush cr
+
+      - name: Verify tool registration count
+        run: |
+          cd drupal
+          MCP_TOOL_COUNT=$(./vendor/bin/drush eval '$defs = \Drupal::service("plugin.manager.tool")->getDefinitions(); $defs = array_filter($defs, static fn($def): bool => str_starts_with($def->getProvider(), "mcp_tools")); echo count($defs);')
+          echo "Registered MCP Tools tools: $MCP_TOOL_COUNT"
+
+          if [ "$MCP_TOOL_COUNT" -ne 205 ]; then
+            echo "ERROR: Expected 205 MCP Tools tools, found $MCP_TOOL_COUNT"
+            exit 1
+          fi
+          echo "✓ All tools registered (205)"
+
