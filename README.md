@@ -1,6 +1,19 @@
 # MCP Tools
 
+[![CI](https://github.com/code-wheel/mcp-tools/actions/workflows/ci.yml/badge.svg)](https://github.com/code-wheel/mcp-tools/actions/workflows/ci.yml)
+[![Security](https://github.com/code-wheel/mcp-tools/actions/workflows/security.yml/badge.svg)](https://github.com/code-wheel/mcp-tools/actions/workflows/security.yml)
+
 Batteries-included MCP tools for AI assistants working with Drupal sites.
+
+## Version Compatibility
+
+| Drupal Version | PHP Version | Status | Notes |
+|----------------|-------------|--------|-------|
+| **10.2.x** | 8.1, 8.2 | ✅ Tested | Primary development version |
+| **10.3.x** | 8.2, 8.3 | ✅ Tested | Fully supported |
+| **11.0.x** | 8.3 | ✅ Tested | Fully supported |
+
+CI runs tests against all supported Drupal versions on every push.
 
 ## Overview
 
