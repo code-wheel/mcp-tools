@@ -1,0 +1,490 @@
+# =============================================================================
+# CI Workflow for MCP Tools (public repo)
+# Runs tests and code quality checks on PRs
+# Tests against multiple Drupal versions for compatibility
+# =============================================================================
+
+name: CI
+
+on:
+  push:
+    branches: [master, main, 1.0.x]
+  pull_request:
+    branches: [master, main, 1.0.x]
+
+jobs:
+  php-lint:
+    name: PHP Lint
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php-version: ['8.3', '8.4', '8.5']
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-version }}
+
+      - name: PHP Syntax Check
+        run: |
+          find . -name "*.php" -not -path "./.git/*" -print0 | xargs -0 -n1 php -l
+
+  phpcs:
+    name: PHP CodeSniffer
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          tools: phpcs
+
+      - name: Install Drupal Coding Standards
+        run: |
+          composer global config allow-plugins.dealerdirect/phpcodesniffer-composer-installer true
+          composer global require drupal/coder
+          phpcs --config-set installed_paths ~/.composer/vendor/drupal/coder/coder_sniffer
+
+      - name: Run PHPCS
+        run: |
+          phpcs --standard=Drupal,DrupalPractice . --extensions=php,module,install,inc --ignore=*/tests/*,*/vendor/*,*/node_modules/*,*/tmp/*,*/.ddev/*
+        continue-on-error: true
+
+  phpunit:
+    name: PHPUnit (Drupal ${{ matrix.drupal-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - drupal-version: '10.3'
+            php-version: '8.3'
+          - drupal-version: '11.0'
+            php-version: '8.4'
+          - drupal-version: '11.0'
+            php-version: '8.5'
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: drupal
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-version }}
+          extensions: mbstring, pdo_mysql, gd, dom, xml
+          tools: composer
+          coverage: none
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.composer/cache
+          key: ${{ runner.os }}-composer-drupal${{ matrix.drupal-version }}-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-drupal${{ matrix.drupal-version }}-
+
+      - name: Install Drupal
+        run: |
+          composer create-project drupal/recommended-project:^${{ matrix.drupal-version }} drupal --no-interaction
+          cd drupal
+          composer require --dev drupal/core-dev:^${{ matrix.drupal-version }} phpspec/prophecy-phpunit:^2 drush/drush --no-interaction
+
+      - name: Install Tool API dependency
+        run: |
+          cd drupal
+          composer require drupal/tool:1.0.0-alpha9 --no-interaction
+
+      - name: Copy MCP Tools module
+        run: |
+          mkdir -p drupal/web/modules/contrib/mcp_tools
+          rsync -av \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='.ddev' \
+            --exclude='docs' \
+            --exclude='scripts' \
+            --exclude='drupal' \
+            --exclude='vendor' \
+            --exclude='.phpunit.cache' \
+            ./ drupal/web/modules/contrib/mcp_tools/
+
+      - name: Install Drupal site
+        run: |
+          cd drupal
+          ./vendor/bin/drush site:install minimal \
+            --db-url=mysql://root:root@127.0.0.1/drupal \
+            --site-name="MCP Tools Test" \
+            --account-name=admin \
+            --account-pass=admin \
+            -y
+
+      - name: Enable required modules
+        run: |
+          cd drupal
+          ./vendor/bin/drush en tool dblog update -y
+          ./vendor/bin/drush en mcp_tools -y
+          ./vendor/bin/drush cr
+
+      - name: Create phpunit.xml
+        run: |
+          cd drupal
+          cat > phpunit.xml << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+                   bootstrap="web/core/tests/bootstrap.php"
+                   colors="true"
+                   beStrictAboutTestsThatDoNotTestAnything="true"
+                   beStrictAboutOutputDuringTests="true"
+                   beStrictAboutChangesToGlobalState="true">
+            <php>
+              <ini name="error_reporting" value="32767"/>
+              <ini name="memory_limit" value="-1"/>
+              <env name="SIMPLETEST_BASE_URL" value="http://localhost:8888"/>
+              <env name="SIMPLETEST_DB" value="mysql://root:root@127.0.0.1/drupal"/>
+              <env name="BROWSERTEST_OUTPUT_DIRECTORY" value=""/>
+              <env name="SYMFONY_DEPRECATIONS_HELPER" value="disabled"/>
+            </php>
+            <testsuites>
+              <testsuite name="unit">
+                <directory>web/modules/contrib/mcp_tools/tests/src/Unit</directory>
+                <directory>web/modules/contrib/mcp_tools/modules/*/tests/src/Unit</directory>
+              </testsuite>
+              <testsuite name="kernel">
+                <directory>web/modules/contrib/mcp_tools/tests/src/Kernel</directory>
+                <directory>web/modules/contrib/mcp_tools/modules/*/tests/src/Kernel</directory>
+              </testsuite>
+              <testsuite name="functional">
+                <directory>web/modules/contrib/mcp_tools/tests/src/Functional</directory>
+                <directory>web/modules/contrib/mcp_tools/modules/*/tests/src/Functional</directory>
+              </testsuite>
+            </testsuites>
+          </phpunit>
+          EOF
+
+      - name: Start PHP built-in server
+        run: |
+          cd drupal/web
+          php -S localhost:8888 .ht.router.php &
+          sleep 3
+
+      - name: Run Unit Tests
+        run: |
+          cd drupal
+          ./vendor/bin/phpunit --testsuite unit --colors=always
+
+      - name: Run Kernel Tests
+        run: |
+          cd drupal
+          ./vendor/bin/phpunit --testsuite kernel --colors=always
+
+      - name: Run Functional Tests
+        run: |
+          cd drupal
+          ./vendor/bin/phpunit --testsuite functional --colors=always
+        env:
+          SIMPLETEST_BASE_URL: http://localhost:8888
+          SIMPLETEST_DB: mysql://root:root@127.0.0.1/drupal
+
+  code-coverage:
+    name: Code Coverage
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: drupal
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP with coverage
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, pdo_mysql, gd, dom, xml
+          tools: composer
+          coverage: pcov
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.composer/cache
+          key: ${{ runner.os }}-composer-coverage-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-coverage-
+
+      - name: Install Drupal
+        run: |
+          composer create-project drupal/recommended-project:^10.3 drupal --no-interaction
+          cd drupal
+          composer require --dev drupal/core-dev:^10.3 phpspec/prophecy-phpunit:^2 drush/drush --no-interaction
+
+      - name: Install Tool API dependency
+        run: |
+          cd drupal
+          composer require drupal/tool:1.0.0-alpha9 --no-interaction
+
+      - name: Copy MCP Tools module
+        run: |
+          mkdir -p drupal/web/modules/contrib/mcp_tools
+          rsync -av \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='.ddev' \
+            --exclude='docs' \
+            --exclude='scripts' \
+            --exclude='drupal' \
+            --exclude='vendor' \
+            --exclude='.phpunit.cache' \
+            ./ drupal/web/modules/contrib/mcp_tools/
+
+      - name: Install Drupal site
+        run: |
+          cd drupal
+          ./vendor/bin/drush site:install minimal \
+            --db-url=mysql://root:root@127.0.0.1/drupal \
+            --site-name="MCP Tools Test" \
+            --account-name=admin \
+            --account-pass=admin \
+            -y
+
+      - name: Enable required modules
+        run: |
+          cd drupal
+          ./vendor/bin/drush en tool dblog update -y
+          ./vendor/bin/drush en mcp_tools -y
+          ./vendor/bin/drush cr
+
+      - name: Create phpunit.xml with coverage
+        run: |
+          cd drupal
+          cat > phpunit.xml << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+                   bootstrap="web/core/tests/bootstrap.php"
+                   colors="true"
+                   beStrictAboutTestsThatDoNotTestAnything="true"
+                   beStrictAboutOutputDuringTests="true"
+                   beStrictAboutChangesToGlobalState="true">
+            <php>
+              <ini name="error_reporting" value="32767"/>
+              <ini name="memory_limit" value="-1"/>
+              <env name="SIMPLETEST_BASE_URL" value="http://localhost:8888"/>
+              <env name="SIMPLETEST_DB" value="mysql://root:root@127.0.0.1/drupal"/>
+              <env name="BROWSERTEST_OUTPUT_DIRECTORY" value=""/>
+              <env name="SYMFONY_DEPRECATIONS_HELPER" value="disabled"/>
+            </php>
+            <testsuites>
+              <testsuite name="unit">
+                <directory>web/modules/contrib/mcp_tools/tests/src/Unit</directory>
+                <directory>web/modules/contrib/mcp_tools/modules/*/tests/src/Unit</directory>
+              </testsuite>
+              <testsuite name="kernel">
+                <directory>web/modules/contrib/mcp_tools/tests/src/Kernel</directory>
+                <directory>web/modules/contrib/mcp_tools/modules/*/tests/src/Kernel</directory>
+              </testsuite>
+            </testsuites>
+            <coverage>
+              <include>
+                <directory suffix=".php">web/modules/contrib/mcp_tools/src</directory>
+                <directory suffix=".php">web/modules/contrib/mcp_tools/modules/*/src</directory>
+              </include>
+              <exclude>
+                <directory>web/modules/contrib/mcp_tools/tests</directory>
+                <directory>web/modules/contrib/mcp_tools/modules/*/tests</directory>
+              </exclude>
+            </coverage>
+          </phpunit>
+          EOF
+
+      - name: Run tests with coverage
+        run: |
+          cd drupal
+          ./vendor/bin/phpunit --testsuite unit,kernel --coverage-clover=coverage.xml --colors=always
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: drupal/coverage.xml
+          flags: unittests
+          name: mcp-tools-coverage
+          fail_ci_if_error: false
+          verbose: true
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+  tool-registration:
+    name: Verify All Tools Register
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: drupal
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: mbstring, pdo_mysql, gd, dom, xml
+          tools: composer
+
+      - name: Install Drupal with all submodules
+        run: |
+          composer create-project drupal/recommended-project:^10.3 drupal --no-interaction
+          cd drupal
+          composer require drush/drush --no-interaction
+          composer require drupal/tool:1.0.0-alpha9 --no-interaction
+
+      - name: Copy module
+        run: |
+          mkdir -p drupal/web/modules/contrib/mcp_tools
+          rsync -av \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='.ddev' \
+            --exclude='docs' \
+            --exclude='scripts' \
+            --exclude='drupal' \
+            --exclude='vendor' \
+            --exclude='.phpunit.cache' \
+            ./ drupal/web/modules/contrib/mcp_tools/
+
+      - name: Install Drupal
+        run: |
+          cd drupal
+          ./vendor/bin/drush site:install minimal \
+            --db-url=mysql://root:root@127.0.0.1/drupal \
+            --site-name="MCP Tools Test" \
+            -y
+
+      - name: Enable all MCP Tools modules
+        run: |
+          cd drupal
+          ./vendor/bin/drush en tool dblog update -y
+          ./vendor/bin/drush en mcp_tools -y
+
+          # Enable all submodules (skip those with unmet dependencies)
+          for module in mcp_tools_analysis mcp_tools_batch mcp_tools_blocks mcp_tools_cache mcp_tools_config \
+                        mcp_tools_content mcp_tools_cron mcp_tools_entity_clone mcp_tools_image_styles \
+                        mcp_tools_layout_builder mcp_tools_media mcp_tools_menus mcp_tools_metatag \
+                        mcp_tools_migration mcp_tools_moderation mcp_tools_paragraphs mcp_tools_pathauto \
+                        mcp_tools_recipes mcp_tools_redirect mcp_tools_scheduler mcp_tools_search_api \
+                        mcp_tools_sitemap mcp_tools_structure mcp_tools_templates mcp_tools_theme \
+                        mcp_tools_ultimate_cron mcp_tools_users mcp_tools_views mcp_tools_webform; do
+            ./vendor/bin/drush en $module -y 2>/dev/null || echo "Skipping $module (optional dependency not met)"
+          done
+          ./vendor/bin/drush cr
+
+      - name: Count and verify registered tools
+        run: |
+          cd drupal
+          TOOL_COUNT=$(./vendor/bin/drush eval "echo count(\\Drupal::service('plugin.manager.tool')->getDefinitions());" 2>/dev/null || echo "0")
+          echo "========================================"
+          echo "Registered tools: $TOOL_COUNT"
+          echo "========================================"
+
+          if [ "$TOOL_COUNT" -lt 20 ]; then
+            echo "ERROR: Expected at least 20 tools, found $TOOL_COUNT"
+            exit 1
+          fi
+          echo "✓ Tool registration looks healthy ($TOOL_COUNT tools)"
+
+  dependency-audit:
+    name: Dependency Audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          tools: composer
+
+      - name: Create test Drupal project
+        run: |
+          composer create-project drupal/recommended-project:^10.3 drupal --no-interaction
+
+      - name: Check for security vulnerabilities
+        run: |
+          cd drupal
+          echo "=== Security Audit ==="
+          composer audit --format=plain || true
+
+      - name: Check for outdated packages
+        run: |
+          cd drupal
+          echo "=== Outdated Packages ==="
+          composer outdated --direct --format=list || true
+          echo ""
+          echo "=== Drupal Core Version ==="
+          composer show drupal/core | grep -E "^(name|versions)" || true
+
+      - name: Check Drupal security advisories
+        run: |
+          cd drupal
+          echo "=== Drupal Security Advisories ==="
+          # Check if there are any security updates available
+          composer require --dev drupal/core-dev:^10.3 --no-interaction 2>/dev/null || true
+          ./vendor/bin/drush pm:security 2>/dev/null || echo "Drush not available for security check"
+        continue-on-error: true
+
+  documentation:
+    name: Documentation Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check README exists
+        run: |
+          if [ ! -f README.md ]; then
+            echo "ERROR: README.md not found"
+            exit 1
+          fi
+          LINES=$(wc -l < README.md)
+          echo "README.md exists with $LINES lines"
