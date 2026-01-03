@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools\Mcp;
 
+use Drupal\Component\Plugin\PluginManagerInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\tool\Tool\ToolDefinition;
 use Drupal\tool\Tool\ToolInterface;
-use Drupal\tool\Tool\ToolManager;
 use Drupal\tool\TypedData\InputDefinitionInterface;
 use Drupal\tool\TypedData\ListInputDefinition;
 use Drupal\tool\TypedData\MapInputDefinition;
@@ -32,7 +32,7 @@ use Psr\Log\LoggerInterface;
 final class ToolApiCallToolHandler implements RequestHandlerInterface {
 
   public function __construct(
-    private readonly ToolManager $toolManager,
+    private readonly PluginManagerInterface $toolManager,
     private readonly LoggerInterface $logger,
     private readonly bool $includeAllTools = FALSE,
     private readonly string $allowedProviderPrefix = 'mcp_tools',
@@ -242,4 +242,3 @@ final class ToolApiCallToolHandler implements RequestHandlerInterface {
   }
 
 }
-

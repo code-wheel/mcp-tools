@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools\Mcp;
 
+use Drupal\Component\Plugin\PluginManagerInterface;
 use Drupal\tool\Tool\ToolDefinition;
-use Drupal\tool\Tool\ToolManager;
 use Mcp\Schema\ToolAnnotations;
 use Mcp\Server;
 use Psr\EventDispatcher\EventDispatcherInterface;
@@ -17,7 +17,7 @@ use Psr\Log\LoggerInterface;
 final class McpToolsServerFactory {
 
   public function __construct(
-    private readonly ToolManager $toolManager,
+    private readonly PluginManagerInterface $toolManager,
     private readonly ToolApiSchemaConverter $schemaConverter,
     private readonly LoggerInterface $logger,
     private readonly EventDispatcherInterface $eventDispatcher,
@@ -88,4 +88,3 @@ final class McpToolsServerFactory {
   }
 
 }
-

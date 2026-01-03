@@ -199,7 +199,7 @@ X-MCP-Scope: read,write
 ?mcp_scope=read,write
 
 # Via environment (for STDIO transport)
-MCP_SCOPE=read,write drush mcp:serve
+MCP_SCOPE=read,write drush mcp-tools:serve
 ```
 
 Scopes are always limited by `access.allowed_scopes`. When no trusted override is present, `access.default_scopes` are used.
@@ -812,18 +812,35 @@ Signature verification: When a secret is configured, requests include an `X-MCP-
 
 ## Usage
 
-With MCP Server configured:
+### Local (STDIO via Drush) — recommended
 
 ```bash
-# STDIO transport (Claude Desktop, Claude Code)
-drush mcp:serve
+# Enable the transport.
+drush en mcp_tools_stdio -y
 
-# With specific scopes
-MCP_SCOPE=read,write drush mcp:serve
+# Run the MCP server over STDIO (Claude Desktop, Claude Code, etc).
+drush mcp-tools:serve
 
-# HTTP transport
-# Endpoint available at /_mcp after configuration
+# With specific scopes (local only)
+MCP_SCOPE=read,write drush mcp-tools:serve
+# or: drush mcp-tools:serve --scope=read,write
 ```
+
+### Remote (HTTP) — experimental
+
+```bash
+# Enable the transport.
+drush en mcp_tools_remote -y
+
+# Create a read-only API key (shown once).
+drush mcp-tools:remote-key-create --label="My Key" --scopes=read
+```
+
+Configure your MCP client to use `/_mcp_tools` and send the key as `Authorization: Bearer …` or `X-MCP-Api-Key: …`.
+
+### Alternative: drupal/mcp_server
+
+If you choose to use [MCP Server](https://www.drupal.org/project/mcp_server) instead of the built-in transports, it provides its own Drush commands (e.g. `drush mcp:serve`).
 
 ## Contributing
 
