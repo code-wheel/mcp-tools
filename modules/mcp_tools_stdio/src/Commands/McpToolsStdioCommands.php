@@ -27,7 +27,7 @@ final class McpToolsStdioCommands extends DrushCommands {
     private readonly EntityTypeManagerInterface $entityTypeManager,
     private readonly AccountSwitcherInterface $accountSwitcher,
     private readonly EventDispatcherInterface $eventDispatcher,
-    private readonly LoggerInterface $logger,
+    private readonly LoggerInterface $mcpLogger,
   ) {
     parent::__construct();
   }
@@ -42,7 +42,7 @@ final class McpToolsStdioCommands extends DrushCommands {
   #[CLI\Option(name: 'all-tools', description: 'Expose all Tool API tools (not only mcp_tools providers)')]
   public function serve(array $options = ['scope' => NULL, 'uid' => NULL, 'all-tools' => FALSE]): void {
     if (!class_exists(\Mcp\Server::class)) {
-      $this->io()->error('Missing dependency: mcp/sdk. Run: composer require mcp/sdk:^0.2');
+      fwrite(\STDERR, "Missing dependency: mcp/sdk. Run: composer require mcp/sdk:^0.2\n");
       return;
     }
 
@@ -55,7 +55,7 @@ final class McpToolsStdioCommands extends DrushCommands {
         $switched = TRUE;
       }
       else {
-        $this->io()->warning('User not found for --uid=' . $options['uid'] . '; continuing with current user.');
+        fwrite(\STDERR, "User not found for --uid={$options['uid']}; continuing with current user.\n");
       }
     }
 
@@ -73,12 +73,12 @@ final class McpToolsStdioCommands extends DrushCommands {
     $serverFactory = new McpToolsServerFactory(
       $this->toolManager,
       $schemaConverter,
-      $this->logger,
+      $this->mcpLogger,
       $this->eventDispatcher,
     );
 
-    $this->io()->title('MCP Tools STDIO Server');
-    $this->io()->text('Starting MCP server over STDIO…');
+    fwrite(\STDERR, "MCP Tools STDIO Server\n");
+    fwrite(\STDERR, "Starting MCP server over STDIO...\n");
 
     $server = $serverFactory->create(
       'Drupal MCP Tools',
@@ -98,4 +98,3 @@ final class McpToolsStdioCommands extends DrushCommands {
   }
 
 }
-

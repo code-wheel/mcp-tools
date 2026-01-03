@@ -72,6 +72,13 @@ Functional tests run with a full Drupal installation:
 
 - `SettingsFormTest` - Admin UI form testing
 
+### MCP Transport E2E
+
+The repo includes two end-to-end checks that validate the full MCP request/response flow without any client SDK:
+
+- `scripts/mcp_stdio_e2e.py` - Starts `drush mcp-tools:serve` and runs `initialize` → `tools/list` → `tools/call`.
+- `scripts/mcp_http_e2e.py` - Serves Drupal and runs the same flow against `/_mcp_tools`, verifying API key auth and read vs read/write scope enforcement.
+
 ## CI/CD
 
 GitHub Actions runs tests automatically on every push and PR:
@@ -93,6 +100,13 @@ If you have a local Drupal installation:
 
 # With filter
 ./vendor/bin/phpunit -c web/modules/contrib/mcp_tools/phpunit.xml --filter=AccessManager
+```
+
+You can also run the MCP transport checks from the module repo root:
+
+```bash
+python3 scripts/mcp_stdio_e2e.py --drupal-root /path/to/drupal
+python3 scripts/mcp_http_e2e.py --drupal-root /path/to/drupal --base-url http://localhost:8888
 ```
 
 ## Writing New Tests
