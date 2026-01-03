@@ -184,7 +184,7 @@ jobs:
           ### Compatibility
 
           - Drupal 10.3.x, 11.0.x
-          - PHP 8.3, 8.4, 8.5
+          - PHP 8.3, 8.4
 
           ### Links
 
