@@ -107,7 +107,7 @@ jobs:
         run: |
           composer create-project drupal/recommended-project:^${{ matrix.drupal-version }} drupal --no-interaction
           cd drupal
-          composer require --dev drupal/core-dev:^${{ matrix.drupal-version }} phpspec/prophecy-phpunit:^2 drush/drush --no-interaction
+          composer require --dev drupal/core-dev:^${{ matrix.drupal-version }} phpspec/prophecy-phpunit:^2 drush/drush --with-all-dependencies --no-interaction
 
       - name: Install Tool API dependency
         run: |
@@ -252,7 +252,7 @@ jobs:
         run: |
           composer create-project drupal/recommended-project:^10.3 drupal --no-interaction
           cd drupal
-          composer require --dev drupal/core-dev:^10.3 phpspec/prophecy-phpunit:^2 drush/drush --no-interaction
+          composer require --dev drupal/core-dev:^10.3 phpspec/prophecy-phpunit:^2 drush/drush --with-all-dependencies --no-interaction
 
       - name: Install Tool API dependency
         run: |
@@ -490,7 +490,7 @@ jobs:
           cd drupal
           echo "=== Drupal Security Advisories ==="
           # Check if there are any security updates available
-          composer require --dev drupal/core-dev:^10.3 --no-interaction 2>/dev/null || true
+          composer require --dev drupal/core-dev:^10.3 --with-all-dependencies --no-interaction 2>/dev/null || true
           ./vendor/bin/drush pm:security 2>/dev/null || echo "Drush not available for security check"
         continue-on-error: true
 

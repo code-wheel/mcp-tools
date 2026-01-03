@@ -80,7 +80,7 @@ jobs:
         run: |
           composer create-project drupal/recommended-project:^10.3 drupal --no-interaction
           cd drupal
-          composer require --dev drupal/core-dev:^10.3 phpspec/prophecy-phpunit:^2 drush/drush --no-interaction
+          composer require --dev drupal/core-dev:^10.3 phpspec/prophecy-phpunit:^2 drush/drush --with-all-dependencies --no-interaction
 
       - name: Install Tool API dependency
         run: |
