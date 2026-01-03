@@ -492,6 +492,10 @@ class RecipesService {
         $this->fileSystem->mkdir($configDir, 0755, TRUE);
 
         foreach ($config['config_files'] as $filename => $content) {
+          // Validate filename to prevent path traversal.
+          if (!preg_match('/^[a-zA-Z0-9_\-\.]+\.yml$/', $filename) || str_contains($filename, '..')) {
+            throw new \InvalidArgumentException("Invalid config filename: {$filename}");
+          }
           $configContent = is_array($content) ? Yaml::dump($content, 4, 2) : $content;
           file_put_contents($configDir . '/' . $filename, $configContent);
         }
