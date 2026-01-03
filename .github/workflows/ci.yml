@@ -46,6 +46,7 @@ jobs:
 
       - name: Install Drupal Coding Standards
         run: |
+          composer global config allow-plugins.dealerdirect/phpcodesniffer-composer-installer true
           composer global require drupal/coder
           phpcs --config-set installed_paths ~/.composer/vendor/drupal/coder/coder_sniffer
 
