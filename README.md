@@ -59,6 +59,7 @@ AI:   Creates content type, fields, vocabularies, role, and permissions
 - Drupal 10.3+ or Drupal 11
 - [Tool API](https://www.drupal.org/project/tool) module
 - [MCP Server](https://www.drupal.org/project/mcp_server) module (optional; required to expose tools over MCP)
+  - Note: `drupal/mcp_server` currently has an upstream Composer metadata issue; see https://www.drupal.org/project/mcp_server/issues/3560993 for the workaround.
 
 ## Installation
 
