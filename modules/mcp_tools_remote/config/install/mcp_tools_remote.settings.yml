@@ -1,0 +1,7 @@
+enabled: false
+uid: 1
+server_name: 'Drupal MCP Tools'
+server_version: '1.0.0'
+pagination_limit: 50
+include_all_tools: false
+

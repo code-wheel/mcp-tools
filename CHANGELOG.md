@@ -4,6 +4,19 @@ All notable changes to the MCP Tools module will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.0.0-alpha4] - 2026-01-03
+
+### Added
+
+- `mcp_tools_stdio` submodule to run an MCP server over STDIO via Drush (`drush mcp-tools:serve`).
+- `mcp_tools_remote` submodule to expose an HTTP MCP endpoint at `/_mcp_tools` using API key authentication.
+- MCP server bridge classes for exposing Tool API tools via the official `mcp/sdk`.
+- Unit test to ensure every tool category has a corresponding permission, plus unit coverage for remote API key management.
+
+### Fixed
+
+- Added missing `mcp_tools use {category}` permissions so non-uid1 roles can be granted access to all tool categories.
+
 ## [1.0.0-alpha3] - 2026-01-03
 
 ### Added

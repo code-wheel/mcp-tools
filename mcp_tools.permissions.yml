@@ -1,26 +1,32 @@
 mcp_tools use site_tools:
   title: 'Use MCP site health tools'
   description: 'Access site status, system requirements, security updates, cron status, watchdog, queues, and file system status via MCP.'
+  restrict access: true
 
 mcp_tools use site_health:
   title: 'Use MCP site health tools (category: site_health)'
   description: 'Access site status, system requirements, security updates, cron status, watchdog, queues, and file system status via MCP.'
+  restrict access: true
 
 mcp_tools use content_tools:
   title: 'Use MCP content analysis tools'
   description: 'Access content types, content search, recent content, taxonomies, and file management via MCP.'
+  restrict access: true
 
 mcp_tools use content:
   title: 'Use MCP content tools (category: content)'
   description: 'Access content types, content search, recent content, taxonomies, and file management via MCP.'
+  restrict access: true
 
 mcp_tools use config_tools:
   title: 'Use MCP configuration tools'
   description: 'Access configuration status, config viewing, and config listing via MCP.'
+  restrict access: true
 
 mcp_tools use config:
   title: 'Use MCP configuration tools (category: config)'
   description: 'Access configuration status, config viewing, and config listing via MCP.'
+  restrict access: true
 
 mcp_tools use user_tools:
   title: 'Use MCP user tools'
@@ -35,14 +41,142 @@ mcp_tools use users:
 mcp_tools use structure_tools:
   title: 'Use MCP structure tools'
   description: 'Access menu structure and site navigation via MCP.'
+  restrict access: true
 
 mcp_tools use structure:
   title: 'Use MCP structure tools (category: structure)'
   description: 'Access menu structure and site navigation via MCP.'
+  restrict access: true
+
+mcp_tools use blocks:
+  title: 'Use MCP block tools (category: blocks)'
+  description: 'Access block placement and configuration via MCP.'
+  restrict access: true
+
+mcp_tools use cache:
+  title: 'Use MCP cache tools (category: cache)'
+  description: 'Access cache inspection and cache clearing operations via MCP.'
+  restrict access: true
+
+mcp_tools use cron:
+  title: 'Use MCP cron tools (category: cron)'
+  description: 'Access cron status, cron execution, and cron key management via MCP.'
+  restrict access: true
+
+mcp_tools use analysis:
+  title: 'Use MCP analysis tools (category: analysis)'
+  description: 'Access site analysis tools (performance, SEO, a11y, content quality) via MCP.'
+  restrict access: true
+
+mcp_tools use batch:
+  title: 'Use MCP batch tools (category: batch)'
+  description: 'Access bulk operations (create, update, publish, delete) via MCP.'
+  restrict access: true
+
+mcp_tools use entity_clone:
+  title: 'Use MCP entity clone tools (category: entity_clone)'
+  description: 'Access entity cloning operations via MCP.'
+  restrict access: true
+
+mcp_tools use image_styles:
+  title: 'Use MCP image style tools (category: image_styles)'
+  description: 'Access image style listing and modification operations via MCP.'
+  restrict access: true
+
+mcp_tools use layout_builder:
+  title: 'Use MCP Layout Builder tools (category: layout_builder)'
+  description: 'Access Layout Builder section and block placement operations via MCP.'
+  restrict access: true
+
+mcp_tools use media:
+  title: 'Use MCP media tools (category: media)'
+  description: 'Access media type and media entity management tools via MCP.'
+  restrict access: true
+
+mcp_tools use menus:
+  title: 'Use MCP menu tools (category: menus)'
+  description: 'Access menu creation and menu link management tools via MCP.'
+  restrict access: true
+
+mcp_tools use metatag:
+  title: 'Use MCP metatag tools (category: metatag)'
+  description: 'Access Metatag configuration tools via MCP.'
+  restrict access: true
+
+mcp_tools use migration:
+  title: 'Use MCP migration tools (category: migration)'
+  description: 'Access import/export and migration helpers via MCP.'
+  restrict access: true
+
+mcp_tools use moderation:
+  title: 'Use MCP moderation tools (category: moderation)'
+  description: 'Access Content Moderation workflow and state operations via MCP.'
+  restrict access: true
+
+mcp_tools use paragraphs:
+  title: 'Use MCP paragraphs tools (category: paragraphs)'
+  description: 'Access Paragraphs type and field tools via MCP.'
+  restrict access: true
+
+mcp_tools use pathauto:
+  title: 'Use MCP pathauto tools (category: pathauto)'
+  description: 'Access Pathauto pattern and alias management tools via MCP.'
+  restrict access: true
+
+mcp_tools use recipes:
+  title: 'Use MCP recipes tools (category: recipes)'
+  description: 'Access Drupal Recipes tools via MCP.'
+  restrict access: true
+
+mcp_tools use redirect:
+  title: 'Use MCP redirect tools (category: redirect)'
+  description: 'Access Redirect tools via MCP.'
+  restrict access: true
+
+mcp_tools use scheduler:
+  title: 'Use MCP scheduler tools (category: scheduler)'
+  description: 'Access Scheduler tools via MCP.'
+  restrict access: true
+
+mcp_tools use search_api:
+  title: 'Use MCP Search API tools (category: search_api)'
+  description: 'Access Search API index configuration and indexing operations via MCP.'
+  restrict access: true
+
+mcp_tools use sitemap:
+  title: 'Use MCP sitemap tools (category: sitemap)'
+  description: 'Access sitemap configuration and regeneration tools via MCP.'
+  restrict access: true
+
+mcp_tools use templates:
+  title: 'Use MCP templates tools (category: templates)'
+  description: 'Access site template creation and application tools via MCP.'
+  restrict access: true
+
+mcp_tools use theme:
+  title: 'Use MCP theme tools (category: theme)'
+  description: 'Access theme settings and configuration tools via MCP.'
+  restrict access: true
+
+mcp_tools use ultimate_cron:
+  title: 'Use MCP Ultimate Cron tools (category: ultimate_cron)'
+  description: 'Access Ultimate Cron job management tools via MCP.'
+  restrict access: true
+
+mcp_tools use views:
+  title: 'Use MCP views tools (category: views)'
+  description: 'Access Views creation and management tools via MCP.'
+  restrict access: true
+
+mcp_tools use webform:
+  title: 'Use MCP webform tools (category: webform)'
+  description: 'Access Webform tools via MCP.'
+  restrict access: true
 
 mcp_tools use discovery:
   title: 'Use MCP tool discovery'
   description: 'List available MCP tools and categories via MCP.'
+  restrict access: true
 
 mcp_tools administer:
   title: 'Administer MCP Tools'

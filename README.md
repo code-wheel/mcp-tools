@@ -58,8 +58,12 @@ AI:   Creates content type, fields, vocabularies, role, and permissions
 
 - Drupal 10.3+ or Drupal 11
 - [Tool API](https://www.drupal.org/project/tool) module
-- [MCP Server](https://www.drupal.org/project/mcp_server) module (optional; required to expose tools over MCP)
-  - Note: `drupal/mcp_server` currently has an upstream Composer metadata issue; see https://www.drupal.org/project/mcp_server/issues/3560993 for the workaround.
+
+### MCP Transports (choose one)
+
+- **Recommended (local dev):** `mcp_tools_stdio` — runs an MCP server over STDIO via Drush.
+- **Experimental (remote HTTP):** `mcp_tools_remote` — exposes an HTTP endpoint with API key authentication.
+- **Alternative:** [MCP Server](https://www.drupal.org/project/mcp_server) (optional). Note: `drupal/mcp_server` currently has an upstream Composer metadata issue; see https://www.drupal.org/project/mcp_server/issues/3560993 for the workaround.
 
 ## Installation
 
@@ -67,6 +71,24 @@ AI:   Creates content type, fields, vocabularies, role, and permissions
 composer require drupal/mcp_tools
 drush en mcp_tools
 ```
+
+### Local MCP (STDIO) setup (recommended)
+
+```bash
+drush en mcp_tools_stdio
+drush mcp-tools:serve
+```
+
+### Remote MCP (HTTP) setup (experimental)
+
+```bash
+drush en mcp_tools_remote
+drush mcp-tools:remote-key-create --label="My Key" --scopes=read
+```
+
+Configure the endpoint at `/_mcp_tools` in your MCP client, and send the key as `Authorization: Bearer …` or `X-MCP-Api-Key: …`.
+
+Only use this on trusted internal networks; configure a dedicated execution user (not uid 1) and keep keys read-only unless absolutely necessary.
 
 ## Architecture: Granular Submodules
 
