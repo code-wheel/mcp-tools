@@ -94,14 +94,17 @@ class AuditLogger {
 
     foreach ($details as $key => $value) {
       $lowerKey = strtolower($key);
+      $isSensitive = FALSE;
       foreach ($sensitiveKeys as $sensitiveKey) {
         if (str_contains($lowerKey, $sensitiveKey)) {
           $details[$key] = '[REDACTED]';
+          $isSensitive = TRUE;
           break;
         }
       }
 
-      if (is_array($value)) {
+      // Only recurse into arrays if the key itself wasn't sensitive.
+      if (!$isSensitive && is_array($value)) {
         $details[$key] = $this->sanitizeDetails($value);
       }
     }
