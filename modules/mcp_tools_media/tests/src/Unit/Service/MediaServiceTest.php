@@ -189,4 +189,46 @@ class MediaServiceTest extends UnitTestCase {
     }
   }
 
+  /**
+   * @covers ::uploadFile
+   */
+  public function testUploadFileRejectsInvalidBase64(): void {
+    $this->accessManager->method('canWrite')->willReturn(TRUE);
+
+    $service = $this->createMediaService();
+    $result = $service->uploadFile('test.txt', 'not-base64-$$$', 'public://mcp-uploads');
+
+    $this->assertFalse($result['success']);
+    $this->assertStringContainsString('Invalid base64', $result['error']);
+  }
+
+  /**
+   * @covers ::uploadFile
+   */
+  public function testUploadFileBlocksDangerousExtensions(): void {
+    $this->accessManager->method('canWrite')->willReturn(TRUE);
+
+    $service = $this->createMediaService();
+    $result = $service->uploadFile('shell.php', base64_encode('test'), 'public://mcp-uploads');
+
+    $this->assertFalse($result['success']);
+    $this->assertSame('INVALID_FILE_TYPE', $result['code']);
+  }
+
+  /**
+   * @covers ::uploadFile
+   */
+  public function testUploadFileRejectsOversizedPayloads(): void {
+    $this->accessManager->method('canWrite')->willReturn(TRUE);
+
+    // Generate a payload that exceeds the pre-decode size estimate.
+    $tooLarge = str_repeat('A', 14 * 1024 * 1024);
+
+    $service = $this->createMediaService();
+    $result = $service->uploadFile('big.txt', $tooLarge, 'public://mcp-uploads');
+
+    $this->assertFalse($result['success']);
+    $this->assertSame('PAYLOAD_TOO_LARGE', $result['code']);
+  }
+
 }

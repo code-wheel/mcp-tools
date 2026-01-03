@@ -8,11 +8,11 @@ use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Session\AccountSwitcherInterface;
+use Drupal\Component\Plugin\PluginManagerInterface;
 use Drupal\mcp_tools\Mcp\McpToolsServerFactory;
 use Drupal\mcp_tools\Mcp\ToolApiSchemaConverter;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools_remote\Service\ApiKeyManager;
-use Drupal\tool\Tool\ToolManager;
 use GuzzleHttp\Psr7\HttpFactory;
 use Mcp\Server\Session\FileSessionStore;
 use Mcp\Server\Transport\StreamableHttpTransport;
@@ -34,7 +34,7 @@ final class McpToolsRemoteController implements ContainerInjectionInterface {
     private readonly ConfigFactoryInterface $configFactory,
     private readonly ApiKeyManager $apiKeyManager,
     private readonly AccessManager $accessManager,
-    private readonly ToolManager $toolManager,
+    private readonly PluginManagerInterface $toolManager,
     private readonly EntityTypeManagerInterface $entityTypeManagerService,
     private readonly AccountSwitcherInterface $accountSwitcher,
     private readonly EventDispatcherInterface $eventDispatcher,

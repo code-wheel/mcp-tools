@@ -129,21 +129,33 @@ jobs:
           <phpunit bootstrap="web/core/tests/bootstrap.php" colors="true">
             <php>
               <ini name="memory_limit" value="-1"/>
+              <env name="SIMPLETEST_BASE_URL" value="http://localhost:8888"/>
               <env name="SIMPLETEST_DB" value="mysql://root:root@127.0.0.1/drupal"/>
               <env name="SYMFONY_DEPRECATIONS_HELPER" value="disabled"/>
             </php>
             <testsuites>
               <testsuite name="unit">
                 <directory>web/modules/contrib/mcp_tools/tests/src/Unit</directory>
+                <directory>web/modules/contrib/mcp_tools/modules/*/tests/src/Unit</directory>
               </testsuite>
               <testsuite name="kernel">
                 <directory>web/modules/contrib/mcp_tools/tests/src/Kernel</directory>
+                <directory>web/modules/contrib/mcp_tools/modules/*/tests/src/Kernel</directory>
+              </testsuite>
+              <testsuite name="functional">
+                <directory>web/modules/contrib/mcp_tools/tests/src/Functional</directory>
+                <directory>web/modules/contrib/mcp_tools/modules/*/tests/src/Functional</directory>
               </testsuite>
             </testsuites>
           </phpunit>
           EOF
 
-          ./vendor/bin/phpunit --testsuite unit,kernel --colors=always
+          cd web
+          php -S localhost:8888 .ht.router.php &
+          sleep 3
+          cd ..
+
+          ./vendor/bin/phpunit --testsuite unit,kernel,functional --colors=always
 
       - name: MCP transport E2E
         run: |

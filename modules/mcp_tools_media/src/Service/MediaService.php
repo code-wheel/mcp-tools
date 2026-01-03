@@ -17,6 +17,37 @@ use Drupal\mcp_tools\Service\AuditLogger;
  */
 class MediaService {
 
+  /**
+   * Maximum decoded upload size for base64 uploads (10 MiB).
+   */
+  private const MAX_UPLOAD_BYTES = 10485760;
+
+  /**
+   * Extensions blocked from being written to file directories.
+   *
+   * This prevents accidental code execution on misconfigured servers.
+   */
+  private const BLOCKED_UPLOAD_EXTENSIONS = [
+    'php',
+    'php3',
+    'php4',
+    'php5',
+    'phtml',
+    'phar',
+    'cgi',
+    'pl',
+    'py',
+    'sh',
+    'exe',
+    'bat',
+    'cmd',
+    'com',
+    'msi',
+    'jsp',
+    'asp',
+    'aspx',
+  ];
+
   public function __construct(
     protected EntityTypeManagerInterface $entityTypeManager,
     protected FileSystemInterface $fileSystem,
@@ -146,10 +177,33 @@ class MediaService {
         return ['success' => FALSE, 'error' => 'Invalid directory. Only public:// and private:// stream wrappers allowed.'];
       }
 
+      // Support data URIs (data:*;base64,...) by stripping the prefix.
+      if (str_starts_with($data, 'data:') && str_contains($data, 'base64,')) {
+        $data = substr($data, (int) strpos($data, 'base64,') + 7);
+      }
+
+      // Reject large payloads before decoding to avoid memory exhaustion.
+      $estimatedBytes = (int) floor(strlen($data) * 0.75);
+      if ($estimatedBytes > self::MAX_UPLOAD_BYTES) {
+        return [
+          'success' => FALSE,
+          'error' => 'Upload too large. Maximum size is ' . self::MAX_UPLOAD_BYTES . ' bytes.',
+          'code' => 'PAYLOAD_TOO_LARGE',
+        ];
+      }
+
       // Decode base64 data.
       $decodedData = base64_decode($data, TRUE);
       if ($decodedData === FALSE) {
         return ['success' => FALSE, 'error' => 'Invalid base64 data provided.'];
+      }
+
+      if (strlen($decodedData) > self::MAX_UPLOAD_BYTES) {
+        return [
+          'success' => FALSE,
+          'error' => 'Upload too large. Maximum size is ' . self::MAX_UPLOAD_BYTES . ' bytes.',
+          'code' => 'PAYLOAD_TOO_LARGE',
+        ];
       }
 
       // Ensure directory exists.
@@ -157,6 +211,21 @@ class MediaService {
 
       // Sanitize filename.
       $safeFilename = preg_replace('/[^a-zA-Z0-9._-]/', '_', $filename);
+      $safeFilename = (string) $safeFilename;
+
+      if ($safeFilename === '' || str_starts_with($safeFilename, '.')) {
+        return ['success' => FALSE, 'error' => 'Invalid filename.'];
+      }
+
+      $extension = strtolower((string) pathinfo($safeFilename, PATHINFO_EXTENSION));
+      if ($extension !== '' && in_array($extension, self::BLOCKED_UPLOAD_EXTENSIONS, TRUE)) {
+        return [
+          'success' => FALSE,
+          'error' => "File extension '$extension' is not allowed for uploads.",
+          'code' => 'INVALID_FILE_TYPE',
+        ];
+      }
+
       $destination = $directory . '/' . $safeFilename;
 
       // Save the file.

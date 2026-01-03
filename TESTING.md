@@ -87,6 +87,7 @@ GitHub Actions runs tests automatically on every push and PR:
 - **PHPCS** - Drupal coding standards
 - **PHPUnit** - All test suites
 - **Gitleaks** - Security scanning for secrets
+- **Code Coverage** - Unit + kernel + functional coverage for core modules (contrib-dependent submodules are excluded unless their dependencies are installed)
 
 See `.github/workflows/ci.yml` for configuration.
 

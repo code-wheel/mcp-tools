@@ -353,6 +353,8 @@ Available scopes:
 | `mcp_media_delete` | Delete media entities |
 | `mcp_media_list_types` | List available media types |
 
+**Safety:** Base64 uploads are capped and block dangerous executable extensions by default.
+
 ### mcp_tools_webform (7 tools)
 
 | Tool | Description |

@@ -24,6 +24,13 @@ use GuzzleHttp\Exception\RequestException;
  */
 class AnalysisService {
 
+  /**
+   * Max bytes allowed for serialized metatag field data.
+   *
+   * Prevents memory exhaustion on crafted field payloads.
+   */
+  private const MAX_SERIALIZED_METATAG_BYTES = 65536;
+
   public function __construct(
     protected EntityTypeManagerInterface $entityTypeManager,
     protected Connection $database,
@@ -337,17 +344,19 @@ class AnalysisService {
       if (\Drupal::moduleHandler()->moduleExists('metatag') && $entity->hasField('field_metatag')) {
         $metatag = $entity->get('field_metatag')->value;
         if (!empty($metatag)) {
-          $metatagData = @unserialize($metatag, ['allowed_classes' => FALSE]);
-          if (!empty($metatagData['description'])) {
-            $hasMetaDescription = TRUE;
-            $descLength = strlen($metatagData['description']);
-            if ($descLength < 120 || $descLength > 160) {
-              $issues[] = [
-                'type' => 'meta_description_length',
-                'severity' => 'info',
-                'message' => "Meta description length ({$descLength}) not optimal. Recommended: 120-160 characters.",
-              ];
-              $score -= 5;
+          if (is_string($metatag) && strlen($metatag) <= self::MAX_SERIALIZED_METATAG_BYTES) {
+            $metatagData = @unserialize($metatag, ['allowed_classes' => FALSE]);
+            if (is_array($metatagData) && !empty($metatagData['description'])) {
+              $hasMetaDescription = TRUE;
+              $descLength = strlen((string) $metatagData['description']);
+              if ($descLength < 120 || $descLength > 160) {
+                $issues[] = [
+                  'type' => 'meta_description_length',
+                  'severity' => 'info',
+                  'message' => "Meta description length ({$descLength}) not optimal. Recommended: 120-160 characters.",
+                ];
+                $score -= 5;
+              }
             }
           }
         }

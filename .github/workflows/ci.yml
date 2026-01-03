@@ -401,6 +401,10 @@ jobs:
                 <directory>web/modules/contrib/mcp_tools/tests/src/Kernel</directory>
                 <directory>web/modules/contrib/mcp_tools/modules/*/tests/src/Kernel</directory>
               </testsuite>
+              <testsuite name="functional">
+                <directory>web/modules/contrib/mcp_tools/tests/src/Functional</directory>
+                <directory>web/modules/contrib/mcp_tools/modules/*/tests/src/Functional</directory>
+              </testsuite>
             </testsuites>
             <coverage>
               <include>
@@ -411,6 +415,21 @@ jobs:
                 <!-- Tool plugins are thin wrappers; focus coverage on service logic. -->
                 <directory>web/modules/contrib/mcp_tools/src/Plugin</directory>
                 <directory>web/modules/contrib/mcp_tools/modules/*/src/Plugin</directory>
+                <!-- Drush command wrappers are tested via E2E and release workflows. -->
+                <directory>web/modules/contrib/mcp_tools/src/Commands</directory>
+                <directory>web/modules/contrib/mcp_tools/modules/*/src/Commands</directory>
+                <!-- Optional contrib-dependent submodules are excluded from core coverage. -->
+                <directory>web/modules/contrib/mcp_tools/modules/mcp_tools_entity_clone/src</directory>
+                <directory>web/modules/contrib/mcp_tools/modules/mcp_tools_mcp_server/src</directory>
+                <directory>web/modules/contrib/mcp_tools/modules/mcp_tools_metatag/src</directory>
+                <directory>web/modules/contrib/mcp_tools/modules/mcp_tools_paragraphs/src</directory>
+                <directory>web/modules/contrib/mcp_tools/modules/mcp_tools_pathauto/src</directory>
+                <directory>web/modules/contrib/mcp_tools/modules/mcp_tools_redirect/src</directory>
+                <directory>web/modules/contrib/mcp_tools/modules/mcp_tools_scheduler/src</directory>
+                <directory>web/modules/contrib/mcp_tools/modules/mcp_tools_search_api/src</directory>
+                <directory>web/modules/contrib/mcp_tools/modules/mcp_tools_sitemap/src</directory>
+                <directory>web/modules/contrib/mcp_tools/modules/mcp_tools_ultimate_cron/src</directory>
+                <directory>web/modules/contrib/mcp_tools/modules/mcp_tools_webform/src</directory>
                 <directory>web/modules/contrib/mcp_tools/tests</directory>
                 <directory>web/modules/contrib/mcp_tools/modules/*/tests</directory>
               </exclude>
@@ -418,10 +437,16 @@ jobs:
           </phpunit>
           EOF
 
+      - name: Start PHP built-in server
+        run: |
+          cd drupal/web
+          php -S localhost:8888 .ht.router.php &
+          sleep 3
+
       - name: Run tests with coverage
         run: |
           cd drupal
-          ./vendor/bin/phpunit --testsuite unit,kernel --coverage-clover=coverage.xml --colors=always
+          ./vendor/bin/phpunit --testsuite unit,kernel,functional --coverage-clover=coverage.xml --colors=always
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4

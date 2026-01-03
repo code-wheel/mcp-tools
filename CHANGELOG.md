@@ -4,6 +4,23 @@ All notable changes to the MCP Tools module will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.0.0-alpha8] - 2026-01-03
+
+### Added
+
+- Unit coverage for schema conversion, error formatting, config management previews/exports, and remote controller failure paths.
+- Additional unit coverage for batch/migration helpers and watchdog message formatting.
+
+### Changed
+
+- Code coverage job now runs unit + kernel + functional suites and excludes contrib-dependent submodules (unless their dependencies are installed).
+- Release workflow now runs submodule unit/kernel/functional tests (not just base module tests).
+
+### Security
+
+- Base64 uploads are capped and block dangerous executable extensions by default.
+- Serialized watchdog/metatag parsing now enforces size limits to prevent memory exhaustion.
+
 ## [1.0.0-alpha7] - 2026-01-03
 
 ### Added
