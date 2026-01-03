@@ -50,6 +50,7 @@ services:
     class: Drupal\mcp_tools\Service\SystemStatusService
     arguments:
       - '@module_handler'
+      - '@database'
 
   # Content Services
   mcp_tools.content_analysis:
@@ -100,6 +101,7 @@ services:
       - '@file_system'
       - '@stream_wrapper_manager'
       - '@entity_type.manager'
+      - '@database'
 
   # Error Formatting
   mcp_tools.error_formatter:

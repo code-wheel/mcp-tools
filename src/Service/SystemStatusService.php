@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools\Service;
 
+use Drupal\Core\Database\Connection;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\system\SystemManager;
@@ -29,6 +30,7 @@ class SystemStatusService {
 
   public function __construct(
     protected ModuleHandlerInterface $moduleHandler,
+    protected Connection $database,
   ) {}
 
   /**
@@ -127,19 +129,17 @@ class SystemStatusService {
    *   Database status data.
    */
   public function getDatabaseStatus(): array {
-    $connection = \Drupal::database();
-
     $info = [
-      'driver' => $connection->driver(),
-      'version' => $connection->version(),
-      'database_name' => $connection->getConnectionOptions()['database'] ?? 'unknown',
-      'host' => $connection->getConnectionOptions()['host'] ?? 'localhost',
-      'prefix' => $connection->getConnectionOptions()['prefix'] ?? '',
+      'driver' => $this->database->driver(),
+      'version' => $this->database->version(),
+      'database_name' => $this->database->getConnectionOptions()['database'] ?? 'unknown',
+      'host' => $this->database->getConnectionOptions()['host'] ?? 'localhost',
+      'prefix' => $this->database->getConnectionOptions()['prefix'] ?? '',
     ];
 
     // Get table count.
     try {
-      $tables = $connection->schema()->findTables('%');
+      $tables = $this->database->schema()->findTables('%');
       $info['table_count'] = count($tables);
     }
     catch (\Exception $e) {

@@ -25,6 +25,7 @@ final class FileSystemServiceTest extends UnitTestCase {
       $this->createMock(FileSystemInterface::class),
       $this->createMock(StreamWrapperManagerInterface::class),
       $this->createMock(EntityTypeManagerInterface::class),
+      $this->createMock(\Drupal\Core\Database\Connection::class),
     ) extends FileSystemService {
 
       public function directorySize(string $path): int {

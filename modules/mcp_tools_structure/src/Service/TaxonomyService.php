@@ -7,8 +7,6 @@ namespace Drupal\mcp_tools_structure\Service;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AuditLogger;
-use Drupal\taxonomy\Entity\Term;
-use Drupal\taxonomy\Entity\Vocabulary;
 
 /**
  * Service for managing taxonomies.
@@ -64,7 +62,7 @@ class TaxonomyService {
     }
 
     try {
-      $vocabulary = Vocabulary::create([
+      $vocabulary = $this->entityTypeManager->getStorage('taxonomy_vocabulary')->create([
         'vid' => $id,
         'name' => $label,
         'description' => $description,
@@ -159,7 +157,7 @@ class TaxonomyService {
         $termData['parent'] = ['target_id' => $options['parent']];
       }
 
-      $term = Term::create($termData);
+      $term = $this->entityTypeManager->getStorage('taxonomy_term')->create($termData);
       $term->save();
 
       $this->auditLogger->logSuccess('create_term', 'taxonomy_term', (string) $term->id(), [

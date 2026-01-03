@@ -6,5 +6,6 @@ services:
       - '@entity_display.repository'
       - '@plugin.manager.core.layout'
       - '@plugin.manager.block'
+      - '@uuid'
       - '@mcp_tools.access_manager'
       - '@mcp_tools.audit_logger'

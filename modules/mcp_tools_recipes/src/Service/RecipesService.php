@@ -7,8 +7,11 @@ namespace Drupal\mcp_tools_recipes\Service;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Extension\ModuleExtensionList;
 use Drupal\Core\File\FileSystemInterface;
+use Drupal\Core\Session\AccountProxyInterface;
+use Drupal\Core\State\StateInterface;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AuditLogger;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Yaml\Yaml;
 
 /**
@@ -37,6 +40,9 @@ class RecipesService {
     protected string $appRoot,
     protected AccessManager $accessManager,
     protected AuditLogger $auditLogger,
+    protected StateInterface $state,
+    protected AccountProxyInterface $currentUser,
+    protected LoggerInterface $logger,
   ) {}
 
   /**
@@ -109,7 +115,7 @@ class RecipesService {
           }
           catch (\Exception $e) {
             // Skip malformed recipes but log the issue.
-            \Drupal::logger('mcp_tools_recipes')->warning(
+            $this->logger->warning(
               'Failed to parse recipe at @path: @error',
               ['@path' => $recipeYml, '@error' => $e->getMessage()]
             );
@@ -395,7 +401,7 @@ class RecipesService {
       return $this->getUnsupportedVersionError();
     }
 
-    $appliedRecipes = \Drupal::state()->get(self::APPLIED_RECIPES_STATE_KEY, []);
+    $appliedRecipes = $this->state->get(self::APPLIED_RECIPES_STATE_KEY, []);
 
     return [
       'success' => TRUE,
@@ -631,16 +637,16 @@ class RecipesService {
    *   The recipe path.
    */
   protected function trackAppliedRecipe(string $recipeName, string $recipePath): void {
-    $appliedRecipes = \Drupal::state()->get(self::APPLIED_RECIPES_STATE_KEY, []);
+    $appliedRecipes = $this->state->get(self::APPLIED_RECIPES_STATE_KEY, []);
 
     $appliedRecipes[$recipeName] = [
       'name' => $recipeName,
       'path' => $recipePath,
       'applied_at' => date('c'),
-      'applied_by' => \Drupal::currentUser()->getAccountName(),
+      'applied_by' => $this->currentUser->getAccountName(),
     ];
 
-    \Drupal::state()->set(self::APPLIED_RECIPES_STATE_KEY, $appliedRecipes);
+    $this->state->set(self::APPLIED_RECIPES_STATE_KEY, $appliedRecipes);
   }
 
 }

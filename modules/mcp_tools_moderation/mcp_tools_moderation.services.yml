@@ -5,5 +5,7 @@ services:
       - '@entity_type.manager'
       - '@content_moderation.moderation_information'
       - '@content_moderation.state_transition_validation'
+      - '@current_user'
+      - '@datetime.time'
       - '@mcp_tools.access_manager'
       - '@mcp_tools.audit_logger'

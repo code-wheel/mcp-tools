@@ -4,6 +4,22 @@ All notable changes to the MCP Tools module will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.0.0-alpha11] - 2026-01-03
+
+### Added
+
+- Additional unit coverage for Tool API access gating, cron/cache/image styles, and moderation services.
+
+### Changed
+
+- Refactored multiple services to use dependency injection (improves testability and reduces static `\Drupal::*` usage).
+- Entity creation in write services now uses storage `->create()` instead of static entity `::create()` helpers.
+
+### Fixed
+
+- Cron job discovery now uses `ModuleHandlerInterface::invokeAllWith()` (prevents calling a non-existent `getImplementations()` method).
+- `mcp_tools_recipes` now registers `logger.channel.mcp_tools_recipes` so the service container compiles cleanly in kernel tests.
+
 ## [1.0.0-alpha10] - 2026-01-03
 
 ### Added

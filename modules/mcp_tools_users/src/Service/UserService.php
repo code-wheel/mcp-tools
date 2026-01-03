@@ -8,7 +8,6 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Password\PasswordGeneratorInterface;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AuditLogger;
-use Drupal\user\Entity\User;
 
 /**
  * Service for user management operations.
@@ -86,7 +85,7 @@ class UserService {
         'status' => $options['status'] ?? 1,
       ];
 
-      $user = User::create($userData);
+      $user = $this->entityTypeManager->getStorage('user')->create($userData);
 
       // Assign roles if provided (filter out 'administrator').
       if (!empty($options['roles'])) {

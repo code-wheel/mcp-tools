@@ -9,7 +9,6 @@ use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AuditLogger;
-use Drupal\node\Entity\NodeType;
 
 /**
  * Service for managing content types.
@@ -68,7 +67,7 @@ class ContentTypeService {
     }
 
     try {
-      $nodeType = NodeType::create([
+      $nodeType = $this->entityTypeManager->getStorage('node_type')->create([
         'type' => $id,
         'name' => $label,
         'description' => $options['description'] ?? '',

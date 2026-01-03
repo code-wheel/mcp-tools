@@ -7,8 +7,10 @@ namespace Drupal\mcp_tools_analysis\Service;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Extension\ModuleHandlerInterface;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\RequestException;
+use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
  * Service for site health and content analysis.
@@ -36,6 +38,8 @@ class AnalysisService {
     protected Connection $database,
     protected ClientInterface $httpClient,
     protected ConfigFactoryInterface $configFactory,
+    protected ModuleHandlerInterface $moduleHandler,
+    protected RequestStack $requestStack,
   ) {}
 
   /**
@@ -50,7 +54,8 @@ class AnalysisService {
   public function findBrokenLinks(int $limit = 100): array {
     $brokenLinks = [];
     $checkedCount = 0;
-    $baseUrl = \Drupal::request()->getSchemeAndHttpHost();
+    $request = $this->requestStack->getCurrentRequest();
+    $baseUrl = $request ? $request->getSchemeAndHttpHost() : '';
 
     try {
       // Get published nodes with body or text fields.
@@ -75,7 +80,8 @@ class AnalysisService {
               preg_match_all('/href=["\']([^"\']+)["\']/', $value, $matches);
               foreach ($matches[1] as $url) {
                 // Only check internal links.
-                if (str_starts_with($url, '/') || str_starts_with($url, $baseUrl)) {
+                $isInternal = str_starts_with($url, '/') || ($baseUrl !== '' && str_starts_with($url, $baseUrl));
+                if ($isInternal) {
                   $fullUrl = str_starts_with($url, '/') ? $baseUrl . $url : $url;
                   $linksToCheck[] = [
                     'url' => $fullUrl,
@@ -341,7 +347,7 @@ class AnalysisService {
 
       // Check for meta tags if metatag module is enabled.
       $hasMetaDescription = FALSE;
-      if (\Drupal::moduleHandler()->moduleExists('metatag') && $entity->hasField('field_metatag')) {
+      if ($this->moduleHandler->moduleExists('metatag') && $entity->hasField('field_metatag')) {
         $metatag = $entity->get('field_metatag')->value;
         if (!empty($metatag)) {
           if (is_string($metatag) && strlen($metatag) <= self::MAX_SERIALIZED_METATAG_BYTES) {
@@ -594,7 +600,7 @@ class AnalysisService {
       }
 
       // Check PHP input format availability.
-      if (\Drupal::moduleHandler()->moduleExists('php')) {
+      if ($this->moduleHandler->moduleExists('php')) {
         $issues[] = [
           'type' => 'php_module_enabled',
           'severity' => 'critical',
@@ -732,7 +738,7 @@ class AnalysisService {
       ];
 
       // Analyze watchdog for performance issues (if dblog enabled).
-      if (\Drupal::moduleHandler()->moduleExists('dblog')) {
+      if ($this->moduleHandler->moduleExists('dblog')) {
         // Get recent PHP errors.
         $query = $this->database->select('watchdog', 'w')
           ->fields('w', ['message', 'variables', 'timestamp', 'type'])

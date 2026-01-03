@@ -9,7 +9,6 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AuditLogger;
-use Drupal\node\Entity\Node;
 
 /**
  * Service for content CRUD operations.
@@ -57,7 +56,7 @@ class ContentService {
         $nodeData[$fieldName] = $this->normalizeFieldValue($fieldName, $value, $fieldDefinitions);
       }
 
-      $node = Node::create($nodeData);
+      $node = $this->entityTypeManager->getStorage('node')->create($nodeData);
       $node->save();
 
       $this->auditLogger->logSuccess('create_content', 'node', (string) $node->id(), [

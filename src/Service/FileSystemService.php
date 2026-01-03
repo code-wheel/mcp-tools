@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools\Service;
 
+use Drupal\Core\Database\Connection;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\StreamWrapper\StreamWrapperManagerInterface;
@@ -17,6 +18,7 @@ class FileSystemService {
     protected FileSystemInterface $fileSystem,
     protected StreamWrapperManagerInterface $streamWrapperManager,
     protected EntityTypeManagerInterface $entityTypeManager,
+    protected Connection $database,
   ) {}
 
   /**
@@ -137,7 +139,7 @@ class FileSystemService {
     $fileStorage = $this->entityTypeManager->getStorage('file');
 
     // Get files not referenced in file_usage table.
-    $query = \Drupal::database()->select('file_managed', 'fm');
+    $query = $this->database->select('file_managed', 'fm');
     $query->leftJoin('file_usage', 'fu', 'fm.fid = fu.fid');
     $query->fields('fm', ['fid']);
     $query->isNull('fu.fid');
