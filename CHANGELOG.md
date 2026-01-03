@@ -4,6 +4,12 @@ All notable changes to the MCP Tools module will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.0.0-alpha5] - 2026-01-03
+
+### Added
+
+- `mcp_tools_mcp_server` optional bridge submodule (depends on `drupal/mcp_server`) with a Drush sync command to generate MCP Server tool configs for MCP Tools.
+
 ## [1.0.0-alpha4] - 2026-01-03
 
 ### Added

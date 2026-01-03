@@ -1,0 +1,10 @@
+services:
+  mcp_tools_mcp_server.commands:
+    class: Drupal\mcp_tools_mcp_server\Commands\McpToolsMcpServerCommands
+    arguments:
+      - '@plugin.manager.tool'
+      - '@plugin.manager.mcp_server.tool'
+      - '@entity_type.manager'
+    tags:
+      - { name: drush.command }
+
