@@ -320,6 +320,9 @@ jobs:
                 <directory suffix=".php">web/modules/contrib/mcp_tools/modules/*/src</directory>
               </include>
               <exclude>
+                <!-- Tool plugins are thin wrappers; focus coverage on service logic. -->
+                <directory>web/modules/contrib/mcp_tools/src/Plugin</directory>
+                <directory>web/modules/contrib/mcp_tools/modules/*/src/Plugin</directory>
                 <directory>web/modules/contrib/mcp_tools/tests</directory>
                 <directory>web/modules/contrib/mcp_tools/modules/*/tests</directory>
               </exclude>
@@ -421,12 +424,8 @@ jobs:
       - name: Count and verify registered tools
         run: |
           cd drupal
-          TOOL_COUNT=$(./vendor/bin/drush eval "echo count(\\Drupal::service('plugin.manager.tool')->getDefinitions());" 2>/dev/null || echo "0")
-          MCP_TOOL_COUNT=$(./vendor/bin/drush eval "
-            \\$defs = \\Drupal::service('plugin.manager.tool')->getDefinitions();
-            \\$defs = array_filter(\\$defs, static fn(\\$def): bool => str_starts_with(\\$def->getProvider(), 'mcp_tools'));
-            echo count(\\$defs);
-          " 2>/dev/null || echo "0")
+          TOOL_COUNT=$(./vendor/bin/drush eval 'echo count(\Drupal::service("plugin.manager.tool")->getDefinitions());')
+          MCP_TOOL_COUNT=$(./vendor/bin/drush eval '$defs = \Drupal::service("plugin.manager.tool")->getDefinitions(); $defs = array_filter($defs, static fn($def): bool => str_starts_with($def->getProvider(), "mcp_tools")); echo count($defs);')
           echo "========================================"
           echo "Registered tools (total): $TOOL_COUNT"
           echo "Registered tools (mcp_tools* providers): $MCP_TOOL_COUNT"
