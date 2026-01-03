@@ -87,6 +87,7 @@ AI:  Creates content type, taxonomy vocabularies, fields, role, and permissions
 **Optional (to expose tools over MCP):**
 - **Recommended (local dev):** `mcp_tools_stdio` submodule (STDIO via Drush)
 - **Experimental (remote HTTP):** `mcp_tools_remote` submodule (API key auth)
+- **Optional bridge:** `mcp_tools_mcp_server` submodule (generates MCP Server tool configs for MCP Tools)
 - **Alternative:** [MCP Server](https://www.drupal.org/project/mcp_server) module (note: upstream Composer metadata issue: https://www.drupal.org/project/mcp_server/issues/3560993)
 
 **PHP:**
@@ -144,6 +145,7 @@ This module is developed and maintained by [Code Wheel](https://github.com/code-
 | Submodule | Tools | Description |
 |-----------|-------|-------------|
 | mcp_tools (base) | 23 | Read-only site status, health, content listing |
+| mcp_tools_mcp_server | 0 | Optional bridge for drupal/mcp_server |
 | mcp_tools_content | 4 | Content CRUD operations |
 | mcp_tools_structure | 12 | Content types, fields, taxonomy, roles |
 | mcp_tools_users | 5 | User account management |
