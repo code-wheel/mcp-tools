@@ -302,7 +302,7 @@ push_drupal() {
 
     if $DRY_RUN; then
         echo -e "${BLUE}[DRY-RUN] Would add remote: drupal -> $DRUPAL_ORG_REMOTE${NC}"
-        echo -e "${BLUE}[DRY-RUN] Would push: git push drupal main --tags${NC}"
+        echo -e "${BLUE}[DRY-RUN] Would push: git push drupal master --tags${NC}"
         return 0
     fi
 
@@ -313,7 +313,7 @@ push_drupal() {
     fi
 
     # Push main branch and tags
-    git push drupal main --tags
+    git push drupal master --tags
 
     echo -e "${GREEN}Pushed to drupal.org successfully.${NC}"
 }
@@ -326,7 +326,7 @@ sync_mirror() {
 
     if $DRY_RUN; then
         echo -e "${BLUE}[DRY-RUN] Would add remote: github -> $GITHUB_MIRROR_REMOTE${NC}"
-        echo -e "${BLUE}[DRY-RUN] Would push: git push github main --tags${NC}"
+        echo -e "${BLUE}[DRY-RUN] Would push: git push github master --tags${NC}"
         return 0
     fi
 
@@ -337,7 +337,7 @@ sync_mirror() {
     fi
 
     # Push to GitHub
-    git push github main --tags
+    git push github master --tags
 
     echo -e "${GREEN}GitHub mirror synced.${NC}"
 }
