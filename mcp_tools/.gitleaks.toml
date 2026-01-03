@@ -1,0 +1,79 @@
+# =============================================================================
+# Gitleaks Configuration for MCP Tools
+# https://github.com/gitleaks/gitleaks
+# =============================================================================
+
+title = "MCP Tools Gitleaks Config"
+
+[extend]
+# Use the default gitleaks config as base
+useDefault = true
+
+# =============================================================================
+# Allowlist: Files and patterns that are safe to ignore
+# =============================================================================
+
+[allowlist]
+description = "MCP Tools allowlist"
+
+# Files that are safe to commit (examples, templates, tests)
+paths = [
+  '''\.env\.example$''',
+  '''tests/.*''',
+  '''\.gitleaks\.toml$''',
+  '''CHANGELOG\.md$''',
+]
+
+# Patterns that look like secrets but aren't
+regexes = [
+  '''example[_-]?(api[_-]?)?key''',
+  '''your[_-]?api[_-]?key''',
+  '''placeholder''',
+  '''<your[_-].*>''',
+  '''YOUR_.*_HERE''',
+  '''xxx+''',
+]
+
+# =============================================================================
+# Additional Rules: Drupal/PHP specific patterns
+# =============================================================================
+
+[[rules]]
+id = "drupal-database-password"
+description = "Drupal database password in settings"
+regex = '''['"]password['"]\s*=>\s*['"][^'"]{8,}['"]'''
+path = '''settings.*\.php$'''
+tags = ["drupal", "password"]
+
+[[rules]]
+id = "drupal-hash-salt"
+description = "Drupal hash salt"
+regex = '''\$settings\s*\[\s*['"]hash_salt['"]\s*\]\s*=\s*['"][^'"]{20,}['"]'''
+path = '''settings.*\.php$'''
+tags = ["drupal", "secret"]
+
+[[rules]]
+id = "private-key-file"
+description = "Private key file contents"
+regex = '''-----BEGIN\s+(RSA\s+)?PRIVATE\s+KEY-----'''
+tags = ["key", "private"]
+
+[[rules]]
+id = "webhook-secret"
+description = "Webhook secret or signing key"
+regex = '''(webhook[_-]?secret|signing[_-]?key)\s*[=:]\s*['"][^'"]{16,}['"]'''
+tags = ["webhook", "secret"]
+
+[[rules]]
+id = "api-token"
+description = "API token or bearer token"
+regex = '''(Bearer\s+|api[_-]?token\s*[=:]\s*)['"a-zA-Z0-9_-]{20,}'''
+tags = ["api", "token"]
+
+# =============================================================================
+# Exclude paths from scanning
+# =============================================================================
+
+[allowlist.commits]
+# Commits that have been audited and are safe
+# Add commit hashes here if needed after initial audit

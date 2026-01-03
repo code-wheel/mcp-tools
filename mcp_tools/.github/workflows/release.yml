@@ -1,0 +1,216 @@
+# =============================================================================
+# Release Workflow for MCP Tools
+# Creates GitHub releases when tags are pushed
+# =============================================================================
+
+name: Release
+
+on:
+  push:
+    tags:
+      - '*.*.*'
+      - 'v*.*.*'
+
+jobs:
+  validate:
+    name: Validate Release
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Extract version from tag
+        id: version
+        run: |
+          TAG=${GITHUB_REF#refs/tags/}
+          VERSION=${TAG#v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Releasing version: $VERSION"
+
+      - name: Validate version format
+        run: |
+          VERSION=${{ steps.version.outputs.version }}
+          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9]+)?$ ]]; then
+            echo "Error: Invalid version format: $VERSION"
+            echo "Expected format: X.Y.Z or X.Y.Z-suffix"
+            exit 1
+          fi
+
+      - name: Check CHANGELOG
+        run: |
+          if [ -f CHANGELOG.md ]; then
+            VERSION=${{ steps.version.outputs.version }}
+            if ! grep -q "$VERSION" CHANGELOG.md; then
+              echo "Warning: Version $VERSION not found in CHANGELOG.md"
+            fi
+          fi
+
+  test:
+    name: Run Tests Before Release
+    needs: validate
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: drupal
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, pdo_mysql, gd, dom, xml
+          tools: composer
+
+      - name: Install Drupal
+        run: |
+          composer create-project drupal/recommended-project:^10.3 drupal --no-interaction
+          cd drupal
+          composer require --dev drupal/core-dev:^10.3 phpspec/prophecy-phpunit:^2 drush/drush --no-interaction
+
+      - name: Install Tool API dependency
+        run: |
+          cd drupal
+          composer require drupal/tool:1.0.0-alpha9 --no-interaction
+
+      - name: Copy module
+        run: |
+          mkdir -p drupal/web/modules/contrib/mcp_tools
+          rsync -av \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='.ddev' \
+            --exclude='docs' \
+            --exclude='scripts' \
+            --exclude='drupal' \
+            --exclude='vendor' \
+            --exclude='.phpunit.cache' \
+            ./ drupal/web/modules/contrib/mcp_tools/
+
+      - name: Install Drupal
+        run: |
+          cd drupal
+          ./vendor/bin/drush site:install minimal \
+            --db-url=mysql://root:root@127.0.0.1/drupal \
+            --site-name="MCP Tools Test" \
+            --account-name=admin \
+            --account-pass=admin \
+            -y
+
+      - name: Enable modules and run tests
+        run: |
+          cd drupal
+          ./vendor/bin/drush en tool dblog update -y
+          ./vendor/bin/drush en mcp_tools -y
+          ./vendor/bin/drush cr
+
+          cat > phpunit.xml << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <phpunit bootstrap="web/core/tests/bootstrap.php" colors="true">
+            <php>
+              <ini name="memory_limit" value="-1"/>
+              <env name="SIMPLETEST_DB" value="mysql://root:root@127.0.0.1/drupal"/>
+              <env name="SYMFONY_DEPRECATIONS_HELPER" value="disabled"/>
+            </php>
+            <testsuites>
+              <testsuite name="unit">
+                <directory>web/modules/contrib/mcp_tools/tests/src/Unit</directory>
+              </testsuite>
+              <testsuite name="kernel">
+                <directory>web/modules/contrib/mcp_tools/tests/src/Kernel</directory>
+              </testsuite>
+            </testsuites>
+          </phpunit>
+          EOF
+
+          ./vendor/bin/phpunit --testsuite unit,kernel --colors=always
+
+  release:
+    name: Create GitHub Release
+    needs: [validate, test]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate release notes
+        id: notes
+        run: |
+          VERSION=${{ needs.validate.outputs.version }}
+
+          # Get commits since last tag
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+
+          if [ -n "$PREV_TAG" ]; then
+            echo "Generating notes from $PREV_TAG to HEAD"
+            COMMITS=$(git log ${PREV_TAG}..HEAD --pretty=format:"- %s (%h)" --no-merges)
+          else
+            echo "No previous tag found, using all commits"
+            COMMITS=$(git log --pretty=format:"- %s (%h)" --no-merges -20)
+          fi
+
+          # Create release notes
+          cat > release_notes.md << EOF
+          ## MCP Tools v${VERSION}
+
+          ### Changes
+          ${COMMITS}
+
+          ### Installation
+
+          \`\`\`bash
+          composer require drupal/mcp_tools:${VERSION}
+          drush en mcp_tools
+          \`\`\`
+
+          ### Compatibility
+
+          - Drupal 10.3.x, 11.0.x
+          - PHP 8.3, 8.4, 8.5
+
+          ### Links
+
+          - [Documentation](https://www.drupal.org/project/mcp_tools)
+          - [Issue Queue](https://www.drupal.org/project/issues/mcp_tools)
+          - [Changelog](CHANGELOG.md)
+          EOF
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: MCP Tools v${{ needs.validate.outputs.version }}
+          body_path: release_notes.md
+          draft: false
+          prerelease: ${{ contains(needs.validate.outputs.version, '-') }}
+          generate_release_notes: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Summary
+        run: |
+          echo "## Release Created" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** ${{ needs.validate.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Next Steps" >> $GITHUB_STEP_SUMMARY
+          echo "1. Verify the GitHub release at the releases page" >> $GITHUB_STEP_SUMMARY
+          echo "2. Update drupal.org project page if needed" >> $GITHUB_STEP_SUMMARY
+          echo "3. Announce the release if appropriate" >> $GITHUB_STEP_SUMMARY
