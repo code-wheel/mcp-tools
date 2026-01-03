@@ -1,0 +1,60 @@
+{
+    "name": "mcp-tools/test-environment",
+    "description": "Test environment for MCP Tools module",
+    "type": "project",
+    "license": "GPL-2.0-or-later",
+    "repositories": [
+        {
+            "type": "composer",
+            "url": "https://packages.drupal.org/8"
+        },
+        {
+            "type": "path",
+            "url": "./",
+            "options": {
+                "symlink": true
+            }
+        }
+    ],
+    "require": {
+        "php": ">=8.1",
+        "composer/installers": "^2.0",
+        "drupal/core-composer-scaffold": "^10.2 || ^11",
+        "drupal/core-recommended": "^10.2 || ^11",
+        "drush/drush": "^12 || ^13",
+        "drupal/mcp_server": "^1.0@dev",
+        "drupal/tool": "^1.0@alpha"
+    },
+    "require-dev": {
+        "drupal/core-dev": "^10.2 || ^11",
+        "phpunit/phpunit": "^10",
+        "phpspec/prophecy-phpunit": "^2"
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "config": {
+        "allow-plugins": {
+            "composer/installers": true,
+            "drupal/core-composer-scaffold": true,
+            "phpstan/extension-installer": true,
+            "dealerdirect/phpcodesniffer-composer-installer": true,
+            "php-http/discovery": true
+        },
+        "sort-packages": true
+    },
+    "extra": {
+        "drupal-scaffold": {
+            "locations": {
+                "web-root": "web/"
+            }
+        },
+        "installer-paths": {
+            "web/core": ["type:drupal-core"],
+            "web/libraries/{$name}": ["type:drupal-library"],
+            "web/modules/contrib/{$name}": ["type:drupal-module"],
+            "web/profiles/contrib/{$name}": ["type:drupal-profile"],
+            "web/themes/contrib/{$name}": ["type:drupal-theme"],
+            "drush/Commands/contrib/{$name}": ["type:drupal-drush"]
+        }
+    }
+}

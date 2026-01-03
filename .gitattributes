@@ -18,6 +18,8 @@
 
 # Testing
 /tests                   export-ignore
+/.ddev                   export-ignore
+/TESTING.md              export-ignore
 /behat.yml               export-ignore
 /behat.yml.dist          export-ignore
 
