@@ -16,7 +16,13 @@ class SettingsFormTest extends BrowserTestBase {
   /**
    * {@inheritdoc}
    */
-  protected static $modules = ['mcp_tools', 'dblog', 'update'];
+  protected static $modules = [
+    'mcp_tools',
+    'mcp_server',
+    'tool',
+    'dblog',
+    'update',
+  ];
 
   /**
    * {@inheritdoc}
@@ -37,7 +43,7 @@ class SettingsFormTest extends BrowserTestBase {
     parent::setUp();
     $this->adminUser = $this->drupalCreateUser([
       'administer site configuration',
-      'administer mcp tools',
+      'mcp_tools administer',
     ]);
   }
 
