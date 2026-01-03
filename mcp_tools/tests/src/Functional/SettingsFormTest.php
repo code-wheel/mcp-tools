@@ -82,7 +82,7 @@ class SettingsFormTest extends BrowserTestBase {
 
     // Verify the setting was saved.
     $config = $this->config('mcp_tools.settings');
-    $this->assertTrue($config->get('read_only_mode'));
+    $this->assertTrue($config->get('access.read_only_mode'));
   }
 
   /**
