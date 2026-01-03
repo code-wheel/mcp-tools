@@ -2,6 +2,7 @@
 
 [![CI](https://github.com/code-wheel/mcp-tools/actions/workflows/ci.yml/badge.svg)](https://github.com/code-wheel/mcp-tools/actions/workflows/ci.yml)
 [![Security](https://github.com/code-wheel/mcp-tools/actions/workflows/security.yml/badge.svg)](https://github.com/code-wheel/mcp-tools/actions/workflows/security.yml)
+[![codecov](https://codecov.io/gh/code-wheel/mcp-tools/branch/master/graph/badge.svg)](https://codecov.io/gh/code-wheel/mcp-tools)
 
 Batteries-included MCP tools for AI assistants working with Drupal sites.
 

@@ -214,6 +214,149 @@ jobs:
           SIMPLETEST_BASE_URL: http://localhost:8888
           SIMPLETEST_DB: mysql://root:root@127.0.0.1/drupal
 
+  code-coverage:
+    name: Code Coverage
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: drupal
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP with coverage
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, pdo_mysql, gd, dom, xml
+          tools: composer
+          coverage: pcov
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.composer/cache
+          key: ${{ runner.os }}-composer-coverage-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-coverage-
+
+      - name: Install Drupal
+        run: |
+          composer create-project drupal/recommended-project:^10.3 drupal --no-interaction
+          cd drupal
+          composer require --dev drupal/core-dev:^10.3 phpspec/prophecy-phpunit:^2 drush/drush --no-interaction
+
+      - name: Create stub modules for dependencies
+        run: |
+          mkdir -p drupal/web/modules/contrib/mcp_server
+          cat > drupal/web/modules/contrib/mcp_server/mcp_server.info.yml << 'EOF'
+          name: MCP Server (Stub)
+          type: module
+          description: 'Stub module for testing MCP Tools.'
+          package: Testing
+          core_version_requirement: ^10 || ^11
+          EOF
+
+          mkdir -p drupal/web/modules/contrib/tool
+          cat > drupal/web/modules/contrib/tool/tool.info.yml << 'EOF'
+          name: Tool (Stub)
+          type: module
+          description: 'Stub module for testing MCP Tools.'
+          package: Testing
+          core_version_requirement: ^10 || ^11
+          EOF
+
+      - name: Copy MCP Tools module
+        run: |
+          mkdir -p drupal/web/modules/contrib/mcp_tools
+          rsync -av --exclude='.git' --exclude='.github' . drupal/web/modules/contrib/mcp_tools/
+
+      - name: Install Drupal site
+        run: |
+          cd drupal
+          ./vendor/bin/drush site:install minimal \
+            --db-url=mysql://root:root@127.0.0.1/drupal \
+            --site-name="MCP Tools Test" \
+            --account-name=admin \
+            --account-pass=admin \
+            -y
+
+      - name: Enable required modules
+        run: |
+          cd drupal
+          ./vendor/bin/drush en mcp_server tool dblog update -y
+          ./vendor/bin/drush en mcp_tools -y
+          ./vendor/bin/drush cr
+
+      - name: Create phpunit.xml with coverage
+        run: |
+          cd drupal
+          cat > phpunit.xml << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+                   bootstrap="web/core/tests/bootstrap.php"
+                   colors="true"
+                   beStrictAboutTestsThatDoNotTestAnything="true"
+                   beStrictAboutOutputDuringTests="true"
+                   beStrictAboutChangesToGlobalState="true">
+            <php>
+              <ini name="error_reporting" value="32767"/>
+              <ini name="memory_limit" value="-1"/>
+              <env name="SIMPLETEST_BASE_URL" value="http://localhost:8888"/>
+              <env name="SIMPLETEST_DB" value="mysql://root:root@127.0.0.1/drupal"/>
+              <env name="BROWSERTEST_OUTPUT_DIRECTORY" value=""/>
+              <env name="SYMFONY_DEPRECATIONS_HELPER" value="disabled"/>
+            </php>
+            <testsuites>
+              <testsuite name="unit">
+                <directory>web/modules/contrib/mcp_tools/tests/src/Unit</directory>
+                <directory>web/modules/contrib/mcp_tools/modules/*/tests/src/Unit</directory>
+              </testsuite>
+              <testsuite name="kernel">
+                <directory>web/modules/contrib/mcp_tools/tests/src/Kernel</directory>
+                <directory>web/modules/contrib/mcp_tools/modules/*/tests/src/Kernel</directory>
+              </testsuite>
+            </testsuites>
+            <coverage>
+              <include>
+                <directory suffix=".php">web/modules/contrib/mcp_tools/src</directory>
+                <directory suffix=".php">web/modules/contrib/mcp_tools/modules/*/src</directory>
+              </include>
+              <exclude>
+                <directory>web/modules/contrib/mcp_tools/tests</directory>
+                <directory>web/modules/contrib/mcp_tools/modules/*/tests</directory>
+              </exclude>
+            </coverage>
+          </phpunit>
+          EOF
+
+      - name: Run tests with coverage
+        run: |
+          cd drupal
+          ./vendor/bin/phpunit --testsuite unit,kernel --coverage-clover=coverage.xml --colors=always
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: drupal/coverage.xml
+          flags: unittests
+          name: mcp-tools-coverage
+          fail_ci_if_error: false
+          verbose: true
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
   tool-registration:
     name: Verify All Tools Register
     runs-on: ubuntu-latest
