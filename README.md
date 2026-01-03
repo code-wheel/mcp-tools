@@ -39,8 +39,8 @@ AI:   Creates content type, fields, vocabularies, role, and permissions
 | Environment | Read Tools | Write Tools | Recommendation |
 |-------------|------------|-------------|----------------|
 | **Local dev** | ✅ Safe | ✅ Safe | Full functionality |
-| **Staging** | ✅ Safe | ⚠️ Caution | Use read-only mode or limited scopes |
-| **Production** | ⚠️ Careful | ❌ Not recommended | Read-only mode strongly advised |
+| **Staging** | ✅ Safe | ⚠️ Caution | Use config-only mode or limited scopes |
+| **Production** | ⚠️ Careful | ❌ Not recommended | Read-only mode strongly advised (config-only if unavoidable) |
 
 **Why write tools are risky in production:**
 - Creates configuration in database, not in version-controlled code
@@ -50,9 +50,10 @@ AI:   Creates content type, fields, vocabularies, role, and permissions
 
 **Ideal workflow:**
 1. Use MCP Tools locally to scaffold your site
-2. Export configuration: `drush config:export`
-3. Commit to Git and deploy through normal CI/CD
-4. Keep production in read-only mode
+2. Enable config-only mode to keep changes reviewable as code
+3. Export configuration: `drush config:export`
+4. Commit to Git and deploy through normal CI/CD
+5. Keep production in read-only mode
 
 ## Requirements
 

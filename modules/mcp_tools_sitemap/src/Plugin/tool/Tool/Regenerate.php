@@ -51,6 +51,7 @@ use Drupal\tool\TypedData\InputDefinition;
 class Regenerate extends McpToolsToolBase {
 
   protected const MCP_CATEGORY = 'sitemap';
+  protected const MCP_WRITE_KIND = 'ops';
 
 
   protected SitemapService $sitemapService;

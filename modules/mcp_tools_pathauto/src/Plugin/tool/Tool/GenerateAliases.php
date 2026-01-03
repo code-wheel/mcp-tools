@@ -20,7 +20,7 @@ use Drupal\tool\TypedData\InputDefinition;
   id: 'mcp_pathauto_generate',
   label: new TranslatableMarkup('Generate URL Aliases'),
   description: new TranslatableMarkup('Bulk generate URL aliases for entities using Pathauto patterns. This is a write operation.'),
-  operation: ToolOperation::Read,
+  operation: ToolOperation::Write,
   input_definitions: [
     'entity_type' => new InputDefinition(
       data_type: 'string',
@@ -83,6 +83,7 @@ use Drupal\tool\TypedData\InputDefinition;
 class GenerateAliases extends McpToolsToolBase {
 
   protected const MCP_CATEGORY = 'pathauto';
+  protected const MCP_WRITE_KIND = 'content';
 
 
   protected PathautoService $pathautoService;

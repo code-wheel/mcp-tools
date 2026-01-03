@@ -22,7 +22,7 @@ use Drupal\tool\TypedData\InputDefinition;
   id: 'mcp_search_api_index',
   label: new TranslatableMarkup('Index Items'),
   description: new TranslatableMarkup('Index a batch of items on a search index.'),
-  operation: ToolOperation::Read,
+  operation: ToolOperation::Write,
   input_definitions: [
     'id' => new InputDefinition(
       data_type: 'string',

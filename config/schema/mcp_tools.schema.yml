@@ -9,6 +9,15 @@ mcp_tools.settings:
         read_only_mode:
           type: boolean
           label: 'Global read-only mode'
+        config_only_mode:
+          type: boolean
+          label: 'Config-only mode'
+        config_only_allowed_write_kinds:
+          type: sequence
+          label: 'Allowed write kinds in config-only mode'
+          sequence:
+            type: string
+            label: 'Write kind'
         allowed_scopes:
           type: sequence
           label: 'Allowed scopes'

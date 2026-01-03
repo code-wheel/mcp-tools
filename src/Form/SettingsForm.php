@@ -46,6 +46,30 @@ class SettingsForm extends ConfigFormBase {
       '#default_value' => $config->get('access.read_only_mode') ?? FALSE,
     ];
 
+    $form['access']['config_only_mode'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Config-only mode'),
+      '#description' => $this->t('When enabled, write tools are restricted to configuration changes (e.g., content types, fields, views). Content mutations (nodes, media, users) and operational actions (cache/cron) are blocked unless explicitly allowed below.'),
+      '#default_value' => $config->get('access.config_only_mode') ?? FALSE,
+    ];
+
+    $form['access']['config_only_allowed_write_kinds'] = [
+      '#type' => 'checkboxes',
+      '#title' => $this->t('Allowed write types in config-only mode'),
+      '#description' => $this->t('Recommended: allow "Config" only. Enabling additional types reduces safety.'),
+      '#options' => [
+        'config' => $this->t('Config - Configuration changes'),
+        'ops' => $this->t('Ops - Operational actions (cache/cron/indexing)'),
+        'content' => $this->t('Content - Content/entity changes (nodes/media/users)'),
+      ],
+      '#default_value' => $config->get('access.config_only_allowed_write_kinds') ?? ['config'],
+      '#states' => [
+        'visible' => [
+          ':input[name="config_only_mode"]' => ['checked' => TRUE],
+        ],
+      ],
+    ];
+
     $form['access']['default_scopes'] = [
       '#type' => 'checkboxes',
       '#title' => $this->t('Default connection scopes'),
@@ -341,6 +365,7 @@ class SettingsForm extends ConfigFormBase {
         '<p>' . $this->t('MCP Tools is designed primarily for <strong>local development and prototyping</strong>. If you must use it in production:') . '</p>' .
         '<ul>' .
         '<li>' . $this->t('Enable read-only mode') . '</li>' .
+        '<li>' . $this->t('Or enable config-only mode') . '</li>' .
         '<li>' . $this->t('Enable rate limiting') . '</li>' .
         '<li>' . $this->t('Enable audit logging') . '</li>' .
         '<li>' . $this->t('Restrict default scopes to "read" only') . '</li>' .
@@ -362,6 +387,12 @@ class SettingsForm extends ConfigFormBase {
 
     // Access settings.
     $config->set('access.read_only_mode', (bool) $form_state->getValue('read_only_mode'));
+    $config->set('access.config_only_mode', (bool) $form_state->getValue('config_only_mode'));
+    $kinds = array_filter($form_state->getValue('config_only_allowed_write_kinds') ?? []);
+    if (empty($kinds)) {
+      $kinds = ['config'];
+    }
+    $config->set('access.config_only_allowed_write_kinds', array_values($kinds));
 
     $allowedScopes = array_filter($form_state->getValue('allowed_scopes') ?? []);
     if (empty($allowedScopes)) {

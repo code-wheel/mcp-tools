@@ -20,7 +20,7 @@ use Drupal\tool\TypedData\InputDefinition;
   id: 'mcp_configure_block',
   label: new TranslatableMarkup('Configure Block'),
   description: new TranslatableMarkup('Update configuration of a placed block.'),
-  operation: ToolOperation::Read,
+  operation: ToolOperation::Write,
   input_definitions: [
     'block_id' => new InputDefinition(
       data_type: 'string',

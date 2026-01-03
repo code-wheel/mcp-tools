@@ -56,6 +56,7 @@ use Drupal\tool\TypedData\InputDefinition;
 class DeleteSubmission extends McpToolsToolBase {
 
   protected const MCP_CATEGORY = 'webform';
+  protected const MCP_WRITE_KIND = 'content';
 
 
   protected WebformService $webformService;

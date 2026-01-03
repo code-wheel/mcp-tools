@@ -22,7 +22,7 @@ use Drupal\tool\TypedData\InputDefinition;
   id: 'mcp_search_api_reindex',
   label: new TranslatableMarkup('Reindex Search Index'),
   description: new TranslatableMarkup('Mark all items in a search index for reindexing.'),
-  operation: ToolOperation::Read,
+  operation: ToolOperation::Write,
   input_definitions: [
     'id' => new InputDefinition(
       data_type: 'string',

@@ -20,7 +20,7 @@ use Drupal\tool\TypedData\InputDefinition;
   id: 'mcp_scheduler_cancel',
   label: new TranslatableMarkup('Cancel Schedule'),
   description: new TranslatableMarkup('Cancel scheduled publishing or unpublishing for content.'),
-  operation: ToolOperation::Read,
+  operation: ToolOperation::Write,
   input_definitions: [
     'entity_type' => new InputDefinition(
       data_type: 'string',

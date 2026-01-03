@@ -148,9 +148,9 @@ class StatusController extends ControllerBase {
     $warnings = [];
     $config = $this->config('mcp_tools.settings');
 
-    if (!$config->get('access.read_only_mode')) {
+    if (!$config->get('access.read_only_mode') && !$config->get('access.config_only_mode')) {
       $warnings[] = [
-        '#markup' => '<span style="color: orange;">⚠</span> ' . $this->t('Read-only mode is disabled. Enable for production environments.'),
+        '#markup' => '<span style="color: orange;">⚠</span> ' . $this->t('Read-only mode is disabled. Enable read-only or config-only mode for production environments.'),
       ];
     }
 

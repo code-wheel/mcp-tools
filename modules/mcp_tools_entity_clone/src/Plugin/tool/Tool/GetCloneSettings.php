@@ -20,7 +20,7 @@ use Drupal\tool\TypedData\InputDefinition;
   id: 'mcp_entity_clone_settings',
   label: new TranslatableMarkup('Get Clone Settings'),
   description: new TranslatableMarkup('Get clone settings and reference fields for a specific entity type and bundle.'),
-  operation: ToolOperation::Write,
+  operation: ToolOperation::Read,
   input_definitions: [
     'entity_type' => new InputDefinition(
       data_type: 'string',

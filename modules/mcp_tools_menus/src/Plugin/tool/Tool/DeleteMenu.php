@@ -46,6 +46,7 @@ use Drupal\tool\TypedData\InputDefinition;
 class DeleteMenu extends McpToolsToolBase {
 
   protected const MCP_CATEGORY = 'menus';
+  protected const MCP_WRITE_KIND = 'config';
 
 
   protected MenuService $menuService;

@@ -107,7 +107,15 @@ abstract class McpToolsToolBase extends ToolBase {
 
     $scopeAccess = $scopeAllowed ? AccessResult::allowed() : AccessResult::forbidden();
 
-    $access = $permissionAccess->andIf($scopeAccess);
+    $policyAccess = AccessResult::allowed();
+    if ($operation === ToolOperation::Write || $operation === ToolOperation::Trigger) {
+      $writeKind = static::getMcpWriteKind();
+      $policyAccess = $this->accessManager->isWriteKindAllowed($writeKind)
+        ? AccessResult::allowed()
+        : AccessResult::forbidden();
+    }
+
+    $access = $permissionAccess->andIf($scopeAccess)->andIf($policyAccess);
     return $return_as_object ? $access : $access->isAllowed();
   }
 
@@ -131,6 +139,50 @@ abstract class McpToolsToolBase extends ToolBase {
       }
     }
     return 'discovery';
+  }
+
+  /**
+   * Returns the write kind for this tool (config/content/ops).
+   *
+   * Used to enforce "config-only mode" without requiring every tool to
+   * implement its own checks.
+   */
+  protected static function getMcpWriteKind(): string {
+    $const = static::class . '::MCP_WRITE_KIND';
+    if (defined($const)) {
+      $value = constant($const);
+      if (is_string($value) && in_array($value, AccessManager::ALL_WRITE_KINDS, TRUE)) {
+        return $value;
+      }
+    }
+
+    $category = static::getMcpCategory();
+
+    return match ($category) {
+      // Content/entity mutations (nodes, media, users, etc.).
+      'content',
+      'users',
+      'media',
+      'batch',
+      'migration',
+      'moderation',
+      'scheduler',
+      'redirect',
+      'entity_clone',
+      // Default menus to content because menu links are content entities.
+      'menus',
+        => AccessManager::WRITE_KIND_CONTENT,
+
+      // Operational actions (runtime state, indexing, regeneration, etc.).
+      'cache',
+      'cron',
+      'ultimate_cron',
+      'search_api',
+        => AccessManager::WRITE_KIND_OPS,
+
+      // Everything else is treated as configuration changes.
+      default => AccessManager::WRITE_KIND_CONFIG,
+    };
   }
 
 }

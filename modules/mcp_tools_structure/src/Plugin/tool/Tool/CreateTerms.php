@@ -66,6 +66,7 @@ use Drupal\tool\TypedData\InputDefinition;
 class CreateTerms extends McpToolsToolBase {
 
   protected const MCP_CATEGORY = 'structure';
+  protected const MCP_WRITE_KIND = 'content';
 
 
   protected TaxonomyService $taxonomyService;

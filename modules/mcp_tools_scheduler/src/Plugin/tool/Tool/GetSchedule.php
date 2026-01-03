@@ -20,7 +20,7 @@ use Drupal\tool\TypedData\InputDefinition;
   id: 'mcp_scheduler_get_schedule',
   label: new TranslatableMarkup('Get Schedule'),
   description: new TranslatableMarkup('Get scheduling information for a specific piece of content.'),
-  operation: ToolOperation::Write,
+  operation: ToolOperation::Read,
   input_definitions: [
     'entity_type' => new InputDefinition(
       data_type: 'string',

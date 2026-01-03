@@ -67,6 +67,7 @@ use Drupal\tool\TypedData\InputDefinition;
 class CreateMenu extends McpToolsToolBase {
 
   protected const MCP_CATEGORY = 'menus';
+  protected const MCP_WRITE_KIND = 'config';
 
 
   protected MenuService $menuService;

@@ -6,6 +6,27 @@ access:
   # Use this to quickly disable all writes without uninstalling modules.
   read_only_mode: false
 
+  # Config-only mode - restricts write tools to configuration changes.
+  #
+  # When enabled, write tools that primarily mutate content (nodes, media,
+  # users, etc.) are blocked even if the connection has write scope.
+  #
+  # This is useful for safer environments (staging/production) and for a
+  # "config-as-code" workflow where you build locally and then export config
+  # and/or generate a Recipe for review.
+  config_only_mode: false
+
+  # Which kinds of write tools are allowed while config-only mode is enabled.
+  #
+  # Allowed values:
+  # - config: configuration changes (content types, fields, views, etc.)
+  # - content: content/entity changes (nodes, media, users, terms, etc.)
+  # - ops: operational actions (cache, cron, indexing, regeneration)
+  #
+  # Recommended: keep this as ['config'] for staging/production safety.
+  config_only_allowed_write_kinds:
+    - config
+
   # Maximum scopes that can ever be granted to an MCP connection.
   # Any requested scopes (header/query/env) are intersected with this list.
   allowed_scopes:

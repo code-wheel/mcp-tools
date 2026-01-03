@@ -51,6 +51,7 @@ AI:  Creates content type, taxonomy vocabularies, fields, role, and permissions
 
 **Security Built-In**
 - Three-layer access control (modules, global toggle, connection scopes)
+- Config-only mode (restrict writes to configuration changes)
 - Rate limiting for write operations
 - Audit logging with sensitive data redaction
 - Protected entities (uid 1, admin role, core views)
@@ -70,6 +71,7 @@ AI:  Creates content type, taxonomy vocabularies, fields, role, and permissions
 
 3. **Configure settings** at `/admin/config/services/mcp-tools`:
    - Set default connection scopes (read/write/admin)
+   - Enable config-only mode for config-as-code workflows
    - Enable rate limiting for production safety
    - Configure audit logging
    - Set up webhook notifications (optional)

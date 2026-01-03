@@ -20,7 +20,7 @@ use Drupal\tool\TypedData\InputDefinition;
   id: 'mcp_place_block',
   label: new TranslatableMarkup('Place Block'),
   description: new TranslatableMarkup('Place a block in a theme region.'),
-  operation: ToolOperation::Read,
+  operation: ToolOperation::Write,
   input_definitions: [
     'plugin_id' => new InputDefinition(
       data_type: 'string',

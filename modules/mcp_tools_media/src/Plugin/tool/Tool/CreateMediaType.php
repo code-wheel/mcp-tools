@@ -72,6 +72,7 @@ use Drupal\tool\TypedData\InputDefinition;
 class CreateMediaType extends McpToolsToolBase {
 
   protected const MCP_CATEGORY = 'media';
+  protected const MCP_WRITE_KIND = 'config';
 
 
   protected MediaService $mediaService;

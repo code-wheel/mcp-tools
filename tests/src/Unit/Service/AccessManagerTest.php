@@ -104,6 +104,94 @@ class AccessManagerTest extends UnitTestCase {
   }
 
   /**
+   * @covers ::isConfigOnlyMode
+   */
+  public function testIsConfigOnlyMode(): void {
+    $this->config->method('get')
+      ->willReturnMap([
+        ['access.config_only_mode', TRUE],
+      ]);
+
+    $this->requestStack->method('getCurrentRequest')->willReturn(NULL);
+
+    $accessManager = $this->createAccessManager();
+    $this->assertTrue($accessManager->isConfigOnlyMode());
+  }
+
+  /**
+   * @covers ::isWriteKindAllowed
+   */
+  public function testIsWriteKindAllowedWhenConfigOnlyDisabled(): void {
+    $this->config->method('get')
+      ->willReturnMap([
+        ['access.config_only_mode', FALSE],
+      ]);
+
+    $this->requestStack->method('getCurrentRequest')->willReturn(NULL);
+
+    $accessManager = $this->createAccessManager();
+    $this->assertTrue($accessManager->isWriteKindAllowed(AccessManager::WRITE_KIND_CONFIG));
+    $this->assertTrue($accessManager->isWriteKindAllowed(AccessManager::WRITE_KIND_CONTENT));
+    $this->assertTrue($accessManager->isWriteKindAllowed(AccessManager::WRITE_KIND_OPS));
+    $this->assertTrue($accessManager->isWriteKindAllowed('unknown'));
+  }
+
+  /**
+   * @covers ::isWriteKindAllowed
+   */
+  public function testIsWriteKindAllowedDefaultsToConfigOnly(): void {
+    $this->config->method('get')
+      ->willReturnMap([
+        ['access.config_only_mode', TRUE],
+        // Intentionally omit access.config_only_allowed_write_kinds to assert default.
+      ]);
+
+    $this->requestStack->method('getCurrentRequest')->willReturn(NULL);
+
+    $accessManager = $this->createAccessManager();
+    $this->assertTrue($accessManager->isWriteKindAllowed(AccessManager::WRITE_KIND_CONFIG));
+    $this->assertFalse($accessManager->isWriteKindAllowed(AccessManager::WRITE_KIND_CONTENT));
+    $this->assertFalse($accessManager->isWriteKindAllowed(AccessManager::WRITE_KIND_OPS));
+    $this->assertFalse($accessManager->isWriteKindAllowed('unknown'));
+  }
+
+  /**
+   * @covers ::isWriteKindAllowed
+   */
+  public function testIsWriteKindAllowedWithConfiguredKinds(): void {
+    $this->config->method('get')
+      ->willReturnMap([
+        ['access.config_only_mode', TRUE],
+        ['access.config_only_allowed_write_kinds', [AccessManager::WRITE_KIND_CONFIG, AccessManager::WRITE_KIND_OPS]],
+      ]);
+
+    $this->requestStack->method('getCurrentRequest')->willReturn(NULL);
+
+    $accessManager = $this->createAccessManager();
+    $this->assertTrue($accessManager->isWriteKindAllowed(AccessManager::WRITE_KIND_CONFIG));
+    $this->assertTrue($accessManager->isWriteKindAllowed(AccessManager::WRITE_KIND_OPS));
+    $this->assertFalse($accessManager->isWriteKindAllowed(AccessManager::WRITE_KIND_CONTENT));
+  }
+
+  /**
+   * @covers ::isWriteKindAllowed
+   */
+  public function testIsWriteKindAllowedFallsBackWhenAllowedKindsEmpty(): void {
+    $this->config->method('get')
+      ->willReturnMap([
+        ['access.config_only_mode', TRUE],
+        ['access.config_only_allowed_write_kinds', []],
+      ]);
+
+    $this->requestStack->method('getCurrentRequest')->willReturn(NULL);
+
+    $accessManager = $this->createAccessManager();
+    $this->assertTrue($accessManager->isWriteKindAllowed(AccessManager::WRITE_KIND_CONFIG));
+    $this->assertFalse($accessManager->isWriteKindAllowed(AccessManager::WRITE_KIND_CONTENT));
+    $this->assertFalse($accessManager->isWriteKindAllowed(AccessManager::WRITE_KIND_OPS));
+  }
+
+  /**
    * @covers ::canWrite
    */
   public function testCanWriteWithWriteScope(): void {
