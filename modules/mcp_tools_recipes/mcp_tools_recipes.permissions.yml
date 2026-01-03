@@ -1,0 +1,9 @@
+mcp_tools use recipes:
+  title: 'Use MCP recipes tools'
+  description: 'List, view, and apply Drupal Recipes via MCP.'
+  restrict access: true
+
+mcp_tools administer recipes:
+  title: 'Administer MCP recipes tools'
+  description: 'Apply and create Drupal Recipes via MCP (requires admin scope).'
+  restrict access: true

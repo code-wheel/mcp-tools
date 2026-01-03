@@ -1,0 +1,4 @@
+mcp_tools use theme:
+  title: 'Use MCP theme tools'
+  description: 'Manage themes, enable/disable themes, and configure theme settings via MCP.'
+  restrict access: true

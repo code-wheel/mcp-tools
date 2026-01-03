@@ -1,0 +1,9 @@
+name: 'MCP Tools - Scheduler'
+type: module
+description: 'Schedule content publishing and unpublishing via MCP Tools integration with Scheduler module.'
+package: MCP Tools
+core_version_requirement: ^10.2 || ^11
+dependencies:
+  - mcp_tools:mcp_tools
+  - scheduler:scheduler
+lifecycle: experimental

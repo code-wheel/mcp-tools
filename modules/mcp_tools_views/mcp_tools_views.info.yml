@@ -1,0 +1,9 @@
+name: 'MCP Tools - Views'
+type: module
+description: 'Views management: create, update, delete, and configure views.'
+package: MCP Tools
+core_version_requirement: ^10.2 || ^11
+dependencies:
+  - mcp_tools:mcp_tools
+  - drupal:views
+lifecycle: experimental

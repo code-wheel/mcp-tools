@@ -1,0 +1,8 @@
+name: 'MCP Tools - Search API'
+type: module
+description: 'MCP Tools for Search API integration (indexes, servers, reindexing).'
+core_version_requirement: ^10.3 || ^11
+package: MCP Tools
+dependencies:
+  - mcp_tools:mcp_tools
+  - search_api:search_api

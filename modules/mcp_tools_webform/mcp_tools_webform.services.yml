@@ -1,0 +1,7 @@
+services:
+  mcp_tools_webform.webform:
+    class: Drupal\mcp_tools_webform\Service\WebformService
+    arguments:
+      - '@entity_type.manager'
+      - '@mcp_tools.access_manager'
+      - '@mcp_tools.audit_logger'

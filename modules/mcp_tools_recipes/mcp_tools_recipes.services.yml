@@ -1,0 +1,10 @@
+services:
+  mcp_tools_recipes.recipes:
+    class: Drupal\mcp_tools_recipes\Service\RecipesService
+    arguments:
+      - '@config.factory'
+      - '@extension.list.module'
+      - '@file_system'
+      - '%app.root%'
+      - '@mcp_tools.access_manager'
+      - '@mcp_tools.audit_logger'

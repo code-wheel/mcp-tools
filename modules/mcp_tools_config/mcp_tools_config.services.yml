@@ -1,0 +1,11 @@
+services:
+  mcp_tools_config.config_management:
+    class: Drupal\mcp_tools_config\Service\ConfigManagementService
+    arguments:
+      - '@config.factory'
+      - '@config.storage'
+      - '@config.storage.sync'
+      - '@state'
+      - '@file_system'
+      - '@mcp_tools.access_manager'
+      - '@mcp_tools.audit_logger'

@@ -1,0 +1,10 @@
+services:
+  mcp_tools_batch.batch:
+    class: Drupal\mcp_tools_batch\Service\BatchService
+    arguments:
+      - '@entity_type.manager'
+      - '@entity_field.manager'
+      - '@current_user'
+      - '@module_handler'
+      - '@mcp_tools.access_manager'
+      - '@mcp_tools.audit_logger'

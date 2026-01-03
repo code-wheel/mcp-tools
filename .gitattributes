@@ -1,0 +1,54 @@
+# =============================================================================
+# Export-ignore: Files excluded from release archives (drupal.org, GitHub)
+# These files are useful for development but not needed in production.
+# =============================================================================
+
+# Development & CI files
+/.github                 export-ignore
+/.gitattributes          export-ignore
+/.gitignore              export-ignore
+/.editorconfig           export-ignore
+/.phpcs.xml              export-ignore
+/.phpcs.xml.dist         export-ignore
+/phpunit.xml             export-ignore
+/phpunit.xml.dist        export-ignore
+/phpstan.neon            export-ignore
+/phpstan.neon.dist       export-ignore
+/.gitleaks.toml          export-ignore
+
+# Testing
+/tests                   export-ignore
+/behat.yml               export-ignore
+/behat.yml.dist          export-ignore
+
+# Documentation (keep README, exclude dev docs)
+/CONTRIBUTING.md         export-ignore
+/ROADMAP.md              export-ignore
+/docs                    export-ignore
+
+# Scripts
+/scripts                 export-ignore
+
+# Ensure text files have consistent line endings
+*.php    text eol=lf
+*.yml    text eol=lf
+*.yaml   text eol=lf
+*.json   text eol=lf
+*.md     text eol=lf
+*.txt    text eol=lf
+*.css    text eol=lf
+*.js     text eol=lf
+*.html   text eol=lf
+*.twig   text eol=lf
+
+# Binary files
+*.png    binary
+*.jpg    binary
+*.jpeg   binary
+*.gif    binary
+*.ico    binary
+*.woff   binary
+*.woff2  binary
+*.ttf    binary
+*.eot    binary
+*.svg    text

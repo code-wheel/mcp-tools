@@ -1,0 +1,9 @@
+services:
+  mcp_tools.commands:
+    class: Drupal\mcp_tools\Commands\McpToolsCommands
+    arguments:
+      - '@mcp_tools.access_manager'
+      - '@mcp_tools.rate_limiter'
+      - '@module_handler'
+    tags:
+      - { name: drush.command }

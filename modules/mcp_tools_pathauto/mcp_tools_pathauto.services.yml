@@ -1,0 +1,9 @@
+services:
+  mcp_tools_pathauto.pathauto:
+    class: Drupal\mcp_tools_pathauto\Service\PathautoService
+    arguments:
+      - '@entity_type.manager'
+      - '@pathauto.generator'
+      - '@pathauto.alias_cleaner'
+      - '@mcp_tools.access_manager'
+      - '@mcp_tools.audit_logger'

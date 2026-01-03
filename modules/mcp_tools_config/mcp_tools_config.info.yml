@@ -1,0 +1,7 @@
+name: 'MCP Tools - Config Management'
+type: module
+description: 'MCP tools for configuration export and dry-run mode.'
+package: MCP
+core_version_requirement: ^10.2 || ^11
+dependencies:
+  - mcp_tools:mcp_tools

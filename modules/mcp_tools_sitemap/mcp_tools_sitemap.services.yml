@@ -1,0 +1,10 @@
+services:
+  mcp_tools_sitemap.sitemap:
+    class: Drupal\mcp_tools_sitemap\Service\SitemapService
+    arguments:
+      - '@entity_type.manager'
+      - '@config.factory'
+      - '@simple_sitemap.generator'
+      - '@simple_sitemap.manager'
+      - '@mcp_tools.access_manager'
+      - '@mcp_tools.audit_logger'

@@ -1,0 +1,10 @@
+name: 'MCP Tools - Content Moderation'
+type: module
+description: 'Content moderation workflow tools: manage states, transitions, and content moderation.'
+package: MCP Tools
+core_version_requirement: ^10.2 || ^11
+dependencies:
+  - mcp_tools:mcp_tools
+  - drupal:content_moderation
+  - drupal:workflows
+lifecycle: experimental

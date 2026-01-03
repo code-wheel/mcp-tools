@@ -1,0 +1,9 @@
+mcp_tools use config:
+  title: 'Use MCP config tools'
+  description: 'View configuration changes and diffs via MCP.'
+  restrict access: true
+
+mcp_tools export config:
+  title: 'Export configuration via MCP'
+  description: 'Export configuration to sync directory via MCP. Potentially dangerous operation.'
+  restrict access: true

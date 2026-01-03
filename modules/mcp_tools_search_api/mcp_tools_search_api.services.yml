@@ -1,0 +1,5 @@
+services:
+  mcp_tools_search_api.search_api_service:
+    class: Drupal\mcp_tools_search_api\Service\SearchApiService
+    arguments:
+      - '@entity_type.manager'
