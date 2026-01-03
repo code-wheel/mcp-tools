@@ -337,7 +337,7 @@ class AnalysisService {
       if (\Drupal::moduleHandler()->moduleExists('metatag') && $entity->hasField('field_metatag')) {
         $metatag = $entity->get('field_metatag')->value;
         if (!empty($metatag)) {
-          $metatagData = unserialize($metatag);
+          $metatagData = @unserialize($metatag, ['allowed_classes' => FALSE]);
           if (!empty($metatagData['description'])) {
             $hasMetaDescription = TRUE;
             $descLength = strlen($metatagData['description']);

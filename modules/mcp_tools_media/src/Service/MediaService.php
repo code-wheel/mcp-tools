@@ -141,6 +141,11 @@ class MediaService {
     }
 
     try {
+      // Validate directory to prevent path traversal - only allow public:// and private://.
+      if (!preg_match('/^(public|private):\/\/[a-zA-Z0-9_\-\/]+$/', $directory) || str_contains($directory, '..')) {
+        return ['success' => FALSE, 'error' => 'Invalid directory. Only public:// and private:// stream wrappers allowed.'];
+      }
+
       // Decode base64 data.
       $decodedData = base64_decode($data, TRUE);
       if ($decodedData === FALSE) {
@@ -282,8 +287,9 @@ class MediaService {
    * List available media types with source plugins.
    */
   public function listMediaTypes(): array {
-    if (!$this->accessManager->canWrite()) {
-      return $this->accessManager->getWriteAccessDenied();
+    // Read-only operation - only requires read access.
+    if (!$this->accessManager->canRead()) {
+      return $this->accessManager->getReadAccessDenied();
     }
 
     try {
