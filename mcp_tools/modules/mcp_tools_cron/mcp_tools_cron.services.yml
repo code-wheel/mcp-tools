@@ -1,0 +1,10 @@
+services:
+  mcp_tools_cron.cron_service:
+    class: Drupal\mcp_tools_cron\Service\CronService
+    arguments:
+      - '@cron'
+      - '@state'
+      - '@config.factory'
+      - '@module_handler'
+      - '@plugin.manager.queue_worker'
+      - '@queue'

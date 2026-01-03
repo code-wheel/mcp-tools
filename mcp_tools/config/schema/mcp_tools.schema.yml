@@ -1,0 +1,107 @@
+mcp_tools.settings:
+  type: config_object
+  label: 'MCP Tools settings'
+  mapping:
+    access:
+      type: mapping
+      label: 'Access control settings'
+      mapping:
+        read_only_mode:
+          type: boolean
+          label: 'Global read-only mode'
+        default_scopes:
+          type: sequence
+          label: 'Default scopes'
+          sequence:
+            type: string
+            label: 'Scope'
+        audit_logging:
+          type: boolean
+          label: 'Enable audit logging'
+    rate_limits:
+      type: mapping
+      label: 'Rate limits for read operations'
+      mapping:
+        broken_link_scan:
+          type: mapping
+          label: 'Broken link scan limits'
+          mapping:
+            max_per_hour:
+              type: integer
+              label: 'Maximum scans per hour'
+            max_urls_per_scan:
+              type: integer
+              label: 'Maximum URLs per scan'
+        content_search:
+          type: mapping
+          label: 'Content search limits'
+          mapping:
+            max_per_minute:
+              type: integer
+              label: 'Maximum searches per minute'
+    rate_limiting:
+      type: mapping
+      label: 'Rate limiting for write operations'
+      mapping:
+        enabled:
+          type: boolean
+          label: 'Enable rate limiting'
+        max_writes_per_minute:
+          type: integer
+          label: 'Maximum write operations per minute'
+        max_writes_per_hour:
+          type: integer
+          label: 'Maximum write operations per hour'
+        max_deletes_per_hour:
+          type: integer
+          label: 'Maximum delete operations per hour'
+        max_structure_changes_per_hour:
+          type: integer
+          label: 'Maximum structure changes per hour'
+    enabled_categories:
+      type: sequence
+      label: 'Enabled categories'
+      sequence:
+        type: string
+        label: 'Category'
+    allowed_hosts:
+      type: sequence
+      label: 'Allowed hosts for SSRF protection'
+      sequence:
+        type: string
+        label: 'Host pattern'
+    output:
+      type: mapping
+      label: 'Output settings'
+      mapping:
+        max_items:
+          type: integer
+          label: 'Maximum items in list operations'
+        include_sensitive:
+          type: boolean
+          label: 'Include sensitive information'
+    webhooks:
+      type: mapping
+      label: 'Webhook notification settings'
+      mapping:
+        enabled:
+          type: boolean
+          label: 'Enable webhook notifications'
+        url:
+          type: string
+          label: 'Webhook URL'
+        secret:
+          type: string
+          label: 'Webhook secret for HMAC signing'
+        timeout:
+          type: integer
+          label: 'Request timeout in seconds'
+        batch_notifications:
+          type: boolean
+          label: 'Batch notifications'
+        notify_on:
+          type: sequence
+          label: 'Operations to notify on'
+          sequence:
+            type: string
+            label: 'Operation type'

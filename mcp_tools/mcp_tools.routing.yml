@@ -1,0 +1,15 @@
+mcp_tools.settings:
+  path: '/admin/config/services/mcp-tools'
+  defaults:
+    _form: '\Drupal\mcp_tools\Form\SettingsForm'
+    _title: 'MCP Tools Settings'
+  requirements:
+    _permission: 'administer site configuration'
+
+mcp_tools.status:
+  path: '/admin/config/services/mcp-tools/status'
+  defaults:
+    _controller: '\Drupal\mcp_tools\Controller\StatusController::status'
+    _title: 'MCP Tools Status'
+  requirements:
+    _permission: 'administer site configuration'

@@ -1,0 +1,7 @@
+services:
+  mcp_tools_cache.cache_service:
+    class: Drupal\mcp_tools_cache\Service\CacheService
+    arguments:
+      - '@cache_tags.invalidator'
+      - '@module_handler'
+      - '@database'

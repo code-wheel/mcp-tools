@@ -1,0 +1,9 @@
+name: 'MCP Tools - Redirect'
+type: module
+description: 'URL redirect management: create, update, and manage URL redirects for SEO and link maintenance.'
+package: MCP Tools
+core_version_requirement: ^10.2 || ^11
+dependencies:
+  - mcp_tools:mcp_tools
+  - redirect:redirect
+lifecycle: experimental

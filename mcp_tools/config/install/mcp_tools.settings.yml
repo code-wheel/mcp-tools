@@ -1,0 +1,74 @@
+# MCP Tools default configuration.
+
+# Access control settings.
+access:
+  # Global read-only mode - blocks ALL write operations site-wide.
+  # Use this to quickly disable all writes without uninstalling modules.
+  read_only_mode: false
+
+  # Default scopes for connections that don't specify a scope.
+  # Available scopes: read, write, admin
+  default_scopes:
+    - read
+    - write
+
+  # Audit logging for all operations.
+  audit_logging: true
+
+# Rate limiting for expensive read operations.
+rate_limits:
+  broken_link_scan:
+    max_per_hour: 10
+    max_urls_per_scan: 500
+  content_search:
+    max_per_minute: 30
+
+# Rate limiting for write operations (production hardening).
+rate_limiting:
+  # Enable/disable rate limiting for write operations.
+  enabled: false
+  # Maximum write operations per minute per client.
+  max_writes_per_minute: 30
+  # Maximum write operations per hour per client.
+  max_writes_per_hour: 500
+  # Maximum delete operations per hour per client.
+  max_deletes_per_hour: 50
+  # Maximum structure changes (content types, fields, roles) per hour.
+  max_structure_changes_per_hour: 100
+
+# Tool categories enabled by default.
+enabled_categories:
+  - site_tools
+  - content_tools
+  - config_tools
+
+# SSRF protection - allowed hosts for URL fetching.
+allowed_hosts:
+  - localhost
+  - '*.local'
+
+# Output settings.
+output:
+  # Maximum items to return in list operations.
+  max_items: 100
+  # Include sensitive information (requires administer permission).
+  include_sensitive: false
+
+# Webhook notification settings.
+webhooks:
+  # Enable webhook notifications for MCP operations.
+  enabled: false
+  # Webhook URL to POST notifications to.
+  url: ''
+  # Secret for HMAC signing (recommended for security).
+  secret: ''
+  # Request timeout in seconds.
+  timeout: 5
+  # Batch notifications and send on shutdown (better performance).
+  batch_notifications: true
+  # Operations to notify on: create, update, delete, structure.
+  notify_on:
+    - create
+    - update
+    - delete
+    - structure

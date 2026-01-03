@@ -1,0 +1,8 @@
+services:
+  mcp_tools_analysis.analysis:
+    class: Drupal\mcp_tools_analysis\Service\AnalysisService
+    arguments:
+      - '@entity_type.manager'
+      - '@database'
+      - '@http_client'
+      - '@config.factory'

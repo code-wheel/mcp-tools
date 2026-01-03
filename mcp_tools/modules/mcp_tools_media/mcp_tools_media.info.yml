@@ -1,0 +1,10 @@
+name: 'MCP Tools - Media'
+type: module
+description: 'Media management operations: create, upload, and manage media entities.'
+package: MCP Tools
+core_version_requirement: ^10.2 || ^11
+dependencies:
+  - mcp_tools:mcp_tools
+  - drupal:media
+  - drupal:file
+lifecycle: experimental

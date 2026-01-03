@@ -1,0 +1,8 @@
+services:
+  mcp_tools_menus.menu:
+    class: Drupal\mcp_tools_menus\Service\MenuService
+    arguments:
+      - '@entity_type.manager'
+      - '@plugin.manager.menu.link'
+      - '@mcp_tools.access_manager'
+      - '@mcp_tools.audit_logger'

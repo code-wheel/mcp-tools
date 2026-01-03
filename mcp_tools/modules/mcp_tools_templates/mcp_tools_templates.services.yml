@@ -1,0 +1,8 @@
+services:
+  mcp_tools_templates.template:
+    class: Drupal\mcp_tools_templates\Service\TemplateService
+    arguments:
+      - '@entity_type.manager'
+      - '@config.factory'
+      - '@mcp_tools.access_manager'
+      - '@mcp_tools.audit_logger'

@@ -1,0 +1,33 @@
+services:
+  mcp_tools_structure.content_type:
+    class: Drupal\mcp_tools_structure\Service\ContentTypeService
+    arguments:
+      - '@entity_type.manager'
+      - '@entity_type.bundle.info'
+      - '@config.factory'
+      - '@mcp_tools.access_manager'
+      - '@mcp_tools.audit_logger'
+
+  mcp_tools_structure.field:
+    class: Drupal\mcp_tools_structure\Service\FieldService
+    arguments:
+      - '@entity_type.manager'
+      - '@entity_field.manager'
+      - '@plugin.manager.field.field_type'
+      - '@mcp_tools.access_manager'
+      - '@mcp_tools.audit_logger'
+
+  mcp_tools_structure.taxonomy:
+    class: Drupal\mcp_tools_structure\Service\TaxonomyService
+    arguments:
+      - '@entity_type.manager'
+      - '@mcp_tools.access_manager'
+      - '@mcp_tools.audit_logger'
+
+  mcp_tools_structure.role:
+    class: Drupal\mcp_tools_structure\Service\RoleService
+    arguments:
+      - '@entity_type.manager'
+      - '@user.permissions'
+      - '@mcp_tools.access_manager'
+      - '@mcp_tools.audit_logger'

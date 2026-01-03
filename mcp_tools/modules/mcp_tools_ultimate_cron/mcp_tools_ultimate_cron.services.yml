@@ -1,0 +1,7 @@
+services:
+  mcp_tools_ultimate_cron.ultimate_cron_service:
+    class: Drupal\mcp_tools_ultimate_cron\Service\UltimateCronService
+    arguments:
+      - '@entity_type.manager'
+      - '@database'
+      - '@logger.factory'

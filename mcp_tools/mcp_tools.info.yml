@@ -1,0 +1,16 @@
+name: MCP Tools
+type: module
+description: 'Batteries-included MCP tools for AI assistants working with Drupal sites.'
+package: AI
+core_version_requirement: ^10.2 || ^11
+php: 8.1
+version: '1.0.0-dev'
+lifecycle: experimental
+
+dependencies:
+  - mcp_server:mcp_server
+  - tool:tool
+  - drupal:dblog
+  - drupal:update
+
+configure: mcp_tools.settings

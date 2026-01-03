@@ -1,0 +1,6 @@
+mcp_tools.settings:
+  title: 'MCP Tools'
+  description: 'Configure MCP Tools access control, rate limiting, and security settings.'
+  route_name: mcp_tools.settings
+  parent: system.admin_config_services
+  weight: 10

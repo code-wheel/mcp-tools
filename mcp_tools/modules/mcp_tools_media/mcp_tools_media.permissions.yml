@@ -1,0 +1,4 @@
+mcp_tools use media:
+  title: 'Use MCP media tools'
+  description: 'Create, upload, and manage media entities via MCP.'
+  restrict access: true

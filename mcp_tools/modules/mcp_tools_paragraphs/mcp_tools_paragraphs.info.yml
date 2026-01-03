@@ -1,0 +1,9 @@
+name: 'MCP Tools - Paragraphs'
+type: module
+description: 'Paragraphs integration: manage paragraph types and their fields.'
+package: MCP Tools
+core_version_requirement: ^10.2 || ^11
+dependencies:
+  - mcp_tools:mcp_tools
+  - paragraphs:paragraphs
+lifecycle: experimental

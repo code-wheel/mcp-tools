@@ -1,0 +1,9 @@
+name: 'MCP Tools - Webform'
+type: module
+description: 'Webform management: list, create, update, delete webforms and manage submissions.'
+package: MCP Tools
+core_version_requirement: ^10.2 || ^11
+dependencies:
+  - mcp_tools:mcp_tools
+  - webform:webform
+lifecycle: experimental

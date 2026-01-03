@@ -1,0 +1,9 @@
+services:
+  mcp_tools_migration.migration:
+    class: Drupal\mcp_tools_migration\Service\MigrationService
+    arguments:
+      - '@entity_type.manager'
+      - '@entity_field.manager'
+      - '@current_user'
+      - '@mcp_tools.access_manager'
+      - '@mcp_tools.audit_logger'

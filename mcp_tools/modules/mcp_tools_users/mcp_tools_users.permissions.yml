@@ -1,0 +1,4 @@
+mcp_tools use users:
+  title: 'Use MCP user tools'
+  description: 'Create, update, block, activate users and assign roles via MCP.'
+  restrict access: true

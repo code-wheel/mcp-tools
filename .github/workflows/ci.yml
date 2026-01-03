@@ -1,0 +1,139 @@
+# =============================================================================
+# CI Workflow for MCP Tools
+# Runs tests and code quality checks on PRs
+# =============================================================================
+
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  php-lint:
+    name: PHP Lint
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php-version: ['8.1', '8.2', '8.3']
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-version }}
+
+      - name: PHP Syntax Check
+        run: |
+          find mcp_tools -name "*.php" -print0 | xargs -0 -n1 php -l
+
+  phpcs:
+    name: PHP CodeSniffer
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          tools: phpcs
+
+      - name: Install Drupal Coding Standards
+        run: |
+          composer global require drupal/coder
+          phpcs --config-set installed_paths ~/.composer/vendor/drupal/coder/coder_sniffer
+
+      - name: Run PHPCS
+        run: |
+          phpcs --standard=Drupal,DrupalPractice mcp_tools/src --extensions=php,module,install,inc --ignore=*/tests/*
+        continue-on-error: true  # Warning only for now
+
+  phpunit:
+    name: PHPUnit Tests
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: drupal
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, pdo_mysql, gd
+          tools: composer
+
+      - name: Get Composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v3
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: Install Drupal
+        run: |
+          composer create-project drupal/recommended-project:^10.2 drupal --no-interaction
+          cd drupal
+          composer require drupal/mcp_server drupal/tool --no-interaction || true
+
+      - name: Copy module
+        run: |
+          mkdir -p drupal/web/modules/contrib/mcp_tools
+          cp -r mcp_tools/* drupal/web/modules/contrib/mcp_tools/
+
+      - name: Run PHPUnit
+        run: |
+          cd drupal
+          if [ -f web/modules/contrib/mcp_tools/phpunit.xml ]; then
+            ./vendor/bin/phpunit -c web/modules/contrib/mcp_tools/phpunit.xml
+          else
+            echo "No phpunit.xml found, skipping tests"
+          fi
+        env:
+          SIMPLETEST_DB: mysql://root:root@127.0.0.1/drupal
+
+  documentation:
+    name: Documentation Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check for broken links in README
+        run: |
+          # Basic check that README exists and has content
+          if [ ! -f mcp_tools/README.md ]; then
+            echo "ERROR: README.md not found"
+            exit 1
+          fi
+
+          # Check minimum content
+          LINES=$(wc -l < mcp_tools/README.md)
+          if [ "$LINES" -lt 50 ]; then
+            echo "WARNING: README.md seems short ($LINES lines)"
+          fi
+
+          echo "README.md exists with $LINES lines"

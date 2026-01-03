@@ -1,0 +1,62 @@
+# =============================================================================
+# Private Monorepo .gitignore
+# =============================================================================
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Dependencies
+/vendor/
+node_modules/
+composer.lock
+package-lock.json
+
+# Testing
+.phpunit.result.cache
+coverage/
+.phpcs-cache
+
+# Build artifacts
+/dist/
+/build/
+
+# Environment & Secrets
+.env
+.env.*
+!.env.example
+*.local.php
+secrets/
+*.pem
+*.key
+
+# Drupal (if testing locally)
+/web/
+/docroot/
+sites/default/files/
+sites/default/settings.local.php
+
+# Temporary files
+/tmp/
+*.tmp
+*.bak
+*.log
+
+# Release artifacts
+*.tar.gz
+*.zip
+
+# Gitleaks
+.gitleaks.toml.local
+
+# Internal planning docs (keep in private repo only)
+INTERNAL_PLANNING.md
+/notes/
+*.internal.md

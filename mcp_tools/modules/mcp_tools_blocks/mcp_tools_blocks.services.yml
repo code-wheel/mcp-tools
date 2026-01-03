@@ -1,0 +1,9 @@
+services:
+  mcp_tools_blocks.block:
+    class: Drupal\mcp_tools_blocks\Service\BlockService
+    arguments:
+      - '@entity_type.manager'
+      - '@plugin.manager.block'
+      - '@theme_handler'
+      - '@mcp_tools.access_manager'
+      - '@mcp_tools.audit_logger'

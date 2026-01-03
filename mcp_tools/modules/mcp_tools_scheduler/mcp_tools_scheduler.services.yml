@@ -1,0 +1,9 @@
+services:
+  mcp_tools_scheduler.scheduler:
+    class: Drupal\mcp_tools_scheduler\Service\SchedulerService
+    arguments:
+      - '@entity_type.manager'
+      - '@current_user'
+      - '@mcp_tools.access_manager'
+      - '@mcp_tools.audit_logger'
+      - '@datetime.time'

@@ -1,0 +1,8 @@
+services:
+  mcp_tools_media.media:
+    class: Drupal\mcp_tools_media\Service\MediaService
+    arguments:
+      - '@entity_type.manager'
+      - '@file_system'
+      - '@mcp_tools.access_manager'
+      - '@mcp_tools.audit_logger'

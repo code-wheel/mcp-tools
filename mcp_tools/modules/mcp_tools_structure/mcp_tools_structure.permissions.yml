@@ -1,0 +1,4 @@
+mcp_tools use structure:
+  title: 'Use MCP structure tools'
+  description: 'Manage content types, fields, taxonomy, and roles via MCP.'
+  restrict access: true

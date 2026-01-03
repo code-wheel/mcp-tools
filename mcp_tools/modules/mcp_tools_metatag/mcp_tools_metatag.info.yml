@@ -1,0 +1,9 @@
+name: 'MCP Tools - Metatag'
+type: module
+description: 'Metatag management: get and set SEO metatags on entities for improved search engine optimization.'
+package: MCP Tools
+core_version_requirement: ^10.2 || ^11
+dependencies:
+  - mcp_tools:mcp_tools
+  - metatag:metatag
+lifecycle: experimental

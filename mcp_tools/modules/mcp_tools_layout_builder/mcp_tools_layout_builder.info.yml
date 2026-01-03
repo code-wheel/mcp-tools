@@ -1,0 +1,9 @@
+name: 'MCP Tools - Layout Builder'
+type: module
+description: 'MCP tools for Layout Builder management.'
+package: MCP
+core_version_requirement: ^10.2 || ^11
+dependencies:
+  - mcp_tools:mcp_tools
+  - drupal:layout_builder
+lifecycle: experimental
