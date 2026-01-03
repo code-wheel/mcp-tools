@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Drupal\mcp_tools\Controller;
 
 use Drupal\Core\Controller\ControllerBase;
-use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\RateLimiter;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -18,7 +17,6 @@ class StatusController extends ControllerBase {
   public function __construct(
     protected AccessManager $accessManager,
     protected RateLimiter $rateLimiter,
-    protected ModuleHandlerInterface $moduleHandler,
   ) {}
 
   /**
@@ -28,7 +26,6 @@ class StatusController extends ControllerBase {
     return new static(
       $container->get('mcp_tools.access_manager'),
       $container->get('mcp_tools.rate_limiter'),
-      $container->get('module_handler'),
     );
   }
 
@@ -126,7 +123,7 @@ class StatusController extends ControllerBase {
 
     $moduleItems = [];
     foreach ($submodules as $module => $description) {
-      $enabled = $this->moduleHandler->moduleExists($module);
+      $enabled = $this->moduleHandler()->moduleExists($module);
       $moduleItems[] = [
         '#markup' => $this->t('@module: @status - @desc', [
           '@module' => $module,
