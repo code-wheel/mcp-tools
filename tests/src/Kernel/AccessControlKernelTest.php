@@ -17,7 +17,15 @@ class AccessControlKernelTest extends KernelTestBase {
   /**
    * {@inheritdoc}
    */
-  protected static $modules = ['mcp_tools', 'user', 'system'];
+  protected static $modules = [
+    'mcp_tools',
+    'mcp_server',
+    'tool',
+    'user',
+    'system',
+    'update',
+    'dblog',
+  ];
 
   /**
    * The access manager service.
