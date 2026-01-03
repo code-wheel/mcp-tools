@@ -7,9 +7,9 @@ name: Security
 
 on:
   push:
-    branches: [main, develop]
+    branches: [master, main, develop]
   pull_request:
-    branches: [main, develop]
+    branches: [master, main, develop]
   schedule:
     # Run weekly on Sundays at midnight
     - cron: '0 0 * * 0'

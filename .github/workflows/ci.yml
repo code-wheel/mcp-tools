@@ -7,9 +7,9 @@ name: CI
 
 on:
   push:
-    branches: [main, develop]
+    branches: [master, main, develop]
   pull_request:
-    branches: [main, develop]
+    branches: [master, main, develop]
 
 jobs:
   php-lint:
@@ -97,23 +97,38 @@ jobs:
         run: |
           composer create-project drupal/recommended-project:^10.2 drupal --no-interaction
           cd drupal
-          composer require drupal/mcp_server drupal/tool --no-interaction || true
+          composer require --dev drupal/core-dev:^10.2 phpspec/prophecy-phpunit:^2 --no-interaction
+          composer require drupal/mcp_server drupal/tool --no-interaction || echo "Optional deps not available yet"
 
       - name: Copy module
         run: |
           mkdir -p drupal/web/modules/contrib/mcp_tools
           cp -r mcp_tools/* drupal/web/modules/contrib/mcp_tools/
 
-      - name: Run PHPUnit
+      - name: Run PHPUnit Unit Tests
         run: |
           cd drupal
-          if [ -f web/modules/contrib/mcp_tools/phpunit.xml ]; then
-            ./vendor/bin/phpunit -c web/modules/contrib/mcp_tools/phpunit.xml
-          else
-            echo "No phpunit.xml found, skipping tests"
-          fi
+          ./vendor/bin/phpunit \
+            -c web/core/phpunit.xml.dist \
+            --testsuite unit \
+            web/modules/contrib/mcp_tools/tests/src/Unit/ \
+            --colors=always
         env:
           SIMPLETEST_DB: mysql://root:root@127.0.0.1/drupal
+          SIMPLETEST_BASE_URL: http://localhost
+
+      - name: Run PHPUnit Kernel Tests
+        run: |
+          cd drupal
+          ./vendor/bin/phpunit \
+            -c web/core/phpunit.xml.dist \
+            --testsuite kernel \
+            web/modules/contrib/mcp_tools/tests/src/Kernel/ \
+            --colors=always
+        env:
+          SIMPLETEST_DB: mysql://root:root@127.0.0.1/drupal
+          SIMPLETEST_BASE_URL: http://localhost
+        continue-on-error: true  # Kernel tests may need more setup
 
   documentation:
     name: Documentation Check
