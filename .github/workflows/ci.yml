@@ -80,15 +80,16 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
-          extensions: mbstring, pdo_mysql, gd
+          extensions: mbstring, pdo_mysql, gd, dom, xml
           tools: composer
+          coverage: none
 
       - name: Get Composer cache directory
         id: composer-cache
         run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
 
       - name: Cache Composer dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ${{ steps.composer-cache.outputs.dir }}
           key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
@@ -98,38 +99,114 @@ jobs:
         run: |
           composer create-project drupal/recommended-project:^10.2 drupal --no-interaction
           cd drupal
-          composer require --dev drupal/core-dev:^10.2 phpspec/prophecy-phpunit:^2 --no-interaction
-          composer require drupal/mcp_server drupal/tool --no-interaction || echo "Optional deps not available yet"
+          composer require --dev drupal/core-dev:^10.2 phpspec/prophecy-phpunit:^2 drush/drush --no-interaction
 
-      - name: Copy module
+      - name: Create stub modules for dependencies
+        run: |
+          # Create mcp_server stub module
+          mkdir -p drupal/web/modules/contrib/mcp_server
+          cat > drupal/web/modules/contrib/mcp_server/mcp_server.info.yml << 'EOF'
+          name: MCP Server (Stub)
+          type: module
+          description: 'Stub module for testing MCP Tools.'
+          package: Testing
+          core_version_requirement: ^10 || ^11
+          EOF
+
+          # Create tool stub module
+          mkdir -p drupal/web/modules/contrib/tool
+          cat > drupal/web/modules/contrib/tool/tool.info.yml << 'EOF'
+          name: Tool (Stub)
+          type: module
+          description: 'Stub module for testing MCP Tools.'
+          package: Testing
+          core_version_requirement: ^10 || ^11
+          EOF
+
+      - name: Copy MCP Tools module
         run: |
           mkdir -p drupal/web/modules/contrib/mcp_tools
           cp -r mcp_tools/* drupal/web/modules/contrib/mcp_tools/
 
-      - name: Run PHPUnit Unit Tests
+      - name: Install Drupal site
         run: |
           cd drupal
-          ./vendor/bin/phpunit \
-            -c web/core/phpunit.xml.dist \
-            --testsuite unit \
-            web/modules/contrib/mcp_tools/tests/src/Unit/ \
-            --colors=always
-        env:
-          SIMPLETEST_DB: mysql://root:root@127.0.0.1/drupal
-          SIMPLETEST_BASE_URL: http://localhost
+          ./vendor/bin/drush site:install minimal \
+            --db-url=mysql://root:root@127.0.0.1/drupal \
+            --site-name="MCP Tools Test" \
+            --account-name=admin \
+            --account-pass=admin \
+            -y
 
-      - name: Run PHPUnit Kernel Tests
+      - name: Enable required modules
         run: |
           cd drupal
-          ./vendor/bin/phpunit \
-            -c web/core/phpunit.xml.dist \
-            --testsuite kernel \
-            web/modules/contrib/mcp_tools/tests/src/Kernel/ \
-            --colors=always
+          ./vendor/bin/drush en mcp_server tool dblog update -y
+          ./vendor/bin/drush en mcp_tools -y
+          ./vendor/bin/drush cr
+
+      - name: Create phpunit.xml
+        run: |
+          cd drupal
+          cat > phpunit.xml << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+                   bootstrap="web/core/tests/bootstrap.php"
+                   colors="true"
+                   beStrictAboutTestsThatDoNotTestAnything="true"
+                   beStrictAboutOutputDuringTests="true"
+                   beStrictAboutChangesToGlobalState="true">
+            <php>
+              <ini name="error_reporting" value="32767"/>
+              <ini name="memory_limit" value="-1"/>
+              <env name="SIMPLETEST_BASE_URL" value="http://localhost:8888"/>
+              <env name="SIMPLETEST_DB" value="mysql://root:root@127.0.0.1/drupal"/>
+              <env name="BROWSERTEST_OUTPUT_DIRECTORY" value=""/>
+              <env name="SYMFONY_DEPRECATIONS_HELPER" value="disabled"/>
+            </php>
+            <testsuites>
+              <testsuite name="unit">
+                <directory>web/modules/contrib/mcp_tools/tests/src/Unit</directory>
+                <directory>web/modules/contrib/mcp_tools/modules/*/tests/src/Unit</directory>
+              </testsuite>
+              <testsuite name="kernel">
+                <directory>web/modules/contrib/mcp_tools/tests/src/Kernel</directory>
+                <directory>web/modules/contrib/mcp_tools/modules/*/tests/src/Kernel</directory>
+              </testsuite>
+              <testsuite name="functional">
+                <directory>web/modules/contrib/mcp_tools/tests/src/Functional</directory>
+                <directory>web/modules/contrib/mcp_tools/modules/*/tests/src/Functional</directory>
+              </testsuite>
+            </testsuites>
+          </phpunit>
+          EOF
+
+      - name: Start PHP built-in server
+        run: |
+          cd drupal/web
+          php -S localhost:8888 .ht.router.php &
+          sleep 3
+          # Verify server is running
+          curl -s -o /dev/null -w "%{http_code}" http://localhost:8888 || echo "Server check"
+
+      - name: Run Unit Tests
+        run: |
+          cd drupal
+          ./vendor/bin/phpunit --testsuite unit --colors=always
+
+      - name: Run Kernel Tests
+        run: |
+          cd drupal
+          ./vendor/bin/phpunit --testsuite kernel --colors=always
+
+      - name: Run Functional Tests
+        run: |
+          cd drupal
+          ./vendor/bin/phpunit --testsuite functional --colors=always
         env:
+          SIMPLETEST_BASE_URL: http://localhost:8888
           SIMPLETEST_DB: mysql://root:root@127.0.0.1/drupal
-          SIMPLETEST_BASE_URL: http://localhost
-        continue-on-error: true  # Kernel tests may need more setup
 
   documentation:
     name: Documentation Check
