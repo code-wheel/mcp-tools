@@ -18,7 +18,6 @@ class StatusControllerTest extends BrowserTestBase {
    */
   protected static $modules = [
     'mcp_tools',
-    'mcp_server',
     'tool',
     'dblog',
     'update',

@@ -7,16 +7,15 @@ Thank you for your interest in contributing to MCP Tools! This guide explains ho
 ```
 mcp_tools/
 ├── src/
-│   ├── Annotation/McpTool.php       # Tool annotation
-│   ├── McpToolPluginBase.php        # Base class for tools
-│   ├── McpToolPluginManager.php     # Plugin manager
+│   ├── Tool/McpToolsToolBase.php    # Base class for Tool API tools
 │   ├── Service/
 │   │   ├── AccessManager.php        # Access control
 │   │   ├── RateLimiter.php          # Rate limiting
 │   │   └── AuditLogger.php          # Audit logging
-│   └── Plugin/McpTool/              # Read-only tools
+│   └── Plugin/tool/Tool/            # Base module Tool API plugins (read-only tools)
 ├── modules/                          # Write submodules
 │   └── mcp_tools_*/                  # Feature submodules
+│       └── src/Plugin/tool/Tool/     # Submodule Tool API plugins
 └── docs/                             # Documentation
 ```
 
@@ -26,52 +25,72 @@ Base module tools should be **read-only**. For write operations, create a submod
 
 ### 1. Create the Tool Plugin
 
-Create a file in `src/Plugin/McpTool/YourTool.php`:
+Create a file in `src/Plugin/tool/Tool/YourTool.php`:
 
 ```php
 <?php
 
-namespace Drupal\mcp_tools\Plugin\McpTool;
+declare(strict_types=1);
 
-use Drupal\mcp_tools\McpToolPluginBase;
+namespace Drupal\mcp_tools\Plugin\tool\Tool;
+
+use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\mcp_tools\Tool\McpToolsToolBase;
+use Drupal\tool\Attribute\Tool;
+use Drupal\tool\Tool\ToolOperation;
+use Drupal\tool\TypedData\InputDefinition;
 
 /**
- * Gets information about something.
- *
- * @McpTool(
- *   id = "mcp_your_tool",
- *   label = @Translation("Your Tool"),
- *   description = @Translation("Description of what this tool does"),
- *   parameters = {
- *     "param1" = {
- *       "type" = "string",
- *       "description" = "Description of parameter",
- *       "required" = true
- *     },
- *     "param2" = {
- *       "type" = "integer",
- *       "description" = "Optional parameter",
- *       "required" = false,
- *       "default" = 10
- *     }
- *   }
- * )
+ * Tool plugin implementation.
  */
-class YourTool extends McpToolPluginBase {
+#[Tool(
+  id: 'mcp_your_tool',
+  label: new TranslatableMarkup('Your Tool'),
+  description: new TranslatableMarkup('Description of what this tool does'),
+  operation: ToolOperation::Read,
+  input_definitions: [
+    'param1' => new InputDefinition(
+      data_type: 'string',
+      label: new TranslatableMarkup('Param 1'),
+      description: new TranslatableMarkup('Description of param1'),
+      required: TRUE,
+    ),
+    'param2' => new InputDefinition(
+      data_type: 'integer',
+      label: new TranslatableMarkup('Param 2'),
+      description: new TranslatableMarkup('Optional parameter'),
+      required: FALSE,
+      default_value: 10,
+    ),
+  ],
+  output_definitions: [
+    'result' => new ContextDefinition(
+      data_type: 'map',
+      label: new TranslatableMarkup('Result'),
+      description: new TranslatableMarkup('Tool output payload'),
+    ),
+  ],
+)]
+class YourTool extends McpToolsToolBase {
+
+  protected const MCP_CATEGORY = 'discovery';
 
   /**
    * {@inheritdoc}
    */
-  public function execute(array $parameters): array {
-    $param1 = $parameters['param1'];
-    $param2 = $parameters['param2'] ?? 10;
+  protected function executeLegacy(array $input): array {
+    $param1 = (string) ($input['param1'] ?? '');
+    $param2 = (int) ($input['param2'] ?? 10);
 
     // Your logic here
     $result = $this->doSomething($param1, $param2);
 
     return [
       'success' => TRUE,
-      'data' => $result,
+      'data' => [
+        'result' => $result,
+      ],
     ];
   }
 
@@ -86,18 +105,18 @@ class YourTool extends McpToolPluginBase {
 }
 ```
 
-### 2. Parameter Types
+### 2. Input/Output Types
 
-Supported parameter types:
+MCP Tools uses Tool API typed data types:
 
 | Type | Description |
 |------|-------------|
 | `string` | Text value |
 | `integer` | Whole number |
-| `number` | Decimal number |
+| `float` | Decimal number |
 | `boolean` | true/false |
-| `array` | List of values |
-| `object` | Key-value pairs |
+| `list` | List of values |
+| `map` | Key-value pairs |
 
 ### 3. Return Format
 
@@ -117,6 +136,14 @@ return [
 ];
 ```
 
+### 4. Categories and Permissions
+
+Each tool must define `protected const MCP_CATEGORY = '<category>';`.
+
+Access is gated by:
+- Drupal permission `mcp_tools use <category>`
+- MCP scopes (`read` for read tools, `write` for write tools) and global read-only mode
+
 ## Creating a New Submodule
 
 For write operations, create a submodule in `modules/mcp_tools_yourfeature/`.
@@ -130,7 +157,7 @@ modules/mcp_tools_yourfeature/
 ├── src/
 │   ├── Service/
 │   │   └── YourFeatureService.php
-│   └── Plugin/McpTool/
+│   └── Plugin/tool/Tool/
 │       ├── CreateSomething.php
 │       ├── UpdateSomething.php
 │       └── DeleteSomething.php
@@ -146,7 +173,7 @@ name: 'MCP Tools - Your Feature'
 type: module
 description: 'Manage your feature via MCP.'
 package: MCP Tools
-core_version_requirement: ^10 || ^11
+core_version_requirement: ^10.3 || ^11
 dependencies:
   - mcp_tools:mcp_tools
   # Add contrib dependencies if needed:
@@ -174,6 +201,8 @@ services:
 ```php
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\mcp_tools_yourfeature\Service;
 
 use Drupal\Core\Entity\EntityTypeManagerInterface;
@@ -196,8 +225,8 @@ class YourFeatureService {
    */
   public function create(array $data): array {
     // Check write access
-    if (!$this->accessManager->hasWriteAccess()) {
-      return ['success' => FALSE, 'error' => 'Write access denied'];
+    if (!$this->accessManager->canWrite()) {
+      return $this->accessManager->getWriteAccessDenied();
     }
 
     try {
@@ -230,34 +259,56 @@ class YourFeatureService {
 
 ### 5. Tool Plugin (Write Operation)
 
-`src/Plugin/McpTool/CreateSomething.php`:
+`src/Plugin/tool/Tool/CreateSomething.php`:
 
 ```php
 <?php
 
-namespace Drupal\mcp_tools_yourfeature\Plugin\McpTool;
+declare(strict_types=1);
 
-use Drupal\mcp_tools\McpToolPluginBase;
+namespace Drupal\mcp_tools_yourfeature\Plugin\tool\Tool;
+
+use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\mcp_tools_yourfeature\Service\YourFeatureService;
+use Drupal\tool\Attribute\Tool;
+use Drupal\tool\Tool\ToolOperation;
+use Drupal\tool\TypedData\InputDefinition;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * Creates something.
- *
- * @McpTool(
- *   id = "mcp_yourfeature_create",
- *   label = @Translation("Create Something"),
- *   description = @Translation("Creates a new something"),
- *   parameters = {
- *     "name" = {
- *       "type" = "string",
- *       "description" = "The name",
- *       "required" = true
- *     }
- *   }
- * )
+ * Tool plugin implementation.
  */
-class CreateSomething extends McpToolPluginBase {
+#[Tool(
+  id: 'mcp_yourfeature_create',
+  label: new TranslatableMarkup('Create Something'),
+  description: new TranslatableMarkup('Creates a new something'),
+  operation: ToolOperation::Write,
+  input_definitions: [
+    'name' => new InputDefinition(
+      data_type: 'string',
+      label: new TranslatableMarkup('Name'),
+      description: new TranslatableMarkup('The name'),
+      required: TRUE,
+    ),
+  ],
+  output_definitions: [
+    'id' => new ContextDefinition(
+      data_type: 'integer',
+      label: new TranslatableMarkup('ID'),
+      description: new TranslatableMarkup('The created entity ID'),
+    ),
+    'message' => new ContextDefinition(
+      data_type: 'string',
+      label: new TranslatableMarkup('Message'),
+      description: new TranslatableMarkup('Result message'),
+    ),
+  ],
+)]
+class CreateSomething extends McpToolsToolBase {
+
+  protected const MCP_CATEGORY = 'yourfeature';
 
   protected YourFeatureService $service;
 
@@ -273,9 +324,9 @@ class CreateSomething extends McpToolPluginBase {
   /**
    * {@inheritdoc}
    */
-  public function execute(array $parameters): array {
+  protected function executeLegacy(array $input): array {
     return $this->service->create([
-      'name' => $parameters['name'],
+      'name' => $input['name'],
     ]);
   }
 

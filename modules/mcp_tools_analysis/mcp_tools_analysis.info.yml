@@ -2,7 +2,7 @@ name: 'MCP Tools - Analysis'
 type: module
 description: 'Site health and content analysis tools: broken links, SEO, security audit, performance, accessibility, and duplicate content detection.'
 package: MCP Tools
-core_version_requirement: ^10.2 || ^11
+core_version_requirement: ^10.3 || ^11
 dependencies:
   - mcp_tools:mcp_tools
 lifecycle: experimental

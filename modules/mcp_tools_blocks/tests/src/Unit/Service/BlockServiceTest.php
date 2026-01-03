@@ -29,6 +29,7 @@ class BlockServiceTest extends UnitTestCase {
   protected AccessManager $accessManager;
   protected AuditLogger $auditLogger;
   protected EntityStorageInterface $blockStorage;
+  protected bool $themeExists = TRUE;
 
   /**
    * {@inheritdoc}
@@ -50,7 +51,11 @@ class BlockServiceTest extends UnitTestCase {
 
     // Default theme handler behavior.
     $this->themeHandler->method('getDefault')->willReturn('olivero');
-    $this->themeHandler->method('themeExists')->willReturn(TRUE);
+    $this->themeExists = TRUE;
+    $this->themeHandler->method('themeExists')
+      ->willReturnCallback(function (string $theme): bool {
+        return $this->themeExists;
+      });
   }
 
   /**
@@ -105,7 +110,7 @@ class BlockServiceTest extends UnitTestCase {
     $this->blockManager->method('getDefinitions')->willReturn([
       'system_branding_block' => ['admin_label' => 'Branding'],
     ]);
-    $this->themeHandler->method('themeExists')->willReturn(FALSE);
+    $this->themeExists = FALSE;
 
     $service = $this->createBlockService();
     $result = $service->placeBlock('system_branding_block', 'header', ['theme' => 'nonexistent_theme']);
@@ -242,7 +247,7 @@ class BlockServiceTest extends UnitTestCase {
    * @covers ::listRegions
    */
   public function testListRegionsThemeNotFound(): void {
-    $this->themeHandler->method('themeExists')->willReturn(FALSE);
+    $this->themeExists = FALSE;
 
     $service = $this->createBlockService();
     $result = $service->listRegions('nonexistent_theme');

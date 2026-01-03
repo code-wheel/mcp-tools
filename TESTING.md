@@ -76,7 +76,7 @@ Functional tests run with a full Drupal installation:
 
 GitHub Actions runs tests automatically on every push and PR:
 
-- **PHP Lint** - Syntax checking for PHP 8.1, 8.2, 8.3
+- **PHP Lint** - Syntax checking for PHP 8.3+
 - **PHPCS** - Drupal coding standards
 - **PHPUnit** - All test suites
 - **Gitleaks** - Security scanning for secrets

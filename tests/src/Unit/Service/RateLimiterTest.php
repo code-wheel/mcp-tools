@@ -330,4 +330,71 @@ class RateLimiterTest extends UnitTestCase {
     $this->assertTrue($result2['allowed']);
   }
 
+  /**
+   * @covers ::checkReadLimit
+   */
+  public function testCheckReadLimitUnknownOperationIsAllowed(): void {
+    $this->requestStack->method('getCurrentRequest')->willReturn(NULL);
+
+    $limiter = $this->createRateLimiter();
+    $result = $limiter->checkReadLimit('unknown_operation');
+
+    $this->assertTrue($result['allowed']);
+    $this->assertNull($result['error']);
+  }
+
+  /**
+   * @covers ::checkReadLimit
+   */
+  public function testCheckReadLimitBlocksContentSearchWhenOverLimit(): void {
+    $this->config->method('get')
+      ->willReturnMap([
+        ['rate_limits.content_search.max_per_minute', 2],
+      ]);
+
+    $request = $this->createMock(Request::class);
+    $request->method('getClientIp')->willReturn('127.0.0.1');
+    $request->headers = $this->createMock(\Symfony\Component\HttpFoundation\HeaderBag::class);
+    $request->headers->method('get')->willReturn('');
+    $this->requestStack->method('getCurrentRequest')->willReturn($request);
+
+    $limiter = $this->createRateLimiter();
+
+    $result1 = $limiter->checkReadLimit('content_search');
+    $this->assertTrue($result1['allowed']);
+
+    $result2 = $limiter->checkReadLimit('content_search');
+    $this->assertTrue($result2['allowed']);
+
+    $result3 = $limiter->checkReadLimit('content_search');
+    $this->assertFalse($result3['allowed']);
+    $this->assertStringContainsString('Rate limit exceeded', $result3['error']);
+    $this->assertNotNull($result3['retry_after']);
+  }
+
+  /**
+   * @covers ::checkReadLimit
+   */
+  public function testCheckReadLimitBlocksBrokenLinkScanWhenOverLimit(): void {
+    $this->config->method('get')
+      ->willReturnMap([
+        ['rate_limits.broken_link_scan.max_per_hour', 1],
+      ]);
+
+    $request = $this->createMock(Request::class);
+    $request->method('getClientIp')->willReturn('127.0.0.1');
+    $request->headers = $this->createMock(\Symfony\Component\HttpFoundation\HeaderBag::class);
+    $request->headers->method('get')->willReturn('');
+    $this->requestStack->method('getCurrentRequest')->willReturn($request);
+
+    $limiter = $this->createRateLimiter();
+
+    $result1 = $limiter->checkReadLimit('broken_link_scan');
+    $this->assertTrue($result1['allowed']);
+
+    $result2 = $limiter->checkReadLimit('broken_link_scan');
+    $this->assertFalse($result2['allowed']);
+    $this->assertStringContainsString('broken_link_scan', $result2['error']);
+  }
+
 }

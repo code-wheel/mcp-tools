@@ -19,7 +19,6 @@ class SecurityTest extends KernelTestBase {
    */
   protected static $modules = [
     'mcp_tools',
-    'mcp_server',
     'tool',
     'user',
     'system',

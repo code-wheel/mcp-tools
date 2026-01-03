@@ -9,8 +9,6 @@ use Drupal\Core\Config\ImmutableConfig;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\Tests\UnitTestCase;
-use Symfony\Component\HttpFoundation\HeaderBag;
-use Symfony\Component\HttpFoundation\ParameterBag;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 
@@ -77,13 +75,32 @@ class AccessManagerTest extends UnitTestCase {
     $this->config->method('get')
       ->willReturnMap([
         ['access.read_only_mode', FALSE],
-        ['access.default_scopes', []],
+        ['access.allowed_scopes', [AccessManager::SCOPE_WRITE]],
+        ['access.default_scopes', [AccessManager::SCOPE_WRITE]],
       ]);
 
     $this->requestStack->method('getCurrentRequest')->willReturn(NULL);
 
     $accessManager = $this->createAccessManager();
     $this->assertFalse($accessManager->canRead());
+  }
+
+  /**
+   * @covers ::canRead
+   */
+  public function testCanReadFallsBackToReadWhenScopesEmpty(): void {
+    $this->config->method('get')
+      ->willReturnMap([
+        ['access.read_only_mode', FALSE],
+        ['access.allowed_scopes', []],
+        ['access.default_scopes', []],
+      ]);
+
+    $this->requestStack->method('getCurrentRequest')->willReturn(NULL);
+
+    $accessManager = $this->createAccessManager();
+    $this->assertTrue($accessManager->canRead());
+    $this->assertSame([AccessManager::SCOPE_READ], $accessManager->getCurrentScopes());
   }
 
   /**
@@ -170,12 +187,15 @@ class AccessManagerTest extends UnitTestCase {
    * @covers ::getCurrentScopes
    */
   public function testGetCurrentScopesFromHeader(): void {
-    $request = $this->createMock(Request::class);
-    $headers = $this->createMock(HeaderBag::class);
-    $headers->method('has')->with('X-MCP-Scope')->willReturn(TRUE);
-    $headers->method('get')->with('X-MCP-Scope')->willReturn('read,write');
-    $request->headers = $headers;
-    $request->query = new ParameterBag([]);
+    $this->config->method('get')
+      ->willReturnMap([
+        ['access.allowed_scopes', [AccessManager::SCOPE_READ, AccessManager::SCOPE_WRITE]],
+        ['access.default_scopes', [AccessManager::SCOPE_READ]],
+        ['access.trust_scopes_via_header', TRUE],
+      ]);
+
+    $request = new Request();
+    $request->headers->set('X-MCP-Scope', 'read,write');
 
     $this->requestStack->method('getCurrentRequest')->willReturn($request);
 
@@ -191,11 +211,14 @@ class AccessManagerTest extends UnitTestCase {
    * @covers ::getCurrentScopes
    */
   public function testGetCurrentScopesFromQueryParam(): void {
-    $request = $this->createMock(Request::class);
-    $headers = $this->createMock(HeaderBag::class);
-    $headers->method('has')->with('X-MCP-Scope')->willReturn(FALSE);
-    $request->headers = $headers;
-    $request->query = new ParameterBag(['mcp_scope' => 'admin']);
+    $this->config->method('get')
+      ->willReturnMap([
+        ['access.allowed_scopes', [AccessManager::SCOPE_READ, AccessManager::SCOPE_WRITE, AccessManager::SCOPE_ADMIN]],
+        ['access.default_scopes', [AccessManager::SCOPE_READ]],
+        ['access.trust_scopes_via_query', TRUE],
+      ]);
+
+    $request = Request::create('/', 'GET', ['mcp_scope' => 'admin']);
 
     $this->requestStack->method('getCurrentRequest')->willReturn($request);
 
@@ -209,12 +232,15 @@ class AccessManagerTest extends UnitTestCase {
    * @covers ::getCurrentScopes
    */
   public function testGetCurrentScopesFiltersInvalidScopes(): void {
-    $request = $this->createMock(Request::class);
-    $headers = $this->createMock(HeaderBag::class);
-    $headers->method('has')->with('X-MCP-Scope')->willReturn(TRUE);
-    $headers->method('get')->with('X-MCP-Scope')->willReturn('read,invalid,write,superadmin');
-    $request->headers = $headers;
-    $request->query = new ParameterBag([]);
+    $this->config->method('get')
+      ->willReturnMap([
+        ['access.allowed_scopes', [AccessManager::SCOPE_READ, AccessManager::SCOPE_WRITE]],
+        ['access.default_scopes', [AccessManager::SCOPE_READ]],
+        ['access.trust_scopes_via_header', TRUE],
+      ]);
+
+    $request = new Request();
+    $request->headers->set('X-MCP-Scope', 'read,invalid,write,superadmin');
 
     $this->requestStack->method('getCurrentRequest')->willReturn($request);
 

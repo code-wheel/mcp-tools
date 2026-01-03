@@ -49,13 +49,46 @@ class SettingsForm extends ConfigFormBase {
     $form['access']['default_scopes'] = [
       '#type' => 'checkboxes',
       '#title' => $this->t('Default connection scopes'),
-      '#description' => $this->t('Scopes granted to connections that do not specify a scope. Can be overridden via X-MCP-Scope header, mcp_scope query parameter, or MCP_SCOPE environment variable.'),
+      '#description' => $this->t('Scopes granted when no trusted scope override is present. Overrides (header/query/env) are optional and are always limited by the "Allowed scopes" setting.'),
       '#options' => [
         'read' => $this->t('Read - Allow read operations'),
         'write' => $this->t('Write - Allow write operations (content, structure changes)'),
         'admin' => $this->t('Admin - Allow administrative operations (recipe application)'),
       ],
       '#default_value' => $config->get('access.default_scopes') ?? ['read', 'write'],
+    ];
+
+    $form['access']['allowed_scopes'] = [
+      '#type' => 'checkboxes',
+      '#title' => $this->t('Allowed scopes (maximum)'),
+      '#description' => $this->t('Maximum scopes that can ever be granted to an MCP connection. Any requested scopes (header/query/env) are intersected with this list. <strong>Recommended:</strong> do not allow "admin" unless strictly needed.'),
+      '#options' => [
+        'read' => $this->t('Read'),
+        'write' => $this->t('Write'),
+        'admin' => $this->t('Admin'),
+      ],
+      '#default_value' => $config->get('access.allowed_scopes') ?? ['read', 'write'],
+    ];
+
+    $form['access']['trust_scopes_via_header'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Trust X-MCP-Scope header'),
+      '#description' => $this->t('Allow MCP clients to request scopes via the HTTP header. <strong>Unsafe on public endpoints</strong> unless you strip/overwrite this header at a trusted reverse proxy.'),
+      '#default_value' => $config->get('access.trust_scopes_via_header') ?? FALSE,
+    ];
+
+    $form['access']['trust_scopes_via_query'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Trust mcp_scope query parameter'),
+      '#description' => $this->t('Allow MCP clients to request scopes via URL query parameter. <strong>Not recommended</strong> except for local development.'),
+      '#default_value' => $config->get('access.trust_scopes_via_query') ?? FALSE,
+    ];
+
+    $form['access']['trust_scopes_via_env'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Trust MCP_SCOPE environment variable'),
+      '#description' => $this->t('Allow scope selection via the MCP_SCOPE environment variable (primarily for Drush/STDIO transport).'),
+      '#default_value' => $config->get('access.trust_scopes_via_env') ?? TRUE,
     ];
 
     $form['access']['audit_logging'] = [
@@ -245,6 +278,19 @@ class SettingsForm extends ConfigFormBase {
       ],
     ];
 
+    $form['webhooks']['webhook_allowed_hosts'] = [
+      '#type' => 'textarea',
+      '#title' => $this->t('Allowed webhook hosts (optional)'),
+      '#description' => $this->t('One host pattern per line (e.g., hooks.slack.com, *.example.com). When empty, any public host is allowed. Private networks and metadata services are always blocked.'),
+      '#default_value' => implode("\n", $config->get('webhooks.allowed_hosts') ?? []),
+      '#rows' => 4,
+      '#states' => [
+        'visible' => [
+          ':input[name="webhooks_enabled"]' => ['checked' => TRUE],
+        ],
+      ],
+    ];
+
     $form['webhooks']['webhook_timeout'] = [
       '#type' => 'number',
       '#title' => $this->t('Request timeout (seconds)'),
@@ -316,8 +362,25 @@ class SettingsForm extends ConfigFormBase {
 
     // Access settings.
     $config->set('access.read_only_mode', (bool) $form_state->getValue('read_only_mode'));
+
+    $allowedScopes = array_filter($form_state->getValue('allowed_scopes') ?? []);
+    if (empty($allowedScopes)) {
+      $allowedScopes = ['read'];
+    }
+    $config->set('access.allowed_scopes', array_values($allowedScopes));
+
     $scopes = array_filter($form_state->getValue('default_scopes'));
-    $config->set('access.default_scopes', array_values($scopes));
+    // Ensure defaults cannot exceed allowed scopes.
+    $defaultScopes = array_values(array_intersect($scopes, $allowedScopes));
+    if (empty($defaultScopes)) {
+      $defaultScopes = array_values($allowedScopes);
+    }
+    $config->set('access.default_scopes', $defaultScopes);
+
+    $config->set('access.trust_scopes_via_header', (bool) $form_state->getValue('trust_scopes_via_header'));
+    $config->set('access.trust_scopes_via_query', (bool) $form_state->getValue('trust_scopes_via_query'));
+    $config->set('access.trust_scopes_via_env', (bool) $form_state->getValue('trust_scopes_via_env'));
+
     $config->set('access.audit_logging', (bool) $form_state->getValue('audit_logging'));
 
     // Rate limiting settings.
@@ -344,6 +407,8 @@ class SettingsForm extends ConfigFormBase {
     $config->set('webhooks.enabled', (bool) $form_state->getValue('webhooks_enabled'));
     $config->set('webhooks.url', $form_state->getValue('webhook_url') ?? '');
     $config->set('webhooks.secret', $form_state->getValue('webhook_secret') ?? '');
+    $webhookHosts = array_filter(array_map('trim', explode("\n", (string) $form_state->getValue('webhook_allowed_hosts'))));
+    $config->set('webhooks.allowed_hosts', $webhookHosts);
     $config->set('webhooks.timeout', (int) $form_state->getValue('webhook_timeout'));
     $config->set('webhooks.batch_notifications', (bool) $form_state->getValue('batch_notifications'));
     $notifyOn = array_filter($form_state->getValue('notify_on') ?? []);

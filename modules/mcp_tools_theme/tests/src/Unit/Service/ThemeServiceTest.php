@@ -27,6 +27,7 @@ class ThemeServiceTest extends UnitTestCase {
   protected ThemeHandlerInterface $themeHandler;
   protected ThemeManagerInterface $themeManager;
   protected ConfigFactoryInterface $configFactory;
+  protected ImmutableConfig $systemThemeConfig;
   protected ThemeExtensionList $themeExtensionList;
   protected AccessManager $accessManager;
   protected AuditLogger $auditLogger;
@@ -45,15 +46,18 @@ class ThemeServiceTest extends UnitTestCase {
     $this->auditLogger = $this->createMock(AuditLogger::class);
 
     // Default config behavior.
-    $systemThemeConfig = $this->createMock(ImmutableConfig::class);
-    $systemThemeConfig->method('get')
+    $this->systemThemeConfig = $this->createMock(ImmutableConfig::class);
+    $this->systemThemeConfig->method('get')
       ->willReturnMap([
         ['default', 'olivero'],
         ['admin', 'claro'],
       ]);
     $this->configFactory->method('get')
-      ->with('system.theme')
-      ->willReturn($systemThemeConfig);
+      ->willReturnCallback(function (string $name): ImmutableConfig {
+        return $name === 'system.theme'
+          ? $this->systemThemeConfig
+          : $this->createMock(ImmutableConfig::class);
+      });
   }
 
   /**
@@ -211,6 +215,11 @@ class ThemeServiceTest extends UnitTestCase {
   public function testDisableThemeCannotDisableDefault(): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
     $this->themeHandler->method('themeExists')->willReturn(TRUE);
+    $installedTheme = $this->createMock(Extension::class);
+    $installedTheme->info = ['name' => 'Olivero'];
+    $this->themeHandler->method('listInfo')->willReturn([
+      'olivero' => $installedTheme,
+    ]);
 
     $service = $this->createThemeService();
     $result = $service->disableTheme('olivero');
@@ -225,6 +234,11 @@ class ThemeServiceTest extends UnitTestCase {
   public function testDisableThemeCannotDisableAdmin(): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
     $this->themeHandler->method('themeExists')->willReturn(TRUE);
+    $installedTheme = $this->createMock(Extension::class);
+    $installedTheme->info = ['name' => 'Claro'];
+    $this->themeHandler->method('listInfo')->willReturn([
+      'claro' => $installedTheme,
+    ]);
 
     $service = $this->createThemeService();
     $result = $service->disableTheme('claro');
@@ -238,23 +252,32 @@ class ThemeServiceTest extends UnitTestCase {
    */
   public function testGetThemeSettings(): void {
     $themeSettingsConfig = $this->createMock(ImmutableConfig::class);
-    $themeSettingsConfig->method('get')->willReturn([
+    $themeSettingsConfig->method('getRawData')->willReturn([
       'logo' => ['path' => 'logo.svg'],
       'favicon' => ['path' => 'favicon.ico'],
     ]);
 
-    $this->configFactory->method('get')
-      ->willReturnMap([
-        ['system.theme', $this->configFactory->get('system.theme')],
-        ['olivero.settings', $themeSettingsConfig],
-      ]);
+    $globalThemeConfig = $this->createMock(ImmutableConfig::class);
+    $globalThemeConfig->method('getRawData')->willReturn([]);
 
-    $this->themeHandler->method('themeExists')->willReturn(TRUE);
+    $this->configFactory->method('get')
+      ->willReturnCallback(function (string $name) use ($themeSettingsConfig, $globalThemeConfig): ImmutableConfig {
+        return match ($name) {
+          'system.theme' => $this->systemThemeConfig,
+          'olivero.settings' => $themeSettingsConfig,
+          'system.theme.global' => $globalThemeConfig,
+          default => $this->createMock(ImmutableConfig::class),
+        };
+      });
+
+    $this->themeExtensionList->method('getList')->willReturn([
+      'olivero' => $this->createMock(Extension::class),
+    ]);
 
     $service = $this->createThemeService();
     $result = $service->getThemeSettings('olivero');
 
-    $this->assertTrue($result['success']);
+    $this->assertTrue($result['success'], $result['error'] ?? 'Expected getThemeSettings() to succeed.');
   }
 
   /**

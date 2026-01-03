@@ -1,0 +1,4 @@
+mcp_tools use sitemap:
+  title: 'Use MCP sitemap tools'
+  description: 'Manage XML sitemaps (settings, regenerate, entity settings) via MCP.'
+  restrict access: true

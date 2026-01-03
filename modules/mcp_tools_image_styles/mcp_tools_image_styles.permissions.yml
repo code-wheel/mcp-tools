@@ -1,0 +1,4 @@
+mcp_tools use image_styles:
+  title: 'Use MCP image styles tools'
+  description: 'Create and manage image styles and effects via MCP.'
+  restrict access: true

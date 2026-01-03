@@ -1,0 +1,4 @@
+mcp_tools use migration:
+  title: 'Use MCP migration tools'
+  description: 'Import/export content via CSV/JSON migration tools via MCP.'
+  restrict access: true

@@ -33,6 +33,11 @@ class RateLimiter {
    */
   protected const STATE_PREFIX = 'mcp_tools.rate_limit.';
 
+  /**
+   * State keys prefix for read operation limits.
+   */
+  protected const READ_STATE_PREFIX = 'mcp_tools.read_rate_limit.';
+
   public function __construct(
     protected ConfigFactoryInterface $configFactory,
     protected StateInterface $state,
@@ -43,7 +48,7 @@ class RateLimiter {
    * Check if a write operation is allowed.
    *
    * @param string $operationType
-   *   The type of operation: 'write', 'delete', 'structure'.
+   *   The type of operation: 'write', 'delete', 'structure', 'admin'.
    *
    * @return array
    *   ['allowed' => bool, 'error' => string|null, 'retry_after' => int|null]
@@ -56,25 +61,112 @@ class RateLimiter {
       return ['allowed' => TRUE, 'error' => NULL, 'retry_after' => NULL];
     }
 
+    $operationType = strtolower(trim($operationType));
+    // Treat "admin" operations as "structure" changes (most restrictive bucket).
+    if ($operationType === 'admin') {
+      $operationType = 'structure';
+    }
+
     $clientId = $this->getClientIdentifier();
     $now = time();
 
-    // Check per-minute limit.
-    $minuteCheck = $this->checkWindow($clientId, 'minute', 60, $operationType, $now);
+    // Always enforce the global write limits for *all* operation types.
+    $minuteCheck = $this->checkWindow($clientId, 'minute', 60, 'write', $now);
     if (!$minuteCheck['allowed']) {
       return $minuteCheck;
     }
 
-    // Check per-hour limit.
-    $hourCheck = $this->checkWindow($clientId, 'hour', 3600, $operationType, $now);
+    $hourCheck = $this->checkWindow($clientId, 'hour', 3600, 'write', $now);
     if (!$hourCheck['allowed']) {
       return $hourCheck;
+    }
+
+    // Apply per-operation type limits (in addition to global write limits).
+    if ($operationType === 'delete') {
+      $deleteCheck = $this->checkWindow($clientId, 'hour', 3600, 'delete', $now);
+      if (!$deleteCheck['allowed']) {
+        return $deleteCheck;
+      }
+    }
+
+    if ($operationType === 'structure') {
+      $structureCheck = $this->checkWindow($clientId, 'hour', 3600, 'structure', $now);
+      if (!$structureCheck['allowed']) {
+        return $structureCheck;
+      }
     }
 
     // Record this operation.
     $this->recordOperation($clientId, $operationType, $now);
 
     return ['allowed' => TRUE, 'error' => NULL, 'retry_after' => NULL];
+  }
+
+  /**
+   * Check if an expensive read operation is allowed.
+   *
+   * These limits are separate from write operation rate limiting and are meant
+   * to protect site performance from expensive read scans.
+   *
+   * @param string $operation
+   *   Read operation key (e.g., 'broken_link_scan', 'content_search').
+   *
+   * @return array
+   *   ['allowed' => bool, 'error' => string|null, 'retry_after' => int|null, 'code' => string|null]
+   */
+  public function checkReadLimit(string $operation): array {
+    $operation = strtolower(trim($operation));
+    $config = $this->configFactory->get('mcp_tools.settings');
+
+    // Resolve per-operation window and limit.
+    $window = NULL;
+    $windowSeconds = NULL;
+    $limit = NULL;
+
+    if ($operation === 'broken_link_scan') {
+      $window = 'hour';
+      $windowSeconds = 3600;
+      $limit = (int) ($config->get('rate_limits.broken_link_scan.max_per_hour') ?? 10);
+    }
+    elseif ($operation === 'content_search') {
+      $window = 'minute';
+      $windowSeconds = 60;
+      $limit = (int) ($config->get('rate_limits.content_search.max_per_minute') ?? 30);
+    }
+    else {
+      // Unknown operation: do not rate limit by default.
+      return ['allowed' => TRUE, 'error' => NULL, 'retry_after' => NULL, 'code' => NULL];
+    }
+
+    // Treat non-positive limits as unlimited.
+    if ($limit <= 0) {
+      return ['allowed' => TRUE, 'error' => NULL, 'retry_after' => NULL, 'code' => NULL];
+    }
+
+    $clientId = $this->getClientIdentifier();
+    $now = time();
+
+    $stateKey = self::READ_STATE_PREFIX . "$clientId.$operation.$window";
+    $windowData = $this->state->get($stateKey, ['count' => 0, 'window_start' => $now]);
+
+    if ($now - $windowData['window_start'] >= $windowSeconds) {
+      $windowData = ['count' => 0, 'window_start' => $now];
+    }
+
+    if ($windowData['count'] >= $limit) {
+      $retryAfter = $windowData['window_start'] + $windowSeconds - $now;
+      return [
+        'allowed' => FALSE,
+        'error' => "Rate limit exceeded: Maximum $limit $operation operations per $window. Try again in $retryAfter seconds.",
+        'retry_after' => $retryAfter,
+        'code' => 'RATE_LIMIT_EXCEEDED',
+      ];
+    }
+
+    $windowData['count']++;
+    $this->state->set($stateKey, $windowData);
+
+    return ['allowed' => TRUE, 'error' => NULL, 'retry_after' => NULL, 'code' => NULL];
   }
 
   /**

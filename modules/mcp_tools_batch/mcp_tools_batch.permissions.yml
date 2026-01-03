@@ -1,0 +1,4 @@
+mcp_tools use batch:
+  title: 'Use MCP batch tools'
+  description: 'Run bulk operations (mass create/update/publish/delete) via MCP.'
+  restrict access: true

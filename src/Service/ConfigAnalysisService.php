@@ -85,10 +85,57 @@ class ConfigAnalysisService {
       ];
     }
 
+    $data = $config->getRawData();
+
+    // SECURITY: Avoid leaking secrets by default.
+    // Allow full output only when explicitly enabled in settings.
+    $settings = $this->configFactory->get('mcp_tools.settings');
+    $includeSensitive = (bool) ($settings->get('output.include_sensitive') ?? FALSE);
+    if (!$includeSensitive) {
+      $data = $this->sanitizeConfigData($data);
+    }
+
     return [
       'name' => $name,
-      'data' => $config->getRawData(),
+      'data' => $data,
     ];
+  }
+
+  /**
+   * Redact sensitive keys from configuration arrays.
+   *
+   * @param array $data
+   *   Raw configuration data.
+   *
+   * @return array
+   *   Sanitized configuration data.
+   */
+  protected function sanitizeConfigData(array $data): array {
+    $sensitiveKeys = [
+      'password',
+      'pass',
+      'secret',
+      'token',
+      'key',
+      'credential',
+      'credentials',
+      'api_key',
+      'apikey',
+      'client_secret',
+      'private',
+    ];
+
+    $sanitized = $data;
+    array_walk_recursive($sanitized, function (&$value, $key) use ($sensitiveKeys) {
+      foreach ($sensitiveKeys as $sensitiveKey) {
+        if (stripos((string) $key, $sensitiveKey) !== FALSE) {
+          $value = '[REDACTED]';
+          return;
+        }
+      }
+    });
+
+    return $sanitized;
   }
 
   /**

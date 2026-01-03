@@ -9,6 +9,7 @@ use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\RateLimiter;
 use Drush\Attributes as CLI;
 use Drush\Commands\DrushCommands;
+use Drupal\tool\Tool\ToolDefinition;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -148,17 +149,21 @@ class McpToolsCommands extends DrushCommands {
 
     // Get all tool plugins.
     if ($this->moduleHandler->moduleExists('tool')) {
-      /** @var \Drupal\tool\ToolPluginManagerInterface $toolManager */
+      /** @var \Drupal\tool\Tool\ToolManager $toolManager */
       $toolManager = \Drupal::service('plugin.manager.tool');
       $definitions = $toolManager->getDefinitions();
 
       foreach ($definitions as $id => $definition) {
+        if (!$definition instanceof ToolDefinition) {
+          continue;
+        }
+
         // Filter to MCP tools only.
-        $provider = $definition['provider'] ?? '';
-        if (str_starts_with($provider, 'mcp_tools')) {
+        $provider = $definition->getProvider() ?? '';
+        if (is_string($provider) && str_starts_with($provider, 'mcp_tools')) {
           $tools[] = [
             'id' => $id,
-            'label' => $definition['label'] ?? $id,
+            'label' => (string) $definition->getLabel(),
             'provider' => $provider,
           ];
         }
