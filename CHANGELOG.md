@@ -4,6 +4,20 @@ All notable changes to the MCP Tools module will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.0.0-alpha13] - 2026-01-04
+
+### Added
+
+- Remote HTTP hardening: optional IP allowlist (`mcp_tools_remote.settings.allowed_ips`) and API key TTL support (`drush mcp-tools:remote-key-create --ttl=...`).
+- Kernel coverage to ensure all core tool definitions convert cleanly to MCP tool annotations + JSON schemas.
+- HTTP transport E2E now validates config-only mode (config writes allowed, ops writes denied).
+
+### Changed
+
+- Default connection scopes are now read-only by default (`access.default_scopes: [read]`).
+- Admin-scope tools are now declared as `ToolOperation::Trigger` so they can be gated by admin scope at the Tool API access layer (recipes/templates/config export).
+- Rate limiting now ignores the client-provided `X-MCP-Client-Id` header by default; opt-in via `rate_limiting.trust_client_id_header`.
+
 ## [1.0.0-alpha12] - 2026-01-03
 
 ### Added

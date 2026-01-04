@@ -94,7 +94,7 @@ AI:  Creates content type, taxonomy vocabularies, fields, role, and permissions
 
 **Optional (to expose tools over MCP):**
 - **Recommended (local dev):** `mcp_tools_stdio` submodule (STDIO via Drush)
-- **Experimental (remote HTTP):** `mcp_tools_remote` submodule (API key auth)
+- **Experimental (remote HTTP):** `mcp_tools_remote` submodule (API key auth + optional IP allowlist and key TTL)
 - **Optional bridge:** `mcp_tools_mcp_server` submodule (generates MCP Server tool configs for MCP Tools)
 - **Alternative:** [MCP Server](https://www.drupal.org/project/mcp_server) module (note: upstream Composer metadata issue: https://www.drupal.org/project/mcp_server/issues/3560993)
 
