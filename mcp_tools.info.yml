@@ -3,7 +3,7 @@ type: module
 description: 'Batteries-included MCP tools for AI assistants working with Drupal sites.'
 package: AI
 core_version_requirement: ^10.3 || ^11
-version: '1.0.0-alpha17'
+version: '1.0.0-alpha18'
 php: 8.3
 lifecycle: experimental
 

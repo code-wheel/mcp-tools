@@ -4,6 +4,20 @@ All notable changes to the MCP Tools module will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.0.0-alpha18] - 2026-01-04
+
+### Added
+
+- Expanded unit test coverage for analysis/config/templates/batch/migration services to improve reliability and raise overall coverage.
+
+### Changed
+
+- Batch and migration operations now create entities via injected storages (instead of static `::create()` calls) to improve testability and consistency.
+
+### Fixed
+
+- Template application now logs audit events with the correct parameters (avoids runtime errors when audit logging is enabled).
+
 ## [1.0.0-alpha17] - 2026-01-04
 
 ### Added
