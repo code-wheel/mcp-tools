@@ -39,17 +39,17 @@ use Drupal\tool\TypedData\InputDefinition;
     'theme' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Theme'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Machine name of the theme whose settings were updated.'),
     ),
     'updated_keys' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Updated Keys'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('List of setting keys that were modified (e.g., ["logo", "favicon"]). Use GetThemeSettings to verify changes.'),
     ),
     'message' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Human-readable confirmation of which settings were updated.'),
     ),
   ],
 )]

@@ -26,12 +26,28 @@ class AccessManager {
   public const SCOPE_ADMIN = 'admin';
 
   /**
+   * Write kinds (used for config-only mode).
+   */
+  public const WRITE_KIND_CONFIG = 'config';
+  public const WRITE_KIND_CONTENT = 'content';
+  public const WRITE_KIND_OPS = 'ops';
+
+  /**
    * All available scopes.
    */
   public const ALL_SCOPES = [
     self::SCOPE_READ,
     self::SCOPE_WRITE,
     self::SCOPE_ADMIN,
+  ];
+
+  /**
+   * All available write kinds.
+   */
+  public const ALL_WRITE_KINDS = [
+    self::WRITE_KIND_CONFIG,
+    self::WRITE_KIND_CONTENT,
+    self::WRITE_KIND_OPS,
   ];
 
   /**
@@ -54,6 +70,41 @@ class AccessManager {
    */
   public function canRead(): bool {
     return $this->hasScope(self::SCOPE_READ);
+  }
+
+  /**
+   * Check if config-only mode is enabled.
+   */
+  public function isConfigOnlyMode(): bool {
+    return (bool) $this->configFactory->get('mcp_tools.settings')->get('access.config_only_mode');
+  }
+
+  /**
+   * Check if a given write kind is allowed under the current config-only policy.
+   *
+   * When config-only mode is disabled, all write kinds are allowed (subject to
+   * scopes/read-only mode and tool permissions).
+   *
+   * @param string $kind
+   *   One of: config, content, ops.
+   *
+   * @return bool
+   *   TRUE if the write kind is allowed.
+   */
+  public function isWriteKindAllowed(string $kind): bool {
+    $config = $this->configFactory->get('mcp_tools.settings');
+
+    if (!$config->get('access.config_only_mode')) {
+      return TRUE;
+    }
+
+    $allowed = $config->get('access.config_only_allowed_write_kinds') ?? [self::WRITE_KIND_CONFIG];
+    $allowed = array_values(array_intersect((array) $allowed, self::ALL_WRITE_KINDS));
+    if (empty($allowed)) {
+      $allowed = [self::WRITE_KIND_CONFIG];
+    }
+
+    return in_array($kind, $allowed, TRUE);
   }
 
   /**
@@ -180,7 +231,7 @@ class AccessManager {
     // Maximum allowed scopes are always enforced.
     $allowedScopes = $config->get('access.allowed_scopes')
       ?? $config->get('access.default_scopes')
-      ?? [self::SCOPE_READ, self::SCOPE_WRITE];
+      ?? [self::SCOPE_READ];
     $allowedScopes = array_values(array_intersect($allowedScopes, self::ALL_SCOPES));
     if (empty($allowedScopes)) {
       // Always allow at least read; prevents accidental lockout.
@@ -188,7 +239,7 @@ class AccessManager {
     }
 
     // Default scopes (used when no trusted override is present).
-    $defaultScopes = $config->get('access.default_scopes') ?? [self::SCOPE_READ, self::SCOPE_WRITE];
+    $defaultScopes = $config->get('access.default_scopes') ?? [self::SCOPE_READ];
     $defaultScopes = array_values(array_intersect($defaultScopes, $allowedScopes));
     if (empty($defaultScopes)) {
       $defaultScopes = $allowedScopes;

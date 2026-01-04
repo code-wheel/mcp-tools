@@ -42,12 +42,12 @@ use Drupal\tool\TypedData\InputDefinition;
     'success' => new ContextDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Success status'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('True if entity cache cleared successfully.'),
     ),
     'invalidated_tags' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Invalidated cache tags'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('List of cache tags that were invalidated for this entity.'),
     ),
   ],
 )]

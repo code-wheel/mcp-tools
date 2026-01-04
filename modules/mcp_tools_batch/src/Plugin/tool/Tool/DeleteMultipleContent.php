@@ -40,42 +40,42 @@ use Drupal\tool\TypedData\InputDefinition;
     'total_requested' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Requested'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Number of items requested for deletion.'),
     ),
     'deleted_count' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Deleted Count'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Number of items permanently deleted.'),
     ),
     'skipped_count' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Skipped Count'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Number of published items skipped (use force=true to delete these).'),
     ),
     'error_count' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Error Count'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Number of items that failed to delete.'),
     ),
     'deleted' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Deleted Items'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Array of deleted items with nid and title.'),
     ),
     'skipped' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Skipped Items'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Array of skipped published items. Use force=true to include.'),
     ),
     'errors' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Errors'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Array of errors with nid and error message for each failure.'),
     ),
     'message' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Summary of the batch delete operation.'),
     ),
   ],
 )]

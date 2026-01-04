@@ -26,17 +26,17 @@ use Drupal\tool\TypedData\InputDefinition;
     'total' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Tags'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Total number of metatag tags available.'),
     ),
     'by_group' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Tags Grouped'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Tags organized by group (basic, open_graph, twitter_cards, etc.). Use group names to filter ListMetatagGroups.'),
     ),
     'all_tags' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('All Tags'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Flat list of all tag definitions with id, name, description, and group. Use tag id/name with SetEntityMetatags.'),
     ),
   ],
 )]

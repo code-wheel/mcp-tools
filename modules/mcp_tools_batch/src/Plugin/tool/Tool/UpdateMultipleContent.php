@@ -33,32 +33,32 @@ use Drupal\tool\TypedData\InputDefinition;
     'total_requested' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Requested'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Number of items requested for update.'),
     ),
     'updated_count' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Updated Count'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Number of items successfully updated.'),
     ),
     'error_count' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Error Count'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Number of items that failed to update.'),
     ),
     'updated' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Updated Items'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Array of updated items with nid, title, and changed_fields list.'),
     ),
     'errors' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Errors'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Array of errors with nid and error message for each failure.'),
     ),
     'message' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Summary of the batch update operation.'),
     ),
   ],
 )]

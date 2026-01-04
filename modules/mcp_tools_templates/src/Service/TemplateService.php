@@ -603,16 +603,17 @@ class TemplateService {
     $success = empty($errors);
 
     $this->auditLogger->log(
-      $success ? 'success' : 'partial',
       'apply_template',
       'template',
       $id,
       [
         'template' => $id,
+        'status' => $success ? 'success' : 'partial',
         'created_count' => count($created),
         'skipped_count' => count($skipped),
         'error_count' => count($errors),
-      ]
+      ],
+      $success,
     );
 
     return [

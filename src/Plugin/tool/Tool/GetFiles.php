@@ -34,22 +34,22 @@ use Drupal\tool\TypedData\InputDefinition;
     'total_files' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Managed Files'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Total number of files in Drupal file management.'),
     ),
     'returned' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Files Returned'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Number of files in this response (up to limit).'),
     ),
     'by_mime_type' => new ContextDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Files by MIME Type'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('File counts grouped by MIME type (e.g., image/jpeg, application/pdf).'),
     ),
     'files' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('File List'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Array of files with fid, filename, uri, filemime, filesize, status, and created. Use fid for media references.'),
     ),
   ],
 )]

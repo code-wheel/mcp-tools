@@ -39,17 +39,17 @@ use Drupal\tool\TypedData\InputDefinition;
     'id' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Link ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('The updated menu link content entity ID.'),
     ),
     'title' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Title'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Current link title after update.'),
     ),
     'message' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Success confirmation or error details.'),
     ),
   ],
 )]

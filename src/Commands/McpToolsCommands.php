@@ -48,6 +48,7 @@ class McpToolsCommands extends DrushCommands {
     $this->io()->section('Access Control');
     $this->io()->definitionList(
       ['Read-only mode' => $this->accessManager->isReadOnlyMode() ? 'ENABLED' : 'Disabled'],
+      ['Config-only mode' => $this->accessManager->isConfigOnlyMode() ? 'ENABLED' : 'Disabled'],
       ['Current scopes' => implode(', ', $this->accessManager->getCurrentScopes())],
       ['Can read' => $this->accessManager->canRead() ? 'Yes' : 'No'],
       ['Can write' => $this->accessManager->canWrite() ? 'Yes' : 'No'],
@@ -115,8 +116,8 @@ class McpToolsCommands extends DrushCommands {
     $this->io()->section('Security Recommendations');
     $warnings = [];
 
-    if (!$this->accessManager->isReadOnlyMode()) {
-      $warnings[] = '<comment>⚠</comment> Read-only mode is disabled. Enable for production.';
+    if (!$this->accessManager->isReadOnlyMode() && !$this->accessManager->isConfigOnlyMode()) {
+      $warnings[] = '<comment>⚠</comment> Read-only mode is disabled. Enable read-only or config-only for production.';
     }
 
     if (!$rateStatus['enabled']) {

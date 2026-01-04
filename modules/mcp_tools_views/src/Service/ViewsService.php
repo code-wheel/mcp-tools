@@ -7,7 +7,6 @@ namespace Drupal\mcp_tools_views\Service;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AuditLogger;
-use Drupal\views\Entity\View;
 
 /**
  * Service for Views management.
@@ -120,7 +119,7 @@ class ViewsService {
         $viewConfig['display']['block_1'] = $this->buildBlockDisplay($options);
       }
 
-      $view = View::create($viewConfig);
+      $view = $this->entityTypeManager->getStorage('view')->create($viewConfig);
       $view->save();
 
       $this->auditLogger->logSuccess('create_view', 'view', $id, [
@@ -217,7 +216,7 @@ class ViewsService {
     if (!$view) {
       return [
         'success' => FALSE,
-        'error' => "View '$id' not found.",
+        'error' => "View '$id' not found. Use mcp_list_views to see available views.",
       ];
     }
 
@@ -281,7 +280,7 @@ class ViewsService {
     if (!$view) {
       return [
         'success' => FALSE,
-        'error' => "View '$viewId' not found.",
+        'error' => "View '$viewId' not found. Use mcp_list_views to see available views.",
       ];
     }
 
@@ -357,7 +356,7 @@ class ViewsService {
     if (!$view) {
       return [
         'success' => FALSE,
-        'error' => "View '$id' not found.",
+        'error' => "View '$id' not found. Use mcp_list_views to see available views.",
       ];
     }
 

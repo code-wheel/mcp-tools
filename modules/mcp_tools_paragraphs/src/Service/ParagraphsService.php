@@ -571,7 +571,7 @@ class ParagraphsService {
     if (!$field) {
       return [
         'success' => FALSE,
-        'error' => "Field '$fieldName' not found on paragraph.$bundle.",
+        'error' => "Field '$fieldName' not found on paragraph.$bundle. Use mcp_paragraphs_get_type to see available fields.",
       ];
     }
 

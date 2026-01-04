@@ -39,47 +39,47 @@ use Drupal\tool\TypedData\InputDefinition;
     'vocabulary' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Vocabulary'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Vocabulary machine name where terms were created.'),
     ),
     'total_requested' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Requested'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Number of terms requested for creation.'),
     ),
     'created_count' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Created Count'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Number of terms successfully created.'),
     ),
     'skipped_count' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Skipped Count'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Number of terms skipped (already exist with same name).'),
     ),
     'error_count' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Error Count'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Number of terms that failed to create.'),
     ),
     'created' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Created Terms'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Array of created terms with tid, name, and path.'),
     ),
     'skipped' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Skipped Terms'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Array of skipped terms with name and reason (duplicate).'),
     ),
     'errors' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Errors'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Array of errors with name and error message for each failure.'),
     ),
     'message' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Summary of the batch term creation operation.'),
     ),
   ],
 )]

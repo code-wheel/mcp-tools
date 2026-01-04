@@ -33,37 +33,37 @@ use Drupal\tool\TypedData\InputDefinition;
     'id' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Pattern ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Machine name of the pattern.'),
     ),
     'label' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Label'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Human-readable name of the pattern.'),
     ),
     'pattern' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('URL Pattern'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Token pattern for URL aliases (e.g., "[node:title]" or "blog/[node:created:custom:Y]/[node:title]").'),
     ),
     'entity_type' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Entity Type'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Entity type this pattern applies to.'),
     ),
     'bundles' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Bundles'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Content types/bundles this pattern applies to. Empty means all bundles.'),
     ),
     'weight' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Weight'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Priority weight. Lower values are applied first.'),
     ),
     'status' => new ContextDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Enabled'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Whether this pattern is active.'),
     ),
   ],
 )]

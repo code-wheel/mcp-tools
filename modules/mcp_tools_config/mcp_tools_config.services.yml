@@ -9,3 +9,11 @@ services:
       - '@file_system'
       - '@mcp_tools.access_manager'
       - '@mcp_tools.audit_logger'
+
+  mcp_tools_config.config_change_subscriber:
+    class: Drupal\mcp_tools_config\EventSubscriber\McpConfigChangeSubscriber
+    arguments:
+      - '@mcp_tools_config.config_management'
+      - '@mcp_tools.tool_call_context'
+    tags:
+      - { name: event_subscriber }

@@ -28,12 +28,12 @@ use Drupal\tool\TypedData\InputDefinition;
     'success' => new ContextDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Success status'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('True if all cron jobs completed successfully.'),
     ),
     'duration_seconds' => new ContextDefinition(
       data_type: 'float',
       label: new TranslatableMarkup('Duration in seconds'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Total execution time. High values may indicate performance issues.'),
     ),
   ],
 )]

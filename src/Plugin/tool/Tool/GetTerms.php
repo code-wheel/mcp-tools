@@ -47,22 +47,22 @@ use Drupal\tool\TypedData\InputDefinition;
     'vocabulary' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Vocabulary ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Machine name of the vocabulary queried.'),
     ),
     'vocabulary_label' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Vocabulary Label'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Human-readable name of the vocabulary.'),
     ),
     'total' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Terms'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Number of terms returned.'),
     ),
     'terms' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Terms'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Array of terms with tid, name, description, weight, and parent. Use tid for entity reference fields.'),
     ),
   ],
 )]

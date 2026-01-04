@@ -25,7 +25,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'id' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('View Machine Name'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('ID of disabled view to enable. Pages and blocks become accessible.'),
       required: TRUE,
     ),
   ],
@@ -33,17 +33,17 @@ use Drupal\tool\TypedData\InputDefinition;
     'id' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('View ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Machine name of the enabled view.'),
     ),
     'status' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Status'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('New status (will be "enabled").'),
     ),
     'message' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Success confirmation or error details.'),
     ),
   ],
 )]

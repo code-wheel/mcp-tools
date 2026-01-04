@@ -26,12 +26,12 @@ use Drupal\tool\TypedData\InputDefinition;
     'total' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total image styles'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Number of image styles configured in the system.'),
     ),
     'styles' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Image styles with effects'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Array of styles with id, label, and effects. Use id with GetImageStyle or DeleteImageStyle.'),
     ),
   ],
 )]

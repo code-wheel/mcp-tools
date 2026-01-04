@@ -30,6 +30,12 @@ use Drupal\tool\TypedData\InputDefinition;
       description: new TranslatableMarkup('Maximum number of links to check (1-500, default: 100)'),
       required: FALSE,
     ),
+    'base_url' => new InputDefinition(
+      data_type: 'string',
+      label: new TranslatableMarkup('Base URL'),
+      description: new TranslatableMarkup('Optional base URL override for STDIO/CLI usage (e.g., "https://example.com"). When omitted, uses the current request host.'),
+      required: FALSE,
+    ),
   ],
   output_definitions: [
     'broken_links' => new ContextDefinition(
@@ -90,6 +96,7 @@ class FindBrokenLinks extends McpToolsToolBase {
    */
   protected function executeLegacy(array $input): array {
     $limit = isset($input['limit']) ? (int) $input['limit'] : 100;
+    $baseUrl = isset($input['base_url']) ? (string) $input['base_url'] : NULL;
 
     if ($limit < 1 || $limit > 500) {
       return ['success' => FALSE, 'error' => 'Limit must be between 1 and 500.'];
@@ -111,7 +118,7 @@ class FindBrokenLinks extends McpToolsToolBase {
       ];
     }
 
-    return $this->analysisService->findBrokenLinks($limit);
+    return $this->analysisService->findBrokenLinks($limit, $baseUrl);
   }
 
   

@@ -26,12 +26,12 @@ use Drupal\tool\TypedData\InputDefinition;
     'layouts' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Available Layouts'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Array of layouts with id, label, category, and regions. Use id with AddSection.'),
     ),
     'count' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Count'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Number of available layout plugins.'),
     ),
   ],
 )]

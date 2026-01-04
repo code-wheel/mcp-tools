@@ -26,7 +26,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'mid' => new InputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Media ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('ID of media entity to delete. DESTRUCTIVE: Permanently removes media and may break content references.'),
       required: TRUE,
     ),
   ],
@@ -34,22 +34,22 @@ use Drupal\tool\TypedData\InputDefinition;
     'mid' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Deleted Media ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('ID of the deleted media entity.'),
     ),
     'name' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Name'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Name of the deleted media.'),
     ),
     'bundle' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Bundle'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Media type of the deleted entity.'),
     ),
     'message' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Success confirmation. Associated file may be deleted if no other references.'),
     ),
   ],
 )]

@@ -19,13 +19,14 @@ use Drupal\tool\TypedData\InputDefinition;
 #[Tool(
   id: 'mcp_disable_view',
   label: new TranslatableMarkup('Disable View'),
-  description: new TranslatableMarkup('Disable an enabled view.'),
+  description: new TranslatableMarkup('Disable an enabled view. View pages will return 404, blocks hidden. Config is preserved; re-enable with EnableView.'),
   operation: ToolOperation::Write,
+  destructive: TRUE,
   input_definitions: [
     'id' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('View Machine Name'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('ID of view to disable. Pages return 404, blocks hidden. Config preserved.'),
       required: TRUE,
     ),
   ],
@@ -33,17 +34,17 @@ use Drupal\tool\TypedData\InputDefinition;
     'id' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('View ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Machine name of the disabled view.'),
     ),
     'status' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Status'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('New status (will be "disabled").'),
     ),
     'message' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Success confirmation or error details.'),
     ),
   ],
 )]

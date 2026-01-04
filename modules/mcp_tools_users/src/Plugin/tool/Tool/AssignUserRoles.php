@@ -25,13 +25,13 @@ use Drupal\tool\TypedData\InputDefinition;
     'uid' => new InputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('User ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('User ID to assign roles to.'),
       required: TRUE,
     ),
     'roles' => new InputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Roles'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Array of role machine names to add. Use GetRoles to see available roles. "administrator" is blocked.'),
       required: TRUE,
     ),
   ],
@@ -39,27 +39,27 @@ use Drupal\tool\TypedData\InputDefinition;
     'uid' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('User ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('The user ID.'),
     ),
     'username' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Username'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('The username.'),
     ),
     'roles' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Current Roles'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('All roles the user now has.'),
     ),
     'added_roles' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Added Roles'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Roles that were newly added (excludes roles user already had).'),
     ),
     'message' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Success or error message.'),
     ),
   ],
 )]

@@ -25,6 +25,13 @@ class WatchdogAnalyzer {
     7 => 'debug',
   ];
 
+  /**
+   * Max bytes allowed for serialized watchdog variables.
+   *
+   * Prevents memory exhaustion on crafted or corrupted watchdog rows.
+   */
+  private const MAX_SERIALIZED_VARIABLES_BYTES = 65536;
+
   public function __construct(
     protected Connection $database,
   ) {}
@@ -168,6 +175,11 @@ class WatchdogAnalyzer {
    */
   protected function formatMessage(string $message, ?string $variables): string {
     if (empty($variables)) {
+      return $message;
+    }
+
+    // Bail out on unexpectedly large payloads to avoid memory exhaustion.
+    if (strlen($variables) > self::MAX_SERIALIZED_VARIABLES_BYTES) {
       return $message;
     }
 

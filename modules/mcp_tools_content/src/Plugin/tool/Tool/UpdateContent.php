@@ -25,13 +25,13 @@ use Drupal\tool\TypedData\InputDefinition;
     'nid' => new InputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Node ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('The node ID to update. Get from SearchContent, GetRecentContent, or CreateContent.'),
       required: TRUE,
     ),
     'updates' => new InputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Updates'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Fields to update. Include "title" for title changes. Field format same as CreateContent. Only specified fields are changed.'),
       required: TRUE,
     ),
   ],
@@ -39,22 +39,22 @@ use Drupal\tool\TypedData\InputDefinition;
     'nid' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Node ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('The updated node ID.'),
     ),
     'title' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Title'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('The node title after update.'),
     ),
     'revision_id' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('New Revision ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('ID of the new revision created by this update.'),
     ),
     'message' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Human-readable success or error message.'),
     ),
   ],
 )]

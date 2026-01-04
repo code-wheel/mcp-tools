@@ -49,14 +49,14 @@ use Drupal\tool\TypedData\InputDefinition;
     'required' => new InputDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Required'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Whether this field is required when creating paragraphs. Default: FALSE.'),
       required: FALSE,
       default_value: FALSE,
     ),
     'description' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Help Text'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Help text displayed below the field in the edit form.'),
       required: FALSE,
     ),
     'cardinality' => new InputDefinition(
@@ -89,27 +89,27 @@ use Drupal\tool\TypedData\InputDefinition;
     'field_name' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Field Name'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Full machine name of the created field (includes field_ prefix). Use with DeleteParagraphField to remove.'),
     ),
     'bundle' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Paragraph Type'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Paragraph type the field was added to. Use GetParagraphType to view all fields.'),
     ),
     'field_type' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Field Type'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Type of field created (e.g., string, text_long, entity_reference).'),
     ),
     'label' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Label'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Human-readable label assigned to the field.'),
     ),
     'message' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Human-readable confirmation of the field creation.'),
     ),
   ],
 )]

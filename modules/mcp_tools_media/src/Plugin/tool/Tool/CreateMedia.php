@@ -25,19 +25,19 @@ use Drupal\tool\TypedData\InputDefinition;
     'bundle' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Media Type (Bundle)'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Media type machine name (e.g., "image", "document"). Get from ListMediaTypes.'),
       required: TRUE,
     ),
     'name' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Name'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Human-readable media name. Shown in media library.'),
       required: TRUE,
     ),
     'source_field_value' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Source Field Value'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Value for source field. For images: file ID from UploadFile. For remote_video: video URL.'),
       required: TRUE,
     ),
   ],
@@ -45,27 +45,27 @@ use Drupal\tool\TypedData\InputDefinition;
     'mid' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Media ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Media entity ID. Use in content entity reference fields with {"target_id": mid}.'),
     ),
     'uuid' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('UUID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Universally unique identifier for the media entity.'),
     ),
     'name' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Name'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('The media name as created.'),
     ),
     'bundle' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Bundle'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Media type of the created entity.'),
     ),
     'message' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Success confirmation or error details.'),
     ),
   ],
 )]

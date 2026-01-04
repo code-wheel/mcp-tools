@@ -40,27 +40,27 @@ use Drupal\tool\TypedData\InputDefinition;
     'job_id' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Job ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Machine name of the job whose logs were retrieved.'),
     ),
     'job_title' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Job Title'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Human-readable title of the job.'),
     ),
     'logs' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Log entries'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Array of log entries with timestamp, duration, status, and message. Most recent first.'),
     ),
     'count' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Number of entries returned'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Actual number of log entries returned (may be less than limit).'),
     ),
     'limit' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Limit applied'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Maximum entries that were requested. Increase to see more history.'),
     ),
   ],
 )]

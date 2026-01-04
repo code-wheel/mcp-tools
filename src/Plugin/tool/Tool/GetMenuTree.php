@@ -40,17 +40,17 @@ use Drupal\tool\TypedData\InputDefinition;
     'menu' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Menu Name'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Machine name of the menu queried.'),
     ),
     'label' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Menu Label'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Human-readable menu title.'),
     ),
     'tree' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Menu Tree'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Hierarchical array of menu links. Each has id, title, url, weight, enabled, and children (nested links).'),
     ),
   ],
 )]

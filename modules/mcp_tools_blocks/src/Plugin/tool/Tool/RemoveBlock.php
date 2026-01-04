@@ -26,7 +26,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'block_id' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Block ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Config entity ID of block placement to remove. Get from PlaceBlock output or ListRegions.'),
       required: TRUE,
     ),
   ],
@@ -34,27 +34,27 @@ use Drupal\tool\TypedData\InputDefinition;
     'block_id' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Block ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('ID of the removed block placement.'),
     ),
     'plugin_id' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Plugin ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Block plugin that was removed. Plugin itself is not deleted.'),
     ),
     'region' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Region'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Region the block was removed from.'),
     ),
     'theme' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Theme'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Theme the block was removed from.'),
     ),
     'message' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Success confirmation. Block can be placed again with PlaceBlock.'),
     ),
   ],
 )]

@@ -47,17 +47,17 @@ use Drupal\tool\TypedData\InputDefinition;
     'total' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Items Returned'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Number of content items in the results.'),
     ),
     'sorted_by' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Sorted By'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Field used for sorting: "created" or "changed".'),
     ),
     'content' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Content Items'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Array of nodes with nid, title, type, status, author, created, and changed timestamps. Use nid to update/delete content.'),
     ),
   ],
 )]

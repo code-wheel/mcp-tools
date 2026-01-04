@@ -45,22 +45,22 @@ use Drupal\tool\TypedData\InputDefinition;
     'id' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Role ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Machine name of the created role. Use with AssignUserRoles and GrantPermissions.'),
     ),
     'label' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Role Label'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Human-readable role name.'),
     ),
     'permissions_granted' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Permissions Granted'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('List of permissions that were successfully granted to the role.'),
     ),
     'message' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Success or error message.'),
     ),
   ],
 )]

@@ -55,7 +55,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'description' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Description'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Tooltip text shown on hover. Optional accessibility aid.'),
       required: FALSE,
     ),
     'parent' => new InputDefinition(
@@ -69,32 +69,32 @@ use Drupal\tool\TypedData\InputDefinition;
     'id' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Link ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Menu link content entity ID. Use with UpdateMenuLink or DeleteMenuLink.'),
     ),
     'uuid' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('UUID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Universally unique identifier for config export/import.'),
     ),
     'title' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Title'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('The link text as created.'),
     ),
     'menu' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Menu'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Menu machine name where link was added.'),
     ),
     'plugin_id' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Plugin ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Internal plugin ID (menu_link_content:UUID). Use as parent value to nest links under this one.'),
     ),
     'message' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Success confirmation or error details.'),
     ),
   ],
 )]

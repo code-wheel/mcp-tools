@@ -25,13 +25,13 @@ use Drupal\tool\TypedData\InputDefinition;
     'role' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Role ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Role machine name. Use GetRoles to see available roles.'),
       required: TRUE,
     ),
     'permissions' => new InputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Permissions'),
-      description: new TranslatableMarkup('Permissions to grant'),
+      description: new TranslatableMarkup('Array of permission machine names. Use GetPermissions to see available permissions.'),
       required: TRUE,
     ),
   ],
@@ -39,22 +39,22 @@ use Drupal\tool\TypedData\InputDefinition;
     'role' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Role'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('The role that was modified.'),
     ),
     'granted' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Permissions Granted'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Permissions that were newly granted.'),
     ),
     'already_had' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Already Had'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Permissions the role already had (not modified).'),
     ),
     'message' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Success or error message.'),
     ),
   ],
 )]

@@ -26,22 +26,22 @@ use Drupal\tool\TypedData\InputDefinition;
     'last_run' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Last Run Time'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Human-readable last cron run time.'),
     ),
     'last_run_timestamp' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Last Run Timestamp'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Unix timestamp of last cron run.'),
     ),
     'seconds_since_last_run' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Seconds Since Last Run'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Seconds elapsed since last cron execution.'),
     ),
     'status' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Health Status'),
-      description: new TranslatableMarkup('One of: healthy, warning, critical, unknown'),
+      description: new TranslatableMarkup('Health assessment: healthy (<3h), warning (3-24h), critical (>24h), or unknown.'),
     ),
   ],
 )]

@@ -48,12 +48,12 @@ use Drupal\tool\TypedData\InputDefinition;
     'mode' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Analysis Mode Used'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('The analysis mode that was used: summary, errors, or recent.'),
     ),
     'data' => new ContextDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Analysis Results'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('For summary: counts by type/severity. For errors/recent: array of log entries with wid, type, severity, message, timestamp, and user.'),
     ),
   ],
 )]

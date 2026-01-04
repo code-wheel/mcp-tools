@@ -26,12 +26,12 @@ use Drupal\tool\TypedData\InputDefinition;
     'jobs' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('List of Ultimate Cron jobs'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Array of job objects with id, title, module, status, and last_run. Use id with GetJob for full details.'),
     ),
     'count' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total number of jobs'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Total count of Ultimate Cron jobs registered in the system.'),
     ),
   ],
 )]

@@ -39,22 +39,22 @@ use Drupal\tool\TypedData\InputDefinition;
     'entity_type' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Entity Type'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('The entity type ID that was queried (e.g., "node", "taxonomy_term").'),
     ),
     'bundle' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Bundle'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('The specific bundle queried, or NULL if all bundles were requested.'),
     ),
     'settings' => new ContextDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Sitemap Settings'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Sitemap settings for the bundle: index (bool), priority (0.0-1.0), changefreq, include_images. Use SetEntitySettings to modify.'),
     ),
     'bundles' => new ContextDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('All Bundle Settings'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('When no bundle specified, returns all bundle settings for the entity type. Keys are bundle IDs, values are settings objects.'),
     ),
   ],
 )]

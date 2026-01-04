@@ -26,13 +26,13 @@ use Drupal\tool\TypedData\InputDefinition;
     'id' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Content Type ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Machine name of the content type to delete. Use ListContentTypes to see types.'),
       required: TRUE,
     ),
     'force' => new InputDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Force Delete'),
-      description: new TranslatableMarkup('Delete even if content exists (dangerous!)'),
+      description: new TranslatableMarkup('WARNING: If true, deletes type even if content exists. All content of this type will be deleted. Default false.'),
       required: FALSE,
       default_value: FALSE,
     ),
@@ -41,12 +41,12 @@ use Drupal\tool\TypedData\InputDefinition;
     'id' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Deleted Content Type ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Machine name of the deleted content type.'),
     ),
     'message' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Confirmation or error message.'),
     ),
   ],
 )]

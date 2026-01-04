@@ -61,7 +61,7 @@ class MenuService {
     $menu = $this->entityTypeManager->getStorage('menu')->load($menuName);
     if (!$menu) {
       return [
-        'error' => "Menu '$menuName' not found.",
+        'error' => "Menu '$menuName' not found. Use mcp_list_menus to see available menus.",
       ];
     }
 

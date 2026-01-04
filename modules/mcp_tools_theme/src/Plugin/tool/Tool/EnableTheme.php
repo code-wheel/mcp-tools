@@ -33,27 +33,27 @@ use Drupal\tool\TypedData\InputDefinition;
     'theme' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Theme'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Machine name of the enabled theme. Use SetDefaultTheme or SetAdminTheme to make it active.'),
     ),
     'label' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Theme Label'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Human-readable name of the enabled theme.'),
     ),
     'message' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Human-readable confirmation of the theme installation.'),
     ),
     'changed' => new ContextDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Changed'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('TRUE if the theme was enabled, FALSE if it was already enabled.'),
     ),
     'admin_path' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Admin Path'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Path to the theme settings page in admin UI (e.g., "/admin/appearance/settings/themename").'),
     ),
   ],
 )]

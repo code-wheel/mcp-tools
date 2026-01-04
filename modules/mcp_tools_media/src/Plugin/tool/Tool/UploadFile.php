@@ -20,24 +20,24 @@ use Drupal\tool\TypedData\InputDefinition;
   id: 'mcp_upload_file',
   label: new TranslatableMarkup('Upload File'),
   description: new TranslatableMarkup('Upload a file from base64 encoded data.'),
-  operation: ToolOperation::Read,
+  operation: ToolOperation::Write,
   input_definitions: [
     'filename' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Filename'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Target filename with extension (e.g., "photo.jpg", "document.pdf").'),
       required: TRUE,
     ),
     'data' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Base64 Data'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Base64-encoded file content. Do NOT include data URI prefix.'),
       required: TRUE,
     ),
     'directory' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Directory'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Drupal stream wrapper path (e.g., "public://uploads"). Defaults to public://mcp-uploads.'),
       required: FALSE,
     ),
   ],
@@ -45,32 +45,32 @@ use Drupal\tool\TypedData\InputDefinition;
     'fid' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('File ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('File entity ID. Use as source_field_value in CreateMedia for image/file types.'),
     ),
     'uuid' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('UUID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Universally unique identifier for the file entity.'),
     ),
     'filename' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Filename'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Actual filename (may differ if sanitized or deduplicated).'),
     ),
     'uri' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('URI'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Drupal file URI (e.g., public://mcp-uploads/photo.jpg).'),
     ),
     'url' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('URL'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Public URL for the uploaded file.'),
     ),
     'message' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Success confirmation or error details.'),
     ),
   ],
 )]

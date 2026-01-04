@@ -35,12 +35,12 @@ use Drupal\tool\TypedData\InputDefinition;
     'success' => new ContextDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Success status'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('True if settings were updated successfully.'),
     ),
     'changes' => new ContextDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Applied changes'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Map of settings that were changed with old and new values.'),
     ),
   ],
 )]

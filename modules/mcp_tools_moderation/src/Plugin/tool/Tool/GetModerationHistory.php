@@ -25,20 +25,20 @@ use Drupal\tool\TypedData\InputDefinition;
     'entity_type' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Entity Type'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Entity type (e.g., "node", "media"). Defaults to "node".'),
       required: FALSE,
       default_value: 'node',
     ),
     'entity_id' => new InputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Entity ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('ID of the entity to get history for.'),
       required: TRUE,
     ),
     'limit' => new InputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Limit'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Maximum revisions to return. Defaults to 50.'),
       required: FALSE,
       default_value: 50,
     ),
@@ -47,32 +47,32 @@ use Drupal\tool\TypedData\InputDefinition;
     'entity_type' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Entity Type'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('The entity type queried.'),
     ),
     'entity_id' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Entity ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('The entity ID queried.'),
     ),
     'label' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Entity Label'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Current title/label of the entity.'),
     ),
     'workflow_id' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Workflow ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Workflow governing this entity.'),
     ),
     'total_revisions' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Revisions'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Number of revisions returned.'),
     ),
     'revisions' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Revisions'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Array of revisions with id, state, author, message, and timestamp.'),
     ),
   ],
 )]

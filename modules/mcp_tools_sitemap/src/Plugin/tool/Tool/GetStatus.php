@@ -26,17 +26,17 @@ use Drupal\tool\TypedData\InputDefinition;
     'sitemaps' => new ContextDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Sitemap Status'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Status for each sitemap variant: last_generated timestamp, link_count, chunk_count, file_size. Keys are variant IDs.'),
     ),
     'total_sitemaps' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Sitemaps'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Total number of sitemap variants in the system.'),
     ),
     'generator_queue' => new ContextDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Generator Queue Status'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Regeneration queue status: items_pending, is_running, last_run. Check after Regenerate to monitor progress.'),
     ),
   ],
 )]

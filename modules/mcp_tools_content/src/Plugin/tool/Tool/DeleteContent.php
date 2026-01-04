@@ -26,7 +26,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'nid' => new InputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Node ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('The node ID to delete. WARNING: This is permanent and cannot be undone.'),
       required: TRUE,
     ),
   ],
@@ -34,17 +34,17 @@ use Drupal\tool\TypedData\InputDefinition;
     'nid' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Deleted Node ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('The ID of the deleted node.'),
     ),
     'title' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Title'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('The title of the deleted node.'),
     ),
     'message' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Confirmation message.'),
     ),
   ],
 )]

@@ -25,25 +25,25 @@ use Drupal\tool\TypedData\InputDefinition;
     'type' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Content Type'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Content type machine name (e.g., "article", "page"). Use ListContentTypes to see available types.'),
       required: TRUE,
     ),
     'title' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Title'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('The node title.'),
       required: TRUE,
     ),
     'fields' => new InputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Fields'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Field values as key-value pairs. Keys are field machine names. Text: {"value": "...", "format": "basic_html"}. Entity refs: {"target_id": 123}. Images: {"target_id": fid}.'),
       required: FALSE,
     ),
     'status' => new InputDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Published'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('True to publish immediately, false to save as draft. Defaults to true.'),
       required: FALSE,
     ),
   ],
@@ -51,22 +51,22 @@ use Drupal\tool\TypedData\InputDefinition;
     'nid' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Node ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('The created node ID. Use this for updates, deletions, or references.'),
     ),
     'uuid' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('UUID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Universally unique identifier for the node.'),
     ),
     'title' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Title'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('The title of the created node.'),
     ),
     'message' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Human-readable success or error message.'),
     ),
   ],
 )]

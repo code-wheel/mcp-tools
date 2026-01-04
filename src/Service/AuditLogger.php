@@ -8,6 +8,7 @@ use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
  * Service for logging MCP write operations.
@@ -22,6 +23,10 @@ class AuditLogger {
     protected ConfigFactoryInterface $configFactory,
     protected AccountProxyInterface $currentUser,
     LoggerChannelFactoryInterface $loggerFactory,
+    protected AccessManager $accessManager,
+    protected RequestStack $requestStack,
+    protected McpToolCallContext $toolCallContext,
+    protected RateLimiter $rateLimiter,
   ) {
     $this->logger = $loggerFactory->get('mcp_tools');
   }
@@ -52,15 +57,39 @@ class AuditLogger {
       return;
     }
 
+    $request = $this->requestStack->getCurrentRequest();
+    $transport = $request ? 'http' : 'cli';
+
+    $client = '';
+    if ($request) {
+      $client = (string) $request->attributes->get('mcp_tools.client_id', '');
+    }
+    if ($client === '') {
+      $rateStatus = $this->rateLimiter->getStatus();
+      $client = (string) ($rateStatus['client_id'] ?? '-');
+    }
+    if ($client === '') {
+      $client = '-';
+    }
+
+    $scopes = $this->accessManager->getCurrentScopes();
+    $scopesText = $scopes ? implode(',', $scopes) : '-';
+
+    $correlationId = $this->toolCallContext->getCorrelationId() ?? '-';
+
     $context = [
       '@operation' => $operation,
       '@entity_type' => $entityType,
       '@entity_id' => $entityId,
       '@user' => $this->currentUser->getAccountName() ?: 'anonymous',
       '@uid' => $this->currentUser->id(),
+      '@cid' => $correlationId,
+      '@transport' => $transport,
+      '@client' => $client,
+      '@scopes' => $scopesText,
     ];
 
-    $message = 'MCP: @operation on @entity_type "@entity_id" by @user (uid: @uid)';
+    $message = 'MCP[@cid] (@transport, client: @client, scopes: @scopes): @operation on @entity_type "@entity_id" by @user (uid: @uid)';
 
     if (!empty($details)) {
       $safeDetails = $this->sanitizeDetails($details);

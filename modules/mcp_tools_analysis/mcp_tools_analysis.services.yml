@@ -6,3 +6,5 @@ services:
       - '@database'
       - '@http_client'
       - '@config.factory'
+      - '@module_handler'
+      - '@request_stack'

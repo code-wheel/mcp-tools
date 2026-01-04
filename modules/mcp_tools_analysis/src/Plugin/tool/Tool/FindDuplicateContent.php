@@ -45,22 +45,22 @@ use Drupal\tool\TypedData\InputDefinition;
     'content_type' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Content Type'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('The content type that was analyzed.'),
     ),
     'field_compared' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Field Compared'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('The field used for similarity comparison.'),
     ),
     'threshold' => new ContextDefinition(
       data_type: 'float',
       label: new TranslatableMarkup('Threshold Used'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Similarity threshold that was applied (0.1-1.0).'),
     ),
     'items_analyzed' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Items Analyzed'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Total number of items compared.'),
     ),
     'duplicates' => new ContextDefinition(
       data_type: 'list',
@@ -70,12 +70,12 @@ use Drupal\tool\TypedData\InputDefinition;
     'duplicate_count' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Duplicate Count'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Number of potential duplicate pairs found.'),
     ),
     'suggestions' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Suggestions'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Recommendations for handling duplicates.'),
     ),
   ],
 )]

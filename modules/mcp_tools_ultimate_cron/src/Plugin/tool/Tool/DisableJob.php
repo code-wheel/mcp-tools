@@ -23,6 +23,7 @@ use Drupal\tool\TypedData\InputDefinition;
   label: new TranslatableMarkup('Disable Ultimate Cron Job'),
   description: new TranslatableMarkup('Disable an Ultimate Cron job to prevent it from running.'),
   operation: ToolOperation::Write,
+  destructive: TRUE,
   input_definitions: [
     'id' => new InputDefinition(
       data_type: 'string',
@@ -35,32 +36,32 @@ use Drupal\tool\TypedData\InputDefinition;
     'success' => new ContextDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Success status'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('TRUE if the job was disabled successfully, FALSE if an error occurred.'),
     ),
     'message' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result message'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Human-readable confirmation of the job status change.'),
     ),
     'id' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Job ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Machine name of the disabled job. Use EnableJob to re-enable.'),
     ),
     'title' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Job Title'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Human-readable title of the job.'),
     ),
     'status' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('New status'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Current job status: "disabled". Job will not run until enabled.'),
     ),
     'changed' => new ContextDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Whether status was changed'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('TRUE if the job was actually disabled, FALSE if it was already disabled.'),
     ),
   ],
 )]

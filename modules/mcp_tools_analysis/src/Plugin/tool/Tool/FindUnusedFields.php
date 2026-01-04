@@ -36,7 +36,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'suggestions' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Suggestions'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Recommendations for handling unused fields.'),
     ),
   ],
 )]

@@ -26,7 +26,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'id' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Role ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Role machine name. Core roles (anonymous, authenticated, administrator) cannot be deleted.'),
       required: TRUE,
     ),
   ],
@@ -34,17 +34,17 @@ use Drupal\tool\TypedData\InputDefinition;
     'id' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Deleted Role ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Machine name of the deleted role.'),
     ),
     'affected_users' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Affected Users'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Number of users who had this role (role was removed from them).'),
     ),
     'message' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Confirmation or error message.'),
     ),
   ],
 )]

@@ -7,8 +7,6 @@ namespace Drupal\mcp_tools_structure\Service;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Field\FieldTypePluginManagerInterface;
-use Drupal\field\Entity\FieldConfig;
-use Drupal\field\Entity\FieldStorageConfig;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AuditLogger;
 
@@ -275,7 +273,7 @@ class FieldService {
           $storageSettings['allowed_values'] = $this->formatAllowedValues($options['allowed_values']);
         }
 
-        $fieldStorage = FieldStorageConfig::create([
+        $fieldStorage = $this->entityTypeManager->getStorage('field_storage_config')->create([
           'field_name' => $fieldName,
           'entity_type' => $entityType,
           'type' => $typeConfig['type'],
@@ -299,7 +297,7 @@ class FieldService {
         }
       }
 
-      $field = FieldConfig::create([
+      $field = $this->entityTypeManager->getStorage('field_config')->create([
         'field_storage' => $fieldStorage,
         'bundle' => $bundle,
         'label' => $label,
@@ -388,7 +386,7 @@ class FieldService {
     if (!$field) {
       return [
         'success' => FALSE,
-        'error' => "Field '$fieldName' not found on $entityType.$bundle.",
+        'error' => "Field '$fieldName' not found on $entityType.$bundle. Use mcp_structure_get_content_type to see available fields.",
       ];
     }
 

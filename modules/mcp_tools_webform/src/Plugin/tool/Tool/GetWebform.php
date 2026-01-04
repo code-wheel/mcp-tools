@@ -25,7 +25,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'id' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Webform ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Machine name of the webform to retrieve. Use ListWebforms to find available webforms.'),
       required: TRUE,
     ),
   ],
@@ -33,32 +33,32 @@ use Drupal\tool\TypedData\InputDefinition;
     'id' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Webform ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Machine name of the webform.'),
     ),
     'title' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Title'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Human-readable title of the webform.'),
     ),
     'description' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Description'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Administrative description of the webform.'),
     ),
     'status' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Status'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Webform status: "open" (accepting submissions) or "closed".'),
     ),
     'elements' => new ContextDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Elements'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Form element definitions with #type, #title, #required, etc. Use with UpdateWebform to modify.'),
     ),
     'settings' => new ContextDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Settings'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Webform configuration: confirmation settings, submission handling, access controls, etc.'),
     ),
   ],
 )]

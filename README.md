@@ -11,7 +11,7 @@ Batteries-included MCP tools for AI assistants working with Drupal sites.
 | Drupal Version | PHP Version | Status | Notes |
 |----------------|-------------|--------|-------|
 | **10.3.x** | 8.3 | ✅ Tested | Minimum supported version |
-| **11.0.x** | 8.3, 8.4 | ✅ Tested | Fully supported |
+| **11.x** | 8.4 | ✅ Tested | Drupal 11 requires PHP 8.4+ |
 
 **PHP Support:** 8.3, 8.4
 
@@ -39,8 +39,8 @@ AI:   Creates content type, fields, vocabularies, role, and permissions
 | Environment | Read Tools | Write Tools | Recommendation |
 |-------------|------------|-------------|----------------|
 | **Local dev** | ✅ Safe | ✅ Safe | Full functionality |
-| **Staging** | ✅ Safe | ⚠️ Caution | Use read-only mode or limited scopes |
-| **Production** | ⚠️ Careful | ❌ Not recommended | Read-only mode strongly advised |
+| **Staging** | ✅ Safe | ⚠️ Caution | Use config-only mode or limited scopes |
+| **Production** | ⚠️ Careful | ❌ Not recommended | Read-only mode strongly advised (config-only if unavoidable) |
 
 **Why write tools are risky in production:**
 - Creates configuration in database, not in version-controlled code
@@ -50,9 +50,10 @@ AI:   Creates content type, fields, vocabularies, role, and permissions
 
 **Ideal workflow:**
 1. Use MCP Tools locally to scaffold your site
-2. Export configuration: `drush config:export`
-3. Commit to Git and deploy through normal CI/CD
-4. Keep production in read-only mode
+2. Enable config-only mode to keep changes reviewable as code
+3. Export configuration: `drush config:export`
+4. Commit to Git and deploy through normal CI/CD
+5. Keep production in read-only mode
 
 ## Requirements
 
@@ -77,19 +78,21 @@ drush en mcp_tools
 
 ```bash
 drush en mcp_tools_stdio
-drush mcp-tools:serve
+drush mcp-tools:serve --uid=1
 ```
+
+Tip: Drush often boots as uid 0 (anonymous). For local development, use `--uid=1`. For shared environments, use a dedicated user with only the MCP Tools permissions you need.
 
 ### Remote MCP (HTTP) setup (experimental)
 
 ```bash
 drush en mcp_tools_remote
-drush mcp-tools:remote-key-create --label="My Key" --scopes=read
+drush mcp-tools:remote-key-create --label="My Key" --scopes=read --ttl=86400
 ```
 
 Configure the endpoint at `/_mcp_tools` in your MCP client, and send the key as `Authorization: Bearer …` or `X-MCP-Api-Key: …`.
 
-Only use this on trusted internal networks; configure a dedicated execution user (not uid 1) and keep keys read-only unless absolutely necessary.
+Only use this on trusted internal networks; configure a dedicated execution user (not uid 1), consider setting IP and Origin/Host allowlists in `/admin/config/services/mcp-tools/remote`, and keep keys read-only unless absolutely necessary.
 
 ## Architecture: Granular Submodules
 
@@ -172,6 +175,16 @@ drush en mcp_tools_templates      # Site templates
 drush en mcp_tools_migration      # Content import/export
 ```
 
+Common starter bundles:
+
+```bash
+# Core site builder (local dev)
+drush en mcp_tools_structure mcp_tools_views mcp_tools_blocks mcp_tools_menus mcp_tools_users mcp_tools_content mcp_tools_media -y
+
+# Ops (use with care)
+drush en mcp_tools_cache mcp_tools_cron mcp_tools_batch mcp_tools_analysis -y
+```
+
 ## Access Control
 
 MCP Tools provides three layers of access control:
@@ -190,6 +203,8 @@ $config['mcp_tools.settings']['access']['read_only_mode'] = TRUE;
 ### 3. Connection Scopes
 Per-connection access levels (read/write/admin).
 
+**Default:** new installs start with `read` only via `access.default_scopes`.
+
 **Security default:** HTTP scope overrides are disabled by default. Enable them only if you have a trusted reverse proxy stripping/overwriting client-supplied scope headers/params.
 
 ```bash
@@ -200,7 +215,7 @@ X-MCP-Scope: read,write
 ?mcp_scope=read,write
 
 # Via environment (for STDIO transport)
-MCP_SCOPE=read,write drush mcp-tools:serve
+MCP_SCOPE=read,write drush mcp-tools:serve --uid=1
 ```
 
 Scopes are always limited by `access.allowed_scopes`. When no trusted override is present, `access.default_scopes` are used.
@@ -352,6 +367,8 @@ Available scopes:
 | `mcp_media_create` | Create media entities |
 | `mcp_media_delete` | Delete media entities |
 | `mcp_media_list_types` | List available media types |
+
+**Safety:** Base64 uploads are capped and block dangerous executable extensions by default.
 
 ### mcp_tools_webform (7 tools)
 
@@ -820,11 +837,11 @@ Signature verification: When a secret is configured, requests include an `X-MCP-
 drush en mcp_tools_stdio -y
 
 # Run the MCP server over STDIO (Claude Desktop, Claude Code, etc).
-drush mcp-tools:serve
+drush mcp-tools:serve --uid=1
 
 # With specific scopes (local only)
-MCP_SCOPE=read,write drush mcp-tools:serve
-# or: drush mcp-tools:serve --scope=read,write
+MCP_SCOPE=read,write drush mcp-tools:serve --uid=1
+# or: drush mcp-tools:serve --uid=1 --scope=read,write
 ```
 
 ### Remote (HTTP) — experimental
@@ -834,10 +851,12 @@ MCP_SCOPE=read,write drush mcp-tools:serve
 drush en mcp_tools_remote -y
 
 # Create a read-only API key (shown once).
-drush mcp-tools:remote-key-create --label="My Key" --scopes=read
+drush mcp-tools:remote-key-create --label="My Key" --scopes=read --ttl=86400
 ```
 
 Configure your MCP client to use `/_mcp_tools` and send the key as `Authorization: Bearer …` or `X-MCP-Api-Key: …`.
+
+Configure the endpoint at `/admin/config/services/mcp-tools/remote` (recommended: dedicated execution user + IP and Origin/Host allowlists).
 
 ### Alternative: drupal/mcp_server
 

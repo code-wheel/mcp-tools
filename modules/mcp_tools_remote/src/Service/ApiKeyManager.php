@@ -31,11 +31,14 @@ final class ApiKeyManager {
    *   Human label (for admins).
    * @param string[] $scopes
    *   Allowed scopes for this key (read, write, admin).
+   * @param int|null $ttlSeconds
+   *   Optional time-to-live in seconds. When provided and > 0, the key will
+   *   expire after this many seconds.
    *
    * @return array{key_id: string, api_key: string}
    *   Key ID and the full API key (shown once).
    */
-  public function createKey(string $label, array $scopes): array {
+  public function createKey(string $label, array $scopes, ?int $ttlSeconds = NULL): array {
     $label = trim($label);
     if ($label === '') {
       $label = 'Unnamed key';
@@ -43,13 +46,20 @@ final class ApiKeyManager {
 
     $keyId = $this->generateKeyId();
     $secret = $this->generateSecret();
+    $now = $this->time->getRequestTime();
+
+    $expires = NULL;
+    if ($ttlSeconds !== NULL && $ttlSeconds > 0) {
+      $expires = $now + $ttlSeconds;
+    }
 
     $record = [
       'label' => $label,
       'scopes' => array_values(array_unique(array_filter(array_map('strval', $scopes)))),
       'hash' => $this->hashSecret($secret),
-      'created' => $this->time->getRequestTime(),
+      'created' => $now,
       'last_used' => NULL,
+      'expires' => $expires,
     ];
 
     $all = $this->state->get(self::STATE_KEY, []);
@@ -81,6 +91,7 @@ final class ApiKeyManager {
         'scopes' => array_values(array_filter($record['scopes'] ?? [])),
         'created' => $record['created'] ?? NULL,
         'last_used' => $record['last_used'] ?? NULL,
+        'expires' => $record['expires'] ?? NULL,
       ];
     }
 
@@ -129,6 +140,11 @@ final class ApiKeyManager {
       return NULL;
     }
 
+    $expires = $record['expires'] ?? NULL;
+    if (is_numeric($expires) && $expires > 0 && $expires < $this->time->getRequestTime()) {
+      return NULL;
+    }
+
     $expected = (string) $record['hash'];
     $actual = $this->hashSecret($secret);
 
@@ -163,4 +179,3 @@ final class ApiKeyManager {
   }
 
 }
-

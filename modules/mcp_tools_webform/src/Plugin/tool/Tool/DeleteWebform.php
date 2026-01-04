@@ -26,7 +26,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'id' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Webform ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Machine name of the webform to delete. WARNING: This permanently deletes all submissions.'),
       required: TRUE,
     ),
   ],
@@ -34,22 +34,22 @@ use Drupal\tool\TypedData\InputDefinition;
     'id' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Deleted Webform ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Machine name of the deleted webform. This ID is no longer valid.'),
     ),
     'title' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Title'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Title of the deleted webform for confirmation.'),
     ),
     'submissions_deleted' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Submissions Deleted'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Number of submissions that were permanently deleted with the webform.'),
     ),
     'message' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Human-readable confirmation of the deletion. WARNING: This cannot be undone.'),
     ),
   ],
 )]

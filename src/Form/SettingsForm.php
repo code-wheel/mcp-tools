@@ -27,10 +27,71 @@ class SettingsForm extends ConfigFormBase {
   }
 
   /**
+   * Configuration presets for different environments.
+   */
+  protected const MODE_PRESETS = [
+    'development' => [
+      'access.read_only_mode' => FALSE,
+      'access.config_only_mode' => FALSE,
+      'access.default_scopes' => ['read', 'write'],
+      'access.allowed_scopes' => ['read', 'write', 'admin'],
+      'access.audit_logging' => FALSE,
+      'rate_limiting.enabled' => FALSE,
+    ],
+    'staging' => [
+      'access.read_only_mode' => FALSE,
+      'access.config_only_mode' => TRUE,
+      'access.config_only_allowed_write_kinds' => ['config'],
+      'access.default_scopes' => ['read', 'write'],
+      'access.allowed_scopes' => ['read', 'write'],
+      'access.audit_logging' => TRUE,
+      'rate_limiting.enabled' => TRUE,
+      'rate_limiting.max_writes_per_minute' => 30,
+      'rate_limiting.max_deletes_per_hour' => 20,
+    ],
+    'production' => [
+      'access.read_only_mode' => TRUE,
+      'access.config_only_mode' => FALSE,
+      'access.default_scopes' => ['read'],
+      'access.allowed_scopes' => ['read'],
+      'access.audit_logging' => TRUE,
+      'rate_limiting.enabled' => TRUE,
+      'rate_limiting.max_writes_per_minute' => 10,
+      'rate_limiting.max_deletes_per_hour' => 5,
+    ],
+  ];
+
+  /**
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state): array {
     $config = $this->config('mcp_tools.settings');
+
+    // Mode selector at the top.
+    $form['mode'] = [
+      '#type' => 'select',
+      '#title' => $this->t('Configuration Mode'),
+      '#description' => $this->t('Select a preset to quickly configure MCP Tools for your environment. Selecting a mode will apply recommended settings below.'),
+      '#options' => [
+        'development' => $this->t('Development - Full access, no restrictions'),
+        'staging' => $this->t('Staging - Config-only, rate limited, audited'),
+        'production' => $this->t('Production - Read-only, rate limited, audited'),
+        'custom' => $this->t('Custom - Configure manually'),
+      ],
+      '#default_value' => $config->get('mode') ?? 'development',
+      '#weight' => -200,
+    ];
+
+    $form['mode_description'] = [
+      '#type' => 'markup',
+      '#markup' => '<div class="description">' .
+        '<strong>' . $this->t('Mode presets:') . '</strong><br>' .
+        '<em>' . $this->t('Development:') . '</em> ' . $this->t('Read + Write scopes, no rate limiting, no audit logging. Best for local development.') . '<br>' .
+        '<em>' . $this->t('Staging:') . '</em> ' . $this->t('Config-only mode (no content writes), rate limiting enabled, audit logging enabled.') . '<br>' .
+        '<em>' . $this->t('Production:') . '</em> ' . $this->t('Read-only mode, strict rate limits, audit logging enabled. Safest for production.') .
+        '</div>',
+      '#weight' => -199,
+    ];
 
     // Access Control section.
     $form['access'] = [
@@ -46,6 +107,30 @@ class SettingsForm extends ConfigFormBase {
       '#default_value' => $config->get('access.read_only_mode') ?? FALSE,
     ];
 
+    $form['access']['config_only_mode'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Config-only mode'),
+      '#description' => $this->t('When enabled, write tools are restricted to configuration changes (e.g., content types, fields, views). Content mutations (nodes, media, users) and operational actions (cache/cron) are blocked unless explicitly allowed below.'),
+      '#default_value' => $config->get('access.config_only_mode') ?? FALSE,
+    ];
+
+    $form['access']['config_only_allowed_write_kinds'] = [
+      '#type' => 'checkboxes',
+      '#title' => $this->t('Allowed write types in config-only mode'),
+      '#description' => $this->t('Recommended: allow "Config" only. Enabling additional types reduces safety.'),
+      '#options' => [
+        'config' => $this->t('Config - Configuration changes'),
+        'ops' => $this->t('Ops - Operational actions (cache/cron/indexing)'),
+        'content' => $this->t('Content - Content/entity changes (nodes/media/users)'),
+      ],
+      '#default_value' => $config->get('access.config_only_allowed_write_kinds') ?? ['config'],
+      '#states' => [
+        'visible' => [
+          ':input[name="config_only_mode"]' => ['checked' => TRUE],
+        ],
+      ],
+    ];
+
     $form['access']['default_scopes'] = [
       '#type' => 'checkboxes',
       '#title' => $this->t('Default connection scopes'),
@@ -55,7 +140,7 @@ class SettingsForm extends ConfigFormBase {
         'write' => $this->t('Write - Allow write operations (content, structure changes)'),
         'admin' => $this->t('Admin - Allow administrative operations (recipe application)'),
       ],
-      '#default_value' => $config->get('access.default_scopes') ?? ['read', 'write'],
+      '#default_value' => $config->get('access.default_scopes') ?? ['read'],
     ];
 
     $form['access']['allowed_scopes'] = [
@@ -111,6 +196,18 @@ class SettingsForm extends ConfigFormBase {
       '#title' => $this->t('Enable rate limiting'),
       '#description' => $this->t('When enabled, write operations are limited per client. <strong>Recommended for production.</strong>'),
       '#default_value' => $config->get('rate_limiting.enabled') ?? FALSE,
+    ];
+
+    $form['rate_limiting']['trust_client_id_header'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Trust X-MCP-Client-Id header for rate limiting'),
+      '#description' => $this->t('When enabled, rate limiting will bucket by IP + X-MCP-Client-Id. Leave disabled unless you control the clients (header spoofing can bypass per-client limits).'),
+      '#default_value' => $config->get('rate_limiting.trust_client_id_header') ?? FALSE,
+      '#states' => [
+        'visible' => [
+          ':input[name="enabled"]' => ['checked' => TRUE],
+        ],
+      ],
     ];
 
     $form['rate_limiting']['max_writes_per_minute'] = [
@@ -341,6 +438,7 @@ class SettingsForm extends ConfigFormBase {
         '<p>' . $this->t('MCP Tools is designed primarily for <strong>local development and prototyping</strong>. If you must use it in production:') . '</p>' .
         '<ul>' .
         '<li>' . $this->t('Enable read-only mode') . '</li>' .
+        '<li>' . $this->t('Or enable config-only mode') . '</li>' .
         '<li>' . $this->t('Enable rate limiting') . '</li>' .
         '<li>' . $this->t('Enable audit logging') . '</li>' .
         '<li>' . $this->t('Restrict default scopes to "read" only') . '</li>' .
@@ -360,8 +458,28 @@ class SettingsForm extends ConfigFormBase {
   public function submitForm(array &$form, FormStateInterface $form_state): void {
     $config = $this->config('mcp_tools.settings');
 
-    // Access settings.
+    // Handle mode changes - apply preset values.
+    $mode = $form_state->getValue('mode') ?? 'custom';
+    $previousMode = $config->get('mode') ?? 'custom';
+    $config->set('mode', $mode);
+
+    // If switching to a preset mode (not custom), apply preset values.
+    if ($mode !== 'custom' && $mode !== $previousMode && isset(self::MODE_PRESETS[$mode])) {
+      foreach (self::MODE_PRESETS[$mode] as $key => $value) {
+        $config->set($key, $value);
+      }
+      $this->messenger()->addStatus($this->t('Applied @mode mode preset settings.', ['@mode' => $mode]));
+    }
+
+    // Always save individual settings (user can customize after applying preset).
+    // If they changed individual settings, switch mode to 'custom'.
     $config->set('access.read_only_mode', (bool) $form_state->getValue('read_only_mode'));
+    $config->set('access.config_only_mode', (bool) $form_state->getValue('config_only_mode'));
+    $kinds = array_filter($form_state->getValue('config_only_allowed_write_kinds') ?? []);
+    if (empty($kinds)) {
+      $kinds = ['config'];
+    }
+    $config->set('access.config_only_allowed_write_kinds', array_values($kinds));
 
     $allowedScopes = array_filter($form_state->getValue('allowed_scopes') ?? []);
     if (empty($allowedScopes)) {
@@ -385,6 +503,7 @@ class SettingsForm extends ConfigFormBase {
 
     // Rate limiting settings.
     $config->set('rate_limiting.enabled', (bool) $form_state->getValue('enabled'));
+    $config->set('rate_limiting.trust_client_id_header', (bool) $form_state->getValue('trust_client_id_header'));
     $config->set('rate_limiting.max_writes_per_minute', (int) $form_state->getValue('max_writes_per_minute'));
     $config->set('rate_limiting.max_writes_per_hour', (int) $form_state->getValue('max_writes_per_hour'));
     $config->set('rate_limiting.max_deletes_per_hour', (int) $form_state->getValue('max_deletes_per_hour'));

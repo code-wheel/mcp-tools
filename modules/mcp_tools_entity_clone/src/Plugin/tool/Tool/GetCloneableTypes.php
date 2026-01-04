@@ -20,18 +20,18 @@ use Drupal\tool\TypedData\InputDefinition;
   id: 'mcp_entity_clone_types',
   label: new TranslatableMarkup('Get Cloneable Entity Types'),
   description: new TranslatableMarkup('List all entity types that support cloning with their bundles.'),
-  operation: ToolOperation::Write,
+  operation: ToolOperation::Read,
   input_definitions: [],
   output_definitions: [
     'types' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Cloneable Entity Types'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Array of entity types with their bundles. Use entity_type and bundle with GetCloneSettings for details or CloneEntity to clone.'),
     ),
     'total' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Types'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Total number of entity types that support cloning.'),
     ),
   ],
 )]

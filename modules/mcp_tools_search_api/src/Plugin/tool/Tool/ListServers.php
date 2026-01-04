@@ -26,12 +26,12 @@ use Drupal\tool\TypedData\InputDefinition;
     'total' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total servers'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Total number of search servers configured in the system.'),
     ),
     'servers' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('List of search servers'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Array of server objects with id, label, backend type, status, and index count. Use id with GetServer for full details.'),
     ),
   ],
 )]

@@ -26,12 +26,12 @@ use Drupal\tool\TypedData\InputDefinition;
     'types' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Paragraph Types'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Array of paragraph type objects with id, label, description, and field count. Use id with GetParagraphType for full details.'),
     ),
     'total' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Types'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Total number of paragraph types in the system.'),
     ),
   ],
 )]

@@ -26,12 +26,12 @@ use Drupal\tool\TypedData\InputDefinition;
     'total_menus' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Menus'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Number of menus on the site.'),
     ),
     'menus' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Menus'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Array of menus with id (machine name), label, description, and link_count. Use id with GetMenuTree or AddMenuLink.'),
     ),
   ],
 )]

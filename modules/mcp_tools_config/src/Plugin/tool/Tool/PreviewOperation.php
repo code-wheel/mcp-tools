@@ -25,7 +25,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'operation' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Operation'),
-      description: new TranslatableMarkup('The operation to preview: export_config, import_config, delete_config, create_content_type, add_field, create_vocabulary, create_view.'),
+      description: new TranslatableMarkup('The operation to preview (example: export_config, create_content_type, delete_content_type, add_field, delete_field, create_role, grant_permissions).'),
       required: TRUE,
     ),
     'params' => new InputDefinition(
@@ -98,8 +98,14 @@ class PreviewOperation extends McpToolsToolBase {
           'export_config' => 'Preview what would be exported to sync directory',
           'import_config' => 'Preview what would be imported from sync directory',
           'delete_config' => 'Preview deleting a configuration (requires config_name param)',
+          'create_role' => 'Preview creating a role (requires id param)',
+          'delete_role' => 'Preview deleting a role (requires id param)',
+          'grant_permissions' => 'Preview granting permissions to a role (requires role + permissions params)',
+          'revoke_permissions' => 'Preview revoking permissions from a role (requires role + permissions params)',
           'create_content_type' => 'Preview creating a content type (requires machine_name param)',
+          'delete_content_type' => 'Preview deleting a content type (requires id param)',
           'add_field' => 'Preview adding a field (requires bundle, field_name params)',
+          'delete_field' => 'Preview deleting a field instance (requires bundle, field_name params)',
           'create_vocabulary' => 'Preview creating a vocabulary (requires machine_name param)',
           'create_view' => 'Preview creating a view (requires id param)',
         ],
@@ -110,9 +116,5 @@ class PreviewOperation extends McpToolsToolBase {
 
     return $this->configManagement->previewOperation($operation, $params);
   }
-
-  
-
-  
 
 }

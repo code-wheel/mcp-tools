@@ -1,0 +1,135 @@
+<h2>MCP Tools</h2>
+
+<p><strong>Summary:</strong> MCP Tools lets AI assistants build and manage Drupal sites through the Model Context Protocol (MCP) using Drupal’s Tool API. Create content types, fields, views, roles, blocks, and more by describing what you want.</p>
+
+<p><strong>Example</strong></p>
+<pre>You: "Create a blog with articles, categories, tags, and an editor role"
+AI:  Creates the content type, taxonomies, fields, role, and permissions</pre>
+
+<h3>Recommended Usage (Local-First)</h3>
+<p>MCP Tools is designed primarily for <strong>local development and prototyping</strong>. Remote exposure is supported, but intentionally optional.</p>
+
+<table>
+  <tr>
+    <th>Environment</th>
+    <th>Read Tools</th>
+    <th>Write Tools</th>
+    <th>Recommendation</th>
+  </tr>
+  <tr>
+    <td>Local dev</td>
+    <td>✅ Safe</td>
+    <td>✅ Safe</td>
+    <td>Full functionality</td>
+  </tr>
+  <tr>
+    <td>Staging</td>
+    <td>✅ Safe</td>
+    <td>⚠️ Caution</td>
+    <td>Use <strong>config-only mode</strong> or limit scopes</td>
+  </tr>
+  <tr>
+    <td>Production</td>
+    <td>⚠️ Careful</td>
+    <td>❌ Not recommended</td>
+    <td>Read-only mode strongly advised</td>
+  </tr>
+</table>
+
+<h3>Tooling Strategy (How We Keep It Safe)</h3>
+<ul>
+  <li><strong>Modular by design:</strong> tools are split across submodules so you only enable what you need.</li>
+  <li><strong>Scopes:</strong> per-connection scopes (<code>read</code>/<code>write</code>/<code>admin</code>) gate what a client can do.</li>
+  <li><strong>Safe defaults:</strong> new installs default to <code>read</code>-only scopes; enable write/admin explicitly when needed.</li>
+  <li><strong>Global safety toggles:</strong> read-only mode and config-only mode prevent accidental damage.</li>
+  <li><strong>Production hardening:</strong> rate limiting, protected entities, and sensitive data redaction.</li>
+  <li><strong>Config-as-code workflow:</strong> keep changes reviewable by exporting config after write operations.</li>
+</ul>
+
+<h3>Config-as-Code Workflow</h3>
+<p>If you use write tools to create or change configuration, export your config and commit it to Git to avoid configuration drift.</p>
+<ul>
+  <li><strong>Recommended:</strong> enable config-only mode when you want write access limited to configuration changes.</li>
+  <li><strong>Export config:</strong> run <code>drush cex -y</code> after changes.</li>
+  <li><strong>Optional:</strong> enable <code>mcp_tools_config</code> to preview/export via tools (<code>mcp_config_changes</code>, <code>mcp_config_preview</code>, <code>mcp_config_export</code>).</li>
+</ul>
+
+<h3>Features</h3>
+<p><strong>205 tools across 29 submodules</strong> covering site building, content, admin, and automation:</p>
+
+<p><strong>Site Building</strong></p>
+<ul>
+  <li>Create/manage content types and 18+ field types</li>
+  <li>Taxonomy vocabularies and terms</li>
+  <li>User roles and permissions</li>
+  <li>Menus and navigation</li>
+</ul>
+
+<p><strong>Views &amp; Display</strong></p>
+<ul>
+  <li>Create Views (page + block displays)</li>
+  <li>Place/configure blocks</li>
+  <li>Layout Builder sections and components</li>
+  <li>Image styles and effects</li>
+</ul>
+
+<p><strong>Content &amp; Media</strong></p>
+<ul>
+  <li>Create/update/publish/delete content</li>
+  <li>Upload/manage media files</li>
+  <li>Moderation workflows</li>
+  <li>Bulk operations (up to 50 items)</li>
+</ul>
+
+<p><strong>Administration</strong></p>
+<ul>
+  <li>Site health + security update checks</li>
+  <li>Cache/cron/queue management</li>
+  <li>Audits and analysis tools (SEO/accessibility/broken links)</li>
+</ul>
+
+<h3>MCP Transports</h3>
+<ul>
+  <li><strong>Recommended (local):</strong> <code>mcp_tools_stdio</code> — STDIO server via Drush.</li>
+  <li><strong>Experimental (remote):</strong> <code>mcp_tools_remote</code> — HTTP endpoint with API key authentication + optional IP allowlist and key TTL (intended for trusted networks; requires a dedicated execution user, not uid 1).</li>
+  <li><strong>Optional compatibility:</strong> <code>mcp_tools_mcp_server</code> — bridge to <code>drupal/mcp_server</code> when upstream is stable.</li>
+</ul>
+
+<h3>Security Built-In</h3>
+<ul>
+  <li>Three-layer access control (enabled modules, global toggles, per-connection scopes)</li>
+  <li>Config-only mode (restrict writes to configuration changes)</li>
+  <li>Rate limiting for write operations</li>
+  <li>Audit logging with sensitive data redaction</li>
+  <li>Protected entities and blocked dangerous permissions by default</li>
+</ul>
+
+<h3>Installation</h3>
+<pre>drush en mcp_tools -y
+drush en mcp_tools_content mcp_tools_structure mcp_tools_views -y</pre>
+
+<p>Configure MCP Tools at <code>/admin/config/services/mcp-tools</code>.</p>
+
+<h3>Starter Bundles</h3>
+<p>Enable only what you need. Common starting points:</p>
+<ul>
+  <li><strong>Core site builder (local dev):</strong> <code>mcp_tools_structure</code>, <code>mcp_tools_views</code>, <code>mcp_tools_blocks</code>, <code>mcp_tools_menus</code>, <code>mcp_tools_users</code>, <code>mcp_tools_content</code>, <code>mcp_tools_media</code></li>
+  <li><strong>Ops (use with care):</strong> <code>mcp_tools_cache</code>, <code>mcp_tools_cron</code>, <code>mcp_tools_batch</code>, <code>mcp_tools_analysis</code></li>
+  <li><strong>Contrib extras (only if installed):</strong> <code>mcp_tools_webform</code>, <code>mcp_tools_paragraphs</code>, <code>mcp_tools_metatag</code>, <code>mcp_tools_pathauto</code>, <code>mcp_tools_redirect</code>, <code>mcp_tools_search_api</code>, <code>mcp_tools_sitemap</code></li>
+</ul>
+
+<h3>Requirements</h3>
+<ul>
+  <li>Drupal 10.3+ or Drupal 11</li>
+  <li><a href="https://www.drupal.org/project/tool">Tool API</a> module</li>
+  <li>PHP 8.3+ (CI runs on PHP 8.3 and 8.4)</li>
+</ul>
+
+<h3>Maintainers / Support</h3>
+<p>Maintained by <a href="https://codewheel.ai">CodeWheel</a>.</p>
+<ul>
+  <li>Issue queue: <a href="https://www.drupal.org/project/issues/mcp_tools">drupal.org issues</a></li>
+  <li>GitHub: <a href="https://github.com/code-wheel/mcp-tools">code-wheel/mcp-tools</a></li>
+</ul>
+
+<p><strong>Tip:</strong> If you use write tools to create configuration, export config after changes (config-as-code workflow).</p>

@@ -77,7 +77,7 @@ Functional tests run with a full Drupal installation:
 The repo includes two end-to-end checks that validate the full MCP request/response flow without any client SDK:
 
 - `scripts/mcp_stdio_e2e.py` - Starts `drush mcp-tools:serve` and runs `initialize` → `tools/list` → `tools/call`.
-- `scripts/mcp_http_e2e.py` - Serves Drupal and runs the same flow against `/_mcp_tools`, verifying API key auth and read vs read/write scope enforcement.
+- `scripts/mcp_http_e2e.py` - Serves Drupal and runs the same flow against `/_mcp_tools`, verifying API key auth, IP allowlist enforcement, read vs read/write scope enforcement, and config-only mode behavior.
 
 ## CI/CD
 
@@ -87,8 +87,11 @@ GitHub Actions runs tests automatically on every push and PR:
 - **PHPCS** - Drupal coding standards
 - **PHPUnit** - All test suites
 - **Gitleaks** - Security scanning for secrets
+- **Code Coverage** - Unit + kernel + functional coverage for core modules (contrib-dependent submodules are excluded unless their dependencies are installed)
 
 See `.github/workflows/ci.yml` for configuration.
+
+Drupal.org uses GitLab pipelines (“DrupalCI”). See `DRUPALCI.md` for notes and common failure modes.
 
 ## Running Tests Without DDEV
 

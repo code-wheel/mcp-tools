@@ -25,7 +25,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'theme' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Theme'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Theme machine name (e.g., "olivero"). Defaults to active theme if omitted.'),
       required: FALSE,
     ),
   ],
@@ -33,17 +33,17 @@ use Drupal\tool\TypedData\InputDefinition;
     'theme' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Theme'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Theme machine name queried.'),
     ),
     'regions' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Available Regions'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Array of regions with id, label, and placed blocks. Use id as region in PlaceBlock.'),
     ),
     'count' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Region Count'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Number of regions in this theme.'),
     ),
   ],
 )]

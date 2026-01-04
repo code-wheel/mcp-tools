@@ -26,12 +26,12 @@ use Drupal\tool\TypedData\InputDefinition;
     'total' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Groups'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Total number of metatag groups available.'),
     ),
     'groups' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Metatag Groups'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Array of group objects with id, label, and description. Groups include basic, open_graph, twitter_cards, dublin_core, etc.'),
     ),
   ],
 )]

@@ -25,7 +25,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'id' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Workflow ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Machine name of the workflow (e.g., "editorial"). Get from GetWorkflows.'),
       required: TRUE,
     ),
   ],
@@ -33,27 +33,27 @@ use Drupal\tool\TypedData\InputDefinition;
     'id' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Workflow ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Machine name of the workflow.'),
     ),
     'label' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Workflow Label'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Human-readable name of the workflow.'),
     ),
     'states' => new ContextDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('States'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Available states with id, label, and whether it is published. Use state id with SetModerationState.'),
     ),
     'transitions' => new ContextDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Transitions'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Available transitions showing which state changes are permitted.'),
     ),
     'entity_types' => new ContextDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Entity Types'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Entity types and bundles using this workflow.'),
     ),
   ],
 )]

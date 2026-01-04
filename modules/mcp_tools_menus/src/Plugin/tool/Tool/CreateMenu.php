@@ -37,7 +37,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'description' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Description'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Administrative description. Shown in menu listing.'),
       required: FALSE,
     ),
   ],
@@ -45,28 +45,29 @@ use Drupal\tool\TypedData\InputDefinition;
     'id' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Menu ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Machine name of the created menu. Use with AddMenuLink, GetMenuTree.'),
     ),
     'label' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Menu Label'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Human-readable menu name.'),
     ),
     'admin_path' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Admin Path'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Path to manage this menu in Drupal admin UI.'),
     ),
     'message' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Success confirmation or error details.'),
     ),
   ],
 )]
 class CreateMenu extends McpToolsToolBase {
 
   protected const MCP_CATEGORY = 'menus';
+  protected const MCP_WRITE_KIND = 'config';
 
 
   protected MenuService $menuService;
