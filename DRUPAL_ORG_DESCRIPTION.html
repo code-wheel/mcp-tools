@@ -1,10 +1,19 @@
 <h2>MCP Tools</h2>
 
-<p><strong>Summary:</strong> MCP Tools lets AI assistants build and manage Drupal sites through the Model Context Protocol (MCP) using Drupal’s Tool API. Create content types, fields, views, roles, blocks, and more by describing what you want.</p>
+<p><strong>Summary:</strong> MCP Tools lets AI assistants build and manage Drupal sites through the Model Context Protocol (MCP) using Drupal's Tool API. Create content types, fields, views, roles, blocks, and more by describing what you want.</p>
 
 <p><strong>Example</strong></p>
 <pre>You: "Create a blog with articles, categories, tags, and an editor role"
 AI:  Creates the content type, taxonomies, fields, role, and permissions</pre>
+<br/>
+
+<h3>Quick Start with Configuration Presets</h3>
+<p>New in alpha20: Choose a preset that matches your environment:</p>
+<ul>
+  <li><strong>Development:</strong> Full access, no rate limiting</li>
+  <li><strong>Staging:</strong> Config-only mode, rate limited, audit logging</li>
+  <li><strong>Production:</strong> Read-only mode, strict limits, full audit trail</li>
+</ul>
 
 <h3>Recommended Usage (Local-First)</h3>
 <p>MCP Tools is designed primarily for <strong>local development and prototyping</strong>. Remote exposure is supported, but intentionally optional.</p>
@@ -55,7 +64,7 @@ AI:  Creates the content type, taxonomies, fields, role, and permissions</pre>
 </ul>
 
 <h3>Features</h3>
-<p><strong>205 tools across 29 submodules</strong> covering site building, content, admin, and automation:</p>
+<p><strong>214 tools across 30 submodules</strong> covering site building, content, admin, and automation:</p>
 
 <p><strong>Site Building</strong></p>
 <ul>
@@ -63,6 +72,7 @@ AI:  Creates the content type, taxonomies, fields, role, and permissions</pre>
   <li>Taxonomy vocabularies and terms</li>
   <li>User roles and permissions</li>
   <li>Menus and navigation</li>
+  <li><strong>Compound operations:</strong> scaffold entire content types or taxonomies in one call</li>
 </ul>
 
 <p><strong>Views &amp; Display</strong></p>
@@ -86,6 +96,7 @@ AI:  Creates the content type, taxonomies, fields, role, and permissions</pre>
   <li>Site health + security update checks</li>
   <li>Cache/cron/queue management</li>
   <li>Audits and analysis tools (SEO/accessibility/broken links)</li>
+  <li>Text format inspection</li>
 </ul>
 
 <h3>MCP Transports</h3>
@@ -105,7 +116,8 @@ AI:  Creates the content type, taxonomies, fields, role, and permissions</pre>
 </ul>
 
 <h3>Installation</h3>
-<pre>drush en mcp_tools -y
+<pre>composer require drupal/mcp_tools
+drush en mcp_tools -y
 drush en mcp_tools_content mcp_tools_structure mcp_tools_views -y</pre>
 
 <p>Configure MCP Tools at <code>/admin/config/services/mcp-tools</code>.</p>
@@ -121,7 +133,7 @@ drush en mcp_tools_content mcp_tools_structure mcp_tools_views -y</pre>
 <h3>Requirements</h3>
 <ul>
   <li>Drupal 10.3+ or Drupal 11</li>
-  <li><a href="https://www.drupal.org/project/tool">Tool API</a> module</li>
+  <li><a href="https://www.drupal.org/project/tool_api">Tool API</a> module</li>
   <li>PHP 8.3+ (CI runs on PHP 8.3 and 8.4)</li>
 </ul>
 
@@ -131,5 +143,3 @@ drush en mcp_tools_content mcp_tools_structure mcp_tools_views -y</pre>
   <li>Issue queue: <a href="https://www.drupal.org/project/issues/mcp_tools">drupal.org issues</a></li>
   <li>GitHub: <a href="https://github.com/code-wheel/mcp-tools">code-wheel/mcp-tools</a></li>
 </ul>
-
-<p><strong>Tip:</strong> If you use write tools to create configuration, export config after changes (config-as-code workflow).</p>
