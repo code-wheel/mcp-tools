@@ -26,12 +26,12 @@ use Drupal\tool\TypedData\InputDefinition;
     'total_vocabularies' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Vocabularies'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Number of taxonomy vocabularies on the site.'),
     ),
     'vocabularies' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Vocabularies'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Array of vocabularies with vid (machine name), label, description, and term_count. Use vid with GetTerms or when creating entity references.'),
     ),
   ],
 )]

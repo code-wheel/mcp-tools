@@ -33,22 +33,22 @@ use Drupal\tool\TypedData\InputDefinition;
     'theme' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Theme'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Machine name of the new default frontend theme. Use GetThemeSettings to configure it.'),
     ),
     'previous_default' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Previous Default'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Machine name of the previous default theme, useful for reverting if needed.'),
     ),
     'message' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Human-readable confirmation of the default theme change.'),
     ),
     'changed' => new ContextDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Changed'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('TRUE if the default theme was changed, FALSE if the theme was already the default.'),
     ),
   ],
 )]

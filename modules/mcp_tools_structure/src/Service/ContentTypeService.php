@@ -24,6 +24,149 @@ class ContentTypeService {
   ) {}
 
   /**
+   * List all content types.
+   *
+   * @return array
+   *   Result with list of content types.
+   */
+  public function listContentTypes(): array {
+    try {
+      $nodeTypes = $this->entityTypeManager->getStorage('node_type')->loadMultiple();
+      $types = [];
+
+      foreach ($nodeTypes as $nodeType) {
+        // Count fields for this bundle.
+        $fieldDefinitions = \Drupal::service('entity_field.manager')
+          ->getFieldDefinitions('node', $nodeType->id());
+        // Filter to only configurable fields (exclude base fields).
+        $customFields = array_filter($fieldDefinitions, function ($field) {
+          return $field instanceof \Drupal\field\FieldConfigInterface;
+        });
+
+        // Count content of this type.
+        $contentCount = $this->entityTypeManager->getStorage('node')
+          ->getQuery()
+          ->accessCheck(FALSE)
+          ->condition('type', $nodeType->id())
+          ->count()
+          ->execute();
+
+        $types[] = [
+          'id' => $nodeType->id(),
+          'label' => $nodeType->label(),
+          'description' => $nodeType->getDescription() ?: '',
+          'field_count' => count($customFields),
+          'content_count' => (int) $contentCount,
+        ];
+      }
+
+      // Sort by label.
+      usort($types, fn($a, $b) => strcasecmp($a['label'], $b['label']));
+
+      return [
+        'success' => TRUE,
+        'data' => [
+          'types' => $types,
+          'total' => count($types),
+        ],
+      ];
+    }
+    catch (\Exception $e) {
+      return [
+        'success' => FALSE,
+        'error' => 'Failed to list content types: ' . $e->getMessage(),
+      ];
+    }
+  }
+
+  /**
+   * Get detailed content type information including fields.
+   *
+   * @param string $id
+   *   Content type machine name.
+   *
+   * @return array
+   *   Result with content type details and fields.
+   */
+  public function getContentType(string $id): array {
+    try {
+      $nodeType = $this->entityTypeManager->getStorage('node_type')->load($id);
+
+      if (!$nodeType) {
+        return [
+          'success' => FALSE,
+          'error' => "Content type '$id' not found.",
+        ];
+      }
+
+      // Get field definitions.
+      $fieldDefinitions = \Drupal::service('entity_field.manager')
+        ->getFieldDefinitions('node', $id);
+
+      $fields = [];
+      foreach ($fieldDefinitions as $fieldName => $field) {
+        // Include configurable fields only.
+        if ($field instanceof \Drupal\field\FieldConfigInterface) {
+          $fieldInfo = [
+            'name' => $fieldName,
+            'label' => $field->getLabel(),
+            'type' => $field->getType(),
+            'required' => $field->isRequired(),
+            'description' => $field->getDescription() ?: '',
+            'cardinality' => $field->getFieldStorageDefinition()->getCardinality(),
+          ];
+
+          // Add type-specific info.
+          $storageSettings = $field->getFieldStorageDefinition()->getSettings();
+          $fieldSettings = $field->getSettings();
+
+          // For entity references, show target info.
+          if ($field->getType() === 'entity_reference') {
+            $fieldInfo['target_type'] = $storageSettings['target_type'] ?? NULL;
+            $fieldInfo['target_bundles'] = $fieldSettings['handler_settings']['target_bundles'] ?? [];
+          }
+
+          // For list fields, show allowed values.
+          if (in_array($field->getType(), ['list_string', 'list_integer', 'list_float'])) {
+            $fieldInfo['allowed_values'] = $storageSettings['allowed_values'] ?? [];
+          }
+
+          // For text fields, show max length.
+          if (isset($storageSettings['max_length'])) {
+            $fieldInfo['max_length'] = $storageSettings['max_length'];
+          }
+
+          $fields[] = $fieldInfo;
+        }
+      }
+
+      // Sort fields by name.
+      usort($fields, fn($a, $b) => strcasecmp($a['name'], $b['name']));
+
+      return [
+        'success' => TRUE,
+        'data' => [
+          'id' => $nodeType->id(),
+          'label' => $nodeType->label(),
+          'description' => $nodeType->getDescription() ?: '',
+          'new_revision' => $nodeType->shouldCreateNewRevision(),
+          'display_submitted' => $nodeType->displaySubmitted(),
+          'fields' => $fields,
+          'field_count' => count($fields),
+          'admin_path' => "/admin/structure/types/manage/$id",
+          'add_content_path' => "/node/add/$id",
+        ],
+      ];
+    }
+    catch (\Exception $e) {
+      return [
+        'success' => FALSE,
+        'error' => 'Failed to get content type: ' . $e->getMessage(),
+      ];
+    }
+  }
+
+  /**
    * Create a new content type.
    *
    * @param string $id

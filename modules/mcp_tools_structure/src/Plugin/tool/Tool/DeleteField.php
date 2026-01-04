@@ -26,20 +26,20 @@ use Drupal\tool\TypedData\InputDefinition;
     'entity_type' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Entity Type'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Entity type (node, taxonomy_term, user). Defaults to node.'),
       required: FALSE,
       default_value: 'node',
     ),
     'bundle' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Bundle'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Content type or vocabulary machine name.'),
       required: TRUE,
     ),
     'field_name' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Field Name'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Field machine name (e.g., field_summary). WARNING: All data in this field will be lost.'),
       required: TRUE,
     ),
   ],
@@ -47,12 +47,12 @@ use Drupal\tool\TypedData\InputDefinition;
     'field_name' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Deleted Field Name'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Machine name of the deleted field.'),
     ),
     'message' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Confirmation or error message.'),
     ),
   ],
 )]

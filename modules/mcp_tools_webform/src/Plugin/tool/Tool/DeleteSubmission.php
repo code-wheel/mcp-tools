@@ -26,7 +26,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'sid' => new InputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Submission ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Numeric submission ID to delete. Use GetSubmissions to find submission IDs. WARNING: This is permanent.'),
       required: TRUE,
     ),
   ],
@@ -34,22 +34,22 @@ use Drupal\tool\TypedData\InputDefinition;
     'sid' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Deleted Submission ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('The submission ID that was deleted. This ID is no longer valid.'),
     ),
     'webform_id' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Webform ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Machine name of the webform the submission belonged to.'),
     ),
     'webform_title' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Webform Title'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Title of the webform for confirmation.'),
     ),
     'message' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Human-readable confirmation of the deletion. WARNING: This cannot be undone.'),
     ),
   ],
 )]

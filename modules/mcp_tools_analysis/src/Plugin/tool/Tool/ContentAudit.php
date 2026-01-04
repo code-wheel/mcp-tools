@@ -50,7 +50,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'stale_count' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Stale Count'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Number of content items not updated within threshold.'),
     ),
     'orphaned_content' => new ContextDefinition(
       data_type: 'list',
@@ -60,7 +60,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'orphaned_count' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Orphaned Count'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Number of unpublished content items with no activity.'),
     ),
     'drafts' => new ContextDefinition(
       data_type: 'list',
@@ -70,12 +70,12 @@ use Drupal\tool\TypedData\InputDefinition;
     'draft_count' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Draft Count'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Number of content items in draft state.'),
     ),
     'suggestions' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Suggestions'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Recommendations for managing stale and orphaned content.'),
     ),
   ],
 )]

@@ -39,47 +39,47 @@ use Drupal\tool\TypedData\InputDefinition;
     'action' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Action Performed'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Either "published" or "unpublished" depending on the publish parameter.'),
     ),
     'total_requested' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Requested'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Number of items requested for status change.'),
     ),
     'processed_count' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Processed Count'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Number of items whose status was actually changed.'),
     ),
     'unchanged_count' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Unchanged Count'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Number of items already in the target state.'),
     ),
     'error_count' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Error Count'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Number of items that failed to process.'),
     ),
     'processed' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Processed Items'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Array of items with nid, title whose status was changed.'),
     ),
     'unchanged' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Unchanged Items'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Array of items already in the target publish state.'),
     ),
     'errors' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Errors'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Array of errors with nid and error message for each failure.'),
     ),
     'message' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Summary of the batch publish operation.'),
     ),
   ],
 )]

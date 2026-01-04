@@ -25,19 +25,19 @@ use Drupal\tool\TypedData\InputDefinition;
     'workflow_id' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Workflow ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Machine name of the workflow. Get from GetWorkflows.'),
       required: TRUE,
     ),
     'state' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Moderation State'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('State to filter by (e.g., "draft", "review", "published"). Get from GetWorkflow.'),
       required: TRUE,
     ),
     'limit' => new InputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Limit'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Maximum results to return. Defaults to 50.'),
       required: FALSE,
       default_value: 50,
     ),
@@ -46,32 +46,32 @@ use Drupal\tool\TypedData\InputDefinition;
     'workflow_id' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Workflow ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('The workflow queried.'),
     ),
     'workflow_label' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Workflow Label'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Human-readable workflow name.'),
     ),
     'state' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('State'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('The state filter applied.'),
     ),
     'state_label' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('State Label'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Human-readable state name.'),
     ),
     'total' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Content'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Number of content items in this state.'),
     ),
     'content' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Content'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Array of entities with id, type, bundle, label, and changed date.'),
     ),
   ],
 )]

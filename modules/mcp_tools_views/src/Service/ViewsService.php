@@ -216,7 +216,7 @@ class ViewsService {
     if (!$view) {
       return [
         'success' => FALSE,
-        'error' => "View '$id' not found.",
+        'error' => "View '$id' not found. Use mcp_list_views to see available views.",
       ];
     }
 
@@ -280,7 +280,7 @@ class ViewsService {
     if (!$view) {
       return [
         'success' => FALSE,
-        'error' => "View '$viewId' not found.",
+        'error' => "View '$viewId' not found. Use mcp_list_views to see available views.",
       ];
     }
 
@@ -356,7 +356,7 @@ class ViewsService {
     if (!$view) {
       return [
         'success' => FALSE,
-        'error' => "View '$id' not found.",
+        'error' => "View '$id' not found. Use mcp_list_views to see available views.",
       ];
     }
 

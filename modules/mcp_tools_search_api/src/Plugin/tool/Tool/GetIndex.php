@@ -33,7 +33,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'index' => new ContextDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Index details'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Index configuration: id, label, server, fields, datasources, and indexing status. Use with IndexItems, ReindexIndex, or ClearIndex.'),
     ),
   ],
 )]

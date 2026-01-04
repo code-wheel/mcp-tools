@@ -33,32 +33,32 @@ use Drupal\tool\TypedData\InputDefinition;
     'id' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Redirect ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('The unique numeric identifier for this redirect. Use with UpdateRedirect or DeleteRedirect tools.'),
     ),
     'source' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Source Path'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('The source path that triggers this redirect (e.g., "old-page" or "/legacy/url"). Does not include the domain.'),
     ),
     'destination' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Destination'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('The target path or URL where visitors are redirected (e.g., "/new-page" or "https://example.com/page").'),
     ),
     'status_code' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Status Code'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('HTTP redirect status code: 301 (permanent - cached by browsers), 302 (temporary), 303 (see other), or 307 (temporary preserve method).'),
     ),
     'language' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Language'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Language code if this is a language-specific redirect (e.g., "en", "de"), or empty for language-neutral redirects.'),
     ),
     'count' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Hit Count'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Number of times this redirect has been triggered. Useful for identifying high-traffic redirects or unused ones.'),
     ),
   ],
 )]

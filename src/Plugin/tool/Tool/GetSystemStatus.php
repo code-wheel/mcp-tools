@@ -34,17 +34,17 @@ use Drupal\tool\TypedData\InputDefinition;
     'requirements' => new ContextDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('System Requirements'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Status report items keyed by module. Each has title, value, severity (0=ok, 1=info, 2=warning, 3=error), and description.'),
     ),
     'php' => new ContextDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('PHP Information'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('PHP version, memory limit, max execution time, and loaded extensions.'),
     ),
     'database' => new ContextDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Database Status'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Database driver, version, host, and database name.'),
     ),
   ],
 )]

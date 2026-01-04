@@ -25,19 +25,19 @@ use Drupal\tool\TypedData\InputDefinition;
     'id' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Media Type ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Machine name for the media type. Lowercase, underscores only.'),
       required: TRUE,
     ),
     'label' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Label'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Human-readable name shown in admin UI and media library.'),
       required: TRUE,
     ),
     'source_plugin' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Source Plugin'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Media source: "image", "file", "audio", "video", "oembed:video" (YouTube/Vimeo).'),
       required: TRUE,
     ),
   ],
@@ -45,27 +45,27 @@ use Drupal\tool\TypedData\InputDefinition;
     'id' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Media Type ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Machine name of created type. Use as bundle in CreateMedia.'),
     ),
     'label' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Label'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Human-readable name of the media type.'),
     ),
     'source_plugin' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Source Plugin'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('The media source plugin in use.'),
     ),
     'source_field' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Source Field'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Auto-created field for source data (e.g., field_media_image).'),
     ),
     'message' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Success confirmation or error details.'),
     ),
   ],
 )]

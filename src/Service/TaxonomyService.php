@@ -69,7 +69,7 @@ class TaxonomyService {
     $vocab = $this->entityTypeManager->getStorage('taxonomy_vocabulary')->load($vid);
     if (!$vocab) {
       return [
-        'error' => "Vocabulary '$vid' not found.",
+        'error' => "Vocabulary '$vid' not found. Use mcp_structure_list_vocabularies to see available vocabularies.",
       ];
     }
 

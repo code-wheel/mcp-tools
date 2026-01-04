@@ -40,42 +40,42 @@ use Drupal\tool\TypedData\InputDefinition;
     'nid' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Node ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('The node ID queried.'),
     ),
     'title' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Title'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Title of the content item.'),
     ),
     'type' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Content Type'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Content type machine name (e.g., "article", "page").'),
     ),
     'status' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Current Status'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Current publication status: "published" or "unpublished".'),
     ),
     'scheduling_enabled' => new ContextDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Scheduling Enabled'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('TRUE if the content type supports scheduling, FALSE otherwise.'),
     ),
     'publish_on' => new ContextDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Scheduled Publish'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Scheduled publish date info: timestamp, formatted. NULL if not scheduled. Use SetSchedule to modify.'),
     ),
     'unpublish_on' => new ContextDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Scheduled Unpublish'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Scheduled unpublish date info: timestamp, formatted. NULL if not scheduled. Use SetSchedule to modify.'),
     ),
     'has_schedule' => new ContextDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Has Active Schedule'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('TRUE if any schedule (publish or unpublish) is set. Use CancelSchedule to remove.'),
     ),
   ],
 )]

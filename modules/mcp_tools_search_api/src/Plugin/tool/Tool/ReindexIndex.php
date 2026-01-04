@@ -35,17 +35,17 @@ use Drupal\tool\TypedData\InputDefinition;
     'success' => new ContextDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Success status'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('TRUE if items were marked for reindexing, FALSE if an error occurred.'),
     ),
     'message' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result message'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Human-readable confirmation. Note: actual indexing happens via cron or IndexItems.'),
     ),
     'total_items' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total items to reindex'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Total items marked for reindexing. Use GetIndexStatus to monitor progress, IndexItems to trigger indexing.'),
     ),
   ],
 )]

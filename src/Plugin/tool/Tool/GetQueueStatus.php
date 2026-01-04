@@ -26,22 +26,22 @@ use Drupal\tool\TypedData\InputDefinition;
     'total_queues' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Queues'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Number of queue workers defined on the site.'),
     ),
     'queues_with_items' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Queues With Pending Items'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Number of queues that have items waiting to be processed.'),
     ),
     'total_items' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Pending Items'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Total items across all queues waiting to be processed.'),
     ),
     'queues' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Queue Details'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Array of queues with name, title, item_count, and cron settings. Use name with RunQueue.'),
     ),
   ],
 )]

@@ -46,27 +46,27 @@ use Drupal\tool\TypedData\InputDefinition;
     'nid' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Node ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('The node that was scheduled.'),
     ),
     'title' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Title'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Title of the scheduled content.'),
     ),
     'scheduled_unpublish' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Scheduled Date'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Human-readable scheduled unpublication date.'),
     ),
     'timestamp' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Unix Timestamp'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Unix timestamp of scheduled unpublication.'),
     ),
     'message' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Success or error details.'),
     ),
   ],
 )]

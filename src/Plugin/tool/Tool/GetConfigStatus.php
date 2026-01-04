@@ -26,17 +26,17 @@ use Drupal\tool\TypedData\InputDefinition;
     'has_changes' => new ContextDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Has Pending Changes'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('True if there are differences between active and sync config storage.'),
     ),
     'total_changes' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Changes'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Number of config objects that differ.'),
     ),
     'changes' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Change Details'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Array of changes with name and type (create, update, delete, rename).'),
     ),
   ],
 )]

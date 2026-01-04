@@ -33,17 +33,17 @@ use Drupal\tool\TypedData\InputDefinition;
     'total' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Patterns'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Number of patterns found.'),
     ),
     'patterns' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Pattern List'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Array of patterns with id, label, pattern, entity_type, and bundles. Use id with GetPattern.'),
     ),
     'filter' => new ContextDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Applied Filter'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Entity type filter that was applied, if any.'),
     ),
   ],
 )]

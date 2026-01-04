@@ -39,47 +39,47 @@ use Drupal\tool\TypedData\InputDefinition;
     'role' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Role'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Role machine name that was assigned.'),
     ),
     'total_requested' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Requested'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Number of users requested for role assignment.'),
     ),
     'assigned_count' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Assigned Count'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Number of users who received the role.'),
     ),
     'already_had_count' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Already Had Role Count'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Number of users who already had the role.'),
     ),
     'error_count' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Error Count'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Number of users that failed to receive the role.'),
     ),
     'assigned' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Assigned Users'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Array of users with uid, username who received the role.'),
     ),
     'already_had' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Users Who Already Had Role'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Array of users with uid, username who already had the role.'),
     ),
     'errors' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Errors'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Array of errors with uid and error message for each failure.'),
     ),
     'message' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Summary of the batch role assignment operation.'),
     ),
   ],
 )]

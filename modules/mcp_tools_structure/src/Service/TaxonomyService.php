@@ -20,6 +20,133 @@ class TaxonomyService {
   ) {}
 
   /**
+   * List all vocabularies.
+   *
+   * @return array
+   *   Result with list of vocabularies.
+   */
+  public function listVocabularies(): array {
+    try {
+      $vocabularies = $this->entityTypeManager->getStorage('taxonomy_vocabulary')->loadMultiple();
+      $result = [];
+
+      foreach ($vocabularies as $vocabulary) {
+        // Count terms in this vocabulary.
+        $termCount = $this->entityTypeManager->getStorage('taxonomy_term')
+          ->getQuery()
+          ->accessCheck(FALSE)
+          ->condition('vid', $vocabulary->id())
+          ->count()
+          ->execute();
+
+        $result[] = [
+          'id' => $vocabulary->id(),
+          'label' => $vocabulary->label(),
+          'description' => $vocabulary->getDescription() ?: '',
+          'term_count' => (int) $termCount,
+        ];
+      }
+
+      // Sort by label.
+      usort($result, fn($a, $b) => strcasecmp($a['label'], $b['label']));
+
+      return [
+        'success' => TRUE,
+        'data' => [
+          'vocabularies' => $result,
+          'total' => count($result),
+        ],
+      ];
+    }
+    catch (\Exception $e) {
+      return [
+        'success' => FALSE,
+        'error' => 'Failed to list vocabularies: ' . $e->getMessage(),
+      ];
+    }
+  }
+
+  /**
+   * Get vocabulary details with terms.
+   *
+   * @param string $id
+   *   Vocabulary machine name.
+   * @param int $limit
+   *   Maximum terms to return (0 for all).
+   *
+   * @return array
+   *   Result with vocabulary details and terms.
+   */
+  public function getVocabulary(string $id, int $limit = 100): array {
+    try {
+      $vocabulary = $this->entityTypeManager->getStorage('taxonomy_vocabulary')->load($id);
+
+      if (!$vocabulary) {
+        return [
+          'success' => FALSE,
+          'error' => "Vocabulary '$id' not found. Use mcp_structure_list_vocabularies to see available vocabularies.",
+        ];
+      }
+
+      // Get terms with hierarchy info.
+      $query = $this->entityTypeManager->getStorage('taxonomy_term')
+        ->getQuery()
+        ->accessCheck(FALSE)
+        ->condition('vid', $id)
+        ->sort('weight')
+        ->sort('name');
+
+      if ($limit > 0) {
+        $query->range(0, $limit);
+      }
+
+      $termIds = $query->execute();
+      $terms = $this->entityTypeManager->getStorage('taxonomy_term')->loadMultiple($termIds);
+
+      $termData = [];
+      foreach ($terms as $term) {
+        $parents = $this->entityTypeManager->getStorage('taxonomy_term')->loadParents($term->id());
+        $parentIds = array_keys($parents);
+
+        $termData[] = [
+          'tid' => (int) $term->id(),
+          'name' => $term->getName(),
+          'description' => $term->getDescription() ?: '',
+          'weight' => (int) $term->getWeight(),
+          'parent' => !empty($parentIds) ? (int) reset($parentIds) : 0,
+        ];
+      }
+
+      // Get total term count.
+      $totalTerms = $this->entityTypeManager->getStorage('taxonomy_term')
+        ->getQuery()
+        ->accessCheck(FALSE)
+        ->condition('vid', $id)
+        ->count()
+        ->execute();
+
+      return [
+        'success' => TRUE,
+        'data' => [
+          'id' => $vocabulary->id(),
+          'label' => $vocabulary->label(),
+          'description' => $vocabulary->getDescription() ?: '',
+          'terms' => $termData,
+          'terms_returned' => count($termData),
+          'total_terms' => (int) $totalTerms,
+          'admin_path' => "/admin/structure/taxonomy/manage/$id/overview",
+        ],
+      ];
+    }
+    catch (\Exception $e) {
+      return [
+        'success' => FALSE,
+        'error' => 'Failed to get vocabulary: ' . $e->getMessage(),
+      ];
+    }
+  }
+
+  /**
    * Create a new vocabulary.
    *
    * @param string $id

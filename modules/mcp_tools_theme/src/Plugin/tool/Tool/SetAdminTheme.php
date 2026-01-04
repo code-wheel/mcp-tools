@@ -33,22 +33,22 @@ use Drupal\tool\TypedData\InputDefinition;
     'theme' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Theme'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Machine name of the new admin theme. Use GetThemeSettings to view its configuration.'),
     ),
     'previous_admin' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Previous Admin'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Machine name of the previous admin theme, useful for reverting if needed.'),
     ),
     'message' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Human-readable confirmation of the admin theme change.'),
     ),
     'changed' => new ContextDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Changed'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('TRUE if the admin theme was changed, FALSE if the theme was already the admin theme.'),
     ),
   ],
 )]

@@ -39,22 +39,22 @@ use Drupal\tool\TypedData\InputDefinition;
     'total' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Redirects'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Total number of redirects in the system across all pages. Use with limit and offset for pagination calculations.'),
     ),
     'limit' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Limit'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Maximum number of redirects returned in this response. Default is 100.'),
     ),
     'offset' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Offset'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Number of redirects skipped before this page. Use offset + limit for the next page.'),
     ),
     'redirects' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Redirects'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Array of redirect objects, each containing id, source, destination, status_code, language, and count. Use id with GetRedirect for full details.'),
     ),
   ],
 )]

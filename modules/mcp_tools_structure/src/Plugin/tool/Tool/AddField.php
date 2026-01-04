@@ -50,20 +50,20 @@ use Drupal\tool\TypedData\InputDefinition;
     'label' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Label'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Human-readable field label shown in forms.'),
       required: TRUE,
     ),
     'required' => new InputDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Required'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('True to make field required when creating/editing content.'),
       required: FALSE,
       default_value: FALSE,
     ),
     'description' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Help Text'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Help text shown below the field in edit forms.'),
       required: FALSE,
     ),
     'cardinality' => new InputDefinition(
@@ -96,22 +96,22 @@ use Drupal\tool\TypedData\InputDefinition;
     'field_name' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Field Name'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Full field machine name (e.g., field_summary). Use this key in CreateContent fields parameter.'),
     ),
     'entity_type' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Entity Type'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Entity type the field was added to (e.g., node).'),
     ),
     'bundle' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Bundle'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Bundle the field was added to (e.g., article).'),
     ),
     'message' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Success or error message.'),
     ),
   ],
 )]

@@ -25,19 +25,19 @@ use Drupal\tool\TypedData\InputDefinition;
     'id' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Webform machine name'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Unique machine name for the webform (lowercase, underscores only, e.g., "contact_form").'),
       required: TRUE,
     ),
     'title' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Title'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Human-readable title displayed to users (e.g., "Contact Form").'),
       required: TRUE,
     ),
     'elements' => new InputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Elements definition'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('YAML-style element definitions. Keys are element names, values are element config with #type, #title, etc.'),
       required: FALSE,
     ),
   ],
@@ -45,22 +45,22 @@ use Drupal\tool\TypedData\InputDefinition;
     'id' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Webform ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Machine name of the created webform. Use with GetWebform, UpdateWebform, or DeleteWebform.'),
     ),
     'title' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Title'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Title of the created webform.'),
     ),
     'status' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Status'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Webform status: "open" (accepting submissions) or "closed". Use UpdateWebform to change.'),
     ),
     'message' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Human-readable confirmation of the webform creation.'),
     ),
   ],
 )]

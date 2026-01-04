@@ -31,25 +31,25 @@ use Drupal\tool\TypedData\InputDefinition;
     'name' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Term Name'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('The term name/label.'),
       required: TRUE,
     ),
     'description' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Description'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Optional description for the term.'),
       required: FALSE,
     ),
     'parent' => new InputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Parent Term ID'),
-      description: new TranslatableMarkup('For hierarchical terms'),
+      description: new TranslatableMarkup('Parent term tid for hierarchical vocabularies. 0 or omit for top-level.'),
       required: FALSE,
     ),
     'weight' => new InputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Weight'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Sort order weight. Lower values appear first.'),
       required: FALSE,
       default_value: 0,
     ),
@@ -58,22 +58,22 @@ use Drupal\tool\TypedData\InputDefinition;
     'tid' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Term ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('ID of the created term. Use as target_id in entity reference fields.'),
     ),
     'name' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Term Name'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Name of the created term.'),
     ),
     'vocabulary' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Vocabulary'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Vocabulary the term was added to.'),
     ),
     'message' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Success or error message.'),
     ),
   ],
 )]

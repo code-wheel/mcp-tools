@@ -475,7 +475,7 @@ class LayoutBuilderService {
     if (!$this->blockManager->hasDefinition($blockId)) {
       return [
         'success' => FALSE,
-        'error' => "Block plugin '$blockId' not found.",
+        'error' => "Block plugin '$blockId' not found. Use mcp_list_block_plugins to see available block types.",
       ];
     }
 
@@ -580,7 +580,7 @@ class LayoutBuilderService {
     if (!$found) {
       return [
         'success' => FALSE,
-        'error' => "Block with UUID '$blockUuid' not found in any section.",
+        'error' => "Block with UUID '$blockUuid' not found in any section. Use mcp_layout_get to see current layout sections and blocks.",
       ];
     }
 

@@ -36,12 +36,12 @@ use Drupal\tool\TypedData\InputDefinition;
     'critical_count' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Critical Count'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Number of critical issues requiring immediate action.'),
     ),
     'warning_count' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Warning Count'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Number of warnings to review and prioritize.'),
     ),
     'admin_user_count' => new ContextDefinition(
       data_type: 'integer',
@@ -56,7 +56,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'suggestions' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Suggestions'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Specific remediations for security issues found.'),
     ),
   ],
 )]

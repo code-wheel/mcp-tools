@@ -33,12 +33,12 @@ use Drupal\tool\TypedData\InputDefinition;
     'name' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Configuration Name'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('The configuration object name that was retrieved.'),
     ),
     'data' => new ContextDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Configuration Data'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('The configuration values as a nested object. Structure varies by config type.'),
     ),
   ],
 )]

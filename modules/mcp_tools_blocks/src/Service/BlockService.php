@@ -52,7 +52,7 @@ class BlockService {
     // Validate the block plugin exists.
     $definitions = $this->blockManager->getDefinitions();
     if (!isset($definitions[$pluginId])) {
-      return ['success' => FALSE, 'error' => "Block plugin '$pluginId' not found."];
+      return ['success' => FALSE, 'error' => "Block plugin '$pluginId' not found. Use mcp_list_block_plugins to see available block types."];
     }
 
     // Determine theme.
@@ -145,7 +145,7 @@ class BlockService {
 
     $block = $this->entityTypeManager->getStorage('block')->load($blockId);
     if (!$block) {
-      return ['success' => FALSE, 'error' => "Block '$blockId' not found."];
+      return ['success' => FALSE, 'error' => "Block '$blockId' not found. Use mcp_list_blocks to see placed blocks."];
     }
 
     try {
@@ -203,7 +203,7 @@ class BlockService {
 
     $block = $this->entityTypeManager->getStorage('block')->load($blockId);
     if (!$block) {
-      return ['success' => FALSE, 'error' => "Block '$blockId' not found."];
+      return ['success' => FALSE, 'error' => "Block '$blockId' not found. Use mcp_list_blocks to see placed blocks."];
     }
 
     try {

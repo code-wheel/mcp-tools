@@ -26,12 +26,12 @@ use Drupal\tool\TypedData\InputDefinition;
     'types' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Cloneable Entity Types'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Array of entity types with their bundles. Use entity_type and bundle with GetCloneSettings for details or CloneEntity to clone.'),
     ),
     'total' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Types'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Total number of entity types that support cloning.'),
     ),
   ],
 )]

@@ -4,6 +4,33 @@ All notable changes to the MCP Tools module will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.0.0-alpha19] - 2026-01-04
+
+### Added
+
+- **6 new schema discovery tools** in `mcp_tools_structure` for AI introspection:
+  - `mcp_structure_list_content_types` - List all content types with field counts
+  - `mcp_structure_get_content_type` - Get full field schema with types, cardinality, and allowed values
+  - `mcp_structure_list_vocabularies` - List all vocabularies with term counts
+  - `mcp_structure_get_vocabulary` - Get vocabulary details with terms and hierarchy
+  - `mcp_structure_list_roles` - List all roles with permission/user counts
+  - `mcp_structure_get_role_permissions` - Get permissions grouped by provider module
+- **`destructive: TRUE` flag** added to 6 more tools: DisableTheme, DisableView, DisableJob, DisableLayoutBuilder, CancelSchedule, RevokePermissions (38 total destructive tools)
+- **Remediation hints** added to 32 error messages across 12 services, guiding Claude to the correct discovery tools
+
+### Changed
+
+- **181 tool files updated** with rich, meaningful descriptions for all inputs and outputs
+- All empty `TranslatableMarkup('')` entries replaced with helpful descriptions explaining:
+  - Expected formats and valid values
+  - Field type documentation (entity_reference, text_with_summary, etc.)
+  - When to use each tool and relationships between tools
+- ROADMAP.md cleaned up and simplified, removing completed phases
+
+### Fixed
+
+- Error messages now consistently reference discovery tools (e.g., "Content type 'blog' not found. Use mcp_structure_list_content_types to see available types.")
+
 ## [1.0.0-alpha18] - 2026-01-04
 
 ### Added

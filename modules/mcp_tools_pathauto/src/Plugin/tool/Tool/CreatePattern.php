@@ -57,32 +57,32 @@ use Drupal\tool\TypedData\InputDefinition;
     'id' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Pattern ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Machine name of the created pattern.'),
     ),
     'label' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Label'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Human-readable name of the pattern.'),
     ),
     'pattern' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('URL Pattern'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('The token pattern for URL aliases.'),
     ),
     'entity_type' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Entity Type'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Entity type this pattern applies to.'),
     ),
     'bundle' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Bundle'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Bundle restriction, if any.'),
     ),
     'message' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Success or error details.'),
     ),
   ],
 )]

@@ -33,12 +33,12 @@ use Drupal\tool\TypedData\InputDefinition;
     'total' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Defaults'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Total number of default configurations returned.'),
     ),
     'defaults' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Metatag Defaults'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Array of default configurations with id, label, entity_type, and tags. Tags can use tokens like [node:title].'),
     ),
   ],
 )]

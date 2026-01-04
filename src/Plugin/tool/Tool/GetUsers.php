@@ -40,22 +40,22 @@ use Drupal\tool\TypedData\InputDefinition;
     'total_users' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Users'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Total number of user accounts on the site.'),
     ),
     'active_users' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Active Users'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Number of non-blocked user accounts.'),
     ),
     'blocked_users' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Blocked Users'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Number of blocked user accounts.'),
     ),
     'users' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('User List'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Array of users with uid, name, mail, status (1=active, 0=blocked), roles, created, and last_access. Use uid to update/block users.'),
     ),
   ],
 )]

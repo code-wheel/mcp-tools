@@ -21,17 +21,18 @@ use Drupal\tool\TypedData\InputDefinition;
   label: new TranslatableMarkup('Revoke Permissions'),
   description: new TranslatableMarkup('Revoke permissions from a user role.'),
   operation: ToolOperation::Write,
+  destructive: TRUE,
   input_definitions: [
     'role' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Role ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Role machine name. Use GetRoles to see available roles.'),
       required: TRUE,
     ),
     'permissions' => new InputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Permissions'),
-      description: new TranslatableMarkup('Permissions to revoke'),
+      description: new TranslatableMarkup('Array of permission machine names to remove from the role.'),
       required: TRUE,
     ),
   ],
@@ -39,22 +40,22 @@ use Drupal\tool\TypedData\InputDefinition;
     'role' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Role'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('The role that was modified.'),
     ),
     'revoked' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Permissions Revoked'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Permissions that were removed from the role.'),
     ),
     'didnt_have' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Did Not Have'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Permissions the role did not have (no action taken).'),
     ),
     'message' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Success or error message.'),
     ),
   ],
 )]

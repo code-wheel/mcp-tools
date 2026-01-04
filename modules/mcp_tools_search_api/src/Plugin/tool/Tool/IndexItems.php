@@ -41,22 +41,22 @@ use Drupal\tool\TypedData\InputDefinition;
     'success' => new ContextDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Success status'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('TRUE if indexing completed successfully, FALSE if an error occurred.'),
     ),
     'message' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result message'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Human-readable summary of the indexing operation.'),
     ),
     'items_indexed' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Number of items indexed'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Count of items processed in this batch. May be less than limit if fewer items pending.'),
     ),
     'remaining' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Remaining items to index'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Number of items still pending indexing. Call IndexItems again to continue. Zero when complete.'),
     ),
   ],
 )]

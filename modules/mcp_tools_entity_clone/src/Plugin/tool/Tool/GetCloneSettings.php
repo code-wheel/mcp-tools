@@ -39,37 +39,37 @@ use Drupal\tool\TypedData\InputDefinition;
     'entity_type' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Entity Type'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('The entity type queried.'),
     ),
     'bundle' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Bundle'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('The bundle/content type queried.'),
     ),
     'settings' => new ContextDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Clone Settings'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Clone configuration: title_pattern, clone_references, exclude_fields, and status settings.'),
     ),
     'reference_fields' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Reference Fields'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('List of entity reference fields that can be cloned or preserved. Used to determine deep clone behavior.'),
     ),
     'paragraph_fields' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Paragraph Fields'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('List of paragraph reference fields. Paragraphs are typically deep-cloned automatically.'),
     ),
     'has_paragraphs' => new ContextDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Has Paragraphs'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('TRUE if this bundle contains paragraph fields. Important for understanding clone behavior.'),
     ),
     'message' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Human-readable summary of clone settings.'),
     ),
   ],
 )]

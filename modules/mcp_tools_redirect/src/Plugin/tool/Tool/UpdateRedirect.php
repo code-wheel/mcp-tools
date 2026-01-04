@@ -57,17 +57,17 @@ use Drupal\tool\TypedData\InputDefinition;
     'redirect' => new ContextDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Updated Redirect'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('The updated redirect object with current values for id, source, destination, status_code, and language. Use with GetRedirect to verify changes.'),
     ),
     'updated_fields' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Updated Fields'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('List of field names that were modified (e.g., ["source", "destination"]). Empty if no changes were made.'),
     ),
     'message' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Human-readable confirmation message describing what was updated.'),
     ),
   ],
 )]

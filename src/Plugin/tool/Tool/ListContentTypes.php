@@ -26,12 +26,12 @@ use Drupal\tool\TypedData\InputDefinition;
     'total_types' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Content Types'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Number of content types defined on the site.'),
     ),
     'types' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Content Types'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Array of content types with id (machine name), label, description, and fields. Use the id when creating content.'),
     ),
   ],
 )]

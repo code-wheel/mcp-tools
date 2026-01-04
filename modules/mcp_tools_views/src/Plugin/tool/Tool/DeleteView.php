@@ -26,7 +26,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'id' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('View Machine Name'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('ID of view to delete. DESTRUCTIVE: All displays and config permanently removed.'),
       required: TRUE,
     ),
   ],
@@ -34,12 +34,12 @@ use Drupal\tool\TypedData\InputDefinition;
     'id' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('View ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Machine name of the deleted view.'),
     ),
     'message' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Success confirmation. View is permanently deleted.'),
     ),
   ],
 )]

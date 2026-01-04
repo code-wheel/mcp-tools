@@ -33,37 +33,37 @@ use Drupal\tool\TypedData\InputDefinition;
     'id' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Job ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Machine name of the cron job. Use with RunJob, EnableJob, or DisableJob.'),
     ),
     'title' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Job Title'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Human-readable title of the cron job.'),
     ),
     'module' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Module'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Module that provides this cron job.'),
     ),
     'status' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Status (enabled/disabled)'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Current status: "enabled" (will run on schedule) or "disabled". Use EnableJob/DisableJob to change.'),
     ),
     'is_locked' => new ContextDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Is Locked'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('TRUE if the job is currently running and locked. Cannot run concurrently.'),
     ),
     'scheduler' => new ContextDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Scheduler Configuration'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Scheduler settings: cron expression or rules defining when the job runs.'),
     ),
     'last_run' => new ContextDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Last Run Information'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Last execution info: timestamp, duration, success status. Use GetJobLogs for full history.'),
     ),
   ],
 )]

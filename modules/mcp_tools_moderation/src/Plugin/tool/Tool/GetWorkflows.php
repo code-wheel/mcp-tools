@@ -26,12 +26,12 @@ use Drupal\tool\TypedData\InputDefinition;
     'total' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Workflows'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Number of content moderation workflows.'),
     ),
     'workflows' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Workflows'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Array of workflows with id, label, states, and transitions. Use id with GetWorkflow for details.'),
     ),
   ],
 )]

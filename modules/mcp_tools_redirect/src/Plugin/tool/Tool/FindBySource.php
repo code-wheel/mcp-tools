@@ -33,17 +33,17 @@ use Drupal\tool\TypedData\InputDefinition;
     'found' => new ContextDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Redirect Found'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('TRUE if a redirect exists for the source path, FALSE otherwise. Check this before accessing redirect details.'),
     ),
     'redirect' => new ContextDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Redirect Details'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('The matching redirect object with id, source, destination, status_code, and language. Use id with UpdateRedirect or DeleteRedirect tools. NULL if not found.'),
     ),
     'message' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Human-readable message describing the search result.'),
     ),
   ],
 )]

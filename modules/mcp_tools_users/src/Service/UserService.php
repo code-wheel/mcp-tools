@@ -153,7 +153,7 @@ class UserService {
 
     $user = $this->entityTypeManager->getStorage('user')->load($uid);
     if (!$user) {
-      return ['success' => FALSE, 'error' => "User with ID $uid not found."];
+      return ['success' => FALSE, 'error' => "User with ID $uid not found. Use mcp_list_users or mcp_find_user to locate users."];
     }
 
     try {
@@ -242,7 +242,7 @@ class UserService {
 
     $user = $this->entityTypeManager->getStorage('user')->load($uid);
     if (!$user) {
-      return ['success' => FALSE, 'error' => "User with ID $uid not found."];
+      return ['success' => FALSE, 'error' => "User with ID $uid not found. Use mcp_list_users or mcp_find_user to locate users."];
     }
 
     if (!$user->isActive()) {
@@ -299,7 +299,7 @@ class UserService {
 
     $user = $this->entityTypeManager->getStorage('user')->load($uid);
     if (!$user) {
-      return ['success' => FALSE, 'error' => "User with ID $uid not found."];
+      return ['success' => FALSE, 'error' => "User with ID $uid not found. Use mcp_list_users or mcp_find_user to locate users."];
     }
 
     if ($user->isActive()) {
@@ -358,7 +358,7 @@ class UserService {
 
     $user = $this->entityTypeManager->getStorage('user')->load($uid);
     if (!$user) {
-      return ['success' => FALSE, 'error' => "User with ID $uid not found."];
+      return ['success' => FALSE, 'error' => "User with ID $uid not found. Use mcp_list_users or mcp_find_user to locate users."];
     }
 
     // Filter out 'administrator' role.

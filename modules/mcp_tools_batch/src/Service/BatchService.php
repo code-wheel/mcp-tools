@@ -515,7 +515,7 @@ class BatchService {
     // Verify role exists.
     $roleEntity = $this->entityTypeManager->getStorage('user_role')->load($role);
     if (!$roleEntity) {
-      return ['success' => FALSE, 'error' => "Role '$role' not found."];
+      return ['success' => FALSE, 'error' => "Role '$role' not found. Use mcp_structure_list_roles to see available roles."];
     }
 
     $assigned = [];
@@ -636,7 +636,7 @@ class BatchService {
     // Verify vocabulary exists.
     $vocab = $this->entityTypeManager->getStorage('taxonomy_vocabulary')->load($vocabulary);
     if (!$vocab) {
-      return ['success' => FALSE, 'error' => "Vocabulary '$vocabulary' not found."];
+      return ['success' => FALSE, 'error' => "Vocabulary '$vocabulary' not found. Use mcp_structure_list_vocabularies to see available vocabularies."];
     }
 
     $created = [];

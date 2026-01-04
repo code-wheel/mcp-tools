@@ -26,20 +26,20 @@ use Drupal\tool\TypedData\InputDefinition;
     'entity_type' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Entity Type'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Entity type. Defaults to "node".'),
       required: FALSE,
       default_value: 'node',
     ),
     'bundle' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Bundle/Content Type'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Machine name of the content type (e.g., "article").'),
       required: TRUE,
     ),
     'delta' => new InputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Section Delta'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Section index to remove (0-based). Get from GetLayout.'),
       required: TRUE,
     ),
   ],
@@ -47,27 +47,27 @@ use Drupal\tool\TypedData\InputDefinition;
     'entity_type' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Entity Type'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('The entity type configured.'),
     ),
     'bundle' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Bundle'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('The bundle configured.'),
     ),
     'removed_delta' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Removed Section Delta'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Position of the removed section.'),
     ),
     'section_count' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Remaining Sections'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Number of sections remaining in the layout.'),
     ),
     'message' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Success or error details.'),
     ),
   ],
 )]

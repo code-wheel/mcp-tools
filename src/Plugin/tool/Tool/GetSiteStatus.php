@@ -26,37 +26,37 @@ use Drupal\tool\TypedData\InputDefinition;
     'drupal_version' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Drupal Version'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Drupal core version (e.g., "10.2.3").'),
     ),
     'php_version' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('PHP Version'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('PHP version running the site (e.g., "8.2.10").'),
     ),
     'database' => new ContextDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Database Information'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Database driver, version, and connection details.'),
     ),
     'site_name' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Site Name'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Configured site name from system.site config.'),
     ),
     'modules' => new ContextDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Module Summary'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Counts of enabled/disabled modules by type (core, contrib, custom).'),
     ),
     'cron' => new ContextDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Cron Status'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Last cron run timestamp and status.'),
     ),
     'maintenance_mode' => new ContextDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Maintenance Mode'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('True if site is in maintenance mode.'),
     ),
   ],
 )]

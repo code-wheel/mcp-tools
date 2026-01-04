@@ -36,17 +36,17 @@ use Drupal\tool\TypedData\InputDefinition;
     'success' => new ContextDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Success status'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('TRUE if the index was cleared successfully, FALSE if an error occurred.'),
     ),
     'message' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result message'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Human-readable confirmation. WARNING: All indexed data is removed and must be reindexed.'),
     ),
     'items_to_reindex' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Items that need to be reindexed'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Number of items now pending reindexing. Use IndexItems to rebuild the index.'),
     ),
   ],
 )]

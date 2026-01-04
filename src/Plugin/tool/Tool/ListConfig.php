@@ -33,17 +33,17 @@ use Drupal\tool\TypedData\InputDefinition;
     'prefix' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Prefix Used'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('The prefix filter that was applied, or empty if none.'),
     ),
     'total' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Configuration Objects'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Number of matching configuration objects.'),
     ),
     'names' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Configuration Names'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Array of configuration object names. Use with GetConfig to view values.'),
     ),
   ],
 )]

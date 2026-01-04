@@ -33,7 +33,7 @@ class ContentService {
 
     $nodeType = $this->entityTypeManager->getStorage('node_type')->load($type);
     if (!$nodeType) {
-      return ['success' => FALSE, 'error' => "Content type '$type' not found."];
+      return ['success' => FALSE, 'error' => "Content type '$type' not found. Use mcp_structure_list_content_types to see available types."];
     }
 
     $fieldDefinitions = $this->entityFieldManager->getFieldDefinitions('node', $type);
@@ -93,7 +93,7 @@ class ContentService {
 
     $node = $this->entityTypeManager->getStorage('node')->load($nid);
     if (!$node) {
-      return ['success' => FALSE, 'error' => "Content with ID $nid not found."];
+      return ['success' => FALSE, 'error' => "Content with ID $nid not found. Use mcp_content_search to find content by title or mcp_content_list to browse."];
     }
 
     $fieldDefinitions = $this->entityFieldManager->getFieldDefinitions('node', $node->bundle());
@@ -153,7 +153,7 @@ class ContentService {
 
     $node = $this->entityTypeManager->getStorage('node')->load($nid);
     if (!$node) {
-      return ['success' => FALSE, 'error' => "Content with ID $nid not found."];
+      return ['success' => FALSE, 'error' => "Content with ID $nid not found. Use mcp_content_search to find content by title or mcp_content_list to browse."];
     }
 
     try {
@@ -189,7 +189,7 @@ class ContentService {
 
     $node = $this->entityTypeManager->getStorage('node')->load($nid);
     if (!$node) {
-      return ['success' => FALSE, 'error' => "Content with ID $nid not found."];
+      return ['success' => FALSE, 'error' => "Content with ID $nid not found. Use mcp_content_search to find content by title or mcp_content_list to browse."];
     }
 
     if ($publish === $node->isPublished()) {

@@ -120,7 +120,7 @@ class MediaService {
 
     $mediaType = $this->entityTypeManager->getStorage('media_type')->load($id);
     if (!$mediaType) {
-      return ['success' => FALSE, 'error' => "Media type '$id' not found."];
+      return ['success' => FALSE, 'error' => "Media type '$id' not found. Use mcp_list_media_types to see available types."];
     }
 
     // Check if any media entities use this type.
@@ -272,7 +272,7 @@ class MediaService {
 
     $mediaType = $this->entityTypeManager->getStorage('media_type')->load($bundle);
     if (!$mediaType) {
-      return ['success' => FALSE, 'error' => "Media type '$bundle' not found."];
+      return ['success' => FALSE, 'error' => "Media type '$bundle' not found. Use mcp_list_media_types to see available types."];
     }
 
     try {
@@ -323,7 +323,7 @@ class MediaService {
 
     $media = $this->entityTypeManager->getStorage('media')->load($mid);
     if (!$media) {
-      return ['success' => FALSE, 'error' => "Media with ID $mid not found."];
+      return ['success' => FALSE, 'error' => "Media with ID $mid not found. Use mcp_list_media to browse media items."];
     }
 
     try {

@@ -25,13 +25,13 @@ use Drupal\tool\TypedData\InputDefinition;
     'uid' => new InputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('User ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('User ID to update. Get from GetUsers or CreateUser. Cannot modify uid 1.'),
       required: TRUE,
     ),
     'updates' => new InputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Updates'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Fields to update: mail, status (bool), roles (array). Only specified fields are changed.'),
       required: TRUE,
     ),
   ],
@@ -39,37 +39,37 @@ use Drupal\tool\TypedData\InputDefinition;
     'uid' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('User ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('The updated user ID.'),
     ),
     'username' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Username'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('The username.'),
     ),
     'email' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Email'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Current email address after update.'),
     ),
     'status' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Status'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Current status: "active" or "blocked".'),
     ),
     'roles' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Roles'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Current roles after update.'),
     ),
     'changed_fields' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Changed Fields'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('List of fields that were actually modified.'),
     ),
     'message' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Success or error message.'),
     ),
   ],
 )]

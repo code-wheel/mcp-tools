@@ -26,7 +26,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'id' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Media Type ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Machine name of media type to delete. DESTRUCTIVE: All media of this type must be deleted first.'),
       required: TRUE,
     ),
   ],
@@ -34,17 +34,17 @@ use Drupal\tool\TypedData\InputDefinition;
     'id' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Deleted Media Type ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Machine name of the deleted media type.'),
     ),
     'label' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Label'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Human-readable name of the deleted type.'),
     ),
     'message' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Success confirmation. Fields and config are also removed.'),
     ),
   ],
 )]

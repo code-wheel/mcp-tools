@@ -47,12 +47,12 @@ use Drupal\tool\TypedData\InputDefinition;
     'success' => new ContextDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Success status'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('True if effect was added to the style.'),
     ),
     'effect_uuid' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Effect UUID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('UUID of the added effect. Use with RemoveImageEffect to remove.'),
     ),
   ],
 )]

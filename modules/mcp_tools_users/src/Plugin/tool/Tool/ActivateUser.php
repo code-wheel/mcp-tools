@@ -25,7 +25,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'uid' => new InputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('User ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('User ID to activate. User will be able to log in after activation.'),
       required: TRUE,
     ),
   ],
@@ -33,27 +33,27 @@ use Drupal\tool\TypedData\InputDefinition;
     'uid' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('User ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('The activated user ID.'),
     ),
     'username' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Username'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Username of the activated user.'),
     ),
     'status' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Status'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('New status (will be "active").'),
     ),
     'changed' => new ContextDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Changed'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('True if user was activated, false if already active.'),
     ),
     'message' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Confirmation message.'),
     ),
   ],
 )]

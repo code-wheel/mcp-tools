@@ -386,7 +386,7 @@ class FieldService {
     if (!$field) {
       return [
         'success' => FALSE,
-        'error' => "Field '$fieldName' not found on $entityType.$bundle.",
+        'error' => "Field '$fieldName' not found on $entityType.$bundle. Use mcp_structure_get_content_type to see available fields.",
       ];
     }
 

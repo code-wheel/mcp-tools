@@ -63,27 +63,27 @@ use Drupal\tool\TypedData\InputDefinition;
     'id' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Pattern ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Machine name of the updated pattern.'),
     ),
     'label' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Label'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Current label of the pattern.'),
     ),
     'pattern' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('URL Pattern'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Current URL alias pattern.'),
     ),
     'updated_fields' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Updated Fields'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('List of fields that were changed.'),
     ),
     'message' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Success or error details.'),
     ),
   ],
 )]

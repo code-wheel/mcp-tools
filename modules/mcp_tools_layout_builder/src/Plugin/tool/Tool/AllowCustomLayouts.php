@@ -25,20 +25,20 @@ use Drupal\tool\TypedData\InputDefinition;
     'entity_type' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Entity Type'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Entity type. Defaults to "node".'),
       required: FALSE,
       default_value: 'node',
     ),
     'bundle' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Bundle/Content Type'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Machine name of the content type (e.g., "article").'),
       required: TRUE,
     ),
     'allow' => new InputDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Allow Custom Layouts'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('True to enable per-entity overrides, false to disable. Defaults to true.'),
       required: FALSE,
       default_value: TRUE,
     ),
@@ -47,22 +47,22 @@ use Drupal\tool\TypedData\InputDefinition;
     'entity_type' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Entity Type'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('The entity type configured.'),
     ),
     'bundle' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Bundle'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('The bundle configured.'),
     ),
     'allow_custom_layouts' => new ContextDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Allow Custom Layouts'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Current state of per-entity layout overrides.'),
     ),
     'message' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Success or error details.'),
     ),
   ],
 )]

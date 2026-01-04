@@ -41,17 +41,17 @@ use Drupal\tool\TypedData\InputDefinition;
     'items' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Scheduled Items'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Array of scheduled content with nid, title, schedule type, and timestamp.'),
     ),
     'count' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Item Count'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Number of scheduled items returned.'),
     ),
     'filter' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Applied Filter'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Schedule type filter that was applied.'),
     ),
   ],
 )]

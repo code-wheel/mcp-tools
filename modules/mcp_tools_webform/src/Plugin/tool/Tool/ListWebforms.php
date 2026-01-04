@@ -26,12 +26,12 @@ use Drupal\tool\TypedData\InputDefinition;
     'total' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Webforms'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Total number of webforms in the system.'),
     ),
     'webforms' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Webforms'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Array of webform objects with id, title, status, and submission_count. Use id with GetWebform for full details.'),
     ),
   ],
 )]

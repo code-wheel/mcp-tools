@@ -25,14 +25,14 @@ use Drupal\tool\TypedData\InputDefinition;
     'entity_type' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Entity Type'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Entity type (e.g., "node", "media"). Defaults to "node".'),
       required: FALSE,
       default_value: 'node',
     ),
     'entity_id' => new InputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Entity ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('ID of the entity to check.'),
       required: TRUE,
     ),
   ],
@@ -40,27 +40,27 @@ use Drupal\tool\TypedData\InputDefinition;
     'entity_type' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Entity Type'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('The entity type queried.'),
     ),
     'entity_id' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Entity ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('The entity ID queried.'),
     ),
     'label' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Entity Label'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Title/label of the entity.'),
     ),
     'current_state' => new ContextDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Current State'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Current moderation state with id, label, and published status.'),
     ),
     'available_transitions' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Available Transitions'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('States the entity can transition to. Use state id with SetModerationState.'),
     ),
   ],
 )]
