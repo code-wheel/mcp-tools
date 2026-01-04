@@ -1,5 +1,9 @@
 # MCP Tools default configuration.
 
+# Configuration mode preset: development, staging, production, or custom.
+# Changing mode applies preset values for common settings.
+mode: development
+
 # Access control settings.
 access:
   # Global read-only mode - blocks ALL write operations site-wide.

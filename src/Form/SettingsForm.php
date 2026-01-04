@@ -27,10 +27,71 @@ class SettingsForm extends ConfigFormBase {
   }
 
   /**
+   * Configuration presets for different environments.
+   */
+  protected const MODE_PRESETS = [
+    'development' => [
+      'access.read_only_mode' => FALSE,
+      'access.config_only_mode' => FALSE,
+      'access.default_scopes' => ['read', 'write'],
+      'access.allowed_scopes' => ['read', 'write', 'admin'],
+      'access.audit_logging' => FALSE,
+      'rate_limiting.enabled' => FALSE,
+    ],
+    'staging' => [
+      'access.read_only_mode' => FALSE,
+      'access.config_only_mode' => TRUE,
+      'access.config_only_allowed_write_kinds' => ['config'],
+      'access.default_scopes' => ['read', 'write'],
+      'access.allowed_scopes' => ['read', 'write'],
+      'access.audit_logging' => TRUE,
+      'rate_limiting.enabled' => TRUE,
+      'rate_limiting.max_writes_per_minute' => 30,
+      'rate_limiting.max_deletes_per_hour' => 20,
+    ],
+    'production' => [
+      'access.read_only_mode' => TRUE,
+      'access.config_only_mode' => FALSE,
+      'access.default_scopes' => ['read'],
+      'access.allowed_scopes' => ['read'],
+      'access.audit_logging' => TRUE,
+      'rate_limiting.enabled' => TRUE,
+      'rate_limiting.max_writes_per_minute' => 10,
+      'rate_limiting.max_deletes_per_hour' => 5,
+    ],
+  ];
+
+  /**
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state): array {
     $config = $this->config('mcp_tools.settings');
+
+    // Mode selector at the top.
+    $form['mode'] = [
+      '#type' => 'select',
+      '#title' => $this->t('Configuration Mode'),
+      '#description' => $this->t('Select a preset to quickly configure MCP Tools for your environment. Selecting a mode will apply recommended settings below.'),
+      '#options' => [
+        'development' => $this->t('Development - Full access, no restrictions'),
+        'staging' => $this->t('Staging - Config-only, rate limited, audited'),
+        'production' => $this->t('Production - Read-only, rate limited, audited'),
+        'custom' => $this->t('Custom - Configure manually'),
+      ],
+      '#default_value' => $config->get('mode') ?? 'development',
+      '#weight' => -200,
+    ];
+
+    $form['mode_description'] = [
+      '#type' => 'markup',
+      '#markup' => '<div class="description">' .
+        '<strong>' . $this->t('Mode presets:') . '</strong><br>' .
+        '<em>' . $this->t('Development:') . '</em> ' . $this->t('Read + Write scopes, no rate limiting, no audit logging. Best for local development.') . '<br>' .
+        '<em>' . $this->t('Staging:') . '</em> ' . $this->t('Config-only mode (no content writes), rate limiting enabled, audit logging enabled.') . '<br>' .
+        '<em>' . $this->t('Production:') . '</em> ' . $this->t('Read-only mode, strict rate limits, audit logging enabled. Safest for production.') .
+        '</div>',
+      '#weight' => -199,
+    ];
 
     // Access Control section.
     $form['access'] = [
@@ -397,7 +458,21 @@ class SettingsForm extends ConfigFormBase {
   public function submitForm(array &$form, FormStateInterface $form_state): void {
     $config = $this->config('mcp_tools.settings');
 
-    // Access settings.
+    // Handle mode changes - apply preset values.
+    $mode = $form_state->getValue('mode') ?? 'custom';
+    $previousMode = $config->get('mode') ?? 'custom';
+    $config->set('mode', $mode);
+
+    // If switching to a preset mode (not custom), apply preset values.
+    if ($mode !== 'custom' && $mode !== $previousMode && isset(self::MODE_PRESETS[$mode])) {
+      foreach (self::MODE_PRESETS[$mode] as $key => $value) {
+        $config->set($key, $value);
+      }
+      $this->messenger()->addStatus($this->t('Applied @mode mode preset settings.', ['@mode' => $mode]));
+    }
+
+    // Always save individual settings (user can customize after applying preset).
+    // If they changed individual settings, switch mode to 'custom'.
     $config->set('access.read_only_mode', (bool) $form_state->getValue('read_only_mode'));
     $config->set('access.config_only_mode', (bool) $form_state->getValue('config_only_mode'));
     $kinds = array_filter($form_state->getValue('config_only_allowed_write_kinds') ?? []);

@@ -35,11 +35,17 @@ final class ToolApiSchemaConverter {
     $operation = $definition->getOperation() ?? ToolOperation::Transform;
     $readOnly = $operation === ToolOperation::Read;
 
+    // Idempotent hint: Read operations are always idempotent (no state change).
+    // Write/Trigger operations are conservatively marked as not idempotent
+    // since creates/triggers may have different effects on repeated calls.
+    // This could be refined per-tool in the future.
+    $idempotent = $readOnly ? TRUE : NULL;
+
     return [
       'title' => (string) $definition->getLabel(),
       'readOnlyHint' => $readOnly,
       'destructiveHint' => $definition->isDestructive() ?: NULL,
-      'idempotentHint' => NULL,
+      'idempotentHint' => $idempotent,
       // Drupal site operations are a closed world (not web search, etc).
       'openWorldHint' => FALSE,
     ];

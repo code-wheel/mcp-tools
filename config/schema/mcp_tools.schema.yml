@@ -2,6 +2,9 @@ mcp_tools.settings:
   type: config_object
   label: 'MCP Tools settings'
   mapping:
+    mode:
+      type: string
+      label: 'Configuration mode preset'
     access:
       type: mapping
       label: 'Access control settings'

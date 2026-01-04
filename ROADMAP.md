@@ -10,9 +10,9 @@ MCP Tools provides **curated, high-value tools** that solve real problems—not 
 
 ---
 
-## Current State (v1.0-alpha19)
+## Current State (v1.0-alpha20)
 
-### 210 Tools Total (28 Read + 182 Write/Analysis)
+### 214 Tools Total (30 Read + 184 Write/Analysis)
 
 - **28 read-only tools** in the base module for site introspection
 - **182 write/analysis tools** across 29 submodules
@@ -65,22 +65,22 @@ mcp_tools/                           # Base module (28 read-only tools)
 
 ## Future Roadmap
 
-### Short-term (P1)
+### Short-term (P1) - COMPLETED
 
 | Task | Description | Status |
 |------|-------------|--------|
-| Configuration presets | `development`, `staging`, `production` modes | Pending |
-| Batch/compound operations | Scaffold content type + fields in one call | Pending |
-| `idempotentHint` annotation | Mark safe-to-retry operations | Pending |
+| Configuration presets | `development`, `staging`, `production` modes | ✅ Done |
+| Batch/compound operations | ScaffoldContentType, SetupTaxonomy | ✅ Done |
+| `idempotentHint` annotation | Read ops marked idempotent | ✅ Done |
+| Text Formats tools | ListTextFormats, GetTextFormat | ✅ Done |
+| Architecture documentation | docs/ARCHITECTURE.md | ✅ Done |
 
 ### Medium-term (P2)
 
 | Task | Description | Status |
 |------|-------------|--------|
-| Text Formats tools | ListTextFormats, GetTextFormat | Pending |
-| Service consolidation | Merge small related services | Pending |
-| Architecture documentation | Visual diagrams, security model docs | Pending |
-| Additional testing | Integration tests, edge cases | Pending |
+| Service consolidation | Merge small related services | Deferred |
+| Additional testing | Integration tests, edge cases | Ongoing |
 
 ### Long-term (P3)
 

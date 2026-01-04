@@ -4,6 +4,27 @@ All notable changes to the MCP Tools module will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.0.0-alpha20] - 2026-01-04
+
+### Added
+
+- **Configuration mode presets**: Development, Staging, Production modes with sensible defaults
+  - Development: Full access, no rate limiting
+  - Staging: Config-only mode, rate limited, audit logging
+  - Production: Read-only mode, strict limits, full audit
+- **Compound operations** in `mcp_tools_structure`:
+  - `mcp_structure_scaffold_content_type` - Create content type + fields in one call
+  - `mcp_structure_setup_taxonomy` - Create vocabulary + terms with hierarchy
+- **Text format tools** in base module:
+  - `mcp_list_text_formats` - List available text formats
+  - `mcp_get_text_format` - Get format details including allowed HTML
+- **Architecture documentation**: New `docs/ARCHITECTURE.md` with design patterns, security model
+
+### Changed
+
+- **idempotentHint** now set for read operations (TRUE for safe-to-retry ops)
+- ROADMAP.md updated with completed P1 items
+
 ## [1.0.0-alpha19] - 2026-01-04
 
 ### Added
