@@ -108,6 +108,96 @@ final class McpToolsRemoteControllerTest extends UnitTestCase {
   /**
    * @covers ::handle
    */
+  public function testHandleReturnsNotFoundWhenOriginNotAllowed(): void {
+    $remoteConfig = $this->createMock(ImmutableConfig::class);
+    $remoteConfig->method('get')->willReturnMap([
+      ['enabled', TRUE],
+      ['allowed_origins', ['example.invalid']],
+    ]);
+
+    $configFactory = $this->createMock(ConfigFactoryInterface::class);
+    $configFactory->method('get')->with('mcp_tools_remote.settings')->willReturn($remoteConfig);
+
+    $stateStorage = [];
+    $controller = new McpToolsRemoteController(
+      $configFactory,
+      $this->createApiKeyManager($stateStorage),
+      $this->createMock(AccessManager::class),
+      $this->createMock(PluginManagerInterface::class),
+      $this->createMock(EntityTypeManagerInterface::class),
+      $this->createMock(AccountSwitcherInterface::class),
+      $this->createMock(EventDispatcherInterface::class),
+      $this->createMock(LoggerInterface::class),
+    );
+
+    $response = $controller->handle(Request::create('http://127.0.0.1/_mcp_tools', 'POST'));
+    $this->assertSame(404, $response->getStatusCode());
+  }
+
+  /**
+   * @covers ::handle
+   */
+  public function testHandleUsesOriginHeaderForAllowlist(): void {
+    $remoteConfig = $this->createMock(ImmutableConfig::class);
+    $remoteConfig->method('get')->willReturnMap([
+      ['enabled', TRUE],
+      ['allowed_origins', ['127.0.0.1']],
+    ]);
+
+    $configFactory = $this->createMock(ConfigFactoryInterface::class);
+    $configFactory->method('get')->with('mcp_tools_remote.settings')->willReturn($remoteConfig);
+
+    $stateStorage = [];
+    $controller = new McpToolsRemoteController(
+      $configFactory,
+      $this->createApiKeyManager($stateStorage),
+      $this->createMock(AccessManager::class),
+      $this->createMock(PluginManagerInterface::class),
+      $this->createMock(EntityTypeManagerInterface::class),
+      $this->createMock(AccountSwitcherInterface::class),
+      $this->createMock(EventDispatcherInterface::class),
+      $this->createMock(LoggerInterface::class),
+    );
+
+    $request = Request::create('http://127.0.0.1/_mcp_tools', 'POST');
+    $request->headers->set('Origin', 'https://example.invalid');
+
+    $response = $controller->handle($request);
+    $this->assertSame(404, $response->getStatusCode());
+  }
+
+  /**
+   * @covers ::handle
+   */
+  public function testHandleAllowsWildcardOriginButStillRequiresApiKey(): void {
+    $remoteConfig = $this->createMock(ImmutableConfig::class);
+    $remoteConfig->method('get')->willReturnMap([
+      ['enabled', TRUE],
+      ['allowed_origins', ['*.example.com']],
+    ]);
+
+    $configFactory = $this->createMock(ConfigFactoryInterface::class);
+    $configFactory->method('get')->with('mcp_tools_remote.settings')->willReturn($remoteConfig);
+
+    $stateStorage = [];
+    $controller = new McpToolsRemoteController(
+      $configFactory,
+      $this->createApiKeyManager($stateStorage),
+      $this->createMock(AccessManager::class),
+      $this->createMock(PluginManagerInterface::class),
+      $this->createMock(EntityTypeManagerInterface::class),
+      $this->createMock(AccountSwitcherInterface::class),
+      $this->createMock(EventDispatcherInterface::class),
+      $this->createMock(LoggerInterface::class),
+    );
+
+    $response = $controller->handle(Request::create('http://api.example.com/_mcp_tools', 'POST'));
+    $this->assertSame(401, $response->getStatusCode());
+  }
+
+  /**
+   * @covers ::handle
+   */
   public function testHandleRequiresApiKey(): void {
     $remoteConfig = $this->createMock(ImmutableConfig::class);
     $remoteConfig->method('get')->willReturnMap([
