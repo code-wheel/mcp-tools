@@ -4,6 +4,14 @@ All notable changes to the MCP Tools module will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.0.0-alpha17] - 2026-01-04
+
+### Added
+
+- Optional Origin/Host allowlist for the remote HTTP endpoint (`mcp_tools_remote.settings.allowed_origins`) as defense-in-depth against DNS rebinding.
+- JS MCP SDK STDIO smoke test (`scripts/mcp_js_sdk_compat.mjs`) wired into CI to catch strict-client schema regressions early.
+- HTTP transport E2E coverage for Origin/Host allowlist behavior.
+
 ## [1.0.0-alpha16] - 2026-01-04
 
 ### Added
