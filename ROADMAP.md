@@ -107,7 +107,7 @@ These items are **not planned** until there's demonstrated community interest. T
 
 | Task | Description | Rationale |
 |------|-------------|-----------|
-| Contrib module extraction | Move contrib integrations (paragraphs, webform, metatag, etc.) to separate `mcp_tools_contrib` package | Keeps core module lean; reduces test matrix; allows independent release cycles. **Only worthwhile if adoption justifies maintenance overhead.** |
+| Contrib module extraction | Move contrib integrations (paragraphs, webform, metatag, pathauto, redirect, scheduler, search_api, simple_sitemap, ultimate_cron, entity_clone) to a **separate Drupal module** `drupal/mcp_tools_contrib` | Separate repo, separate CI, independent releases. Keeps `mcp_tools` focused on core Drupal functionality. **Only worthwhile if adoption justifies the maintenance overhead of two packages.** |
 | Multi-site support | Manage multiple Drupal instances | Complex, limited demand - not planned |
 | Submodule consolidation | Merge SEO modules | Not planned - current structure mirrors contrib modules |
 
