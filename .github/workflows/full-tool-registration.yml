@@ -114,3 +114,36 @@ jobs:
             exit 1
           fi
           echo "✓ All tools registered (205)"
+
+      - name: Verify all tool schemas convert
+        run: |
+          cd drupal
+          PHP_CODE=$(cat <<'PHP'
+          $toolManager = \Drupal::service('plugin.manager.tool');
+          $definitions = $toolManager->getDefinitions();
+          $definitions = array_filter(
+            $definitions,
+            static fn(mixed $definition): bool => $definition instanceof \Drupal\tool\Tool\ToolDefinition && str_starts_with((string) $definition->getProvider(), 'mcp_tools')
+          );
+
+          $converter = new \Drupal\mcp_tools\Mcp\ToolApiSchemaConverter();
+
+          foreach ($definitions as $pluginId => $definition) {
+            try {
+              $converter->toolDefinitionToAnnotations($definition);
+              $schema = $converter->toolDefinitionToInputSchema($definition);
+              $encoded = json_encode($schema);
+              if ($encoded === FALSE) {
+                throw new \RuntimeException('json_encode failed: ' . json_last_error_msg());
+              }
+            }
+            catch (\Throwable $e) {
+              fwrite(STDERR, "Schema conversion failed for {$pluginId}: {$e->getMessage()}\n");
+              exit(1);
+            }
+          }
+
+          echo "✓ All tool schemas converted (" . count($definitions) . ")\n";
+          PHP
+          )
+          ./vendor/bin/drush eval "$PHP_CODE"

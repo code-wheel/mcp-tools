@@ -256,6 +256,8 @@ def _run_sequence(base_url: str, api_key: str, expect_write_allowed: bool) -> No
 
     if "mcp_tools_get_site_status" not in tool_names:
         raise SystemExit("Expected tool mcp_tools_get_site_status to be registered over HTTP.")
+    if "mcp_tools_list_content_types" not in tool_names:
+        raise SystemExit("Expected tool mcp_tools_list_content_types to be registered over HTTP.")
     if "mcp_cache_clear_all" not in tool_names:
         raise SystemExit("Expected tool mcp_cache_clear_all to be registered over HTTP.")
 
@@ -277,6 +279,25 @@ def _run_sequence(base_url: str, api_key: str, expect_write_allowed: bool) -> No
     status_structured = (status_resp.get("result") or {}).get("structuredContent") or {}
     if not status_structured.get("success"):
         raise SystemExit(f"Expected success from mcp_tools_get_site_status, got: {status_structured!r}")
+
+    status, _, body = _post_jsonrpc(
+        url,
+        {
+            "jsonrpc": "2.0",
+            "id": 3_1,
+            "method": "tools/call",
+            "params": {"name": "mcp_tools_list_content_types", "arguments": {}},
+        },
+        api_key=api_key,
+        session_id=session_id,
+        timeout_seconds=30,
+    )
+    if status != 200:
+        raise SystemExit(f"tools/call(list_content_types) expected 200, got {status}: {body}")
+    list_resp = _assert_jsonrpc_result(body, 3_1)
+    list_structured = (list_resp.get("result") or {}).get("structuredContent") or {}
+    if not list_structured.get("success"):
+        raise SystemExit(f"Expected success from mcp_tools_list_content_types, got: {list_structured!r}")
 
     status, _, body = _post_jsonrpc(
         url,
@@ -346,6 +367,8 @@ def _run_config_only_sequence(base_url: str, api_key: str) -> None:
 
     if "mcp_structure_create_content_type" not in tool_names:
         raise SystemExit("Expected tool mcp_structure_create_content_type to be registered for config-only checks.")
+    if "mcp_create_content" not in tool_names:
+        raise SystemExit("Expected tool mcp_create_content to be registered for config-only checks.")
     if "mcp_cache_clear_all" not in tool_names:
         raise SystemExit("Expected tool mcp_cache_clear_all to be registered for config-only checks.")
 
@@ -375,7 +398,32 @@ def _run_config_only_sequence(base_url: str, api_key: str) -> None:
     create_resp = _assert_jsonrpc_result(body, 103)
     create_result = create_resp.get("result") or {}
     if create_result.get("isError") is True:
-        raise SystemExit(f"Expected create_content_type to succeed, got isError=true: {create_result!r}")
+        structured = create_result.get("structuredContent") or {}
+        error_message = (structured.get("message") or structured.get("error") or "").lower()
+        if "already exists" not in error_message:
+            raise SystemExit(f"Expected create_content_type to succeed, got isError=true: {create_result!r}")
+
+    # Content writes should be denied in config-only mode.
+    status, _, body = _post_jsonrpc(
+        url,
+        {
+            "jsonrpc": "2.0",
+            "id": 103_1,
+            "method": "tools/call",
+            "params": {"name": "mcp_create_content", "arguments": {"type": "page", "title": "MCP CI Content"}},
+        },
+        api_key=api_key,
+        session_id=session_id,
+        timeout_seconds=60,
+    )
+    if status != 200:
+        raise SystemExit(f"tools/call(create_content) expected 200, got {status}: {body}")
+    create_content_resp = _assert_jsonrpc_result(body, 103_1)
+    create_content_result = create_content_resp.get("result") or {}
+    if create_content_result.get("isError") is not True:
+        raise SystemExit(
+            f"Expected create_content to be denied in config-only mode, got: {create_content_result!r}"
+        )
 
     # Ops writes should be denied in config-only mode.
     status, _, body = _post_jsonrpc(
@@ -427,7 +475,7 @@ def main() -> int:
     drush = os.path.join(drupal_root, "vendor", "bin", "drush")
     _require_file(drush)
 
-    _run_drush(drupal_root, ["en", "mcp_tools_remote", "mcp_tools_cache", "mcp_tools_structure", "-y"])
+    _run_drush(drupal_root, ["en", "mcp_tools_remote", "mcp_tools_cache", "mcp_tools_structure", "mcp_tools_content", "-y"])
     _set_config(drupal_root, "mcp_tools_remote.settings", "enabled", True)
     remote_uid = _create_service_user(drupal_root, "mcp_remote_ci")
     _set_config(drupal_root, "mcp_tools_remote.settings", "uid", remote_uid)
@@ -441,10 +489,15 @@ def main() -> int:
         [
             "mcp_tools use site_health",
             "mcp_tools use cache",
+            "mcp_tools use content",
             "mcp_tools use structure",
         ],
     )
     _assign_role_to_user(drupal_root, remote_uid, role_id)
+
+    # Ensure a consistent baseline if the script is run multiple times.
+    _set_config(drupal_root, "mcp_tools.settings", "access.read_only_mode", False)
+    _set_config(drupal_root, "mcp_tools.settings", "access.config_only_mode", False)
     _run_drush(drupal_root, ["cr"])
 
     read_key = _create_api_key(drupal_root, "CI Read", "read")
