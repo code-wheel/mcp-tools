@@ -104,6 +104,148 @@ final class TemplateServiceTest extends UnitTestCase {
   }
 
   /**
+   * @covers ::applyTemplate
+   */
+  public function testApplyTemplateRespectsComponentFilterAndLogsSuccess(): void {
+    $accessManager = $this->createMock(AccessManager::class);
+    $accessManager->method('canAdmin')->willReturn(TRUE);
+
+    $auditLogger = $this->createMock(AuditLogger::class);
+    $auditLogger->expects($this->once())
+      ->method('log')
+      ->with(
+        'apply_template',
+        'template',
+        'blog',
+        $this->callback(static function (array $details): bool {
+          return ($details['template'] ?? NULL) === 'blog'
+            && ($details['status'] ?? NULL) === 'success'
+            && ($details['error_count'] ?? NULL) === 0;
+        }),
+        TRUE,
+      );
+
+    $service = new class(
+      $this->createMock(EntityTypeManagerInterface::class),
+      $this->configFactory,
+      $accessManager,
+      $auditLogger,
+    ) extends TemplateService {
+      public array $called = [];
+
+      protected function createVocabularies(array $vocabularies, bool $skipExisting): array {
+        $this->called[] = 'vocabularies';
+        return ['created' => [], 'skipped' => [], 'errors' => []];
+      }
+
+      protected function createRoles(array $roles, bool $skipExisting): array {
+        $this->called[] = 'roles';
+        return ['created' => [], 'skipped' => [], 'errors' => []];
+      }
+
+      protected function createContentTypes(array $contentTypes, bool $skipExisting): array {
+        $this->called[] = 'content_types';
+        return ['created' => [], 'skipped' => [], 'errors' => []];
+      }
+
+      protected function createViews(array $views, bool $skipExisting): array {
+        $this->called[] = 'views';
+        return ['created' => [], 'skipped' => [], 'errors' => []];
+      }
+    };
+
+    $result = $service->applyTemplate('blog', [
+      'components' => ['vocabularies', 'roles'],
+    ]);
+
+    $this->assertTrue($result['success']);
+    $this->assertSame(['vocabularies', 'roles'], $service->called);
+  }
+
+  /**
+   * @covers ::applyTemplate
+   */
+  public function testApplyTemplateLogsFailureWhenErrorsOccur(): void {
+    $accessManager = $this->createMock(AccessManager::class);
+    $accessManager->method('canAdmin')->willReturn(TRUE);
+
+    $auditLogger = $this->createMock(AuditLogger::class);
+    $auditLogger->expects($this->once())
+      ->method('log')
+      ->with(
+        'apply_template',
+        'template',
+        'blog',
+        $this->callback(static function (array $details): bool {
+          return ($details['template'] ?? NULL) === 'blog'
+            && ($details['status'] ?? NULL) === 'partial'
+            && ($details['error_count'] ?? NULL) === 1;
+        }),
+        FALSE,
+      );
+
+    $service = new class(
+      $this->createMock(EntityTypeManagerInterface::class),
+      $this->configFactory,
+      $accessManager,
+      $auditLogger,
+    ) extends TemplateService {
+
+      protected function createVocabularies(array $vocabularies, bool $skipExisting): array {
+        return ['created' => [], 'skipped' => [], 'errors' => []];
+      }
+
+      protected function createRoles(array $roles, bool $skipExisting): array {
+        return ['created' => [], 'skipped' => [], 'errors' => []];
+      }
+
+      protected function createContentTypes(array $contentTypes, bool $skipExisting): array {
+        return ['created' => [], 'skipped' => [], 'errors' => [['type' => 'content_type', 'id' => 'article', 'error' => 'boom']]];
+      }
+
+      protected function createViews(array $views, bool $skipExisting): array {
+        return ['created' => [], 'skipped' => [], 'errors' => []];
+      }
+    };
+
+    $result = $service->applyTemplate('blog');
+
+    $this->assertFalse($result['success']);
+    $this->assertCount(1, $result['data']['errors']);
+  }
+
+  /**
+   * @covers ::exportAsTemplate
+   */
+  public function testExportAsTemplateValidatesAdminScopeAndMachineName(): void {
+    $deniedAccessManager = $this->createMock(AccessManager::class);
+    $deniedAccessManager->method('canAdmin')->willReturn(FALSE);
+    $deniedService = new TemplateService(
+      $this->createMock(EntityTypeManagerInterface::class),
+      $this->configFactory,
+      $deniedAccessManager,
+      $this->auditLogger,
+    );
+
+    $denied = $deniedService->exportAsTemplate('example', [], [], []);
+    $this->assertFalse($denied['success']);
+    $this->assertSame('INSUFFICIENT_SCOPE', $denied['code']);
+
+    $allowedAccessManager = $this->createMock(AccessManager::class);
+    $allowedAccessManager->method('canAdmin')->willReturn(TRUE);
+    $allowedService = new TemplateService(
+      $this->createMock(EntityTypeManagerInterface::class),
+      $this->configFactory,
+      $allowedAccessManager,
+      $this->auditLogger,
+    );
+
+    $invalid = $allowedService->exportAsTemplate('Bad Name', [], [], []);
+    $this->assertFalse($invalid['success']);
+    $this->assertSame('INVALID_NAME', $invalid['code']);
+  }
+
+  /**
    * @covers ::previewTemplate
    */
   public function testPreviewTemplateShowsCreatesWhenNothingExists(): void {
@@ -212,4 +354,3 @@ final class TemplateServiceTest extends UnitTestCase {
   }
 
 }
-

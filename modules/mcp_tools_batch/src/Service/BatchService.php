@@ -10,9 +10,6 @@ use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AuditLogger;
-use Drupal\node\Entity\Node;
-use Drupal\taxonomy\Entity\Term;
-use Drupal\user\Entity\User;
 
 /**
  * Service for batch/bulk operations.
@@ -103,7 +100,7 @@ class BatchService {
           }
         }
 
-        $node = Node::create($nodeData);
+        $node = $this->entityTypeManager->getStorage('node')->create($nodeData);
         $node->save();
 
         $created[] = [
@@ -698,7 +695,7 @@ class BatchService {
           $termValues['parent'] = ['target_id' => $termData['parent']];
         }
 
-        $term = Term::create($termValues);
+        $term = $this->entityTypeManager->getStorage('taxonomy_term')->create($termValues);
         $term->save();
 
         $created[] = [

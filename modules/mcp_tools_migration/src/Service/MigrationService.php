@@ -10,7 +10,6 @@ use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\State\StateInterface;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AuditLogger;
-use Drupal\node\Entity\Node;
 
 /**
  * Service for content import/export and migration operations.
@@ -216,7 +215,7 @@ class MigrationService {
             }
           }
 
-          $node = Node::create($nodeData);
+          $node = $this->entityTypeManager->getStorage('node')->create($nodeData);
           $node->save();
 
           $results['created'][] = [

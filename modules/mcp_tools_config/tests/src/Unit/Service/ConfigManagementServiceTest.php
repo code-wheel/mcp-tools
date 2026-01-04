@@ -275,4 +275,113 @@ final class ConfigManagementServiceTest extends UnitTestCase {
     $this->assertSame(['field.field.node.article.field_foo'], $deleteField['data']['configs_deleted']);
   }
 
+  /**
+   * @covers ::previewOperation
+   */
+  public function testPreviewOperationReturnsErrorForUnknownOperation(): void {
+    $service = $this->createService();
+
+    $result = $service->previewOperation('nope', []);
+    $this->assertFalse($result['success']);
+    $this->assertStringContainsString('Unknown operation', $result['error']);
+  }
+
+  /**
+   * @covers ::previewOperation
+   * @covers ::previewExportConfig
+   * @covers ::previewImportConfig
+   */
+  public function testPreviewExportAndImportConfigSummarizeChanges(): void {
+    $this->active->write('system.site', ['name' => 'active']);
+    $this->active->write('only.active', ['x' => 1]);
+    $this->sync->write('system.site', ['name' => 'sync']);
+    $this->sync->write('only.sync', ['y' => 2]);
+
+    $service = $this->createService();
+
+    $export = $service->previewOperation('export_config');
+    $this->assertTrue($export['success']);
+    $this->assertTrue($export['data']['dry_run']);
+    $this->assertSame(1, $export['data']['will_create']);
+    $this->assertSame(1, $export['data']['will_update']);
+    $this->assertSame(1, $export['data']['will_delete']);
+
+    $import = $service->previewOperation('import_config');
+    $this->assertTrue($import['success']);
+    $this->assertTrue($import['data']['dry_run']);
+    $this->assertSame(1, $import['data']['will_create']);
+    $this->assertSame(1, $import['data']['will_update']);
+    $this->assertSame(1, $import['data']['will_delete']);
+  }
+
+  /**
+   * @covers ::previewOperation
+   * @covers ::previewDeleteConfig
+   * @covers ::findDependents
+   */
+  public function testPreviewDeleteConfigReportsDependents(): void {
+    $this->active->write('foo.bar', ['a' => 1]);
+    $this->active->write('dependent.config', [
+      'dependencies' => [
+        'config' => ['foo.bar'],
+      ],
+    ]);
+
+    $service = $this->createService();
+    $result = $service->previewOperation('delete_config', ['config_name' => 'foo.bar']);
+
+    $this->assertTrue($result['success']);
+    $this->assertTrue($result['data']['exists']);
+    $this->assertSame(['dependent.config'], $result['data']['dependents']);
+    $this->assertStringContainsString('WARNING', $result['data']['description']);
+  }
+
+  /**
+   * @covers ::previewOperation
+   * @covers ::previewAddField
+   */
+  public function testPreviewAddFieldNormalizesFieldNameAndOmitsExistingStorage(): void {
+    $this->active->write('field.storage.node.field_foo', ['type' => 'string']);
+
+    $service = $this->createService();
+    $result = $service->previewOperation('add_field', [
+      'entity_type' => 'node',
+      'bundle' => 'article',
+      'field_name' => 'foo',
+      'field_type' => 'string',
+    ]);
+
+    $this->assertTrue($result['success']);
+    $this->assertSame('field_foo', $result['data']['field_name']);
+    $this->assertTrue($result['data']['storage_exists']);
+    $this->assertFalse($result['data']['field_exists']);
+    $this->assertSame(['field.field.node.article.field_foo'], array_values($result['data']['configs_created']));
+  }
+
+  /**
+   * @covers ::previewOperation
+   * @covers ::previewCreateVocabulary
+   * @covers ::previewCreateView
+   */
+  public function testPreviewCreateVocabularyAndViewDetectExistingConfigs(): void {
+    $this->active->write('taxonomy.vocabulary.tags', ['vid' => 'tags']);
+    $this->active->write('views.view.frontpage', ['id' => 'frontpage']);
+
+    $service = $this->createService();
+
+    $vocab = $service->previewOperation('create_vocabulary', [
+      'machine_name' => 'tags',
+      'name' => 'Tags',
+    ]);
+    $this->assertTrue($vocab['success']);
+    $this->assertTrue($vocab['data']['already_exists']);
+
+    $view = $service->previewOperation('create_view', [
+      'id' => 'frontpage',
+      'label' => 'Frontpage',
+    ]);
+    $this->assertTrue($view['success']);
+    $this->assertTrue($view['data']['already_exists']);
+  }
+
 }
