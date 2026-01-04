@@ -34,6 +34,8 @@ User: "Check the site for broken internal links"
 
 AI calls: mcp_analysis_broken_links(
   limit: 100
+  # Optional for STDIO/CLI use:
+  # base_url: "https://example.com"
 )
 
 Response includes:

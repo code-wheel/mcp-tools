@@ -4,6 +4,20 @@ All notable changes to the MCP Tools module will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.0.0-alpha12] - 2026-01-03
+
+### Added
+
+- MCP-scoped config-change tracking via a tool-call context and a `config.save/delete/rename` subscriber (enables `mcp_config_mcp_changes` to reflect real tool activity).
+- Unit/kernel coverage for previously untested core services: Analysis (broken links), Recipes, and Structure (content types + fields).
+- `codecov.yml` to enforce high patch coverage while overall coverage ramps up.
+
+### Changed
+
+- `mcp_analysis_broken_links` adds an optional `base_url` input for STDIO/CLI usage.
+- Broken-link scanner now enforces the `allowed_hosts` allowlist and blocks redirects to non-allowlisted hosts.
+- CI no longer runs Drupal 11 on PHP 8.3 (Composer now requires PHP 8.4+ for current Drupal 11 releases).
+
 ## [1.0.0-alpha11] - 2026-01-03
 
 ### Added

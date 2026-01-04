@@ -9,6 +9,7 @@ use Drupal\Core\Access\AccessResultInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Service\AccessManager;
+use Drupal\mcp_tools\Service\McpToolCallContext;
 use Drupal\tool\ExecutableResult;
 use Drupal\tool\Tool\ToolBase;
 use Drupal\tool\Tool\ToolDefinition;
@@ -29,12 +30,18 @@ abstract class McpToolsToolBase extends ToolBase {
   protected AccessManager $accessManager;
 
   /**
+   * Tool-call execution context.
+   */
+  protected ?McpToolCallContext $toolCallContext = NULL;
+
+  /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     /** @var static $instance */
     $instance = parent::create($container, $configuration, $plugin_id, $plugin_definition);
     $instance->accessManager = $container->get('mcp_tools.access_manager');
+    $instance->toolCallContext = $container->get('mcp_tools.tool_call_context');
     return $instance;
   }
 
@@ -54,40 +61,46 @@ abstract class McpToolsToolBase extends ToolBase {
    * {@inheritdoc}
    */
   protected function doExecute(array $values): ExecutableResult {
+    $this->toolCallContext?->enter();
     try {
-      $legacy = $this->executeLegacy($values);
-    }
-    catch (\Throwable $e) {
-      return ExecutableResult::failure(new TranslatableMarkup('Tool execution failed: @message', [
-        '@message' => $e->getMessage(),
-      ]));
-    }
-
-    $success = (bool) ($legacy['success'] ?? FALSE);
-    if ($success) {
-      $message = $legacy['message'] ?? 'Success.';
-      if (!is_string($message) || $message === '') {
-        $message = 'Success.';
+      try {
+        $legacy = $this->executeLegacy($values);
+      }
+      catch (\Throwable $e) {
+        return ExecutableResult::failure(new TranslatableMarkup('Tool execution failed: @message', [
+          '@message' => $e->getMessage(),
+        ]));
       }
 
-      $context = [];
-      if (array_key_exists('data', $legacy)) {
-        $context = is_array($legacy['data']) ? $legacy['data'] : ['data' => $legacy['data']];
+      $success = (bool) ($legacy['success'] ?? FALSE);
+      if ($success) {
+        $message = $legacy['message'] ?? 'Success.';
+        if (!is_string($message) || $message === '') {
+          $message = 'Success.';
+        }
+
+        $context = [];
+        if (array_key_exists('data', $legacy)) {
+          $context = is_array($legacy['data']) ? $legacy['data'] : ['data' => $legacy['data']];
+        }
+        else {
+          $context = $legacy;
+          unset($context['success'], $context['message']);
+        }
+
+        return ExecutableResult::success(new TranslatableMarkup($message), $context);
       }
-      else {
-        $context = $legacy;
-        unset($context['success'], $context['message']);
+
+      $error = $legacy['error'] ?? $legacy['message'] ?? 'Tool execution failed.';
+      if (!is_string($error) || $error === '') {
+        $error = 'Tool execution failed.';
       }
 
-      return ExecutableResult::success(new TranslatableMarkup($message), $context);
+      return ExecutableResult::failure(new TranslatableMarkup($error));
     }
-
-    $error = $legacy['error'] ?? $legacy['message'] ?? 'Tool execution failed.';
-    if (!is_string($error) || $error === '') {
-      $error = 'Tool execution failed.';
+    finally {
+      $this->toolCallContext?->leave();
     }
-
-    return ExecutableResult::failure(new TranslatableMarkup($error));
   }
 
   /**

@@ -24,6 +24,10 @@ services:
       - '@current_user'
       - '@logger.factory'
 
+  # Tool Call Context (used for MCP-scoped side effects like config tracking).
+  mcp_tools.tool_call_context:
+    class: Drupal\mcp_tools\Service\McpToolCallContext
+
   # Site Health Services
   mcp_tools.site_health:
     class: Drupal\mcp_tools\Service\SiteHealthService
