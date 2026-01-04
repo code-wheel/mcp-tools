@@ -82,13 +82,15 @@ mcp_tools/                           # Base module (28 read-only tools)
 | Service consolidation | Merge small related services | Deferred |
 | Additional testing | Integration tests, edge cases | Ongoing |
 
-### Long-term (P3)
+### Future Considerations
 
-| Task | Description | Status |
-|------|-------------|--------|
-| Multi-site support | Manage multiple Drupal instances | Pending |
-| Submodule consolidation | Merge related SEO modules | Pending |
-| Webhook extraction | Move to separate mcp_tools_webhooks | Pending |
+| Task | Description | Decision |
+|------|-------------|----------|
+| Multi-site support | Manage multiple Drupal instances | Not planned - complex, limited demand |
+| Submodule consolidation | Merge SEO modules | Not planned - current structure mirrors contrib modules |
+| Webhook extraction | Move to submodule | Not planned - minimal benefit |
+
+**Note:** The module is feature-complete at 214 tools. Future work will focus on bug fixes, compatibility updates, and community-requested features.
 
 ---
 
