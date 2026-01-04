@@ -99,7 +99,7 @@ AI:  Creates content type, taxonomy vocabularies, fields, role, and permissions
 - **Alternative:** [MCP Server](https://www.drupal.org/project/mcp_server) module (note: upstream Composer metadata issue: https://www.drupal.org/project/mcp_server/issues/3560993)
 
 **PHP:**
-- PHP 8.3 or 8.4
+- PHP 8.3+ (Drupal 11 requires PHP 8.4+)
 
 ### Recommended Modules/Libraries
 
