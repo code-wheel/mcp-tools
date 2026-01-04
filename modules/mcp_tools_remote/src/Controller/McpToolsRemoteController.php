@@ -110,6 +110,9 @@ final class McpToolsRemoteController implements ContainerInjectionInterface {
 
     // Execute as configured user for consistent attribution.
     $uid = (int) ($remoteConfig->get('uid') ?? 1);
+    if ($uid === 1) {
+      return new Response('Invalid execution user.', 500);
+    }
     $account = $this->entityTypeManagerService->getStorage('user')->load($uid);
     if (!$account) {
       return new Response('Invalid execution user.', 500);

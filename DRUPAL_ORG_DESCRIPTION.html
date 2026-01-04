@@ -40,6 +40,7 @@ AI:  Creates the content type, taxonomies, fields, role, and permissions</pre>
 <ul>
   <li><strong>Modular by design:</strong> tools are split across submodules so you only enable what you need.</li>
   <li><strong>Scopes:</strong> per-connection scopes (<code>read</code>/<code>write</code>/<code>admin</code>) gate what a client can do.</li>
+  <li><strong>Safe defaults:</strong> new installs default to <code>read</code>-only scopes; enable write/admin explicitly when needed.</li>
   <li><strong>Global safety toggles:</strong> read-only mode and config-only mode prevent accidental damage.</li>
   <li><strong>Production hardening:</strong> rate limiting, protected entities, and sensitive data redaction.</li>
   <li><strong>Config-as-code workflow:</strong> keep changes reviewable by exporting config after write operations.</li>
@@ -90,7 +91,7 @@ AI:  Creates the content type, taxonomies, fields, role, and permissions</pre>
 <h3>MCP Transports</h3>
 <ul>
   <li><strong>Recommended (local):</strong> <code>mcp_tools_stdio</code> — STDIO server via Drush.</li>
-  <li><strong>Experimental (remote):</strong> <code>mcp_tools_remote</code> — HTTP endpoint with API key authentication + optional IP allowlist and key TTL (intended for trusted networks).</li>
+  <li><strong>Experimental (remote):</strong> <code>mcp_tools_remote</code> — HTTP endpoint with API key authentication + optional IP allowlist and key TTL (intended for trusted networks; requires a dedicated execution user, not uid 1).</li>
   <li><strong>Optional compatibility:</strong> <code>mcp_tools_mcp_server</code> — bridge to <code>drupal/mcp_server</code> when upstream is stable.</li>
 </ul>
 
@@ -108,6 +109,14 @@ AI:  Creates the content type, taxonomies, fields, role, and permissions</pre>
 drush en mcp_tools_content mcp_tools_structure mcp_tools_views -y</pre>
 
 <p>Configure MCP Tools at <code>/admin/config/services/mcp-tools</code>.</p>
+
+<h3>Starter Bundles</h3>
+<p>Enable only what you need. Common starting points:</p>
+<ul>
+  <li><strong>Core site builder (local dev):</strong> <code>mcp_tools_structure</code>, <code>mcp_tools_views</code>, <code>mcp_tools_blocks</code>, <code>mcp_tools_menus</code>, <code>mcp_tools_users</code>, <code>mcp_tools_content</code>, <code>mcp_tools_media</code></li>
+  <li><strong>Ops (use with care):</strong> <code>mcp_tools_cache</code>, <code>mcp_tools_cron</code>, <code>mcp_tools_batch</code>, <code>mcp_tools_analysis</code></li>
+  <li><strong>Contrib extras (only if installed):</strong> <code>mcp_tools_webform</code>, <code>mcp_tools_paragraphs</code>, <code>mcp_tools_metatag</code>, <code>mcp_tools_pathauto</code>, <code>mcp_tools_redirect</code>, <code>mcp_tools_search_api</code>, <code>mcp_tools_sitemap</code></li>
+</ul>
 
 <h3>Requirements</h3>
 <ul>

@@ -1,7 +1,7 @@
 # Drupal.org Project Description
 
 **Summary (200 chars):**
-MCP Tools provides 205 AI-powered tools for building Drupal sites through natural conversation. Create content types, fields, views, blocks, users, and more via Claude, ChatGPT, or any MCP client.
+MCP Tools provides 205 MCP tools for building Drupal via AI, safe-by-default with read-only scopes and optional write/admin for local development.
 
 ---
 
@@ -51,6 +51,7 @@ AI:  Creates content type, taxonomy vocabularies, fields, role, and permissions
 
 **Security Built-In**
 - Three-layer access control (modules, global toggle, connection scopes)
+- Safe defaults: new installs default to read-only scopes
 - Config-only mode (restrict writes to configuration changes)
 - Rate limiting for write operations
 - Audit logging with sensitive data redaction
@@ -70,7 +71,7 @@ AI:  Creates content type, taxonomy vocabularies, fields, role, and permissions
    ```
 
 3. **Configure settings** at `/admin/config/services/mcp-tools`:
-   - Set default connection scopes (read/write/admin)
+   - Default scopes are read-only; enable write/admin explicitly when needed
    - Enable config-only mode for config-as-code workflows
    - Enable rate limiting for production safety
    - Configure audit logging
@@ -86,6 +87,17 @@ AI:  Creates content type, taxonomy vocabularies, fields, role, and permissions
 
 6. **Start building!** Ask your AI assistant to create content types, add fields, build views, etc.
 
+### Starter Bundles (Recommended Submodule Sets)
+
+Enable only what you need. These bundles are common starting points:
+
+- **Core site builder (local dev):**
+  `mcp_tools_structure`, `mcp_tools_views`, `mcp_tools_blocks`, `mcp_tools_menus`, `mcp_tools_users`, `mcp_tools_content`, `mcp_tools_media`
+- **Ops (use with care):**
+  `mcp_tools_cache`, `mcp_tools_cron`, `mcp_tools_batch`, `mcp_tools_analysis`
+- **Contrib extras (only if installed):**
+  `mcp_tools_webform`, `mcp_tools_paragraphs`, `mcp_tools_metatag`, `mcp_tools_pathauto`, `mcp_tools_redirect`, `mcp_tools_search_api`, `mcp_tools_sitemap`
+
 ### Additional Requirements
 
 **Required:**
@@ -94,7 +106,7 @@ AI:  Creates content type, taxonomy vocabularies, fields, role, and permissions
 
 **Optional (to expose tools over MCP):**
 - **Recommended (local dev):** `mcp_tools_stdio` submodule (STDIO via Drush)
-- **Experimental (remote HTTP):** `mcp_tools_remote` submodule (API key auth + optional IP allowlist and key TTL)
+- **Experimental (remote HTTP):** `mcp_tools_remote` submodule (API key auth + optional IP allowlist and key TTL; requires a dedicated execution user, not uid 1)
 - **Optional bridge:** `mcp_tools_mcp_server` submodule (generates MCP Server tool configs for MCP Tools)
 - **Alternative:** [MCP Server](https://www.drupal.org/project/mcp_server) module (note: upstream Composer metadata issue: https://www.drupal.org/project/mcp_server/issues/3560993)
 

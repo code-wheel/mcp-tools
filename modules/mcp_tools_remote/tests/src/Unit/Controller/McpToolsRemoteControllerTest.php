@@ -193,4 +193,47 @@ final class McpToolsRemoteControllerTest extends UnitTestCase {
     $this->assertSame('Invalid execution user.', (string) $response->getContent());
   }
 
+  /**
+   * @covers ::handle
+   * @covers ::extractApiKey
+   */
+  public function testHandleReturnsErrorWhenExecutionUserIsUidOne(): void {
+    $remoteConfig = $this->createMock(ImmutableConfig::class);
+    $remoteConfig->method('get')->willReturnMap([
+      ['enabled', TRUE],
+      ['uid', 1],
+    ]);
+
+    $mcpConfig = $this->createMock(ImmutableConfig::class);
+    $mcpConfig->method('get')->with('access.allowed_scopes')->willReturn(['read', 'write']);
+
+    $configFactory = $this->createMock(ConfigFactoryInterface::class);
+    $configFactory->method('get')->willReturnMap([
+      ['mcp_tools_remote.settings', $remoteConfig],
+      ['mcp_tools.settings', $mcpConfig],
+    ]);
+
+    $stateStorage = [];
+    $apiKeyManager = $this->createApiKeyManager($stateStorage);
+    $created = $apiKeyManager->createKey('Test', ['read']);
+
+    $controller = new McpToolsRemoteController(
+      $configFactory,
+      $apiKeyManager,
+      $this->createMock(AccessManager::class),
+      $this->createMock(PluginManagerInterface::class),
+      $this->createMock(EntityTypeManagerInterface::class),
+      $this->createMock(AccountSwitcherInterface::class),
+      $this->createMock(EventDispatcherInterface::class),
+      $this->createMock(LoggerInterface::class),
+    );
+
+    $request = Request::create('/_mcp_tools', 'POST');
+    $request->headers->set('Authorization', 'Bearer ' . $created['api_key']);
+
+    $response = $controller->handle($request);
+    $this->assertSame(500, $response->getStatusCode());
+    $this->assertSame('Invalid execution user.', (string) $response->getContent());
+  }
+
 }

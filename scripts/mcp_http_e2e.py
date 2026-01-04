@@ -32,6 +32,71 @@ def _run_drush(drupal_root: str, args: list[str]) -> str:
     return completed.stdout
 
 
+def _set_config(drupal_root: str, config_name: str, key: str, value: object) -> None:
+    encoded = json.dumps(value, separators=(",", ":"))
+    php = (
+        f'$config = \\Drupal::configFactory()->getEditable("{config_name}"); '
+        f'$config->set("{key}", json_decode(\'{encoded}\', true)); '
+        "$config->save();"
+    )
+    _run_drush(drupal_root, ["eval", php])
+
+
+def _create_service_user(drupal_root: str, username: str) -> int:
+    marker = "MCP_UID:"
+    php = (
+        f'$name = "{username}"; '
+        '$storage = \\Drupal::entityTypeManager()->getStorage("user"); '
+        '$existing = $storage->loadByProperties(["name" => $name]); '
+        'if ($existing) { $user = reset($existing); } '
+        'else { '
+        '$user = \\Drupal\\user\\Entity\\User::create(['
+        '"name" => $name, '
+        '"mail" => $name . "@example.invalid", '
+        '"pass" => "mcp_tools_ci", '
+        '"status" => 1'
+        ']); '
+        '$user->save(); '
+        '} '
+        f'echo "{marker}" . (int) $user->id();'
+    )
+    output = _run_drush(drupal_root, ["eval", php]).strip()
+    pos = output.rfind(marker)
+    if pos == -1:
+        raise SystemExit(f"Failed to parse service user id from drush output: {output!r}")
+    tail = output[pos + len(marker) :].strip()
+    token = tail.split()[0] if tail else ""
+    if not token.isdigit():
+        raise SystemExit(f"Failed to parse service user id from drush output: {output!r}")
+    return int(token)
+
+
+def _ensure_role_with_permissions(drupal_root: str, role_id: str, label: str, permissions: list[str]) -> None:
+    encoded = json.dumps(permissions, separators=(",", ":"))
+    php = (
+        f'$role_id = "{role_id}"; '
+        f'$label = "{label}"; '
+        f'$perms = json_decode(\'{encoded}\', true) ?: []; '
+        '$storage = \\Drupal::entityTypeManager()->getStorage("user_role"); '
+        '$role = $storage->load($role_id); '
+        'if (!$role) { $role = $storage->create(["id" => $role_id, "label" => $label]); } '
+        'foreach ($perms as $perm) { if (is_string($perm) && $perm !== "") { $role->grantPermission($perm); } } '
+        '$role->save();'
+    )
+    _run_drush(drupal_root, ["eval", php])
+
+
+def _assign_role_to_user(drupal_root: str, uid: int, role_id: str) -> None:
+    php = (
+        f'$uid = {uid}; '
+        f'$role_id = "{role_id}"; '
+        '$user = \\Drupal::entityTypeManager()->getStorage("user")->load($uid); '
+        'if ($user) { $user->addRole($role_id); $user->save(); } '
+        'echo "OK";'
+    )
+    _run_drush(drupal_root, ["eval", php])
+
+
 def _create_api_key(drupal_root: str, label: str, scopes: str) -> str:
     output = _run_drush(
         drupal_root,
@@ -328,6 +393,24 @@ def _run_config_only_sequence(base_url: str, api_key: str) -> None:
         raise SystemExit(f"Expected cache clear to be denied in config-only mode, got: {clear_result!r}")
 
 
+def _start_php_server(web_root: str, host: str, port: int) -> subprocess.Popen:
+    return subprocess.Popen(
+        ["php", "-S", f"{host}:{port}", ".ht.router.php"],
+        cwd=web_root,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        env={**os.environ, "SYMFONY_DEPRECATIONS_HELPER": "disabled"},
+    )
+
+
+def _stop_php_server(server: subprocess.Popen) -> None:
+    server.terminate()
+    try:
+        server.wait(timeout=5)
+    except subprocess.TimeoutExpired:
+        server.kill()
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="End-to-end HTTP MCP check for mcp_tools_remote.")
     parser.add_argument("--drupal-root", default="drupal", help="Path to Drupal project root")
@@ -345,7 +428,23 @@ def main() -> int:
     _require_file(drush)
 
     _run_drush(drupal_root, ["en", "mcp_tools_remote", "mcp_tools_cache", "mcp_tools_structure", "-y"])
-    _run_drush(drupal_root, ["config:set", "mcp_tools_remote.settings", "enabled", "true", "-y"])
+    _set_config(drupal_root, "mcp_tools_remote.settings", "enabled", True)
+    remote_uid = _create_service_user(drupal_root, "mcp_remote_ci")
+    _set_config(drupal_root, "mcp_tools_remote.settings", "uid", remote_uid)
+
+    # Grant only the MCP Tools permissions needed for this E2E flow.
+    role_id = "mcp_tools_remote_ci"
+    _ensure_role_with_permissions(
+        drupal_root,
+        role_id,
+        "MCP Tools Remote CI",
+        [
+            "mcp_tools use site_health",
+            "mcp_tools use cache",
+            "mcp_tools use structure",
+        ],
+    )
+    _assign_role_to_user(drupal_root, remote_uid, role_id)
     _run_drush(drupal_root, ["cr"])
 
     read_key = _create_api_key(drupal_root, "CI Read", "read")
@@ -355,18 +454,45 @@ def main() -> int:
     router = os.path.join(web_root, ".ht.router.php")
     _require_file(router)
 
-    server = subprocess.Popen(
-        ["php", "-S", f"{parsed_base_url.hostname}:{parsed_base_url.port}", ".ht.router.php"],
-        cwd=web_root,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-        env={**os.environ, "SYMFONY_DEPRECATIONS_HELPER": "disabled"},
-    )
+    url = args.base_url.rstrip("/") + "/_mcp_tools"
 
     try:
+        # Ensure the optional IP allowlist behaves as expected.
+        # First lock it down so localhost cannot reach it.
+        _set_config(drupal_root, "mcp_tools_remote.settings", "allowed_ips", ["203.0.113.1"])
+        _run_drush(drupal_root, ["cr"])
+
+        server = _start_php_server(web_root, parsed_base_url.hostname, parsed_base_url.port)
+        try:
+            _wait_for_http(args.base_url.rstrip("/") + "/", timeout_seconds=15)
+
+            status, _, _ = _post_jsonrpc(
+                url,
+                {
+                    "jsonrpc": "2.0",
+                    "id": 998,
+                    "method": "initialize",
+                    "params": {
+                        "protocolVersion": "2024-11-05",
+                        "clientInfo": {"name": "mcp_tools_ci_allowlist", "version": "0.0.0"},
+                        "capabilities": {},
+                    },
+                },
+                api_key=None,
+                session_id=None,
+            )
+            if status != 404:
+                raise SystemExit(f"Expected 404 when client IP is not allowlisted, got {status}")
+        finally:
+            _stop_php_server(server)
+
+        # Now allow localhost (IPv4 + IPv6) and run the normal flow.
+        _set_config(drupal_root, "mcp_tools_remote.settings", "allowed_ips", ["127.0.0.1", "::1"])
+        _run_drush(drupal_root, ["cr"])
+
+        server = _start_php_server(web_root, parsed_base_url.hostname, parsed_base_url.port)
         _wait_for_http(args.base_url.rstrip("/") + "/", timeout_seconds=15)
 
-        url = args.base_url.rstrip("/") + "/_mcp_tools"
         status, _, _ = _post_jsonrpc(
             url,
             {
@@ -389,15 +515,12 @@ def main() -> int:
         _run_sequence(args.base_url, write_key, expect_write_allowed=True)
 
         # Config-only mode: allow config writes, deny ops writes.
-        _run_drush(drupal_root, ["config:set", "mcp_tools.settings", "access.config_only_mode", "true", "-y"])
+        _set_config(drupal_root, "mcp_tools.settings", "access.config_only_mode", True)
         _run_drush(drupal_root, ["cr"])
         _run_config_only_sequence(args.base_url, write_key)
     finally:
-        server.terminate()
-        try:
-            server.wait(timeout=5)
-        except subprocess.TimeoutExpired:
-            server.kill()
+        if "server" in locals():
+            _stop_php_server(server)
 
     return 0
 

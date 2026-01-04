@@ -173,6 +173,16 @@ drush en mcp_tools_templates      # Site templates
 drush en mcp_tools_migration      # Content import/export
 ```
 
+Common starter bundles:
+
+```bash
+# Core site builder (local dev)
+drush en mcp_tools_structure mcp_tools_views mcp_tools_blocks mcp_tools_menus mcp_tools_users mcp_tools_content mcp_tools_media -y
+
+# Ops (use with care)
+drush en mcp_tools_cache mcp_tools_cron mcp_tools_batch mcp_tools_analysis -y
+```
+
 ## Access Control
 
 MCP Tools provides three layers of access control:
@@ -190,6 +200,8 @@ $config['mcp_tools.settings']['access']['read_only_mode'] = TRUE;
 
 ### 3. Connection Scopes
 Per-connection access levels (read/write/admin).
+
+**Default:** new installs start with `read` only via `access.default_scopes`.
 
 **Security default:** HTTP scope overrides are disabled by default. Enable them only if you have a trusted reverse proxy stripping/overwriting client-supplied scope headers/params.
 
