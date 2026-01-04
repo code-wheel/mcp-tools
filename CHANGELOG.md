@@ -4,6 +4,20 @@ All notable changes to the MCP Tools module will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.0.0-alpha16] - 2026-01-04
+
+### Added
+
+- Regression coverage for tools with no inputs to ensure MCP JSON Schemas encode empty `properties` as `{}`.
+
+### Changed
+
+- STDIO usage docs/examples now include `--uid` and recommend a dedicated execution user for shared environments.
+
+### Fixed
+
+- Tools with no inputs now return an MCP `inputSchema.properties` value that encodes as an object (`{}`), improving compatibility with strict MCP clients (Codex/Claude Code).
+
 ## [1.0.0-alpha15] - 2026-01-04
 
 ### Added
