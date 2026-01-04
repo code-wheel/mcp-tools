@@ -26,12 +26,12 @@ use Drupal\tool\TypedData\InputDefinition;
     'types' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Field Types'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Array of field types with id (machine name), label, description, and category. Use id with AddField field_type parameter.'),
     ),
     'total' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Types'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Number of field types available.'),
     ),
   ],
 )]

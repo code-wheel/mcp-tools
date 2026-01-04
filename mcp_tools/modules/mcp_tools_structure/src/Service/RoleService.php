@@ -39,6 +39,134 @@ class RoleService {
   ) {}
 
   /**
+   * List all roles.
+   *
+   * @return array
+   *   Result with list of roles.
+   */
+  public function listRoles(): array {
+    try {
+      $roles = $this->entityTypeManager->getStorage('user_role')->loadMultiple();
+      $result = [];
+
+      foreach ($roles as $role) {
+        // Count users with this role.
+        $userCount = 0;
+        // Anonymous and authenticated are special - don't count.
+        if (!in_array($role->id(), ['anonymous', 'authenticated'])) {
+          $userCount = $this->entityTypeManager->getStorage('user')
+            ->getQuery()
+            ->accessCheck(FALSE)
+            ->condition('roles', $role->id())
+            ->count()
+            ->execute();
+        }
+
+        $permissions = $role->getPermissions();
+
+        $result[] = [
+          'id' => $role->id(),
+          'label' => $role->label(),
+          'weight' => (int) $role->getWeight(),
+          'is_admin' => $role->isAdmin(),
+          'permission_count' => count($permissions),
+          'user_count' => (int) $userCount,
+        ];
+      }
+
+      // Sort by weight.
+      usort($result, fn($a, $b) => $a['weight'] <=> $b['weight']);
+
+      return [
+        'success' => TRUE,
+        'data' => [
+          'roles' => $result,
+          'total' => count($result),
+        ],
+      ];
+    }
+    catch (\Exception $e) {
+      return [
+        'success' => FALSE,
+        'error' => 'Failed to list roles: ' . $e->getMessage(),
+      ];
+    }
+  }
+
+  /**
+   * Get role permissions.
+   *
+   * @param string $id
+   *   Role machine name.
+   *
+   * @return array
+   *   Result with role details and permissions.
+   */
+  public function getRolePermissions(string $id): array {
+    try {
+      $role = $this->entityTypeManager->getStorage('user_role')->load($id);
+
+      if (!$role) {
+        return [
+          'success' => FALSE,
+          'error' => "Role '$id' not found. Use mcp_structure_list_roles to see available roles.",
+        ];
+      }
+
+      $rolePermissions = $role->getPermissions();
+      $allPermissions = $this->permissionHandler->getPermissions();
+
+      // Group permissions by provider.
+      $permissionsByProvider = [];
+      foreach ($rolePermissions as $permission) {
+        if (isset($allPermissions[$permission])) {
+          $provider = $allPermissions[$permission]['provider'] ?? 'unknown';
+          $permissionsByProvider[$provider][] = [
+            'id' => $permission,
+            'title' => (string) ($allPermissions[$permission]['title'] ?? $permission),
+            'description' => (string) ($allPermissions[$permission]['description'] ?? ''),
+            'restrict_access' => !empty($allPermissions[$permission]['restrict access']),
+          ];
+        }
+        else {
+          // Permission exists on role but not in system (orphaned).
+          $permissionsByProvider['_orphaned'][] = [
+            'id' => $permission,
+            'title' => $permission,
+            'description' => 'Permission no longer exists in system',
+            'restrict_access' => FALSE,
+          ];
+        }
+      }
+
+      // Sort providers and permissions.
+      ksort($permissionsByProvider);
+      foreach ($permissionsByProvider as &$perms) {
+        usort($perms, fn($a, $b) => strcasecmp($a['title'], $b['title']));
+      }
+
+      return [
+        'success' => TRUE,
+        'data' => [
+          'id' => $role->id(),
+          'label' => $role->label(),
+          'is_admin' => $role->isAdmin(),
+          'permissions' => $rolePermissions,
+          'permissions_by_provider' => $permissionsByProvider,
+          'permission_count' => count($rolePermissions),
+          'admin_path' => "/admin/people/roles/manage/$id",
+        ],
+      ];
+    }
+    catch (\Exception $e) {
+      return [
+        'success' => FALSE,
+        'error' => 'Failed to get role permissions: ' . $e->getMessage(),
+      ];
+    }
+  }
+
+  /**
    * Create a new role.
    *
    * @param string $id
@@ -169,7 +297,7 @@ class RoleService {
     if (!$role) {
       return [
         'success' => FALSE,
-        'error' => "Role '$id' not found.",
+        'error' => "Role '$id' not found. Use mcp_structure_list_roles to see available roles.",
       ];
     }
 
@@ -236,7 +364,7 @@ class RoleService {
     if (!$role) {
       return [
         'success' => FALSE,
-        'error' => "Role '$roleId' not found.",
+        'error' => "Role '$roleId' not found. Use mcp_structure_list_roles to see available roles.",
       ];
     }
 
@@ -315,7 +443,7 @@ class RoleService {
     if (!$role) {
       return [
         'success' => FALSE,
-        'error' => "Role '$roleId' not found.",
+        'error' => "Role '$roleId' not found. Use mcp_structure_list_roles to see available roles.",
       ];
     }
 

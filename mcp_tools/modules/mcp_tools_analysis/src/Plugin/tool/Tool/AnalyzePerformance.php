@@ -36,7 +36,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'error_count' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Error Count'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Total watchdog errors found. High counts indicate systemic issues.'),
     ),
     'slow_queries' => new ContextDefinition(
       data_type: 'list',
@@ -51,7 +51,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'suggestions' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Suggestions'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Actionable performance improvement recommendations.'),
     ),
   ],
 )]

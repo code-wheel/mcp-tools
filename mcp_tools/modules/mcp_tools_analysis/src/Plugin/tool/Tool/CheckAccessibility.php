@@ -39,17 +39,17 @@ use Drupal\tool\TypedData\InputDefinition;
     'entity_type' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Entity Type'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('The entity type that was checked.'),
     ),
     'entity_id' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Entity ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('The entity ID that was checked.'),
     ),
     'title' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Title'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Entity title for reference.'),
     ),
     'issues' => new ContextDefinition(
       data_type: 'list',
@@ -59,22 +59,22 @@ use Drupal\tool\TypedData\InputDefinition;
     'error_count' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Error Count'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('WCAG errors that must be fixed for compliance.'),
     ),
     'warning_count' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Warning Count'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Potential issues that should be reviewed.'),
     ),
     'info_count' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Info Count'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Informational notices for best practices.'),
     ),
     'suggestions' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Suggestions'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Specific fixes to resolve accessibility issues.'),
     ),
   ],
 )]

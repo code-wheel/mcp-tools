@@ -33,22 +33,22 @@ use Drupal\tool\TypedData\InputDefinition;
     'variant' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Variant ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('The sitemap variant ID (e.g., "default"). Use with UpdateSettings or Regenerate.'),
     ),
     'label' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Variant Label'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Human-readable name for this sitemap variant.'),
     ),
     'global_settings' => new ContextDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Global Settings'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Global sitemap settings: max_links, cron_generate, base_url, and other configuration. Use UpdateSettings to modify.'),
     ),
     'entity_types' => new ContextDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Entity Type Settings'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Per-entity-type settings with bundle configurations. Keys are entity type IDs. Use GetEntitySettings for detailed bundle info.'),
     ),
   ],
 )]

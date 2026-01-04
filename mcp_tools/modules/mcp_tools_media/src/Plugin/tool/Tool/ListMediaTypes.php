@@ -26,17 +26,17 @@ use Drupal\tool\TypedData\InputDefinition;
     'types' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Media Types'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Array of media types with id, label, source_plugin, and source_field. Use id as bundle in CreateMedia.'),
     ),
     'count' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Count'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Total number of media types available.'),
     ),
     'message' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Success confirmation.'),
     ),
   ],
 )]

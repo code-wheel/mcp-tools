@@ -8,9 +8,14 @@ use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Config\ImmutableConfig;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Session\AccountProxyInterface;
+use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AuditLogger;
+use Drupal\mcp_tools\Service\McpToolCallContext;
+use Drupal\mcp_tools\Service\RateLimiter;
 use Drupal\Tests\UnitTestCase;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
  * Tests for AuditLogger service.
@@ -25,6 +30,10 @@ class AuditLoggerTest extends UnitTestCase {
   protected LoggerChannelFactoryInterface $loggerFactory;
   protected LoggerInterface $logger;
   protected ImmutableConfig $config;
+  protected AccessManager $accessManager;
+  protected RateLimiter $rateLimiter;
+  protected RequestStack $requestStack;
+  protected McpToolCallContext $toolCallContext;
 
   /**
    * {@inheritdoc}
@@ -47,16 +56,28 @@ class AuditLoggerTest extends UnitTestCase {
     $this->loggerFactory->method('get')
       ->with('mcp_tools')
       ->willReturn($this->logger);
+
+    $this->accessManager = $this->createMock(AccessManager::class);
+
+    $this->rateLimiter = $this->createMock(RateLimiter::class);
+
+    $this->requestStack = new RequestStack();
+
+    $this->toolCallContext = new McpToolCallContext();
   }
 
   /**
    * Creates an AuditLogger instance with the mocked dependencies.
    */
-  protected function createAuditLogger(): AuditLogger {
+  protected function createAuditLogger(?RequestStack $requestStack = NULL): AuditLogger {
     return new AuditLogger(
       $this->configFactory,
       $this->currentUser,
-      $this->loggerFactory
+      $this->loggerFactory,
+      $this->accessManager,
+      $requestStack ?? $this->requestStack,
+      $this->toolCallContext,
+      $this->rateLimiter,
     );
   }
 
@@ -69,21 +90,38 @@ class AuditLoggerTest extends UnitTestCase {
       ->with('access.audit_logging')
       ->willReturn(TRUE);
 
+    $this->toolCallContext->enter();
+    $correlationId = $this->toolCallContext->getCorrelationId();
+    $this->assertNotNull($correlationId);
+
+    $this->accessManager->method('getCurrentScopes')->willReturn(['read', 'write']);
+    $this->rateLimiter->method('getStatus')->willReturn([
+      'enabled' => FALSE,
+      'client_id' => 'abcdef123456...',
+      'limits' => [],
+      'current_usage' => [],
+    ]);
+
     $this->logger->expects($this->once())
       ->method('notice')
       ->with(
-        $this->stringContains('MCP:'),
-        $this->callback(function ($context) {
+        $this->stringContains('MCP['),
+        $this->callback(function ($context) use ($correlationId) {
           return $context['@operation'] === 'create_content'
             && $context['@entity_type'] === 'node'
             && $context['@entity_id'] === '123'
             && $context['@user'] === 'testuser'
-            && $context['@uid'] === 42;
+            && $context['@uid'] === 42
+            && $context['@cid'] === $correlationId
+            && $context['@transport'] === 'cli'
+            && $context['@client'] === 'abcdef123456...'
+            && $context['@scopes'] === 'read,write';
         })
       );
 
     $auditLogger = $this->createAuditLogger();
     $auditLogger->logSuccess('create_content', 'node', '123');
+    $this->toolCallContext->leave();
   }
 
   /**
@@ -98,7 +136,7 @@ class AuditLoggerTest extends UnitTestCase {
     $this->logger->expects($this->once())
       ->method('error')
       ->with(
-        $this->stringContains('MCP:'),
+        $this->stringContains('MCP['),
         $this->callback(function ($context) {
           return $context['@operation'] === 'delete_content'
             && $context['@entity_type'] === 'node'
@@ -262,7 +300,11 @@ class AuditLoggerTest extends UnitTestCase {
     $auditLogger = new AuditLogger(
       $this->configFactory,
       $anonymousUser,
-      $this->loggerFactory
+      $this->loggerFactory,
+      $this->accessManager,
+      $this->requestStack,
+      $this->toolCallContext,
+      $this->rateLimiter,
     );
 
     $this->config->method('get')
@@ -280,6 +322,33 @@ class AuditLoggerTest extends UnitTestCase {
       );
 
     $auditLogger->logSuccess('view_content', 'node', '1');
+  }
+
+  /**
+   * @covers ::log
+   */
+  public function testLogUsesTrustedRequestClientIdWhenPresent(): void {
+    $this->config->method('get')
+      ->with('access.audit_logging')
+      ->willReturn(TRUE);
+
+    $requestStack = new RequestStack();
+    $request = Request::create('/_mcp_tools');
+    $request->attributes->set('mcp_tools.client_id', 'remote_key:abcd1234');
+    $requestStack->push($request);
+
+    $this->logger->expects($this->once())
+      ->method('notice')
+      ->with(
+        $this->anything(),
+        $this->callback(function (array $context): bool {
+          return ($context['@transport'] ?? '') === 'http'
+            && ($context['@client'] ?? '') === 'remote_key:abcd1234';
+        })
+      );
+
+    $auditLogger = $this->createAuditLogger($requestStack);
+    $auditLogger->logSuccess('create_content', 'node', '123');
   }
 
 }

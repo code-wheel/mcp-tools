@@ -34,22 +34,22 @@ use Drupal\tool\TypedData\InputDefinition;
     'total_updates' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Updates Available'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Total number of modules with available updates.'),
     ),
     'security_updates' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Security Updates Count'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Number of security-related updates (requires immediate attention).'),
     ),
     'has_security_issues' => new ContextDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Has Security Issues'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('True if any security updates are available.'),
     ),
     'updates' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Update Details'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Array of updates with name, installed_version, recommended_version, security (bool), and link to release notes.'),
     ),
   ],
 )]

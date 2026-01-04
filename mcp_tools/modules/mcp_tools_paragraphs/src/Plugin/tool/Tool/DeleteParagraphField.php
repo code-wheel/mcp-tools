@@ -40,17 +40,17 @@ use Drupal\tool\TypedData\InputDefinition;
     'field_name' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Deleted Field Name'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Machine name of the deleted field. WARNING: All data in this field is permanently lost.'),
     ),
     'bundle' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Paragraph Type'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Paragraph type the field was removed from.'),
     ),
     'message' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Human-readable confirmation of the field deletion.'),
     ),
   ],
 )]

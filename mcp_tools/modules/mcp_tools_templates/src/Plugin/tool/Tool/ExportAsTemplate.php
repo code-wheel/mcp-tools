@@ -22,7 +22,7 @@ use Drupal\tool\TypedData\InputDefinition;
   id: 'mcp_templates_export',
   label: new TranslatableMarkup('Export as Template'),
   description: new TranslatableMarkup('Export current content types, vocabularies, and roles as a custom template definition. Requires admin scope.'),
-  operation: ToolOperation::Write,
+  operation: ToolOperation::Trigger,
   input_definitions: [
     'name' => new InputDefinition(
       data_type: 'string',

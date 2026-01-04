@@ -35,32 +35,32 @@ use Drupal\tool\TypedData\InputDefinition;
     'success' => new ContextDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Success status'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('TRUE if the job completed successfully, FALSE if it failed or could not be run.'),
     ),
     'message' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result message'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Human-readable summary of the job execution result.'),
     ),
     'id' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Job ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Machine name of the executed job.'),
     ),
     'title' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Job Title'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Human-readable title of the job.'),
     ),
     'duration_seconds' => new ContextDefinition(
       data_type: 'float',
       label: new TranslatableMarkup('Duration in seconds'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('How long the job took to execute. Useful for performance monitoring.'),
     ),
     'executed_at' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Execution timestamp'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('ISO 8601 timestamp when the job was executed.'),
     ),
   ],
 )]

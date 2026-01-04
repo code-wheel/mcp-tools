@@ -37,7 +37,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'description' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Description'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Describes when and how editors should use this paragraph type.'),
       required: FALSE,
     ),
   ],
@@ -45,22 +45,22 @@ use Drupal\tool\TypedData\InputDefinition;
     'id' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Paragraph Type ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Machine name of the created paragraph type. Use with AddParagraphField to add fields.'),
     ),
     'label' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Label'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Human-readable name of the paragraph type.'),
     ),
     'message' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Human-readable confirmation of the type creation.'),
     ),
     'admin_path' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Admin Path'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Path to manage this paragraph type in admin UI.'),
     ),
   ],
 )]

@@ -45,37 +45,37 @@ use Drupal\tool\TypedData\InputDefinition;
     'entity_type' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Entity Type'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('The entity type that was cloned.'),
     ),
     'source_id' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Source Entity ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('ID of the original entity.'),
     ),
     'clone_id' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Cloned Entity ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('ID of the new cloned entity. Use with GetContent to view.'),
     ),
     'clone_uuid' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Cloned Entity UUID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('UUID of the cloned entity for config references.'),
     ),
     'label' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Cloned Entity Label'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Title/label of the cloned entity.'),
     ),
     'cloned_references' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Cloned Referenced Entities'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('List of referenced entities that were also cloned with their new IDs.'),
     ),
     'message' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Success or error details.'),
     ),
   ],
 )]

@@ -39,27 +39,27 @@ use Drupal\tool\TypedData\InputDefinition;
     'entity_type' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Entity Type'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('The entity type queried (e.g., "node", "taxonomy_term").'),
     ),
     'entity_id' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Entity ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('The entity ID queried.'),
     ),
     'entity_label' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Entity Label'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Title or name of the entity for identification.'),
     ),
     'stored_tags' => new ContextDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Stored Metatags'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Metatags explicitly set on this entity. Keys are tag names (e.g., "title", "description"). Use SetEntityMetatags to modify.'),
     ),
     'computed_tags' => new ContextDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Computed Metatags'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Final metatag values with tokens resolved and defaults applied. These appear in the HTML output.'),
     ),
   ],
 )]

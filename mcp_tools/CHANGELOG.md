@@ -4,6 +4,204 @@ All notable changes to the MCP Tools module will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.0.0-alpha20] - 2026-01-04
+
+### Added
+
+- **Configuration mode presets**: Development, Staging, Production modes with sensible defaults
+  - Development: Full access, no rate limiting
+  - Staging: Config-only mode, rate limited, audit logging
+  - Production: Read-only mode, strict limits, full audit
+- **Compound operations** in `mcp_tools_structure`:
+  - `mcp_structure_scaffold_content_type` - Create content type + fields in one call
+  - `mcp_structure_setup_taxonomy` - Create vocabulary + terms with hierarchy
+- **Text format tools** in base module:
+  - `mcp_list_text_formats` - List available text formats
+  - `mcp_get_text_format` - Get format details including allowed HTML
+- **Architecture documentation**: New `docs/ARCHITECTURE.md` with design patterns, security model
+
+### Changed
+
+- **idempotentHint** now set for read operations (TRUE for safe-to-retry ops)
+- ROADMAP.md updated with completed P1 items
+
+## [1.0.0-alpha19] - 2026-01-04
+
+### Added
+
+- **6 new schema discovery tools** in `mcp_tools_structure` for AI introspection:
+  - `mcp_structure_list_content_types` - List all content types with field counts
+  - `mcp_structure_get_content_type` - Get full field schema with types, cardinality, and allowed values
+  - `mcp_structure_list_vocabularies` - List all vocabularies with term counts
+  - `mcp_structure_get_vocabulary` - Get vocabulary details with terms and hierarchy
+  - `mcp_structure_list_roles` - List all roles with permission/user counts
+  - `mcp_structure_get_role_permissions` - Get permissions grouped by provider module
+- **`destructive: TRUE` flag** added to 6 more tools: DisableTheme, DisableView, DisableJob, DisableLayoutBuilder, CancelSchedule, RevokePermissions (38 total destructive tools)
+- **Remediation hints** added to 32 error messages across 12 services, guiding Claude to the correct discovery tools
+
+### Changed
+
+- **181 tool files updated** with rich, meaningful descriptions for all inputs and outputs
+- All empty `TranslatableMarkup('')` entries replaced with helpful descriptions explaining:
+  - Expected formats and valid values
+  - Field type documentation (entity_reference, text_with_summary, etc.)
+  - When to use each tool and relationships between tools
+- ROADMAP.md cleaned up and simplified, removing completed phases
+
+### Fixed
+
+- Error messages now consistently reference discovery tools (e.g., "Content type 'blog' not found. Use mcp_structure_list_content_types to see available types.")
+
+## [1.0.0-alpha18] - 2026-01-04
+
+### Added
+
+- Expanded unit test coverage for analysis/config/templates/batch/migration services to improve reliability and raise overall coverage.
+
+### Changed
+
+- Batch and migration operations now create entities via injected storages (instead of static `::create()` calls) to improve testability and consistency.
+
+### Fixed
+
+- Template application now logs audit events with the correct parameters (avoids runtime errors when audit logging is enabled).
+
+## [1.0.0-alpha17] - 2026-01-04
+
+### Added
+
+- Optional Origin/Host allowlist for the remote HTTP endpoint (`mcp_tools_remote.settings.allowed_origins`) as defense-in-depth against DNS rebinding.
+- JS MCP SDK STDIO smoke test (`scripts/mcp_js_sdk_compat.mjs`) wired into CI to catch strict-client schema regressions early.
+- HTTP transport E2E coverage for Origin/Host allowlist behavior.
+
+## [1.0.0-alpha16] - 2026-01-04
+
+### Added
+
+- Regression coverage for tools with no inputs to ensure MCP JSON Schemas encode empty `properties` as `{}`.
+
+### Changed
+
+- STDIO usage docs/examples now include `--uid` and recommend a dedicated execution user for shared environments.
+
+### Fixed
+
+- Tools with no inputs now return an MCP `inputSchema.properties` value that encodes as an object (`{}`), improving compatibility with strict MCP clients (Codex/Claude Code).
+
+## [1.0.0-alpha15] - 2026-01-04
+
+### Added
+
+- DrupalCI (`.gitlab-ci.yml`) configuration to test across a broader core/PHP matrix.
+- `drush mcp-tools:remote-setup` to create a dedicated remote execution user/role and configure `mcp_tools_remote.settings.uid`.
+- Expanded config preview support: role create/delete, grant/revoke permissions, delete content type, and delete field preview operations.
+- `DRUPALCI.md` and local testing notes to make CI failures easier to triage.
+
+### Changed
+
+- Audit logs now include a per-tool-call correlation ID, transport, client identifier, and active scopes.
+- Status page now shows the remote HTTP endpoint (when enabled) and warns on risky remote settings (uid 1, empty allowlist, include-all-tools).
+- CI "full tool registration" now validates schema conversion for all tools (not just registration count).
+
+### Fixed
+
+- STDIO E2E sets a known baseline for read-only/config-only so local reruns are deterministic.
+
+## [1.0.0-alpha14] - 2026-01-04
+
+### Changed
+
+- Remote HTTP transport now refuses to execute as uid 1 (runtime enforcement, not just UI validation).
+- HTTP transport E2E now validates IP allowlist enforcement and runs as a dedicated service user with only the required `mcp_tools use …` permissions.
+- Drupal.org description and README now highlight read-only default scopes and include recommended starter bundles.
+
+## [1.0.0-alpha13] - 2026-01-04
+
+### Added
+
+- Remote HTTP hardening: optional IP allowlist (`mcp_tools_remote.settings.allowed_ips`) and API key TTL support (`drush mcp-tools:remote-key-create --ttl=...`).
+- Kernel coverage to ensure all core tool definitions convert cleanly to MCP tool annotations + JSON schemas.
+- HTTP transport E2E now validates config-only mode (config writes allowed, ops writes denied).
+
+### Changed
+
+- Default connection scopes are now read-only by default (`access.default_scopes: [read]`).
+- Admin-scope tools are now declared as `ToolOperation::Trigger` so they can be gated by admin scope at the Tool API access layer (recipes/templates/config export).
+- Rate limiting now ignores the client-provided `X-MCP-Client-Id` header by default; opt-in via `rate_limiting.trust_client_id_header`.
+
+## [1.0.0-alpha12] - 2026-01-03
+
+### Added
+
+- MCP-scoped config-change tracking via a tool-call context and a `config.save/delete/rename` subscriber (enables `mcp_config_mcp_changes` to reflect real tool activity).
+- Unit/kernel coverage for previously untested core services: Analysis (broken links), Recipes, and Structure (content types + fields).
+- `codecov.yml` to enforce high patch coverage while overall coverage ramps up.
+
+### Changed
+
+- `mcp_analysis_broken_links` adds an optional `base_url` input for STDIO/CLI usage.
+- Broken-link scanner now enforces the `allowed_hosts` allowlist and blocks redirects to non-allowlisted hosts.
+- CI no longer runs Drupal 11 on PHP 8.3 (Composer now requires PHP 8.4+ for current Drupal 11 releases).
+
+## [1.0.0-alpha11] - 2026-01-03
+
+### Added
+
+- Additional unit coverage for Tool API access gating, cron/cache/image styles, and moderation services.
+
+### Changed
+
+- Refactored multiple services to use dependency injection (improves testability and reduces static `\Drupal::*` usage).
+- Entity creation in write services now uses storage `->create()` instead of static entity `::create()` helpers.
+
+### Fixed
+
+- Cron job discovery now uses `ModuleHandlerInterface::invokeAllWith()` (prevents calling a non-existent `getImplementations()` method).
+- `mcp_tools_recipes` now registers `logger.channel.mcp_tools_recipes` so the service container compiles cleanly in kernel tests.
+
+## [1.0.0-alpha10] - 2026-01-03
+
+### Added
+
+- Tool metadata lint test to prevent read/write operation regressions.
+- Kernel coverage for config-only mode gating by write kind.
+
+### Fixed
+
+- `mcp_upload_file` now correctly declares a write operation (requires write scope).
+- Status page now shows config-only mode status.
+
+## [1.0.0-alpha9] - 2026-01-03
+
+### Added
+
+- Config-only mode (restrict write tools to configuration changes) with configurable allowed write kinds.
+
+### Fixed
+
+- Corrected multiple Tool API operation declarations so write tools are not incorrectly exposed as read operations.
+
+### Security
+
+- Enforced correct write-scope gating for tools that mutate configuration or operational state (e.g., block placement, pathauto alias generation, Search API indexing).
+
+## [1.0.0-alpha8] - 2026-01-03
+
+### Added
+
+- Unit coverage for schema conversion, error formatting, config management previews/exports, and remote controller failure paths.
+- Additional unit coverage for batch/migration helpers and watchdog message formatting.
+
+### Changed
+
+- Code coverage job now runs unit + kernel + functional suites and excludes contrib-dependent submodules (unless their dependencies are installed).
+- Release workflow now runs submodule unit/kernel/functional tests (not just base module tests).
+
+### Security
+
+- Base64 uploads are capped and block dangerous executable extensions by default.
+- Serialized watchdog/metatag parsing now enforces size limits to prevent memory exhaustion.
+
 ## [1.0.0-alpha7] - 2026-01-03
 
 ### Added

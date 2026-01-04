@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools_layout_builder\Service;
 
+use Drupal\Component\Uuid\UuidInterface;
 use Drupal\Core\Block\BlockManagerInterface;
 use Drupal\Core\Entity\EntityDisplayRepositoryInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
@@ -23,6 +24,7 @@ class LayoutBuilderService {
     protected EntityDisplayRepositoryInterface $entityDisplayRepository,
     protected LayoutPluginManagerInterface $layoutPluginManager,
     protected BlockManagerInterface $blockManager,
+    protected UuidInterface $uuid,
     protected AccessManager $accessManager,
     protected AuditLogger $auditLogger,
   ) {}
@@ -473,7 +475,7 @@ class LayoutBuilderService {
     if (!$this->blockManager->hasDefinition($blockId)) {
       return [
         'success' => FALSE,
-        'error' => "Block plugin '$blockId' not found.",
+        'error' => "Block plugin '$blockId' not found. Use mcp_list_block_plugins to see available block types.",
       ];
     }
 
@@ -489,7 +491,7 @@ class LayoutBuilderService {
     }
 
     try {
-      $componentUuid = \Drupal::service('uuid')->generate();
+      $componentUuid = $this->uuid->generate();
       $component = new SectionComponent($componentUuid, $region, ['id' => $blockId]);
       $section->appendComponent($component);
 
@@ -578,7 +580,7 @@ class LayoutBuilderService {
     if (!$found) {
       return [
         'success' => FALSE,
-        'error' => "Block with UUID '$blockUuid' not found in any section.",
+        'error' => "Block with UUID '$blockUuid' not found in any section. Use mcp_layout_get to see current layout sections and blocks.",
       ];
     }
 

@@ -51,12 +51,12 @@ use Drupal\tool\TypedData\InputDefinition;
     'redirect' => new ContextDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Created Redirect'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('The created redirect object containing id, source, destination, status_code, and language. Use id with GetRedirect, UpdateRedirect, or DeleteRedirect tools.'),
     ),
     'message' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Human-readable confirmation message describing the redirect creation result.'),
     ),
   ],
 )]

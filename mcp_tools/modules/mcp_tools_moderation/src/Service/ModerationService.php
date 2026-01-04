@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools_moderation\Service;
 
+use Drupal\Component\Datetime\TimeInterface;
 use Drupal\content_moderation\ModerationInformationInterface;
 use Drupal\content_moderation\StateTransitionValidationInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Entity\RevisionLogInterface;
+use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AuditLogger;
 
@@ -20,6 +22,8 @@ class ModerationService {
     protected EntityTypeManagerInterface $entityTypeManager,
     protected ModerationInformationInterface $moderationInformation,
     protected StateTransitionValidationInterface $stateTransitionValidation,
+    protected AccountProxyInterface $currentUser,
+    protected TimeInterface $time,
     protected AccessManager $accessManager,
     protected AuditLogger $auditLogger,
   ) {}
@@ -191,7 +195,7 @@ class ModerationService {
 
     // Get available transitions.
     $availableTransitions = [];
-    $validTransitions = $this->stateTransitionValidation->getValidTransitions($entity, \Drupal::currentUser());
+    $validTransitions = $this->stateTransitionValidation->getValidTransitions($entity, $this->currentUser);
     foreach ($validTransitions as $transition) {
       $availableTransitions[] = [
         'id' => $transition->id(),
@@ -277,7 +281,7 @@ class ModerationService {
     $currentState = $entity->get('moderation_state')->value;
 
     // Check if the transition is valid.
-    $validTransitions = $this->stateTransitionValidation->getValidTransitions($entity, \Drupal::currentUser());
+    $validTransitions = $this->stateTransitionValidation->getValidTransitions($entity, $this->currentUser);
     $isValidTransition = FALSE;
     foreach ($validTransitions as $transition) {
       if ($transition->to()->id() === $state) {
@@ -323,8 +327,8 @@ class ModerationService {
         $entity->setNewRevision(TRUE);
         $message = $revisionMessage ?: "Moderation state changed from '$previousState' to '$state' via MCP Tools";
         $entity->setRevisionLogMessage($message);
-        $entity->setRevisionCreationTime(\Drupal::time()->getRequestTime());
-        $entity->setRevisionUserId(\Drupal::currentUser()->id());
+        $entity->setRevisionCreationTime($this->time->getRequestTime());
+        $entity->setRevisionUserId($this->currentUser->id());
       }
 
       $entity->save();

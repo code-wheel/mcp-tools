@@ -19,8 +19,9 @@ use Drupal\tool\TypedData\InputDefinition;
 #[Tool(
   id: 'mcp_theme_disable',
   label: new TranslatableMarkup('Disable Theme'),
-  description: new TranslatableMarkup('Disable/uninstall a theme. Cannot disable the default or admin theme.'),
+  description: new TranslatableMarkup('Disable/uninstall a theme. Cannot disable the default or admin theme. Reversible via EnableTheme.'),
   operation: ToolOperation::Write,
+  destructive: TRUE,
   input_definitions: [
     'theme' => new InputDefinition(
       data_type: 'string',
@@ -33,22 +34,22 @@ use Drupal\tool\TypedData\InputDefinition;
     'theme' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Theme'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Machine name of the theme that was disabled. Use EnableTheme to re-enable if needed.'),
     ),
     'label' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Theme Label'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Human-readable name of the disabled theme.'),
     ),
     'message' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Human-readable confirmation or error message.'),
     ),
     'changed' => new ContextDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Changed'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('TRUE if the theme was disabled, FALSE if it was already disabled or is the default/admin theme.'),
     ),
   ],
 )]

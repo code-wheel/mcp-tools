@@ -26,7 +26,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'id' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Paragraph Type ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Machine name of the paragraph type to delete. Use ListParagraphTypes to see available types.'),
       required: TRUE,
     ),
     'force' => new InputDefinition(
@@ -41,17 +41,17 @@ use Drupal\tool\TypedData\InputDefinition;
     'id' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Deleted Paragraph Type ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Machine name of the deleted paragraph type. Use CreateParagraphType to recreate if needed.'),
     ),
     'message' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Human-readable confirmation of the deletion. WARNING: This operation cannot be undone.'),
     ),
     'deleted_paragraphs' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Deleted Paragraphs Count'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Number of paragraph entities deleted when force=true. Zero if no paragraphs existed.'),
     ),
   ],
 )]

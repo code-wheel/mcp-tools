@@ -20,7 +20,8 @@ use Drupal\tool\TypedData\InputDefinition;
   id: 'mcp_scheduler_cancel',
   label: new TranslatableMarkup('Cancel Schedule'),
   description: new TranslatableMarkup('Cancel scheduled publishing or unpublishing for content.'),
-  operation: ToolOperation::Read,
+  operation: ToolOperation::Write,
+  destructive: TRUE,
   input_definitions: [
     'entity_type' => new InputDefinition(
       data_type: 'string',
@@ -47,22 +48,22 @@ use Drupal\tool\TypedData\InputDefinition;
     'nid' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Node ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('The node ID whose schedule was cancelled.'),
     ),
     'title' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Title'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Title of the content item.'),
     ),
     'cancelled' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Cancelled Schedules'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('List of cancelled schedule types: "publish", "unpublish", or both. Empty if nothing was scheduled.'),
     ),
     'message' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Human-readable confirmation of what schedules were cancelled.'),
     ),
   ],
 )]

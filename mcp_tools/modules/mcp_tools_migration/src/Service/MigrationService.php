@@ -7,9 +7,9 @@ namespace Drupal\mcp_tools_migration\Service;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Session\AccountProxyInterface;
+use Drupal\Core\State\StateInterface;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AuditLogger;
-use Drupal\node\Entity\Node;
 
 /**
  * Service for content import/export and migration operations.
@@ -73,6 +73,7 @@ class MigrationService {
     protected EntityTypeManagerInterface $entityTypeManager,
     protected EntityFieldManagerInterface $entityFieldManager,
     protected AccountProxyInterface $currentUser,
+    protected StateInterface $state,
     protected AccessManager $accessManager,
     protected AuditLogger $auditLogger,
   ) {}
@@ -214,7 +215,7 @@ class MigrationService {
             }
           }
 
-          $node = Node::create($nodeData);
+          $node = $this->entityTypeManager->getStorage('node')->create($nodeData);
           $node->save();
 
           $results['created'][] = [
@@ -565,8 +566,7 @@ class MigrationService {
    *   Import status information.
    */
   public function getImportStatus(): array {
-    $state = \Drupal::state();
-    $status = $state->get(self::IMPORT_STATUS_KEY);
+    $status = $this->state->get(self::IMPORT_STATUS_KEY);
 
     if (!$status) {
       return [
@@ -597,8 +597,7 @@ class MigrationService {
    * Store import status in state.
    */
   protected function setImportStatus(string $importId, string $status, int $total, int $processed, int $failed = 0): void {
-    $state = \Drupal::state();
-    $state->set(self::IMPORT_STATUS_KEY, [
+    $this->state->set(self::IMPORT_STATUS_KEY, [
       'import_id' => $importId,
       'status' => $status,
       'total_items' => $total,

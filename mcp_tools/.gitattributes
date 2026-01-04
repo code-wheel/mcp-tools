@@ -5,6 +5,7 @@
 
 # Development & CI files
 /.github                 export-ignore
+/.gitlab-ci.yml          export-ignore
 /.gitattributes          export-ignore
 /.gitignore              export-ignore
 /.editorconfig           export-ignore
@@ -15,6 +16,7 @@
 /phpstan.neon            export-ignore
 /phpstan.neon.dist       export-ignore
 /.gitleaks.toml          export-ignore
+/codecov.yml             export-ignore
 
 # Testing
 /tests                   export-ignore
@@ -26,7 +28,9 @@
 # Documentation (keep README and CHANGELOG, exclude dev docs)
 /CONTRIBUTING.md         export-ignore
 /ROADMAP.md              export-ignore
+/DRUPALCI.md             export-ignore
 /DRUPAL_ORG_DESCRIPTION.md export-ignore
+/DRUPAL_ORG_DESCRIPTION.html export-ignore
 /docs                    export-ignore
 
 # Scripts

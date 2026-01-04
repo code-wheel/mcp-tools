@@ -36,12 +36,12 @@ use Drupal\tool\TypedData\InputDefinition;
     'success' => new ContextDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Success status'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('True if rebuild completed successfully.'),
     ),
     'message' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result message'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Confirmation of what was rebuilt.'),
     ),
   ],
 )]

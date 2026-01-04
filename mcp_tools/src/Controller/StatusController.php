@@ -49,6 +49,9 @@ class StatusController extends ControllerBase {
       $this->t('Read-only mode: @status', [
         '@status' => $this->accessManager->isReadOnlyMode() ? $this->t('ENABLED') : $this->t('Disabled'),
       ]),
+      $this->t('Config-only mode: @status', [
+        '@status' => $this->accessManager->isConfigOnlyMode() ? $this->t('ENABLED') : $this->t('Disabled'),
+      ]),
       $this->t('Current scopes: @scopes', [
         '@scopes' => implode(', ', $this->accessManager->getCurrentScopes()),
       ]),
@@ -138,6 +141,44 @@ class StatusController extends ControllerBase {
       '#items' => $moduleItems,
     ];
 
+    // Remote HTTP endpoint status (optional submodule).
+    if ($this->moduleHandler()->moduleExists('mcp_tools_remote')) {
+      $remoteConfig = $this->config('mcp_tools_remote.settings');
+      $enabled = (bool) $remoteConfig->get('enabled');
+      $uid = (int) ($remoteConfig->get('uid') ?? 0);
+      $allowedIps = $remoteConfig->get('allowed_ips') ?? [];
+      if (!is_array($allowedIps)) {
+        $allowedIps = [];
+      }
+      $allowedIps = array_values(array_filter(array_map('trim', $allowedIps)));
+
+      $build['remote'] = [
+        '#type' => 'details',
+        '#title' => $this->t('Remote HTTP Endpoint (Experimental)'),
+        '#open' => FALSE,
+      ];
+
+      $remoteItems = [
+        $this->t('Enabled: @status', ['@status' => $enabled ? $this->t('YES') : $this->t('No')]),
+        $this->t('Endpoint: @path', ['@path' => '/_mcp_tools']),
+        $this->t('Execution user (uid): @uid', ['@uid' => $uid ?: $this->t('Not set')]),
+        $this->t('IP allowlist entries: @count', ['@count' => count($allowedIps)]),
+        $this->t('Expose all Tool API tools: @status', [
+          '@status' => $remoteConfig->get('include_all_tools') ? $this->t('YES') : $this->t('No'),
+        ]),
+        [
+          '#markup' => $this->t('Configure at <a href=":url">/admin/config/services/mcp-tools/remote</a>.', [
+            ':url' => '/admin/config/services/mcp-tools/remote',
+          ]),
+        ],
+      ];
+
+      $build['remote']['list'] = [
+        '#theme' => 'item_list',
+        '#items' => $remoteItems,
+      ];
+    }
+
     // Security recommendations.
     $build['security'] = [
       '#type' => 'details',
@@ -148,9 +189,9 @@ class StatusController extends ControllerBase {
     $warnings = [];
     $config = $this->config('mcp_tools.settings');
 
-    if (!$config->get('access.read_only_mode')) {
+    if (!$config->get('access.read_only_mode') && !$config->get('access.config_only_mode')) {
       $warnings[] = [
-        '#markup' => '<span style="color: orange;">⚠</span> ' . $this->t('Read-only mode is disabled. Enable for production environments.'),
+        '#markup' => '<span style="color: orange;">⚠</span> ' . $this->t('Read-only mode is disabled. Enable read-only or config-only mode for production environments.'),
       ];
     }
 
@@ -171,6 +212,39 @@ class StatusController extends ControllerBase {
       $warnings[] = [
         '#markup' => '<span style="color: orange;">⚠</span> ' . $this->t('Write/admin scopes enabled by default. Consider read-only for production.'),
       ];
+    }
+
+    if ($this->moduleHandler()->moduleExists('mcp_tools_remote')) {
+      $remoteConfig = $this->config('mcp_tools_remote.settings');
+      if ((bool) $remoteConfig->get('enabled')) {
+        $warnings[] = [
+          '#markup' => '<span style="color: orange;">⚠</span> ' . $this->t('Remote HTTP endpoint is enabled. Ensure this is only exposed on trusted networks.'),
+        ];
+
+        $uid = (int) ($remoteConfig->get('uid') ?? 0);
+        if ($uid === 1) {
+          $warnings[] = [
+            '#markup' => '<span style="color: orange;">⚠</span> ' . $this->t('Remote endpoint is configured to run as uid 1. Use a dedicated service account (uid 1 is blocked at runtime).'),
+          ];
+        }
+
+        $allowedIps = $remoteConfig->get('allowed_ips') ?? [];
+        if (!is_array($allowedIps)) {
+          $allowedIps = [];
+        }
+        $allowedIps = array_values(array_filter(array_map('trim', $allowedIps)));
+        if (empty($allowedIps)) {
+          $warnings[] = [
+            '#markup' => '<span style="color: orange;">⚠</span> ' . $this->t('Remote endpoint IP allowlist is empty. Set allowed IPs/CIDRs to reduce exposure risk.'),
+          ];
+        }
+
+        if ((bool) $remoteConfig->get('include_all_tools')) {
+          $warnings[] = [
+            '#markup' => '<span style="color: orange;">⚠</span> ' . $this->t('Remote endpoint is configured to expose all Tool API tools. Disable this unless you fully trust all installed Tool API providers.'),
+          ];
+        }
+      }
     }
 
     if (empty($warnings)) {

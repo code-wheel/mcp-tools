@@ -26,17 +26,17 @@ use Drupal\tool\TypedData\InputDefinition;
     'total_permissions' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Permissions'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Total number of permissions available on the site.'),
     ),
     'providers' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Provider Count'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Number of modules providing permissions.'),
     ),
     'by_provider' => new ContextDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Permissions by Provider'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Permissions grouped by provider module. Each permission has id (machine name), title, and description. Use id with GrantPermissions.'),
     ),
   ],
 )]

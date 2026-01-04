@@ -34,23 +34,24 @@ use Drupal\tool\TypedData\InputDefinition;
     'variant' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Regenerated Variant'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('The variant ID that was regenerated, or "all" if all variants were processed.'),
     ),
     'queue_status' => new ContextDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Queue Status'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Queue information: items_queued, estimated_time. Generation happens via cron. Use GetStatus to check progress.'),
     ),
     'message' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Human-readable confirmation. Note: regeneration is queued and completes during cron runs.'),
     ),
   ],
 )]
 class Regenerate extends McpToolsToolBase {
 
   protected const MCP_CATEGORY = 'sitemap';
+  protected const MCP_WRITE_KIND = 'ops';
 
 
   protected SitemapService $sitemapService;

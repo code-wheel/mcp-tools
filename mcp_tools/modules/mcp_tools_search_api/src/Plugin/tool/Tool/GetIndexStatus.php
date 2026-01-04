@@ -33,12 +33,12 @@ use Drupal\tool\TypedData\InputDefinition;
     'index_id' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Index ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Machine name of the queried search index.'),
     ),
     'status' => new ContextDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Indexing status'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Status object with total_items, indexed_items, and remaining_items. Use remaining to determine if reindexing needed.'),
     ),
   ],
 )]

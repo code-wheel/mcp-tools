@@ -42,17 +42,17 @@ use Drupal\tool\TypedData\InputDefinition;
     'success' => new ContextDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Success status'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('True if queue processing completed without errors.'),
     ),
     'processed' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Items processed'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Number of queue items processed in this run.'),
     ),
     'remaining' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Items remaining'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Items still in queue. Run again if > 0.'),
     ),
   ],
 )]

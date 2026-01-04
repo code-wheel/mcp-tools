@@ -44,11 +44,11 @@ class AccessControlKernelTest extends KernelTestBase {
   }
 
   /**
-   * Tests that default configuration allows read and write.
+   * Tests that default configuration allows read-only access.
    */
-  public function testDefaultConfigAllowsReadWrite(): void {
+  public function testDefaultConfigAllowsReadOnly(): void {
     $this->assertTrue($this->accessManager->canRead());
-    $this->assertTrue($this->accessManager->canWrite());
+    $this->assertFalse($this->accessManager->canWrite());
     $this->assertFalse($this->accessManager->canAdmin());
   }
 
@@ -92,14 +92,18 @@ class AccessControlKernelTest extends KernelTestBase {
    * Tests that setScopes works correctly.
    */
   public function testSetScopesOverridesConfig(): void {
-    // Default should allow read+write.
+    // Default should allow read-only.
+    $this->assertTrue($this->accessManager->canRead());
+    $this->assertFalse($this->accessManager->canWrite());
+
+    // Override with read+write.
+    $this->accessManager->setScopes([AccessManager::SCOPE_READ, AccessManager::SCOPE_WRITE]);
+
     $this->assertTrue($this->accessManager->canRead());
     $this->assertTrue($this->accessManager->canWrite());
 
-    // Override with just read.
+    // Override back to read-only.
     $this->accessManager->setScopes([AccessManager::SCOPE_READ]);
-
-    $this->assertTrue($this->accessManager->canRead());
     $this->assertFalse($this->accessManager->canWrite());
   }
 

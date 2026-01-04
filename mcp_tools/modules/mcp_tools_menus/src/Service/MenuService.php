@@ -156,7 +156,7 @@ class MenuService {
     if (!$menu) {
       return [
         'success' => FALSE,
-        'error' => "Menu '$id' not found.",
+        'error' => "Menu '$id' not found. Use mcp_list_menus to see available menus.",
       ];
     }
 
@@ -210,7 +210,7 @@ class MenuService {
     if (!$menu) {
       return [
         'success' => FALSE,
-        'error' => "Menu '$menuName' not found.",
+        'error' => "Menu '$menuName' not found. Use mcp_list_menus to see available menus.",
       ];
     }
 
@@ -291,7 +291,7 @@ class MenuService {
     if (!$menuLink) {
       return [
         'success' => FALSE,
-        'error' => "Menu link with ID $linkId not found.",
+        'error' => "Menu link with ID $linkId not found. Use mcp_get_menu to see links in a menu.",
       ];
     }
 
@@ -363,7 +363,7 @@ class MenuService {
     if (!$menuLink) {
       return [
         'success' => FALSE,
-        'error' => "Menu link with ID $linkId not found.",
+        'error' => "Menu link with ID $linkId not found. Use mcp_get_menu to see links in a menu.",
       ];
     }
 

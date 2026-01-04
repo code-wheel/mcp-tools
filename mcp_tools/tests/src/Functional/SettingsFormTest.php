@@ -78,11 +78,15 @@ class SettingsFormTest extends BrowserTestBase {
 
     // Check that form elements exist.
     $this->assertSession()->fieldExists('read_only_mode');
+    $this->assertSession()->fieldExists('config_only_mode');
     $this->assertSession()->fieldExists('enabled');
 
-    // Submit the form with read-only mode enabled.
+    // Submit the form with read-only mode and config-only mode enabled.
     $this->submitForm([
       'read_only_mode' => TRUE,
+      'config_only_mode' => TRUE,
+      'config_only_allowed_write_kinds[config]' => TRUE,
+      'config_only_allowed_write_kinds[ops]' => TRUE,
     ], 'Save configuration');
 
     $this->assertSession()->pageTextContains('The configuration options have been saved.');
@@ -90,6 +94,8 @@ class SettingsFormTest extends BrowserTestBase {
     // Verify the setting was saved.
     $config = $this->config('mcp_tools.settings');
     $this->assertTrue($config->get('access.read_only_mode'));
+    $this->assertTrue($config->get('access.config_only_mode'));
+    $this->assertSame(['config', 'ops'], $config->get('access.config_only_allowed_write_kinds'));
   }
 
   /**

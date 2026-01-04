@@ -397,4 +397,92 @@ class RateLimiterTest extends UnitTestCase {
     $this->assertStringContainsString('broken_link_scan', $result2['error']);
   }
 
+  /**
+   * @covers ::getClientIdentifier
+   */
+  public function testClientIdentifierIgnoresClientIdHeaderByDefault(): void {
+    $this->config->method('get')
+      ->willReturnMap([
+        ['rate_limiting.trust_client_id_header', FALSE],
+      ]);
+
+    $request = Request::create('/', 'GET', [], [], [], ['REMOTE_ADDR' => '127.0.0.1']);
+    $request->headers->set('User-Agent', 'ua');
+    $request->headers->set('Accept-Language', 'en');
+    $request->headers->set('X-MCP-Client-Id', 'client-a');
+
+    $this->requestStack->method('getCurrentRequest')->willReturn($request);
+
+    $limiter = new class($this->configFactory, $this->state, $this->requestStack) extends RateLimiter {
+      public function exposedClientIdentifier(): string {
+        return $this->getClientIdentifier();
+      }
+    };
+
+    $idA = $limiter->exposedClientIdentifier();
+    $request->headers->set('X-MCP-Client-Id', 'client-b');
+    $idB = $limiter->exposedClientIdentifier();
+
+    $this->assertSame($idA, $idB);
+  }
+
+  /**
+   * @covers ::getClientIdentifier
+   */
+  public function testClientIdentifierUsesClientIdHeaderWhenTrusted(): void {
+    $this->config->method('get')
+      ->willReturnMap([
+        ['rate_limiting.trust_client_id_header', TRUE],
+      ]);
+
+    $request = Request::create('/', 'GET', [], [], [], ['REMOTE_ADDR' => '127.0.0.1']);
+    $request->headers->set('User-Agent', 'ua');
+    $request->headers->set('Accept-Language', 'en');
+    $request->headers->set('X-MCP-Client-Id', 'client-a');
+
+    $this->requestStack->method('getCurrentRequest')->willReturn($request);
+
+    $limiter = new class($this->configFactory, $this->state, $this->requestStack) extends RateLimiter {
+      public function exposedClientIdentifier(): string {
+        return $this->getClientIdentifier();
+      }
+    };
+
+    $idA = $limiter->exposedClientIdentifier();
+    $request->headers->set('X-MCP-Client-Id', 'client-b');
+    $idB = $limiter->exposedClientIdentifier();
+
+    $this->assertNotSame($idA, $idB);
+  }
+
+  /**
+   * @covers ::getClientIdentifier
+   */
+  public function testClientIdentifierPrefersTrustedRequestAttribute(): void {
+    $this->config->method('get')
+      ->willReturnMap([
+        ['rate_limiting.trust_client_id_header', TRUE],
+      ]);
+
+    $request = Request::create('/', 'GET', [], [], [], ['REMOTE_ADDR' => '127.0.0.1']);
+    $request->headers->set('User-Agent', 'ua');
+    $request->headers->set('Accept-Language', 'en');
+    $request->headers->set('X-MCP-Client-Id', 'client-a');
+    $request->attributes->set('mcp_tools.client_id', 'trusted-id');
+
+    $this->requestStack->method('getCurrentRequest')->willReturn($request);
+
+    $limiter = new class($this->configFactory, $this->state, $this->requestStack) extends RateLimiter {
+      public function exposedClientIdentifier(): string {
+        return $this->getClientIdentifier();
+      }
+    };
+
+    $trusted = $limiter->exposedClientIdentifier();
+    $request->headers->set('X-MCP-Client-Id', 'client-b');
+    $stillTrusted = $limiter->exposedClientIdentifier();
+
+    $this->assertSame($trusted, $stillTrusted);
+  }
+
 }

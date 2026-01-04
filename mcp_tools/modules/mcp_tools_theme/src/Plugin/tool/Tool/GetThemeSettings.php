@@ -33,27 +33,27 @@ use Drupal\tool\TypedData\InputDefinition;
     'theme' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Theme'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Machine name of the theme whose settings are returned.'),
     ),
     'settings' => new ContextDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Theme Settings'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Theme-specific settings including features, colors, and custom options. Use UpdateThemeSettings to modify.'),
     ),
     'global_settings' => new ContextDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Global Settings'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Global settings that apply to all themes: features, toggles, and system defaults.'),
     ),
     'logo' => new ContextDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Logo Settings'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Logo configuration: use_default (bool), path (string). Modify via UpdateThemeSettings with logo key.'),
     ),
     'favicon' => new ContextDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Favicon Settings'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Favicon configuration: use_default (bool), path (string), mimetype. Modify via UpdateThemeSettings with favicon key.'),
     ),
   ],
 )]

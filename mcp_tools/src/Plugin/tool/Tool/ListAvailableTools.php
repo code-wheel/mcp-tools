@@ -47,17 +47,17 @@ use Drupal\tool\TypedData\InputDefinition;
     'total_tools' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Tools'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Number of tools matching the filters.'),
     ),
     'categories' => new ContextDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Categories'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Tool counts by category. Use category names to filter further.'),
     ),
     'tools' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Tools'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Array of tools with id, label, category, and description. Use id to call the tool.'),
     ),
   ],
 )]

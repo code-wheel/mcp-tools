@@ -39,37 +39,37 @@ use Drupal\tool\TypedData\InputDefinition;
     'content_type' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Content Type'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Content type that was used for all created items.'),
     ),
     'total_requested' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Requested'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Number of items that were requested to be created.'),
     ),
     'created_count' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Created Count'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Number of items successfully created.'),
     ),
     'error_count' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Error Count'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Number of items that failed to create. Check errors for details.'),
     ),
     'created' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Created Items'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Array of created items with nid, uuid, title, and path for each.'),
     ),
     'errors' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Errors'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Array of errors with index, title, and error message for each failure.'),
     ),
     'message' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Summary of the batch operation results.'),
     ),
   ],
 )]

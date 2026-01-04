@@ -26,20 +26,20 @@ use Drupal\tool\TypedData\InputDefinition;
     'entity_type' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Entity Type'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Entity type. Defaults to "node".'),
       required: FALSE,
       default_value: 'node',
     ),
     'bundle' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Bundle/Content Type'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Machine name of the content type (e.g., "article").'),
       required: TRUE,
     ),
     'block_uuid' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Block Component UUID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('UUID of the block to remove. Get from GetLayout or AddBlock output.'),
       required: TRUE,
     ),
   ],
@@ -47,27 +47,27 @@ use Drupal\tool\TypedData\InputDefinition;
     'entity_type' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Entity Type'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('The entity type configured.'),
     ),
     'bundle' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Bundle'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('The bundle configured.'),
     ),
     'removed_block_uuid' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Removed Block UUID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('UUID of the block that was removed.'),
     ),
     'section_delta' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Section Delta'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Section the block was removed from.'),
     ),
     'message' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Success or error details.'),
     ),
   ],
 )]

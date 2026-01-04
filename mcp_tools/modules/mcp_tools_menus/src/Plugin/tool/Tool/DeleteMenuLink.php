@@ -34,12 +34,12 @@ use Drupal\tool\TypedData\InputDefinition;
     'id' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Deleted Link ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('ID of the menu link that was deleted.'),
     ),
     'message' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Success confirmation. Child links are NOT automatically deleted.'),
     ),
   ],
 )]

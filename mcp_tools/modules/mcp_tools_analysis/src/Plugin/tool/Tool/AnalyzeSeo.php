@@ -39,17 +39,17 @@ use Drupal\tool\TypedData\InputDefinition;
     'entity_type' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Entity Type'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('The entity type that was analyzed.'),
     ),
     'entity_id' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Entity ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('The entity ID that was analyzed.'),
     ),
     'title' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Title'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Entity title for reference.'),
     ),
     'seo_score' => new ContextDefinition(
       data_type: 'integer',
@@ -69,12 +69,12 @@ use Drupal\tool\TypedData\InputDefinition;
     'issue_count' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Issue Count'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Total number of SEO issues found.'),
     ),
     'suggestions' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Suggestions'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Specific fixes to improve SEO score.'),
     ),
   ],
 )]

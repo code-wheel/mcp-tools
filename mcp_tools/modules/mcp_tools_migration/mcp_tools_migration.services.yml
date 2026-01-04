@@ -5,5 +5,6 @@ services:
       - '@entity_type.manager'
       - '@entity_field.manager'
       - '@current_user'
+      - '@state'
       - '@mcp_tools.access_manager'
       - '@mcp_tools.audit_logger'

@@ -45,22 +45,22 @@ use Drupal\tool\TypedData\InputDefinition;
     'entity_type' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Entity Type'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('The entity type ID that was configured.'),
     ),
     'bundle' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Bundle'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('The bundle ID that was configured.'),
     ),
     'settings' => new ContextDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Applied Settings'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('The settings now in effect. Use Regenerate to apply changes to the sitemap. Use GetEntitySettings to verify.'),
     ),
     'message' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Human-readable confirmation of the settings update.'),
     ),
   ],
 )]

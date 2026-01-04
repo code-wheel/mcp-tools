@@ -8,11 +8,11 @@ use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Session\AccountSwitcherInterface;
+use Drupal\Component\Plugin\PluginManagerInterface;
 use Drupal\mcp_tools\Mcp\McpToolsServerFactory;
 use Drupal\mcp_tools\Mcp\ToolApiSchemaConverter;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools_remote\Service\ApiKeyManager;
-use Drupal\tool\Tool\ToolManager;
 use GuzzleHttp\Psr7\HttpFactory;
 use Mcp\Server\Session\FileSessionStore;
 use Mcp\Server\Transport\StreamableHttpTransport;
@@ -22,6 +22,7 @@ use Symfony\Bridge\PsrHttpMessage\Factory\HttpFoundationFactory;
 use Symfony\Bridge\PsrHttpMessage\Factory\PsrHttpFactory;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\IpUtils;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -34,7 +35,7 @@ final class McpToolsRemoteController implements ContainerInjectionInterface {
     private readonly ConfigFactoryInterface $configFactory,
     private readonly ApiKeyManager $apiKeyManager,
     private readonly AccessManager $accessManager,
-    private readonly ToolManager $toolManager,
+    private readonly PluginManagerInterface $toolManager,
     private readonly EntityTypeManagerInterface $entityTypeManagerService,
     private readonly AccountSwitcherInterface $accountSwitcher,
     private readonly EventDispatcherInterface $eventDispatcher,
@@ -63,6 +64,38 @@ final class McpToolsRemoteController implements ContainerInjectionInterface {
       return new Response('Not found.', 404);
     }
 
+    $allowedIps = $remoteConfig->get('allowed_ips') ?? [];
+    if (is_array($allowedIps)) {
+      $allowedIps = array_values(array_filter(array_map('trim', $allowedIps)));
+    }
+    else {
+      $allowedIps = [];
+    }
+
+    // Optional IP allowlist (defense-in-depth for the remote endpoint).
+    if (!empty($allowedIps)) {
+      $clientIp = $request->getClientIp();
+      if (!$clientIp || !IpUtils::checkIp($clientIp, $allowedIps)) {
+        return new Response('Not found.', 404);
+      }
+    }
+
+    $allowedOrigins = $remoteConfig->get('allowed_origins') ?? [];
+    if (is_array($allowedOrigins)) {
+      $allowedOrigins = array_values(array_filter(array_map('trim', $allowedOrigins)));
+    }
+    else {
+      $allowedOrigins = [];
+    }
+
+    // Optional origin allowlist (DNS rebinding defense-in-depth).
+    if (!empty($allowedOrigins)) {
+      $hostname = $this->extractHostnameForAllowlist($request);
+      if (!$hostname || !$this->hostnameMatchesAllowlist($hostname, $allowedOrigins)) {
+        return new Response('Not found.', 404);
+      }
+    }
+
     if (!class_exists(\Mcp\Server::class)) {
       return new Response('Missing dependency: mcp/sdk', 500);
     }
@@ -73,6 +106,12 @@ final class McpToolsRemoteController implements ContainerInjectionInterface {
       $response = new JsonResponse(['error' => 'Authentication required'], 401);
       $response->headers->set('WWW-Authenticate', 'Bearer realm="mcp_tools_remote"');
       return $response;
+    }
+
+    // Provide a trusted rate-limit client identifier derived from the API key.
+    // This avoids relying on client-supplied headers for per-key throttling.
+    if (!empty($key['key_id']) && is_string($key['key_id'])) {
+      $request->attributes->set('mcp_tools.client_id', 'remote_key:' . $key['key_id']);
     }
 
     // Resolve scopes from key, intersected with MCP Tools allowed scopes.
@@ -87,6 +126,9 @@ final class McpToolsRemoteController implements ContainerInjectionInterface {
 
     // Execute as configured user for consistent attribution.
     $uid = (int) ($remoteConfig->get('uid') ?? 1);
+    if ($uid === 1) {
+      return new Response('Invalid execution user.', 500);
+    }
     $account = $this->entityTypeManagerService->getStorage('user')->load($uid);
     if (!$account) {
       return new Response('Invalid execution user.', 500);
@@ -146,6 +188,81 @@ final class McpToolsRemoteController implements ContainerInjectionInterface {
 
     $headerKey = (string) $request->headers->get('X-MCP-Api-Key', '');
     return $headerKey !== '' ? trim($headerKey) : NULL;
+  }
+
+  /**
+   * Extract a hostname for allowlist checks.
+   *
+   * Uses Origin, then Referer, then Host (non-browser clients generally won't
+   * send Origin/Referer).
+   */
+  private function extractHostnameForAllowlist(Request $request): ?string {
+    $origin = (string) $request->headers->get('Origin', '');
+    $referer = (string) $request->headers->get('Referer', '');
+
+    $candidate = '';
+    if ($origin !== '') {
+      $candidate = $origin;
+    }
+    elseif ($referer !== '') {
+      $candidate = $referer;
+    }
+
+    if ($candidate === '') {
+      $host = $request->getHost();
+      return $host !== '' ? $host : NULL;
+    }
+
+    // Origin/Referer should be a URL, but be tolerant and accept host[:port].
+    $url = $candidate;
+    if (!preg_match('/^[a-zA-Z][a-zA-Z0-9+\\-.]*:\/\//', $url)) {
+      $url = 'http://' . $url;
+    }
+
+    $host = parse_url($url, PHP_URL_HOST);
+    if (!is_string($host) || $host === '') {
+      return NULL;
+    }
+
+    return $host;
+  }
+
+  /**
+   * Checks whether a hostname matches an allowlist.
+   *
+   * Supports exact host matches and wildcard subdomains (e.g. *.example.com).
+   *
+   * @param string $hostname
+   *   Hostname to validate.
+   * @param array<int, string> $allowedOrigins
+   *   Allowlisted host patterns.
+   */
+  private function hostnameMatchesAllowlist(string $hostname, array $allowedOrigins): bool {
+    $hostname = strtolower($hostname);
+
+    foreach ($allowedOrigins as $pattern) {
+      $pattern = strtolower(trim((string) $pattern));
+      if ($pattern === '') {
+        continue;
+      }
+
+      if ($hostname === $pattern) {
+        return TRUE;
+      }
+
+      // Wildcard subdomains: *.example.com matches foo.example.com.
+      if (str_starts_with($pattern, '*.')) {
+        $suffix = substr($pattern, 1);
+        if ($suffix !== '' && str_ends_with($hostname, $suffix)) {
+          $root = ltrim($suffix, '.');
+          if ($hostname !== $root) {
+            return TRUE;
+          }
+        }
+      }
+    }
+
+    return FALSE;
   }
 
 }

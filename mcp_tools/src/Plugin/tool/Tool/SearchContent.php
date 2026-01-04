@@ -47,17 +47,17 @@ use Drupal\tool\TypedData\InputDefinition;
     'query' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Search Query'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('The search query that was executed.'),
     ),
     'total' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Results'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Total number of matching content items.'),
     ),
     'results' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Search Results'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Array of matching nodes with nid, title, type, status (published/unpublished), created, and changed timestamps.'),
     ),
   ],
 )]

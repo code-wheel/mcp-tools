@@ -25,7 +25,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'uid' => new InputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('User ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('User ID to block. Cannot block uid 1 (admin). User will be unable to log in.'),
       required: TRUE,
     ),
   ],
@@ -33,27 +33,27 @@ use Drupal\tool\TypedData\InputDefinition;
     'uid' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('User ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('The blocked user ID.'),
     ),
     'username' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Username'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Username of the blocked user.'),
     ),
     'status' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Status'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('New status (will be "blocked").'),
     ),
     'changed' => new ContextDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Changed'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('True if user was blocked, false if already blocked.'),
     ),
     'message' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Confirmation message.'),
     ),
   ],
 )]

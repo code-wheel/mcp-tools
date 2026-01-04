@@ -7,8 +7,9 @@ namespace Drupal\mcp_tools_analysis\Service;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Extension\ModuleHandlerInterface;
 use GuzzleHttp\ClientInterface;
-use GuzzleHttp\Exception\RequestException;
+use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
  * Service for site health and content analysis.
@@ -24,11 +25,20 @@ use GuzzleHttp\Exception\RequestException;
  */
 class AnalysisService {
 
+  /**
+   * Max bytes allowed for serialized metatag field data.
+   *
+   * Prevents memory exhaustion on crafted field payloads.
+   */
+  private const MAX_SERIALIZED_METATAG_BYTES = 65536;
+
   public function __construct(
     protected EntityTypeManagerInterface $entityTypeManager,
     protected Connection $database,
     protected ClientInterface $httpClient,
     protected ConfigFactoryInterface $configFactory,
+    protected ModuleHandlerInterface $moduleHandler,
+    protected RequestStack $requestStack,
   ) {}
 
   /**
@@ -36,14 +46,51 @@ class AnalysisService {
    *
    * @param int $limit
    *   Maximum number of links to check.
+   * @param string|null $baseUrlOverride
+   *   Optional base URL override (e.g., https://example.com). Useful for
+   *   STDIO/CLI contexts where there is no active HTTP request.
    *
    * @return array
    *   Analysis results with broken links found.
    */
-  public function findBrokenLinks(int $limit = 100): array {
+  public function findBrokenLinks(int $limit = 100, ?string $baseUrlOverride = NULL): array {
     $brokenLinks = [];
     $checkedCount = 0;
-    $baseUrl = \Drupal::request()->getSchemeAndHttpHost();
+    $allowedHosts = $this->getAllowedHosts();
+    if (empty($allowedHosts)) {
+      return [
+        'success' => FALSE,
+        'error' => 'URL fetching is disabled. Configure allowed hosts in MCP Tools settings (allowed_hosts).',
+        'code' => 'URL_FETCH_DISABLED',
+      ];
+    }
+
+    $baseUrl = $this->resolveBaseUrl($baseUrlOverride);
+    if ($baseUrl === '') {
+      return [
+        'success' => FALSE,
+        'error' => 'Unable to determine a base URL for link checking. Provide base_url to the tool or run this tool over HTTP.',
+        'code' => 'MISSING_BASE_URL',
+      ];
+    }
+
+    $baseHost = (string) (parse_url($baseUrl, PHP_URL_HOST) ?? '');
+    if ($baseHost === '') {
+      return [
+        'success' => FALSE,
+        'error' => "Invalid base URL '$baseUrl'.",
+        'code' => 'INVALID_BASE_URL',
+      ];
+    }
+
+    if (!$this->isHostAllowed($baseHost, $allowedHosts)) {
+      return [
+        'success' => FALSE,
+        'error' => "Host '$baseHost' is not allowed for URL fetching. Update MCP Tools settings (allowed_hosts).",
+        'code' => 'HOST_NOT_ALLOWED',
+        'host' => $baseHost,
+      ];
+    }
 
     try {
       // Get published nodes with body or text fields.
@@ -68,7 +115,8 @@ class AnalysisService {
               preg_match_all('/href=["\']([^"\']+)["\']/', $value, $matches);
               foreach ($matches[1] as $url) {
                 // Only check internal links.
-                if (str_starts_with($url, '/') || str_starts_with($url, $baseUrl)) {
+                $isInternal = str_starts_with($url, '/') || ($baseUrl !== '' && str_starts_with($url, $baseUrl));
+                if ($isInternal) {
                   $fullUrl = str_starts_with($url, '/') ? $baseUrl . $url : $url;
                   $linksToCheck[] = [
                     'url' => $fullUrl,
@@ -90,10 +138,33 @@ class AnalysisService {
         $link = $linksToCheck[$i];
         $checkedCount++;
 
+        $targetHost = (string) (parse_url($link['url'], PHP_URL_HOST) ?? '');
+        if ($targetHost === '' || !$this->isHostAllowed($targetHost, $allowedHosts)) {
+          $brokenLinks[] = [
+            'url' => $link['original'],
+            'status' => 'blocked',
+            'error' => "Blocked outbound request to host '$targetHost'.",
+            'source_nid' => $link['source_nid'],
+            'source_title' => $link['source_title'],
+            'field' => $link['field'],
+          ];
+          continue;
+        }
+
         try {
           $response = $this->httpClient->request('HEAD', $link['url'], [
             'timeout' => 5,
-            'allow_redirects' => TRUE,
+            // SECURITY: prevent redirects to hosts outside the allowlist.
+            'allow_redirects' => [
+              'max' => 3,
+              'strict' => TRUE,
+              'on_redirect' => function ($request, $response, $uri) use ($allowedHosts): void {
+                $redirectHost = (string) (parse_url((string) $uri, PHP_URL_HOST) ?? '');
+                if ($redirectHost === '' || !$this->isHostAllowed($redirectHost, $allowedHosts)) {
+                  throw new \RuntimeException("Redirect to blocked host '$redirectHost'.");
+                }
+              },
+            ],
             'http_errors' => FALSE,
           ]);
 
@@ -117,7 +188,7 @@ class AnalysisService {
             ];
           }
         }
-        catch (RequestException $e) {
+        catch (\Throwable $e) {
           $brokenLinks[] = [
             'url' => $link['original'],
             'status' => 'error',
@@ -149,6 +220,57 @@ class AnalysisService {
     catch (\Exception $e) {
       return ['success' => FALSE, 'error' => 'Failed to scan for broken links: ' . $e->getMessage()];
     }
+  }
+
+  /**
+   * Resolve a base URL for outbound HTTP checks.
+   */
+  private function resolveBaseUrl(?string $baseUrlOverride): string {
+    if ($baseUrlOverride !== NULL && trim($baseUrlOverride) !== '') {
+      return rtrim(trim($baseUrlOverride), '/');
+    }
+
+    $request = $this->requestStack->getCurrentRequest();
+    $baseUrl = $request ? $request->getSchemeAndHttpHost() : '';
+    return $baseUrl !== '' ? rtrim($baseUrl, '/') : '';
+  }
+
+  /**
+   * Returns the configured allowlist for outbound URL fetching.
+   *
+   * @return string[]
+   *   Host patterns (supports wildcards like *.example.com).
+   */
+  private function getAllowedHosts(): array {
+    $config = $this->configFactory->get('mcp_tools.settings');
+    $hosts = $config->get('allowed_hosts') ?? [];
+    $hosts = array_values(array_filter(array_map('strval', (array) $hosts), static fn(string $value): bool => trim($value) !== ''));
+    return $hosts;
+  }
+
+  /**
+   * Checks a host against the configured allowlist patterns.
+   */
+  private function isHostAllowed(string $host, array $allowedHosts): bool {
+    $host = strtolower(trim($host));
+    if ($host === '') {
+      return FALSE;
+    }
+
+    foreach ($allowedHosts as $allowedHost) {
+      $allowedHost = strtolower(trim((string) $allowedHost));
+      if ($allowedHost === '') {
+        continue;
+      }
+
+      $quoted = preg_quote($allowedHost, '/');
+      $pattern = str_replace('\\*', '.*', $quoted);
+      if (preg_match('/^' . $pattern . '$/i', $host)) {
+        return TRUE;
+      }
+    }
+
+    return FALSE;
   }
 
   /**
@@ -334,20 +456,22 @@ class AnalysisService {
 
       // Check for meta tags if metatag module is enabled.
       $hasMetaDescription = FALSE;
-      if (\Drupal::moduleHandler()->moduleExists('metatag') && $entity->hasField('field_metatag')) {
+      if ($this->moduleHandler->moduleExists('metatag') && $entity->hasField('field_metatag')) {
         $metatag = $entity->get('field_metatag')->value;
         if (!empty($metatag)) {
-          $metatagData = @unserialize($metatag, ['allowed_classes' => FALSE]);
-          if (!empty($metatagData['description'])) {
-            $hasMetaDescription = TRUE;
-            $descLength = strlen($metatagData['description']);
-            if ($descLength < 120 || $descLength > 160) {
-              $issues[] = [
-                'type' => 'meta_description_length',
-                'severity' => 'info',
-                'message' => "Meta description length ({$descLength}) not optimal. Recommended: 120-160 characters.",
-              ];
-              $score -= 5;
+          if (is_string($metatag) && strlen($metatag) <= self::MAX_SERIALIZED_METATAG_BYTES) {
+            $metatagData = @unserialize($metatag, ['allowed_classes' => FALSE]);
+            if (is_array($metatagData) && !empty($metatagData['description'])) {
+              $hasMetaDescription = TRUE;
+              $descLength = strlen((string) $metatagData['description']);
+              if ($descLength < 120 || $descLength > 160) {
+                $issues[] = [
+                  'type' => 'meta_description_length',
+                  'severity' => 'info',
+                  'message' => "Meta description length ({$descLength}) not optimal. Recommended: 120-160 characters.",
+                ];
+                $score -= 5;
+              }
             }
           }
         }
@@ -585,7 +709,7 @@ class AnalysisService {
       }
 
       // Check PHP input format availability.
-      if (\Drupal::moduleHandler()->moduleExists('php')) {
+      if ($this->moduleHandler->moduleExists('php')) {
         $issues[] = [
           'type' => 'php_module_enabled',
           'severity' => 'critical',
@@ -723,7 +847,7 @@ class AnalysisService {
       ];
 
       // Analyze watchdog for performance issues (if dblog enabled).
-      if (\Drupal::moduleHandler()->moduleExists('dblog')) {
+      if ($this->moduleHandler->moduleExists('dblog')) {
         // Get recent PHP errors.
         $query = $this->database->select('watchdog', 'w')
           ->fields('w', ['message', 'variables', 'timestamp', 'type'])

@@ -25,13 +25,13 @@ use Drupal\tool\TypedData\InputDefinition;
     'nid' => new InputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Node ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('The node ID to publish or unpublish.'),
       required: TRUE,
     ),
     'publish' => new InputDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Publish'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('True to publish, false to unpublish. Defaults to true.'),
       required: FALSE,
     ),
   ],
@@ -39,22 +39,22 @@ use Drupal\tool\TypedData\InputDefinition;
     'nid' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Node ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('The node ID that was modified.'),
     ),
     'status' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('New Status'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('New publish status: "published" or "unpublished".'),
     ),
     'changed' => new ContextDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Status Changed'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('True if status was actually changed, false if it was already in the requested state.'),
     ),
     'message' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Human-readable result message.'),
     ),
   ],
 )]

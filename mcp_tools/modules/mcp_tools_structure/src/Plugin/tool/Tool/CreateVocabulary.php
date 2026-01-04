@@ -37,7 +37,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'description' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Description'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Description of the vocabulary purpose.'),
       required: FALSE,
     ),
   ],
@@ -45,17 +45,17 @@ use Drupal\tool\TypedData\InputDefinition;
     'id' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Vocabulary ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Machine name of the created vocabulary. Use with CreateTerm and AddField target_bundles.'),
     ),
     'label' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Vocabulary Label'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Human-readable vocabulary name.'),
     ),
     'message' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Success or error message.'),
     ),
   ],
 )]

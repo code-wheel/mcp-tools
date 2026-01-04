@@ -33,7 +33,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'server' => new ContextDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Server details'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Server configuration: id, label, backend (solr/elasticsearch/db), status, and connection details. Lists indexes using this server.'),
     ),
   ],
 )]

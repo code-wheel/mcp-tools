@@ -25,31 +25,31 @@ use Drupal\tool\TypedData\InputDefinition;
     'view_id' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('View Machine Name'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('ID of existing view to add display to. Get from CreateView or views listing.'),
       required: TRUE,
     ),
     'display_type' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Display Type (page, block, feed)'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Display type: "page" (URL path), "block" (placeable block), "feed" (RSS/Atom).'),
       required: TRUE,
     ),
     'path' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Page Path (for page displays)'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('URL path for page displays (e.g., /articles). Required for page type.'),
       required: FALSE,
     ),
     'title' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Display Title'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Title shown at top of display. Overrides view default.'),
       required: FALSE,
     ),
     'items_per_page' => new InputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Items Per Page'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Number of items to show. 0 = all. Overrides view default.'),
       required: FALSE,
     ),
   ],
@@ -57,22 +57,22 @@ use Drupal\tool\TypedData\InputDefinition;
     'view_id' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('View ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Machine name of the view.'),
     ),
     'display_id' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Display ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('ID of created display (page_1, block_1, feed_1, etc.). Use to configure or remove.'),
     ),
     'display_type' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Display Type'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Type of display created.'),
     ),
     'message' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Success confirmation or error details.'),
     ),
   ],
 )]

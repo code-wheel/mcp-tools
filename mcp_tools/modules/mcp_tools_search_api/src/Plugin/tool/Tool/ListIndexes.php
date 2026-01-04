@@ -26,12 +26,12 @@ use Drupal\tool\TypedData\InputDefinition;
     'total' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total indexes'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Total number of search indexes configured in the system.'),
     ),
     'indexes' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('List of search indexes'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Array of index objects with id, label, server, status, and indexing progress. Use id with GetIndex for full details.'),
     ),
   ],
 )]

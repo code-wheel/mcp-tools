@@ -26,17 +26,17 @@ use Drupal\tool\TypedData\InputDefinition;
     'last_run' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Last cron run time'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('ISO 8601 timestamp of last successful cron run.'),
     ),
     'is_overdue' => new ContextDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Is cron overdue'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('True if cron has not run within threshold. Consider running RunCron.'),
     ),
     'jobs' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Registered cron jobs'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Array of modules with cron implementations and their last run times.'),
     ),
   ],
 )]

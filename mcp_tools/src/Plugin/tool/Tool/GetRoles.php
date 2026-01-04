@@ -26,12 +26,12 @@ use Drupal\tool\TypedData\InputDefinition;
     'total_roles' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Roles'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Number of roles defined on the site.'),
     ),
     'roles' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Roles'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Array of roles with id (machine name), label, weight, is_admin, and permissions array. Use id when assigning roles to users.'),
     ),
   ],
 )]

@@ -29,12 +29,12 @@ use Drupal\tool\TypedData\InputDefinition;
     'success' => new ContextDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Success status'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('True if new key was generated successfully.'),
     ),
     'new_key' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('New cron key'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('New cron key. Update any external cron triggers with this value.'),
     ),
   ],
 )]

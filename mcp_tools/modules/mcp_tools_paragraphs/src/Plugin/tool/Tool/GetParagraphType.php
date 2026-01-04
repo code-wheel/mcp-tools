@@ -33,27 +33,27 @@ use Drupal\tool\TypedData\InputDefinition;
     'id' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Paragraph Type ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Machine name of the paragraph type. Use with AddParagraphField, DeleteParagraphType, etc.'),
     ),
     'label' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Label'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Human-readable name of the paragraph type.'),
     ),
     'description' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Description'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Description of when and how to use this paragraph type.'),
     ),
     'fields' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Fields'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Array of field definitions with name, type, label, required, and cardinality. Use AddParagraphField to add more.'),
     ),
     'admin_path' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Admin Path'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Path to manage this paragraph type in admin UI (e.g., "/admin/structure/paragraphs_type/text_block").'),
     ),
   ],
 )]

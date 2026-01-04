@@ -280,7 +280,18 @@ tag_release() {
     fi
 
     # Update version in info.yml
-    sed -i "s/^version:.*/version: '$VERSION'/" mcp_tools.info.yml
+    if grep -q "^version:" mcp_tools.info.yml; then
+        sed -i "s/^version:.*/version: '$VERSION'/" mcp_tools.info.yml
+    else
+        # Insert version after core_version_requirement (common Drupal info.yml layout),
+        # falling back to appending if the anchor is missing.
+        if grep -q "^core_version_requirement:" mcp_tools.info.yml; then
+            sed -i "/^core_version_requirement:/a version: '$VERSION'" mcp_tools.info.yml
+        else
+            echo "" >> mcp_tools.info.yml
+            echo "version: '$VERSION'" >> mcp_tools.info.yml
+        fi
+    fi
 
     # Commit version update
     git add mcp_tools.info.yml

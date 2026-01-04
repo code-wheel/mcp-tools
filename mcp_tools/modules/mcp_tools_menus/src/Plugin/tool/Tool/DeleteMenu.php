@@ -34,18 +34,19 @@ use Drupal\tool\TypedData\InputDefinition;
     'id' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Deleted Menu ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Machine name of the menu that was deleted.'),
     ),
     'message' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Success confirmation. All links in the menu are also deleted.'),
     ),
   ],
 )]
 class DeleteMenu extends McpToolsToolBase {
 
   protected const MCP_CATEGORY = 'menus';
+  protected const MCP_WRITE_KIND = 'config';
 
 
   protected MenuService $menuService;

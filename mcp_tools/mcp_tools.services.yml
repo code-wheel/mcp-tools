@@ -23,6 +23,14 @@ services:
       - '@config.factory'
       - '@current_user'
       - '@logger.factory'
+      - '@mcp_tools.access_manager'
+      - '@request_stack'
+      - '@mcp_tools.tool_call_context'
+      - '@mcp_tools.rate_limiter'
+
+  # Tool Call Context (used for MCP-scoped side effects like config tracking).
+  mcp_tools.tool_call_context:
+    class: Drupal\mcp_tools\Service\McpToolCallContext
 
   # Site Health Services
   mcp_tools.site_health:
@@ -50,6 +58,7 @@ services:
     class: Drupal\mcp_tools\Service\SystemStatusService
     arguments:
       - '@module_handler'
+      - '@database'
 
   # Content Services
   mcp_tools.content_analysis:
@@ -100,6 +109,7 @@ services:
       - '@file_system'
       - '@stream_wrapper_manager'
       - '@entity_type.manager'
+      - '@database'
 
   # Error Formatting
   mcp_tools.error_formatter:

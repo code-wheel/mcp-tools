@@ -25,13 +25,13 @@ use Drupal\tool\TypedData\InputDefinition;
     'vocabulary' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Vocabulary'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Vocabulary machine name. Use GetVocabularies to see available vocabularies.'),
       required: TRUE,
     ),
     'terms' => new InputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Terms'),
-      description: new TranslatableMarkup('Array of term names or objects with name/description/parent'),
+      description: new TranslatableMarkup('Array of strings (term names) or objects with {name, description, parent, weight}. More efficient than multiple CreateTerm calls.'),
       required: TRUE,
     ),
   ],
@@ -39,33 +39,34 @@ use Drupal\tool\TypedData\InputDefinition;
     'vocabulary' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Vocabulary'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Vocabulary terms were added to.'),
     ),
     'created_count' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Terms Created'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Number of terms successfully created.'),
     ),
     'error_count' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Errors'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Number of terms that failed to create.'),
     ),
     'created' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Created Terms'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Array of created terms with tid and name.'),
     ),
     'errors' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Errors'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Array of error messages for failed terms.'),
     ),
   ],
 )]
 class CreateTerms extends McpToolsToolBase {
 
   protected const MCP_CATEGORY = 'structure';
+  protected const MCP_WRITE_KIND = 'content';
 
 
   protected TaxonomyService $taxonomyService;

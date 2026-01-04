@@ -93,6 +93,8 @@ class SecurityTest extends KernelTestBase {
       $this->container->get('mcp_tools.rate_limiter')
     );
 
+    $accessManager->setScopes([AccessManager::SCOPE_READ, AccessManager::SCOPE_WRITE]);
+
     // First write should succeed.
     $this->assertTrue($accessManager->canWrite());
 
@@ -154,10 +156,10 @@ class SecurityTest extends KernelTestBase {
     // But audit logging should be enabled by default.
     $this->assertTrue($config->get('access.audit_logging'));
 
-    // Default scopes should be read + write (not admin).
+    // Default scopes should be read-only (not write/admin).
     $scopes = $config->get('access.default_scopes');
     $this->assertContains('read', $scopes);
-    $this->assertContains('write', $scopes);
+    $this->assertNotContains('write', $scopes);
     $this->assertNotContains('admin', $scopes);
   }
 

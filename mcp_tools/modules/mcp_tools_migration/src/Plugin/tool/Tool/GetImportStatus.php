@@ -20,8 +20,7 @@ use Drupal\tool\TypedData\InputDefinition;
   id: 'mcp_migration_import_status',
   label: new TranslatableMarkup('Get Import Status'),
   description: new TranslatableMarkup('Get the status of the last import operation.'),
-  operation: ToolOperation::Write,
-  destructive: TRUE,
+  operation: ToolOperation::Read,
   input_definitions: [],
   output_definitions: [
     'has_import' => new ContextDefinition(

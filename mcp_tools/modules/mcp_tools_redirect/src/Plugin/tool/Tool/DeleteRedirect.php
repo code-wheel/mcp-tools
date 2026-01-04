@@ -34,17 +34,17 @@ use Drupal\tool\TypedData\InputDefinition;
     'id' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Deleted Redirect ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('The numeric ID of the redirect that was deleted. This ID is no longer valid for other redirect tools.'),
     ),
     'deleted_redirect' => new ContextDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Deleted Redirect Details'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Snapshot of the redirect data before deletion, including source, destination, and status_code. Useful for confirmation or undo operations via CreateRedirect.'),
     ),
     'message' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Human-readable confirmation message describing the deletion result.'),
     ),
   ],
 )]

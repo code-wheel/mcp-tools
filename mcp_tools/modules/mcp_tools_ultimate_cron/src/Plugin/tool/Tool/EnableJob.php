@@ -35,32 +35,32 @@ use Drupal\tool\TypedData\InputDefinition;
     'success' => new ContextDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Success status'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('TRUE if the job was enabled successfully, FALSE if an error occurred.'),
     ),
     'message' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result message'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Human-readable confirmation of the job status change.'),
     ),
     'id' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Job ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Machine name of the enabled job.'),
     ),
     'title' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Job Title'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Human-readable title of the job.'),
     ),
     'status' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('New status'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Current job status: "enabled". Job will now run according to its schedule.'),
     ),
     'changed' => new ContextDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Whether status was changed'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('TRUE if the job was actually enabled, FALSE if it was already enabled.'),
     ),
   ],
 )]

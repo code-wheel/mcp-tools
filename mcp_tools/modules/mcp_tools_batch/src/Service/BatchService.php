@@ -10,9 +10,6 @@ use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AuditLogger;
-use Drupal\node\Entity\Node;
-use Drupal\taxonomy\Entity\Term;
-use Drupal\user\Entity\User;
 
 /**
  * Service for batch/bulk operations.
@@ -103,7 +100,7 @@ class BatchService {
           }
         }
 
-        $node = Node::create($nodeData);
+        $node = $this->entityTypeManager->getStorage('node')->create($nodeData);
         $node->save();
 
         $created[] = [
@@ -518,7 +515,7 @@ class BatchService {
     // Verify role exists.
     $roleEntity = $this->entityTypeManager->getStorage('user_role')->load($role);
     if (!$roleEntity) {
-      return ['success' => FALSE, 'error' => "Role '$role' not found."];
+      return ['success' => FALSE, 'error' => "Role '$role' not found. Use mcp_structure_list_roles to see available roles."];
     }
 
     $assigned = [];
@@ -639,7 +636,7 @@ class BatchService {
     // Verify vocabulary exists.
     $vocab = $this->entityTypeManager->getStorage('taxonomy_vocabulary')->load($vocabulary);
     if (!$vocab) {
-      return ['success' => FALSE, 'error' => "Vocabulary '$vocabulary' not found."];
+      return ['success' => FALSE, 'error' => "Vocabulary '$vocabulary' not found. Use mcp_structure_list_vocabularies to see available vocabularies."];
     }
 
     $created = [];
@@ -698,7 +695,7 @@ class BatchService {
           $termValues['parent'] = ['target_id' => $termData['parent']];
         }
 
-        $term = Term::create($termValues);
+        $term = $this->entityTypeManager->getStorage('taxonomy_term')->create($termValues);
         $term->save();
 
         $created[] = [

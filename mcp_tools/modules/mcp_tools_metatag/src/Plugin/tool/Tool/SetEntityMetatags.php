@@ -45,27 +45,27 @@ use Drupal\tool\TypedData\InputDefinition;
     'entity_type' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Entity Type'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('The entity type updated.'),
     ),
     'entity_id' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Entity ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('The entity ID updated.'),
     ),
     'entity_label' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Entity Label'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Title or name of the updated entity.'),
     ),
     'tags_updated' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Tags Updated'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('List of metatag keys that were set or modified. Use GetEntityMetatags to verify the changes.'),
     ),
     'message' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Human-readable confirmation of the metatag update.'),
     ),
   ],
 )]

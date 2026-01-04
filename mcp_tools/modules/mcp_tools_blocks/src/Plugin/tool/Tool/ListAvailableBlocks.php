@@ -26,12 +26,12 @@ use Drupal\tool\TypedData\InputDefinition;
     'blocks' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Available Blocks'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Array of block plugins with id, label, category. Use id as plugin_id in PlaceBlock.'),
     ),
     'count' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Block Count'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Total number of available block plugins.'),
     ),
   ],
 )]

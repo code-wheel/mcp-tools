@@ -26,12 +26,12 @@ use Drupal\tool\TypedData\InputDefinition;
     'total_bins' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total cache bins'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Number of cache bins in the system.'),
     ),
     'bins' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Cache bin details'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Array of cache bins with name, backend class, and status. Use name with ClearCacheBin.'),
     ),
   ],
 )]

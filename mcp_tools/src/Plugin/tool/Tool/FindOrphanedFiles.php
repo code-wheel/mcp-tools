@@ -34,22 +34,22 @@ use Drupal\tool\TypedData\InputDefinition;
     'total_orphaned' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Orphaned Files'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Number of files found without entity references.'),
     ),
     'total_size_bytes' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Size (bytes)'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Combined size of orphaned files in bytes.'),
     ),
     'total_size_human' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Total Size (human readable)'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Combined size formatted (e.g., "15.2 MB").'),
     ),
     'files' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Orphaned Files'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Array of orphaned files with fid, filename, uri, filemime, filesize, and created. These may be safe to delete.'),
     ),
   ],
 )]

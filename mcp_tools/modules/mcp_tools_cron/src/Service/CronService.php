@@ -226,7 +226,11 @@ class CronService {
     $jobs = [];
 
     // Get modules implementing hook_cron.
-    $implementations = $this->moduleHandler->getImplementations('cron');
+    $implementations = [];
+    $this->moduleHandler->invokeAllWith('cron', static function (callable $implementation, string $module) use (&$implementations): void {
+      $implementations[] = $module;
+    });
+
     foreach ($implementations as $module) {
       $jobs[] = [
         'module' => $module,

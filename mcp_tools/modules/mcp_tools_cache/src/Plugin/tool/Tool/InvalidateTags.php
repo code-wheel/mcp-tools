@@ -36,12 +36,12 @@ use Drupal\tool\TypedData\InputDefinition;
     'success' => new ContextDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Success status'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('True if tags were invalidated successfully.'),
     ),
     'tags' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Invalidated tags'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('List of cache tags that were invalidated.'),
     ),
   ],
 )]

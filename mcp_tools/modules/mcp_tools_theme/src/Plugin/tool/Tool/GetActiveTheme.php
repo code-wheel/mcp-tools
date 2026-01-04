@@ -26,22 +26,22 @@ use Drupal\tool\TypedData\InputDefinition;
     'active_theme' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Active Theme'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Machine name of the currently active theme for the current context (may differ from default on admin pages).'),
     ),
     'default_theme' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Default Theme'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Machine name of the default frontend theme. Use SetDefaultTheme to change.'),
     ),
     'admin_theme' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Admin Theme'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Machine name of the admin theme. Use SetAdminTheme to change.'),
     ),
     'active_theme_info' => new ContextDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Active Theme Info'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Detailed info about active theme: label, version, base_theme, regions, and libraries. Use GetThemeSettings for configuration.'),
     ),
   ],
 )]

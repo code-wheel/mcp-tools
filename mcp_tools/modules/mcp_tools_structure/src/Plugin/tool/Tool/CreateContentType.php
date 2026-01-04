@@ -37,13 +37,13 @@ use Drupal\tool\TypedData\InputDefinition;
     'description' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Description'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Description shown to content editors explaining this type.'),
       required: FALSE,
     ),
     'create_body' => new InputDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Create Body Field'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('True to add a body field with text format. Defaults to true.'),
       required: FALSE,
       default_value: TRUE,
     ),
@@ -52,17 +52,17 @@ use Drupal\tool\TypedData\InputDefinition;
     'id' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Content Type ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Machine name of the created content type. Use with AddField and CreateContent.'),
     ),
     'label' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Content Type Label'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Human-readable label of the content type.'),
     ),
     'message' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Success or error message.'),
     ),
   ],
 )]

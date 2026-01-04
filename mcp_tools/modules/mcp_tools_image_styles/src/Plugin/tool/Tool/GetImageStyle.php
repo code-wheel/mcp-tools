@@ -33,17 +33,17 @@ use Drupal\tool\TypedData\InputDefinition;
     'id' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Style ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Machine name of the image style.'),
     ),
     'label' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Style label'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Human-readable name of the style.'),
     ),
     'effects' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Image effects'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Array of effects with uuid, id, label, weight, and configuration. Use uuid with RemoveImageEffect.'),
     ),
   ],
 )]

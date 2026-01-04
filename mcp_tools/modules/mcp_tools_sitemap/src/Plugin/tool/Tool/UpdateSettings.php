@@ -39,17 +39,17 @@ use Drupal\tool\TypedData\InputDefinition;
     'variant' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Variant ID'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('The sitemap variant ID that was updated.'),
     ),
     'updated_settings' => new ContextDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Updated Settings'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('The settings now in effect for this variant. Use Regenerate to rebuild the sitemap with new settings.'),
     ),
     'message' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Human-readable confirmation of the settings update.'),
     ),
   ],
 )]

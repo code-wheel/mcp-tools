@@ -26,12 +26,12 @@ use Drupal\tool\TypedData\InputDefinition;
     'directories' => new ContextDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Directory Status'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Status of key directories (public, private, temp) with path, exists, writable, and free_space.'),
     ),
     'stream_wrappers' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Stream Wrappers'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Available stream wrappers (e.g., public://, private://) with scheme, name, and description.'),
     ),
   ],
 )]

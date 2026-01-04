@@ -33,22 +33,22 @@ use Drupal\tool\TypedData\InputDefinition;
     'themes' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Themes'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Array of theme objects with name, label, version, status, and base_theme. Use name with EnableTheme, GetThemeSettings, etc.'),
     ),
     'total' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Themes'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Total number of themes in the list (installed and optionally uninstalled).'),
     ),
     'default_theme' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Default Theme'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Machine name of the current default frontend theme. Use SetDefaultTheme to change.'),
     ),
     'admin_theme' => new ContextDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Admin Theme'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Machine name of the current admin theme. Use SetAdminTheme to change.'),
     ),
   ],
 )]

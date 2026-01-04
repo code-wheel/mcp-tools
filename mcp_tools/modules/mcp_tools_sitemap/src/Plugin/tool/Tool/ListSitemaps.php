@@ -26,12 +26,12 @@ use Drupal\tool\TypedData\InputDefinition;
     'total' => new ContextDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Sitemaps'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Total number of sitemap variants configured in the system.'),
     ),
     'sitemaps' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Sitemap Variants'),
-      description: new TranslatableMarkup(''),
+      description: new TranslatableMarkup('Array of sitemap variant objects with id, label, enabled status, URL, and link count. Use variant ID with GetSettings or Regenerate.'),
     ),
   ],
 )]
