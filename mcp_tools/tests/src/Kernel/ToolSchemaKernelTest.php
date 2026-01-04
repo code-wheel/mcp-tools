@@ -79,8 +79,8 @@ final class ToolSchemaKernelTest extends KernelTestBase {
       static fn(mixed $definition): bool => $definition instanceof ToolDefinition && str_starts_with((string) $definition->getProvider(), 'mcp_tools')
     );
 
-    // Base module + core-only submodules provide 144 tools.
-    $this->assertCount(144, $mcpDefinitions);
+    // Base module + core-only submodules provide 154 tools.
+    $this->assertCount(154, $mcpDefinitions);
 
     $converter = new ToolApiSchemaConverter();
     foreach ($mcpDefinitions as $pluginId => $definition) {
