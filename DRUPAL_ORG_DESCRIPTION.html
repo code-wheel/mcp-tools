@@ -42,7 +42,15 @@ AI:  Creates the content type, taxonomies, fields, role, and permissions</pre>
   <li><strong>Scopes:</strong> per-connection scopes (<code>read</code>/<code>write</code>/<code>admin</code>) gate what a client can do.</li>
   <li><strong>Global safety toggles:</strong> read-only mode and config-only mode prevent accidental damage.</li>
   <li><strong>Production hardening:</strong> rate limiting, protected entities, and sensitive data redaction.</li>
-  <li><strong>Config-as-code workflow:</strong> optional config tools to preview/export changes and prevent drift.</li>
+  <li><strong>Config-as-code workflow:</strong> keep changes reviewable by exporting config after write operations.</li>
+</ul>
+
+<h3>Config-as-Code Workflow</h3>
+<p>If you use write tools to create or change configuration, export your config and commit it to Git to avoid configuration drift.</p>
+<ul>
+  <li><strong>Recommended:</strong> enable config-only mode when you want write access limited to configuration changes.</li>
+  <li><strong>Export config:</strong> run <code>drush cex -y</code> after changes.</li>
+  <li><strong>Optional:</strong> enable <code>mcp_tools_config</code> to preview/export via tools (<code>mcp_config_changes</code>, <code>mcp_config_preview</code>, <code>mcp_config_export</code>).</li>
 </ul>
 
 <h3>Features</h3>

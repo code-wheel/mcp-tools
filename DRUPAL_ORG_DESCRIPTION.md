@@ -76,9 +76,15 @@ AI:  Creates content type, taxonomy vocabularies, fields, role, and permissions
    - Configure audit logging
    - Set up webhook notifications (optional)
 
-4. **Connect your MCP client** (Claude Desktop, Claude Code, or any MCP-compatible assistant)
+4. **Export config (recommended after write tools):**
+   ```
+   drush cex -y
+   ```
+   Optionally enable `mcp_tools_config` to preview/export via tools (e.g. `mcp_config_changes`, `mcp_config_preview`, `mcp_config_export`).
 
-5. **Start building!** Ask your AI assistant to create content types, add fields, build views, etc.
+5. **Connect your MCP client** (Claude Desktop, Claude Code, or any MCP-compatible assistant)
+
+6. **Start building!** Ask your AI assistant to create content types, add fields, build views, etc.
 
 ### Additional Requirements
 
@@ -138,7 +144,7 @@ This module is developed and maintained by [Code Wheel](https://github.com/code-
 | Drupal | PHP | Status |
 |--------|-----|--------|
 | 10.3.x | 8.3 | Tested |
-| 11.0.x | 8.3, 8.4 | Tested |
+| 11.x | 8.4 | Tested |
 
 ---
 
