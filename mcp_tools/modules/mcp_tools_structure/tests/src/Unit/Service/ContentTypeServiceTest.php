@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Drupal\Tests\mcp_tools_structure\Unit\Service;
 
+use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Entity\EntityStorageInterface;
+use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Entity\Query\QueryInterface;
 use Drupal\mcp_tools\Service\AccessManager;
@@ -22,6 +24,8 @@ use Drupal\Tests\UnitTestCase;
 class ContentTypeServiceTest extends UnitTestCase {
 
   protected EntityTypeManagerInterface $entityTypeManager;
+  protected EntityTypeBundleInfoInterface $bundleInfo;
+  protected ConfigFactoryInterface $configFactory;
   protected AccessManager $accessManager;
   protected AuditLogger $auditLogger;
   protected EntityStorageInterface $nodeTypeStorage;
@@ -34,6 +38,8 @@ class ContentTypeServiceTest extends UnitTestCase {
     parent::setUp();
 
     $this->entityTypeManager = $this->createMock(EntityTypeManagerInterface::class);
+    $this->bundleInfo = $this->createMock(EntityTypeBundleInfoInterface::class);
+    $this->configFactory = $this->createMock(ConfigFactoryInterface::class);
     $this->accessManager = $this->createMock(AccessManager::class);
     $this->auditLogger = $this->createMock(AuditLogger::class);
     $this->nodeTypeStorage = $this->createMock(EntityStorageInterface::class);
@@ -52,6 +58,8 @@ class ContentTypeServiceTest extends UnitTestCase {
   protected function createService(): ContentTypeService {
     return new ContentTypeService(
       $this->entityTypeManager,
+      $this->bundleInfo,
+      $this->configFactory,
       $this->accessManager,
       $this->auditLogger
     );
