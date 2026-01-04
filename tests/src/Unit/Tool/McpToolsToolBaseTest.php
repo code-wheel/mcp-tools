@@ -236,4 +236,46 @@ final class McpToolsToolBaseTest extends UnitTestCase {
     $this->assertFalse($tool->access($account));
   }
 
+  /**
+   * @covers ::checkAccess
+   */
+  public function testAccessGatesTriggerToolsByAdminScope(): void {
+    $definition = $this->definition('mcp_recipes:apply', ToolOperation::Trigger);
+
+    $currentUser = $this->createMock(AccountInterface::class);
+    $tool = new class([], 'mcp_recipes:apply', $definition, $currentUser) extends McpToolsToolBase {
+      protected const MCP_CATEGORY = 'recipes';
+
+      public function setAccessManager(AccessManager $accessManager): void {
+        $this->accessManager = $accessManager;
+      }
+
+      protected function executeLegacy(array $input): array {
+        return ['success' => TRUE];
+      }
+    };
+
+    $account = $this->createMock(AccountInterface::class);
+    $account->method('hasPermission')
+      ->willReturnCallback(static fn(string $permission): bool => $permission === 'mcp_tools use recipes');
+
+    $adminAccessManager = $this->createMock(AccessManager::class);
+    $adminAccessManager->method('hasScope')->with(AccessManager::SCOPE_ADMIN)->willReturn(TRUE);
+    $adminAccessManager->method('isReadOnlyMode')->willReturn(FALSE);
+    $adminAccessManager->method('isWriteKindAllowed')->willReturn(TRUE);
+    $tool->setAccessManager($adminAccessManager);
+    $this->assertTrue($tool->access($account));
+
+    $noAdmin = $this->createMock(AccessManager::class);
+    $noAdmin->method('hasScope')->with(AccessManager::SCOPE_ADMIN)->willReturn(FALSE);
+    $tool->setAccessManager($noAdmin);
+    $this->assertFalse($tool->access($account));
+
+    $readOnly = $this->createMock(AccessManager::class);
+    $readOnly->method('hasScope')->with(AccessManager::SCOPE_ADMIN)->willReturn(TRUE);
+    $readOnly->method('isReadOnlyMode')->willReturn(TRUE);
+    $tool->setAccessManager($readOnly);
+    $this->assertFalse($tool->access($account));
+  }
+
 }

@@ -70,6 +70,9 @@ mcp_tools.settings:
         enabled:
           type: boolean
           label: 'Enable rate limiting'
+        trust_client_id_header:
+          type: boolean
+          label: 'Trust client ID header for rate limiting'
         max_writes_per_minute:
           type: integer
           label: 'Maximum write operations per minute'

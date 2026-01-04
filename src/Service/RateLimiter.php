@@ -294,6 +294,7 @@ class RateLimiter {
    * SECURITY: This identifier is used for rate limiting. We use multiple
    * factors to make spoofing more difficult:
    * - HTTP: IP address + optional client ID header
+   * - HTTP (trusted): IP address + server-provided client ID attribute
    * - CLI: Process ID + parent PID + user ID (harder to spoof than env vars)
    *
    * @return string
@@ -305,11 +306,19 @@ class RateLimiter {
     if ($request) {
       // Use combination of IP and any client ID header.
       $ip = $request->getClientIp() ?? 'unknown';
-      $clientId = $request->headers->get('X-MCP-Client-Id', '');
-
-      // Add request fingerprint for additional entropy.
       $fingerprint = $request->headers->get('User-Agent', '') . ':' .
                      $request->headers->get('Accept-Language', '');
+
+      $trustedClientId = '';
+      $attributes = $request->attributes ?? NULL;
+      if ($attributes && method_exists($attributes, 'get')) {
+        $trustedClientId = (string) $attributes->get('mcp_tools.client_id', '');
+      }
+
+      $trustHeader = (bool) $this->configFactory->get('mcp_tools.settings')->get('rate_limiting.trust_client_id_header');
+      $headerClientId = $trustHeader ? (string) $request->headers->get('X-MCP-Client-Id', '') : '';
+
+      $clientId = $trustedClientId !== '' ? $trustedClientId : $headerClientId;
 
       if ($clientId) {
         return hash('sha256', $ip . ':' . $clientId . ':' . $fingerprint);

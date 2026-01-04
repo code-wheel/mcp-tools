@@ -61,6 +61,14 @@ final class RemoteSettingsForm extends ConfigFormBase {
       '#default_value' => (bool) $config->get('enabled'),
     ];
 
+    $form['allowed_ips'] = [
+      '#type' => 'textarea',
+      '#title' => $this->t('Allowed client IPs (optional)'),
+      '#description' => $this->t('When provided, only these IPs/CIDRs may access the endpoint. One per line (examples: <code>127.0.0.1</code>, <code>10.0.0.0/8</code>). Leave empty to allow any IP (not recommended).'),
+      '#default_value' => implode("\n", $config->get('allowed_ips') ?? []),
+      '#rows' => 4,
+    ];
+
     $form['uid'] = [
       '#type' => 'number',
       '#title' => $this->t('Execution user ID'),
@@ -105,7 +113,7 @@ final class RemoteSettingsForm extends ConfigFormBase {
     $form['keys']['help'] = [
       '#type' => 'markup',
       '#markup' => '<p>' . $this->t('Manage keys via Drush:') . '</p><pre><code>' .
-        "drush mcp-tools:remote-key-create --label=\"My Key\" --scopes=read\n" .
+        "drush mcp-tools:remote-key-create --label=\"My Key\" --scopes=read --ttl=86400\n" .
         "drush mcp-tools:remote-key-list\n" .
         "drush mcp-tools:remote-key-revoke KEY_ID\n" .
         '</code></pre>',
@@ -120,6 +128,7 @@ final class RemoteSettingsForm extends ConfigFormBase {
         'scopes' => implode(',', $data['scopes'] ?? []),
         'created' => $data['created'] ?? '',
         'last_used' => $data['last_used'] ?? '',
+        'expires' => $data['expires'] ?? '',
       ];
     }
 
@@ -131,6 +140,7 @@ final class RemoteSettingsForm extends ConfigFormBase {
         $this->t('Scopes'),
         $this->t('Created'),
         $this->t('Last used'),
+        $this->t('Expires'),
       ],
       '#rows' => array_map(static fn(array $row): array => array_values($row), $rows),
       '#empty' => $this->t('No keys found.'),
@@ -142,10 +152,25 @@ final class RemoteSettingsForm extends ConfigFormBase {
   /**
    * {@inheritdoc}
    */
+  public function validateForm(array &$form, FormStateInterface $form_state): void {
+    parent::validateForm($form, $form_state);
+
+    if ((bool) $form_state->getValue('enabled') && (int) $form_state->getValue('uid') === 1) {
+      $form_state->setErrorByName('uid', $this->t('For safety, do not run the remote HTTP endpoint as uid 1. Create a dedicated service account and enter its user ID.'));
+    }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function submitForm(array &$form, FormStateInterface $form_state): void {
+    $allowedIps = preg_split('/\\R+/', (string) $form_state->getValue('allowed_ips'), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+    $allowedIps = array_values(array_filter(array_map('trim', $allowedIps)));
+
     $this->config('mcp_tools_remote.settings')
       ->set('enabled', (bool) $form_state->getValue('enabled'))
       ->set('uid', (int) $form_state->getValue('uid'))
+      ->set('allowed_ips', $allowedIps)
       ->set('server_name', (string) $form_state->getValue('server_name'))
       ->set('server_version', (string) $form_state->getValue('server_version'))
       ->set('pagination_limit', (int) $form_state->getValue('pagination_limit'))

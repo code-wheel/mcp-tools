@@ -78,6 +78,36 @@ final class McpToolsRemoteControllerTest extends UnitTestCase {
   /**
    * @covers ::handle
    */
+  public function testHandleReturnsNotFoundWhenIpNotAllowed(): void {
+    $remoteConfig = $this->createMock(ImmutableConfig::class);
+    $remoteConfig->method('get')->willReturnMap([
+      ['enabled', TRUE],
+      ['allowed_ips', ['192.0.2.0/24']],
+    ]);
+
+    $configFactory = $this->createMock(ConfigFactoryInterface::class);
+    $configFactory->method('get')->with('mcp_tools_remote.settings')->willReturn($remoteConfig);
+
+    $stateStorage = [];
+    $controller = new McpToolsRemoteController(
+      $configFactory,
+      $this->createApiKeyManager($stateStorage),
+      $this->createMock(AccessManager::class),
+      $this->createMock(PluginManagerInterface::class),
+      $this->createMock(EntityTypeManagerInterface::class),
+      $this->createMock(AccountSwitcherInterface::class),
+      $this->createMock(EventDispatcherInterface::class),
+      $this->createMock(LoggerInterface::class),
+    );
+
+    $request = Request::create('/_mcp_tools', 'POST', [], [], [], ['REMOTE_ADDR' => '127.0.0.1']);
+    $response = $controller->handle($request);
+    $this->assertSame(404, $response->getStatusCode());
+  }
+
+  /**
+   * @covers ::handle
+   */
   public function testHandleRequiresApiKey(): void {
     $remoteConfig = $this->createMock(ImmutableConfig::class);
     $remoteConfig->method('get')->willReturnMap([

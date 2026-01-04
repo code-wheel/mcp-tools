@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Drupal\Tests\mcp_tools_structure\Kernel;
 
 use Drupal\KernelTests\KernelTestBase;
+use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools_structure\Service\ContentTypeService;
 use Drupal\mcp_tools_structure\Service\FieldService;
 
@@ -45,6 +46,12 @@ final class StructureServicesKernelTest extends KernelTestBase {
 
     $this->contentTypeService = $this->container->get('mcp_tools_structure.content_type');
     $this->fieldService = $this->container->get('mcp_tools_structure.field');
+
+    // Structure services enforce write scope via AccessManager.
+    $this->container->get('mcp_tools.access_manager')->setScopes([
+      AccessManager::SCOPE_READ,
+      AccessManager::SCOPE_WRITE,
+    ]);
   }
 
   public function testCreateAndDeleteContentType(): void {

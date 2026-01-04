@@ -79,7 +79,7 @@ class SettingsForm extends ConfigFormBase {
         'write' => $this->t('Write - Allow write operations (content, structure changes)'),
         'admin' => $this->t('Admin - Allow administrative operations (recipe application)'),
       ],
-      '#default_value' => $config->get('access.default_scopes') ?? ['read', 'write'],
+      '#default_value' => $config->get('access.default_scopes') ?? ['read'],
     ];
 
     $form['access']['allowed_scopes'] = [
@@ -135,6 +135,18 @@ class SettingsForm extends ConfigFormBase {
       '#title' => $this->t('Enable rate limiting'),
       '#description' => $this->t('When enabled, write operations are limited per client. <strong>Recommended for production.</strong>'),
       '#default_value' => $config->get('rate_limiting.enabled') ?? FALSE,
+    ];
+
+    $form['rate_limiting']['trust_client_id_header'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Trust X-MCP-Client-Id header for rate limiting'),
+      '#description' => $this->t('When enabled, rate limiting will bucket by IP + X-MCP-Client-Id. Leave disabled unless you control the clients (header spoofing can bypass per-client limits).'),
+      '#default_value' => $config->get('rate_limiting.trust_client_id_header') ?? FALSE,
+      '#states' => [
+        'visible' => [
+          ':input[name="enabled"]' => ['checked' => TRUE],
+        ],
+      ],
     ];
 
     $form['rate_limiting']['max_writes_per_minute'] = [
@@ -416,6 +428,7 @@ class SettingsForm extends ConfigFormBase {
 
     // Rate limiting settings.
     $config->set('rate_limiting.enabled', (bool) $form_state->getValue('enabled'));
+    $config->set('rate_limiting.trust_client_id_header', (bool) $form_state->getValue('trust_client_id_header'));
     $config->set('rate_limiting.max_writes_per_minute', (int) $form_state->getValue('max_writes_per_minute'));
     $config->set('rate_limiting.max_writes_per_hour', (int) $form_state->getValue('max_writes_per_hour'));
     $config->set('rate_limiting.max_deletes_per_hour', (int) $form_state->getValue('max_deletes_per_hour'));

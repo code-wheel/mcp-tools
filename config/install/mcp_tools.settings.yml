@@ -37,7 +37,6 @@ access:
   # Available scopes: read, write, admin
   default_scopes:
     - read
-    - write
 
   # Whether to trust scope overrides from various sources.
   # SECURITY: HTTP header and query parameter scopes are untrusted by default.
@@ -60,6 +59,12 @@ rate_limits:
 rate_limiting:
   # Enable/disable rate limiting for write operations.
   enabled: false
+  # Whether to include the (client-provided) X-MCP-Client-Id header in the
+  # rate-limit bucket identifier.
+  #
+  # SECURITY: Keep this disabled unless you fully control the clients. A
+  # malicious client can spoof this header to bypass per-client rate limits.
+  trust_client_id_header: false
   # Maximum write operations per minute per client.
   max_writes_per_minute: 30
   # Maximum write operations per hour per client.

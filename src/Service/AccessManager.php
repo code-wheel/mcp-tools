@@ -231,7 +231,7 @@ class AccessManager {
     // Maximum allowed scopes are always enforced.
     $allowedScopes = $config->get('access.allowed_scopes')
       ?? $config->get('access.default_scopes')
-      ?? [self::SCOPE_READ, self::SCOPE_WRITE];
+      ?? [self::SCOPE_READ];
     $allowedScopes = array_values(array_intersect($allowedScopes, self::ALL_SCOPES));
     if (empty($allowedScopes)) {
       // Always allow at least read; prevents accidental lockout.
@@ -239,7 +239,7 @@ class AccessManager {
     }
 
     // Default scopes (used when no trusted override is present).
-    $defaultScopes = $config->get('access.default_scopes') ?? [self::SCOPE_READ, self::SCOPE_WRITE];
+    $defaultScopes = $config->get('access.default_scopes') ?? [self::SCOPE_READ];
     $defaultScopes = array_values(array_intersect($defaultScopes, $allowedScopes));
     if (empty($defaultScopes)) {
       $defaultScopes = $allowedScopes;

@@ -8,6 +8,12 @@ mcp_tools_remote.settings:
     uid:
       type: integer
       label: 'Drupal user ID for execution'
+    allowed_ips:
+      type: sequence
+      label: 'Allowed client IPs for access'
+      sequence:
+        type: string
+        label: 'IP or CIDR'
     server_name:
       type: string
       label: 'Server name'
@@ -20,4 +26,3 @@ mcp_tools_remote.settings:
     include_all_tools:
       type: boolean
       label: 'Expose all Tool API tools'
-

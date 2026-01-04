@@ -67,6 +67,27 @@ final class ApiKeyManagerTest extends UnitTestCase {
     $this->assertSame(['read'], $keys[$created['key_id']]['scopes']);
     $this->assertSame(1700000000, $keys[$created['key_id']]['created']);
     $this->assertSame(1700000000, $keys[$created['key_id']]['last_used']);
+    $this->assertNull($keys[$created['key_id']]['expires']);
+  }
+
+  /**
+   * @covers ::createKey
+   * @covers ::validate
+   */
+  public function testValidateRejectsExpiredKeys(): void {
+    $now = 1700000000;
+    $time = $this->createMock(TimeInterface::class);
+    $time->method('getRequestTime')->willReturnCallback(static function () use (&$now): int {
+      return $now;
+    });
+
+    $manager = new ApiKeyManager($this->state, $this->privateKey, $time);
+
+    $created = $manager->createKey('Expiring', ['read'], 10);
+    $this->assertNotNull($manager->validate($created['api_key']));
+
+    $now = 1700000011;
+    $this->assertNull($manager->validate($created['api_key']));
   }
 
   /**
@@ -106,4 +127,3 @@ final class ApiKeyManagerTest extends UnitTestCase {
   }
 
 }
-

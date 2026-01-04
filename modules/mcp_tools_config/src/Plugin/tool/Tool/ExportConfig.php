@@ -20,7 +20,7 @@ use Drupal\tool\TypedData\InputDefinition;
   id: 'mcp_config_export',
   label: new TranslatableMarkup('Export Config'),
   description: new TranslatableMarkup('Export configuration to sync directory. DANGEROUS: Requires admin scope.'),
-  operation: ToolOperation::Write,
+  operation: ToolOperation::Trigger,
   input_definitions: [
     'confirm' => new InputDefinition(
       data_type: 'boolean',

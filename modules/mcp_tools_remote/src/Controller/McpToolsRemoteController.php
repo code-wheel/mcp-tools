@@ -22,6 +22,7 @@ use Symfony\Bridge\PsrHttpMessage\Factory\HttpFoundationFactory;
 use Symfony\Bridge\PsrHttpMessage\Factory\PsrHttpFactory;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\IpUtils;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -63,6 +64,22 @@ final class McpToolsRemoteController implements ContainerInjectionInterface {
       return new Response('Not found.', 404);
     }
 
+    $allowedIps = $remoteConfig->get('allowed_ips') ?? [];
+    if (is_array($allowedIps)) {
+      $allowedIps = array_values(array_filter(array_map('trim', $allowedIps)));
+    }
+    else {
+      $allowedIps = [];
+    }
+
+    // Optional IP allowlist (defense-in-depth for the remote endpoint).
+    if (!empty($allowedIps)) {
+      $clientIp = $request->getClientIp();
+      if (!$clientIp || !IpUtils::checkIp($clientIp, $allowedIps)) {
+        return new Response('Not found.', 404);
+      }
+    }
+
     if (!class_exists(\Mcp\Server::class)) {
       return new Response('Missing dependency: mcp/sdk', 500);
     }
@@ -73,6 +90,12 @@ final class McpToolsRemoteController implements ContainerInjectionInterface {
       $response = new JsonResponse(['error' => 'Authentication required'], 401);
       $response->headers->set('WWW-Authenticate', 'Bearer realm="mcp_tools_remote"');
       return $response;
+    }
+
+    // Provide a trusted rate-limit client identifier derived from the API key.
+    // This avoids relying on client-supplied headers for per-key throttling.
+    if (!empty($key['key_id']) && is_string($key['key_id'])) {
+      $request->attributes->set('mcp_tools.client_id', 'remote_key:' . $key['key_id']);
     }
 
     // Resolve scopes from key, intersected with MCP Tools allowed scopes.

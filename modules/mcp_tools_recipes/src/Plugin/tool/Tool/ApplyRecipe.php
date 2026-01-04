@@ -22,7 +22,7 @@ use Drupal\tool\TypedData\InputDefinition;
   id: 'mcp_recipes_apply',
   label: new TranslatableMarkup('Apply Recipe'),
   description: new TranslatableMarkup('Apply a Drupal Recipe to configure the site. WARNING: This can make significant changes. Requires admin scope.'),
-  operation: ToolOperation::Write,
+  operation: ToolOperation::Trigger,
   input_definitions: [
     'recipe_name' => new InputDefinition(
       data_type: 'string',

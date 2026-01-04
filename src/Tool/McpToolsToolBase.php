@@ -114,7 +114,8 @@ abstract class McpToolsToolBase extends ToolBase {
     $operation = $definition instanceof ToolDefinition ? $definition->getOperation() : ToolOperation::Transform;
 
     $scopeAllowed = match ($operation) {
-      ToolOperation::Write, ToolOperation::Trigger => $this->accessManager->hasScope(AccessManager::SCOPE_WRITE) && !$this->accessManager->isReadOnlyMode(),
+      ToolOperation::Trigger => $this->accessManager->hasScope(AccessManager::SCOPE_ADMIN) && !$this->accessManager->isReadOnlyMode(),
+      ToolOperation::Write => $this->accessManager->hasScope(AccessManager::SCOPE_WRITE) && !$this->accessManager->isReadOnlyMode(),
       default => $this->accessManager->hasScope(AccessManager::SCOPE_READ),
     };
 

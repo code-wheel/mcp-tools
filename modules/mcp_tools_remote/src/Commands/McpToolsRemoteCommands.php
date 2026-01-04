@@ -26,14 +26,18 @@ final class McpToolsRemoteCommands extends DrushCommands {
   #[CLI\Usage(name: 'drush mcp-tools:remote-key-create --label=\"My Key\" --scopes=read,write', description: 'Create an API key and print it (shown once)')]
   #[CLI\Option(name: 'label', description: 'Key label for admins')]
   #[CLI\Option(name: 'scopes', description: 'Comma-separated scopes: read,write,admin (default: read)')]
-  public function createKey(array $options = ['label' => '', 'scopes' => 'read']): void {
+  #[CLI\Option(name: 'ttl', description: 'Optional time-to-live in seconds (0 = no expiry)')]
+  public function createKey(array $options = ['label' => '', 'scopes' => 'read', 'ttl' => 0]): void {
     $label = (string) ($options['label'] ?? '');
     $scopes = array_filter(array_map('trim', explode(',', (string) ($options['scopes'] ?? 'read'))));
     if (empty($scopes)) {
       $scopes = ['read'];
     }
 
-    $created = $this->apiKeyManager->createKey($label, $scopes);
+    $ttl = (int) ($options['ttl'] ?? 0);
+    $ttl = $ttl > 0 ? $ttl : NULL;
+
+    $created = $this->apiKeyManager->createKey($label, $scopes, $ttl);
 
     $this->io()->writeln('Key ID: ' . $created['key_id']);
     $this->io()->writeln('API Key: ' . $created['api_key']);
@@ -84,4 +88,3 @@ final class McpToolsRemoteCommands extends DrushCommands {
   }
 
 }
-

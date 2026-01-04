@@ -236,6 +236,98 @@ def _run_sequence(base_url: str, api_key: str, expect_write_allowed: bool) -> No
             raise SystemExit(f"Expected cache clear to be denied (isError=true), got: {clear_result!r}")
 
 
+def _run_config_only_sequence(base_url: str, api_key: str) -> None:
+    url = base_url.rstrip("/") + "/_mcp_tools"
+
+    init_payload = {
+        "jsonrpc": "2.0",
+        "id": 101,
+        "method": "initialize",
+        "params": {
+            "protocolVersion": "2024-11-05",
+            "clientInfo": {"name": "mcp_tools_ci_config_only", "version": "0.0.0"},
+            "capabilities": {},
+        },
+    }
+    status, headers, body = _post_jsonrpc(url, init_payload, api_key=api_key, session_id=None)
+    if status != 200:
+        raise SystemExit(f"initialize expected 200, got {status}: {body}")
+
+    session_id = headers.get("Mcp-Session-Id")
+    if not session_id:
+        raise SystemExit(f"initialize did not return Mcp-Session-Id header. Headers: {headers!r}")
+
+    status, _, _ = _post_jsonrpc(
+        url,
+        {"jsonrpc": "2.0", "method": "notifications/initialized"},
+        api_key=api_key,
+        session_id=session_id,
+    )
+    if status not in (200, 202):
+        raise SystemExit(f"notifications/initialized expected 200/202, got {status}")
+
+    status, _, body = _post_jsonrpc(
+        url,
+        {"jsonrpc": "2.0", "id": 102, "method": "tools/list"},
+        api_key=api_key,
+        session_id=session_id,
+    )
+    if status != 200:
+        raise SystemExit(f"tools/list expected 200, got {status}: {body}")
+
+    tools_resp = _assert_jsonrpc_result(body, 102)
+    tools = (tools_resp.get("result") or {}).get("tools") or []
+    tool_names = {tool.get("name") for tool in tools if isinstance(tool, dict)}
+
+    if "mcp_structure_create_content_type" not in tool_names:
+        raise SystemExit("Expected tool mcp_structure_create_content_type to be registered for config-only checks.")
+    if "mcp_cache_clear_all" not in tool_names:
+        raise SystemExit("Expected tool mcp_cache_clear_all to be registered for config-only checks.")
+
+    # Config writes should still be allowed in config-only mode.
+    status, _, body = _post_jsonrpc(
+        url,
+        {
+            "jsonrpc": "2.0",
+            "id": 103,
+            "method": "tools/call",
+            "params": {
+                "name": "mcp_structure_create_content_type",
+                "arguments": {
+                    "id": "mcp_ci_type",
+                    "label": "MCP CI Type",
+                    "description": "",
+                    "create_body": False,
+                },
+            },
+        },
+        api_key=api_key,
+        session_id=session_id,
+        timeout_seconds=60,
+    )
+    if status != 200:
+        raise SystemExit(f"tools/call(create_content_type) expected 200, got {status}: {body}")
+    create_resp = _assert_jsonrpc_result(body, 103)
+    create_result = create_resp.get("result") or {}
+    if create_result.get("isError") is True:
+        raise SystemExit(f"Expected create_content_type to succeed, got isError=true: {create_result!r}")
+
+    # Ops writes should be denied in config-only mode.
+    status, _, body = _post_jsonrpc(
+        url,
+        {"jsonrpc": "2.0", "id": 104, "method": "tools/call", "params": {"name": "mcp_cache_clear_all", "arguments": {}}},
+        api_key=api_key,
+        session_id=session_id,
+        timeout_seconds=60,
+    )
+    if status != 200:
+        raise SystemExit(f"tools/call(mcp_cache_clear_all) expected 200, got {status}: {body}")
+    clear_resp = _assert_jsonrpc_result(body, 104)
+    clear_result = clear_resp.get("result") or {}
+    if clear_result.get("isError") is not True:
+        raise SystemExit(f"Expected cache clear to be denied in config-only mode, got: {clear_result!r}")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="End-to-end HTTP MCP check for mcp_tools_remote.")
     parser.add_argument("--drupal-root", default="drupal", help="Path to Drupal project root")
@@ -252,7 +344,7 @@ def main() -> int:
     drush = os.path.join(drupal_root, "vendor", "bin", "drush")
     _require_file(drush)
 
-    _run_drush(drupal_root, ["en", "mcp_tools_remote", "mcp_tools_cache", "-y"])
+    _run_drush(drupal_root, ["en", "mcp_tools_remote", "mcp_tools_cache", "mcp_tools_structure", "-y"])
     _run_drush(drupal_root, ["config:set", "mcp_tools_remote.settings", "enabled", "true", "-y"])
     _run_drush(drupal_root, ["cr"])
 
@@ -295,6 +387,11 @@ def main() -> int:
 
         _run_sequence(args.base_url, read_key, expect_write_allowed=False)
         _run_sequence(args.base_url, write_key, expect_write_allowed=True)
+
+        # Config-only mode: allow config writes, deny ops writes.
+        _run_drush(drupal_root, ["config:set", "mcp_tools.settings", "access.config_only_mode", "true", "-y"])
+        _run_drush(drupal_root, ["cr"])
+        _run_config_only_sequence(args.base_url, write_key)
     finally:
         server.terminate()
         try:

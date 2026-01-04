@@ -22,7 +22,7 @@ use Drupal\tool\TypedData\InputDefinition;
   id: 'mcp_templates_apply',
   label: new TranslatableMarkup('Apply Template'),
   description: new TranslatableMarkup('Apply a site configuration template to create content types, vocabularies, roles, and views. WARNING: This can make significant changes. Requires admin scope.'),
-  operation: ToolOperation::Write,
+  operation: ToolOperation::Trigger,
   input_definitions: [
     'template_id' => new InputDefinition(
       data_type: 'string',
