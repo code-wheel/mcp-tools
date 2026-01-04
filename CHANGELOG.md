@@ -4,6 +4,14 @@ All notable changes to the MCP Tools module will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.0.0-alpha14] - 2026-01-04
+
+### Changed
+
+- Remote HTTP transport now refuses to execute as uid 1 (runtime enforcement, not just UI validation).
+- HTTP transport E2E now validates IP allowlist enforcement and runs as a dedicated service user with only the required `mcp_tools use …` permissions.
+- Drupal.org description and README now highlight read-only default scopes and include recommended starter bundles.
+
 ## [1.0.0-alpha13] - 2026-01-04
 
 ### Added
