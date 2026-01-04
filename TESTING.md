@@ -91,6 +91,8 @@ GitHub Actions runs tests automatically on every push and PR:
 
 See `.github/workflows/ci.yml` for configuration.
 
+Drupal.org uses GitLab pipelines (“DrupalCI”). See `DRUPALCI.md` for notes and common failure modes.
+
 ## Running Tests Without DDEV
 
 If you have a local Drupal installation:

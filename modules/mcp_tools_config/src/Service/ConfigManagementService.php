@@ -380,14 +380,20 @@ class ConfigManagementService {
       'export_config' => $this->previewExportConfig(),
       'import_config' => $this->previewImportConfig(),
       'delete_config' => $this->previewDeleteConfig($params['config_name'] ?? ''),
+      'create_role' => $this->previewCreateRole($params),
+      'delete_role' => $this->previewDeleteRole($params),
+      'grant_permissions' => $this->previewGrantPermissions($params),
+      'revoke_permissions' => $this->previewRevokePermissions($params),
       'create_content_type' => $this->previewCreateContentType($params),
+      'delete_content_type' => $this->previewDeleteContentType($params),
       'add_field' => $this->previewAddField($params),
+      'delete_field' => $this->previewDeleteField($params),
       'create_vocabulary' => $this->previewCreateVocabulary($params),
       'create_view' => $this->previewCreateView($params),
       default => [
         'success' => FALSE,
         'error' => sprintf(
-          "Unknown operation '%s'. Supported: export_config, import_config, delete_config, create_content_type, add_field, create_vocabulary, create_view",
+          "Unknown operation '%s'. Supported: export_config, import_config, delete_config, create_role, delete_role, grant_permissions, revoke_permissions, create_content_type, delete_content_type, add_field, delete_field, create_vocabulary, create_view",
           $operation
         ),
       ],
@@ -634,6 +640,181 @@ class ConfigManagementService {
   }
 
   /**
+   * Preview create role operation.
+   */
+  protected function previewCreateRole(array $params): array {
+    $roleId = $params['id'] ?? $params['role_id'] ?? '';
+    $label = $params['label'] ?? '';
+
+    if ($roleId === '') {
+      return [
+        'success' => FALSE,
+        'error' => 'id parameter is required for create_role preview.',
+      ];
+    }
+
+    $configName = "user.role.$roleId";
+    $exists = $this->activeStorage->read($configName) !== FALSE;
+
+    return [
+      'success' => TRUE,
+      'data' => [
+        'action' => 'Create role',
+        'role_id' => $roleId,
+        'label' => $label ?: $roleId,
+        'already_exists' => $exists,
+        'configs_created' => [$configName],
+        'description' => $exists
+          ? "Role '$roleId' already exists. Operation would fail or update existing."
+          : "Would create new role '$roleId'.",
+      ],
+    ];
+  }
+
+  /**
+   * Preview delete role operation.
+   */
+  protected function previewDeleteRole(array $params): array {
+    $roleId = $params['id'] ?? $params['role_id'] ?? '';
+
+    if ($roleId === '') {
+      return [
+        'success' => FALSE,
+        'error' => 'id parameter is required for delete_role preview.',
+      ];
+    }
+
+    $configName = "user.role.$roleId";
+    $exists = $this->activeStorage->read($configName) !== FALSE;
+    if (!$exists) {
+      return [
+        'success' => TRUE,
+        'data' => [
+          'action' => 'Delete role',
+          'role_id' => $roleId,
+          'description' => "Role '$roleId' does not exist. No action would be taken.",
+        ],
+      ];
+    }
+
+    return [
+      'success' => TRUE,
+      'data' => [
+        'action' => 'Delete role',
+        'role_id' => $roleId,
+        'configs_deleted' => [$configName],
+        'description' => "Would delete role '$roleId'.",
+      ],
+    ];
+  }
+
+  /**
+   * Preview granting permissions to a role.
+   */
+  protected function previewGrantPermissions(array $params): array {
+    $roleId = $params['role'] ?? $params['id'] ?? $params['role_id'] ?? '';
+    $permissions = $params['permissions'] ?? [];
+
+    if ($roleId === '') {
+      return [
+        'success' => FALSE,
+        'error' => 'role parameter is required for grant_permissions preview.',
+      ];
+    }
+
+    if (is_string($permissions)) {
+      $permissions = array_filter(array_map('trim', explode(',', $permissions)));
+    }
+    if (!is_array($permissions)) {
+      $permissions = [];
+    }
+
+    $configName = "user.role.$roleId";
+    $roleData = $this->activeStorage->read($configName);
+    if ($roleData === FALSE) {
+      return [
+        'success' => FALSE,
+        'error' => "Role '$roleId' does not exist.",
+      ];
+    }
+
+    $current = $roleData['permissions'] ?? [];
+    if (!is_array($current)) {
+      $current = [];
+    }
+
+    $normalized = array_values(array_unique(array_filter(array_map('strval', $permissions))));
+    $willAdd = array_values(array_diff($normalized, $current));
+
+    return [
+      'success' => TRUE,
+      'data' => [
+        'action' => 'Grant permissions to role',
+        'role_id' => $roleId,
+        'config_updated' => $configName,
+        'will_add' => $willAdd,
+        'already_present' => array_values(array_intersect($normalized, $current)),
+        'description' => empty($willAdd)
+          ? 'All provided permissions are already granted.'
+          : sprintf('Would grant %d permission(s) to role %s.', count($willAdd), $roleId),
+      ],
+    ];
+  }
+
+  /**
+   * Preview revoking permissions from a role.
+   */
+  protected function previewRevokePermissions(array $params): array {
+    $roleId = $params['role'] ?? $params['id'] ?? $params['role_id'] ?? '';
+    $permissions = $params['permissions'] ?? [];
+
+    if ($roleId === '') {
+      return [
+        'success' => FALSE,
+        'error' => 'role parameter is required for revoke_permissions preview.',
+      ];
+    }
+
+    if (is_string($permissions)) {
+      $permissions = array_filter(array_map('trim', explode(',', $permissions)));
+    }
+    if (!is_array($permissions)) {
+      $permissions = [];
+    }
+
+    $configName = "user.role.$roleId";
+    $roleData = $this->activeStorage->read($configName);
+    if ($roleData === FALSE) {
+      return [
+        'success' => FALSE,
+        'error' => "Role '$roleId' does not exist.",
+      ];
+    }
+
+    $current = $roleData['permissions'] ?? [];
+    if (!is_array($current)) {
+      $current = [];
+    }
+
+    $normalized = array_values(array_unique(array_filter(array_map('strval', $permissions))));
+    $willRemove = array_values(array_intersect($normalized, $current));
+
+    return [
+      'success' => TRUE,
+      'data' => [
+        'action' => 'Revoke permissions from role',
+        'role_id' => $roleId,
+        'config_updated' => $configName,
+        'will_remove' => $willRemove,
+        'not_present' => array_values(array_diff($normalized, $current)),
+        'description' => empty($willRemove)
+          ? 'None of the provided permissions are currently granted.'
+          : sprintf('Would revoke %d permission(s) from role %s.', count($willRemove), $roleId),
+      ],
+    ];
+  }
+
+  /**
    * Preview create content type operation.
    */
   protected function previewCreateContentType(array $params): array {
@@ -666,6 +847,42 @@ class ConfigManagementService {
         'description' => $exists
           ? "Content type '$machineName' already exists. Operation would fail or update existing."
           : "Would create new content type '$machineName' with default form and view displays.",
+      ],
+    ];
+  }
+
+  /**
+   * Preview delete content type operation.
+   */
+  protected function previewDeleteContentType(array $params): array {
+    $machineName = $params['machine_name'] ?? $params['id'] ?? '';
+    if ($machineName === '') {
+      return [
+        'success' => FALSE,
+        'error' => 'id parameter is required for delete_content_type preview.',
+      ];
+    }
+
+    $typeConfig = "node.type.$machineName";
+    $exists = $this->activeStorage->read($typeConfig) !== FALSE;
+
+    $related = [
+      $typeConfig,
+      "core.entity_form_display.node.$machineName.default",
+      "core.entity_view_display.node.$machineName.default",
+      "core.entity_view_display.node.$machineName.teaser",
+    ];
+
+    return [
+      'success' => TRUE,
+      'data' => [
+        'action' => 'Delete content type',
+        'machine_name' => $machineName,
+        'exists' => $exists,
+        'configs_deleted' => $related,
+        'description' => $exists
+          ? "Would attempt to delete content type '$machineName'. NOTE: deletion will fail if content exists unless the tool supports force deletion."
+          : "Content type '$machineName' does not exist. No action would be taken.",
       ],
     ];
   }
@@ -714,6 +931,46 @@ class ConfigManagementService {
             "Would create %s field '$fullFieldName' on $entityType.$bundle.",
             $storageExists ? 'instance of existing' : 'new'
           ),
+      ],
+    ];
+  }
+
+  /**
+   * Preview delete field operation.
+   */
+  protected function previewDeleteField(array $params): array {
+    $entityType = $params['entity_type'] ?? 'node';
+    $bundle = $params['bundle'] ?? '';
+    $fieldName = $params['field_name'] ?? $params['name'] ?? '';
+
+    if ($bundle === '' || $fieldName === '') {
+      return [
+        'success' => FALSE,
+        'error' => 'bundle and field_name parameters are required for delete_field preview.',
+      ];
+    }
+
+    $fullFieldName = str_starts_with($fieldName, 'field_') ? $fieldName : "field_$fieldName";
+
+    $storageConfig = "field.storage.$entityType.$fullFieldName";
+    $fieldConfig = "field.field.$entityType.$bundle.$fullFieldName";
+
+    $storageExists = $this->activeStorage->read($storageConfig) !== FALSE;
+    $fieldExists = $this->activeStorage->read($fieldConfig) !== FALSE;
+
+    return [
+      'success' => TRUE,
+      'data' => [
+        'action' => 'Delete field instance',
+        'entity_type' => $entityType,
+        'bundle' => $bundle,
+        'field_name' => $fullFieldName,
+        'field_exists' => $fieldExists,
+        'storage_exists' => $storageExists,
+        'configs_deleted' => $fieldExists ? [$fieldConfig] : [],
+        'description' => $fieldExists
+          ? "Would delete field '$fullFieldName' from $entityType.$bundle. Field storage may remain if used elsewhere."
+          : "Field '$fullFieldName' was not found on $entityType.$bundle. No action would be taken.",
       ],
     ];
   }

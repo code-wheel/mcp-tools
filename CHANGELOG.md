@@ -4,6 +4,25 @@ All notable changes to the MCP Tools module will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.0.0-alpha15] - 2026-01-04
+
+### Added
+
+- DrupalCI (`.gitlab-ci.yml`) configuration to test across a broader core/PHP matrix.
+- `drush mcp-tools:remote-setup` to create a dedicated remote execution user/role and configure `mcp_tools_remote.settings.uid`.
+- Expanded config preview support: role create/delete, grant/revoke permissions, delete content type, and delete field preview operations.
+- `DRUPALCI.md` and local testing notes to make CI failures easier to triage.
+
+### Changed
+
+- Audit logs now include a per-tool-call correlation ID, transport, client identifier, and active scopes.
+- Status page now shows the remote HTTP endpoint (when enabled) and warns on risky remote settings (uid 1, empty allowlist, include-all-tools).
+- CI "full tool registration" now validates schema conversion for all tools (not just registration count).
+
+### Fixed
+
+- STDIO E2E sets a known baseline for read-only/config-only so local reruns are deterministic.
+
 ## [1.0.0-alpha14] - 2026-01-04
 
 ### Changed

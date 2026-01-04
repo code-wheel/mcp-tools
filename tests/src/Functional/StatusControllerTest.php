@@ -18,6 +18,7 @@ class StatusControllerTest extends BrowserTestBase {
    */
   protected static $modules = [
     'mcp_tools',
+    'mcp_tools_remote',
     'tool',
     'dblog',
     'update',
@@ -221,6 +222,27 @@ class StatusControllerTest extends BrowserTestBase {
     $this->drupalGet('/admin/config/services/mcp-tools/status');
     $this->assertSession()->statusCodeEquals(200);
     $this->assertSession()->pageTextContains('MCP Tools Status');
+  }
+
+  /**
+   * Tests remote endpoint section and warnings.
+   */
+  public function testRemoteEndpointWarnings(): void {
+    $this->config('mcp_tools_remote.settings')
+      ->set('enabled', TRUE)
+      ->set('uid', 1)
+      ->set('allowed_ips', [])
+      ->set('include_all_tools', TRUE)
+      ->save();
+
+    $this->drupalLogin($this->adminUser);
+    $this->drupalGet('/admin/config/services/mcp-tools/status');
+
+    $this->assertSession()->pageTextContains('Remote HTTP Endpoint (Experimental)');
+    $this->assertSession()->pageTextContains('Remote HTTP endpoint is enabled');
+    $this->assertSession()->pageTextContains('Remote endpoint is configured to run as uid 1');
+    $this->assertSession()->pageTextContains('Remote endpoint IP allowlist is empty');
+    $this->assertSession()->pageTextContains('Remote endpoint is configured to expose all Tool API tools');
   }
 
 }

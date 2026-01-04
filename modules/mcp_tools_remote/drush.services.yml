@@ -3,5 +3,7 @@ services:
     class: Drupal\mcp_tools_remote\Commands\McpToolsRemoteCommands
     arguments:
       - '@mcp_tools_remote.api_key_manager'
+      - '@entity_type.manager'
+      - '@config.factory'
     tags:
       - { name: drush.command }

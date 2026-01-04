@@ -208,4 +208,71 @@ final class ConfigManagementServiceTest extends UnitTestCase {
     $this->assertSame('update', $result['data']['changes'][0]['operation']);
   }
 
+  /**
+   * @covers ::previewOperation
+   */
+  public function testPreviewOperationSupportsRoleOperations(): void {
+    $this->active->write('user.role.editor', [
+      'id' => 'editor',
+      'label' => 'Editor',
+      'permissions' => ['access content'],
+    ]);
+
+    $service = $this->createService();
+
+    $create = $service->previewOperation('create_role', [
+      'id' => 'editor',
+      'label' => 'Editor',
+    ]);
+    $this->assertTrue($create['success']);
+    $this->assertTrue($create['data']['dry_run']);
+    $this->assertSame('editor', $create['data']['role_id']);
+    $this->assertTrue($create['data']['already_exists']);
+
+    $grant = $service->previewOperation('grant_permissions', [
+      'role' => 'editor',
+      'permissions' => ['access content', 'administer nodes'],
+    ]);
+    $this->assertTrue($grant['success']);
+    $this->assertContains('administer nodes', $grant['data']['will_add']);
+    $this->assertContains('access content', $grant['data']['already_present']);
+
+    $revoke = $service->previewOperation('revoke_permissions', [
+      'role' => 'editor',
+      'permissions' => ['access content'],
+    ]);
+    $this->assertTrue($revoke['success']);
+    $this->assertContains('access content', $revoke['data']['will_remove']);
+
+    $delete = $service->previewOperation('delete_role', ['id' => 'editor']);
+    $this->assertTrue($delete['success']);
+    $this->assertSame(['user.role.editor'], $delete['data']['configs_deleted']);
+  }
+
+  /**
+   * @covers ::previewOperation
+   */
+  public function testPreviewOperationSupportsDeleteContentTypeAndField(): void {
+    $this->active->write('node.type.article', ['type' => 'article']);
+    $this->active->write('field.storage.node.field_foo', ['type' => 'string']);
+    $this->active->write('field.field.node.article.field_foo', ['field_name' => 'field_foo']);
+
+    $service = $this->createService();
+
+    $deleteType = $service->previewOperation('delete_content_type', ['id' => 'article']);
+    $this->assertTrue($deleteType['success']);
+    $this->assertTrue($deleteType['data']['exists']);
+    $this->assertContains('node.type.article', $deleteType['data']['configs_deleted']);
+
+    $deleteField = $service->previewOperation('delete_field', [
+      'bundle' => 'article',
+      'field_name' => 'foo',
+    ]);
+    $this->assertTrue($deleteField['success']);
+    $this->assertTrue($deleteField['data']['field_exists']);
+    $this->assertTrue($deleteField['data']['storage_exists']);
+    $this->assertSame('field_foo', $deleteField['data']['field_name']);
+    $this->assertSame(['field.field.node.article.field_foo'], $deleteField['data']['configs_deleted']);
+  }
+
 }

@@ -50,7 +50,7 @@ final class RemoteSettingsForm extends ConfigFormBase {
     $form['warning'] = [
       '#type' => 'markup',
       '#markup' => '<div class="messages messages--warning"><p>' .
-        $this->t('This module is experimental and should only be used on trusted internal networks. Prefer the STDIO transport (`mcp_tools_stdio`) for local development.') .
+        $this->t('This module is experimental and should only be used on trusted internal networks. Prefer the STDIO transport (`mcp_tools_stdio`) for local development. Remote execution as uid 1 is blocked at runtime.') .
         '</p></div>',
     ];
 
@@ -113,6 +113,7 @@ final class RemoteSettingsForm extends ConfigFormBase {
     $form['keys']['help'] = [
       '#type' => 'markup',
       '#markup' => '<p>' . $this->t('Manage keys via Drush:') . '</p><pre><code>' .
+        "drush mcp-tools:remote-setup\n" .
         "drush mcp-tools:remote-key-create --label=\"My Key\" --scopes=read --ttl=86400\n" .
         "drush mcp-tools:remote-key-list\n" .
         "drush mcp-tools:remote-key-revoke KEY_ID\n" .

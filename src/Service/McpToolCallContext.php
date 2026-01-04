@@ -14,10 +14,15 @@ final class McpToolCallContext {
 
   private int $depth = 0;
 
+  private ?string $correlationId = NULL;
+
   /**
    * Mark the beginning of a tool call.
    */
   public function enter(): void {
+    if ($this->depth === 0) {
+      $this->correlationId = $this->generateCorrelationId();
+    }
     $this->depth++;
   }
 
@@ -28,6 +33,9 @@ final class McpToolCallContext {
     if ($this->depth > 0) {
       $this->depth--;
     }
+    if ($this->depth === 0) {
+      $this->correlationId = NULL;
+    }
   }
 
   /**
@@ -37,5 +45,23 @@ final class McpToolCallContext {
     return $this->depth > 0;
   }
 
-}
+  /**
+   * Returns a correlation ID for the current tool call (if active).
+   */
+  public function getCorrelationId(): ?string {
+    return $this->correlationId;
+  }
 
+  /**
+   * Generate a correlation ID for log grouping.
+   */
+  private function generateCorrelationId(): string {
+    try {
+      return bin2hex(random_bytes(8));
+    }
+    catch (\Throwable) {
+      return substr(hash('sha256', uniqid('', TRUE)), 0, 16);
+    }
+  }
+
+}
