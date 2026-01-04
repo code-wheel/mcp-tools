@@ -80,6 +80,22 @@ final class McpToolsRemoteController implements ContainerInjectionInterface {
       }
     }
 
+    $allowedOrigins = $remoteConfig->get('allowed_origins') ?? [];
+    if (is_array($allowedOrigins)) {
+      $allowedOrigins = array_values(array_filter(array_map('trim', $allowedOrigins)));
+    }
+    else {
+      $allowedOrigins = [];
+    }
+
+    // Optional origin allowlist (DNS rebinding defense-in-depth).
+    if (!empty($allowedOrigins)) {
+      $hostname = $this->extractHostnameForAllowlist($request);
+      if (!$hostname || !$this->hostnameMatchesAllowlist($hostname, $allowedOrigins)) {
+        return new Response('Not found.', 404);
+      }
+    }
+
     if (!class_exists(\Mcp\Server::class)) {
       return new Response('Missing dependency: mcp/sdk', 500);
     }
@@ -172,6 +188,81 @@ final class McpToolsRemoteController implements ContainerInjectionInterface {
 
     $headerKey = (string) $request->headers->get('X-MCP-Api-Key', '');
     return $headerKey !== '' ? trim($headerKey) : NULL;
+  }
+
+  /**
+   * Extract a hostname for allowlist checks.
+   *
+   * Uses Origin, then Referer, then Host (non-browser clients generally won't
+   * send Origin/Referer).
+   */
+  private function extractHostnameForAllowlist(Request $request): ?string {
+    $origin = (string) $request->headers->get('Origin', '');
+    $referer = (string) $request->headers->get('Referer', '');
+
+    $candidate = '';
+    if ($origin !== '') {
+      $candidate = $origin;
+    }
+    elseif ($referer !== '') {
+      $candidate = $referer;
+    }
+
+    if ($candidate === '') {
+      $host = $request->getHost();
+      return $host !== '' ? $host : NULL;
+    }
+
+    // Origin/Referer should be a URL, but be tolerant and accept host[:port].
+    $url = $candidate;
+    if (!preg_match('/^[a-zA-Z][a-zA-Z0-9+\\-.]*:\/\//', $url)) {
+      $url = 'http://' . $url;
+    }
+
+    $host = parse_url($url, PHP_URL_HOST);
+    if (!is_string($host) || $host === '') {
+      return NULL;
+    }
+
+    return $host;
+  }
+
+  /**
+   * Checks whether a hostname matches an allowlist.
+   *
+   * Supports exact host matches and wildcard subdomains (e.g. *.example.com).
+   *
+   * @param string $hostname
+   *   Hostname to validate.
+   * @param array<int, string> $allowedOrigins
+   *   Allowlisted host patterns.
+   */
+  private function hostnameMatchesAllowlist(string $hostname, array $allowedOrigins): bool {
+    $hostname = strtolower($hostname);
+
+    foreach ($allowedOrigins as $pattern) {
+      $pattern = strtolower(trim((string) $pattern));
+      if ($pattern === '') {
+        continue;
+      }
+
+      if ($hostname === $pattern) {
+        return TRUE;
+      }
+
+      // Wildcard subdomains: *.example.com matches foo.example.com.
+      if (str_starts_with($pattern, '*.')) {
+        $suffix = substr($pattern, 1);
+        if ($suffix !== '' && str_ends_with($hostname, $suffix)) {
+          $root = ltrim($suffix, '.');
+          if ($hostname !== $root) {
+            return TRUE;
+          }
+        }
+      }
+    }
+
+    return FALSE;
   }
 
 }

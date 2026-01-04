@@ -14,6 +14,12 @@ mcp_tools_remote.settings:
       sequence:
         type: string
         label: 'IP or CIDR'
+    allowed_origins:
+      type: sequence
+      label: 'Allowed client origins for access'
+      sequence:
+        type: string
+        label: 'Host or wildcard'
     server_name:
       type: string
       label: 'Server name'

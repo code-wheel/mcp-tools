@@ -278,6 +278,19 @@ jobs:
           ./vendor/bin/drush en mcp_tools_stdio mcp_tools_remote mcp_tools_cache -y
           ./vendor/bin/drush cr
 
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install MCP JS SDK (no-lock)
+        run: |
+          npm install --no-save --no-package-lock @modelcontextprotocol/sdk zod
+
+      - name: JS SDK STDIO compatibility
+        run: |
+          node scripts/mcp_js_sdk_compat.mjs --drupal-root drupal
+
       - name: STDIO transport E2E
         run: |
           python3 scripts/mcp_stdio_e2e.py --drupal-root drupal

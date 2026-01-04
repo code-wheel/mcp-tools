@@ -116,6 +116,7 @@ def _post_jsonrpc(
     payload: dict,
     api_key: str | None,
     session_id: str | None,
+    extra_headers: dict[str, str] | None = None,
     timeout_seconds: float = 10,
 ) -> tuple[int, dict[str, str], str]:
     body = json.dumps(payload, separators=(",", ":")).encode("utf-8")
@@ -128,6 +129,8 @@ def _post_jsonrpc(
         headers["Authorization"] = f"Bearer {api_key}"
     if session_id:
         headers["Mcp-Session-Id"] = session_id
+    if extra_headers:
+        headers.update(extra_headers)
 
     req = urllib.request.Request(url=url, data=body, headers=headers, method="POST")
 
@@ -508,11 +511,13 @@ def main() -> int:
     _require_file(router)
 
     url = args.base_url.rstrip("/") + "/_mcp_tools"
+    base_host = parsed_base_url.hostname
 
     try:
         # Ensure the optional IP allowlist behaves as expected.
         # First lock it down so localhost cannot reach it.
         _set_config(drupal_root, "mcp_tools_remote.settings", "allowed_ips", ["203.0.113.1"])
+        _set_config(drupal_root, "mcp_tools_remote.settings", "allowed_origins", [])
         _run_drush(drupal_root, ["cr"])
 
         server = _start_php_server(web_root, parsed_base_url.hostname, parsed_base_url.port)
@@ -539,8 +544,67 @@ def main() -> int:
         finally:
             _stop_php_server(server)
 
+        # Ensure optional Origin/Host allowlist behaves as expected.
+        _set_config(drupal_root, "mcp_tools_remote.settings", "allowed_ips", [])
+        _set_config(drupal_root, "mcp_tools_remote.settings", "allowed_origins", ["example.invalid"])
+        _run_drush(drupal_root, ["cr"])
+
+        server = _start_php_server(web_root, parsed_base_url.hostname, parsed_base_url.port)
+        try:
+            _wait_for_http(args.base_url.rstrip("/") + "/", timeout_seconds=15)
+
+            status, _, _ = _post_jsonrpc(
+                url,
+                {
+                    "jsonrpc": "2.0",
+                    "id": 997,
+                    "method": "initialize",
+                    "params": {
+                        "protocolVersion": "2024-11-05",
+                        "clientInfo": {"name": "mcp_tools_ci_origin_allowlist", "version": "0.0.0"},
+                        "capabilities": {},
+                    },
+                },
+                api_key=None,
+                session_id=None,
+            )
+            if status != 404:
+                raise SystemExit(f"Expected 404 when host is not allowlisted, got {status}")
+        finally:
+            _stop_php_server(server)
+
+        # Origin header should take precedence over Host for allowlist checks.
+        _set_config(drupal_root, "mcp_tools_remote.settings", "allowed_origins", [base_host])
+        _run_drush(drupal_root, ["cr"])
+
+        server = _start_php_server(web_root, parsed_base_url.hostname, parsed_base_url.port)
+        try:
+            _wait_for_http(args.base_url.rstrip("/") + "/", timeout_seconds=15)
+
+            status, _, _ = _post_jsonrpc(
+                url,
+                {
+                    "jsonrpc": "2.0",
+                    "id": 996,
+                    "method": "initialize",
+                    "params": {
+                        "protocolVersion": "2024-11-05",
+                        "clientInfo": {"name": "mcp_tools_ci_origin_header", "version": "0.0.0"},
+                        "capabilities": {},
+                    },
+                },
+                api_key=None,
+                session_id=None,
+                extra_headers={"Origin": "https://example.invalid"},
+            )
+            if status != 404:
+                raise SystemExit(f"Expected 404 when Origin is not allowlisted, got {status}")
+        finally:
+            _stop_php_server(server)
+
         # Now allow localhost (IPv4 + IPv6) and run the normal flow.
         _set_config(drupal_root, "mcp_tools_remote.settings", "allowed_ips", ["127.0.0.1", "::1"])
+        _set_config(drupal_root, "mcp_tools_remote.settings", "allowed_origins", [base_host])
         _run_drush(drupal_root, ["cr"])
 
         server = _start_php_server(web_root, parsed_base_url.hostname, parsed_base_url.port)

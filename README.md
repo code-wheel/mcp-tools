@@ -92,7 +92,7 @@ drush mcp-tools:remote-key-create --label="My Key" --scopes=read --ttl=86400
 
 Configure the endpoint at `/_mcp_tools` in your MCP client, and send the key as `Authorization: Bearer …` or `X-MCP-Api-Key: …`.
 
-Only use this on trusted internal networks; configure a dedicated execution user (not uid 1), consider setting an IP allowlist in `/admin/config/services/mcp-tools/remote`, and keep keys read-only unless absolutely necessary.
+Only use this on trusted internal networks; configure a dedicated execution user (not uid 1), consider setting IP and Origin/Host allowlists in `/admin/config/services/mcp-tools/remote`, and keep keys read-only unless absolutely necessary.
 
 ## Architecture: Granular Submodules
 
@@ -856,7 +856,7 @@ drush mcp-tools:remote-key-create --label="My Key" --scopes=read --ttl=86400
 
 Configure your MCP client to use `/_mcp_tools` and send the key as `Authorization: Bearer …` or `X-MCP-Api-Key: …`.
 
-Configure the endpoint at `/admin/config/services/mcp-tools/remote` (recommended: dedicated execution user + IP allowlist).
+Configure the endpoint at `/admin/config/services/mcp-tools/remote` (recommended: dedicated execution user + IP and Origin/Host allowlists).
 
 ### Alternative: drupal/mcp_server
 

@@ -3,6 +3,10 @@ uid: 1
 # Optional allowlist of client IPs/CIDRs that may access the HTTP endpoint.
 # When empty, any IP is allowed (not recommended for public networks).
 allowed_ips: []
+# Optional allowlist of client origins (DNS rebinding defense-in-depth).
+# When non-empty, requests must match by Origin/Referer/Host. One host per line.
+# Supports exact hosts (example.com) and wildcard subdomains (*.example.com).
+allowed_origins: []
 server_name: 'Drupal MCP Tools'
 server_version: '1.0.0'
 pagination_limit: 50
