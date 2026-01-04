@@ -82,13 +82,34 @@ mcp_tools/                           # Base module (28 read-only tools)
 | Service consolidation | Merge small related services | Deferred |
 | Additional testing | Integration tests, edge cases | Ongoing |
 
-### Future Considerations
+### Community-Driven (Post-Adoption)
 
-| Task | Description | Decision |
-|------|-------------|----------|
-| Multi-site support | Manage multiple Drupal instances | Not planned - complex, limited demand |
+These items are **not planned** until there's demonstrated community interest. They will be prioritized based on issue queue requests and adoption metrics.
+
+#### Additional Contrib Integrations
+
+| Module | Tools | Status |
+|--------|-------|--------|
+| Commerce | Products, orders, carts, payments | Waiting for demand |
+| ECA | Event-Condition-Action rules | Waiting for demand |
+| Group | Group content, membership | Waiting for demand |
+| Feeds | Import configuration | Waiting for demand |
+
+#### AI-Specific Features
+
+| Feature | Description | Status |
+|---------|-------------|--------|
+| Context summaries | `mcp_get_site_context` - compact site overview for LLM context windows | Waiting for demand |
+| Guided workflows | Multi-step wizards (e.g., "setup blog" orchestration) | Waiting for demand |
+| Schema introspection | Enhanced field type documentation for LLM understanding | Waiting for demand |
+
+#### Architecture Changes
+
+| Task | Description | Rationale |
+|------|-------------|-----------|
+| Contrib module extraction | Move contrib integrations (paragraphs, webform, metatag, etc.) to separate `mcp_tools_contrib` package | Keeps core module lean; reduces test matrix; allows independent release cycles. **Only worthwhile if adoption justifies maintenance overhead.** |
+| Multi-site support | Manage multiple Drupal instances | Complex, limited demand - not planned |
 | Submodule consolidation | Merge SEO modules | Not planned - current structure mirrors contrib modules |
-| Webhook extraction | Move to submodule | Not planned - minimal benefit |
 
 **Note:** The module is feature-complete at 214 tools. Future work will focus on bug fixes, compatibility updates, and community-requested features.
 
