@@ -153,6 +153,29 @@ final class ToolApiSchemaConverterTest extends UnitTestCase {
     $this->assertSame('object', $properties['meta']['type']);
   }
 
+  /**
+   * @covers ::toolDefinitionToInputSchema
+   */
+  public function testToolDefinitionToInputSchemaEncodesEmptyPropertiesAsObject(): void {
+    $converter = new ToolApiSchemaConverter();
+
+    $definition = new ToolDefinition([
+      'id' => 'mcp_tools:test_empty',
+      'provider' => 'mcp_tools',
+      'label' => $this->markup('Empty'),
+      'description' => $this->markup('No inputs'),
+      'operation' => ToolOperation::Read,
+      'destructive' => FALSE,
+      'input_definitions' => [],
+    ]);
+
+    $schema = $converter->toolDefinitionToInputSchema($definition);
+
+    $this->assertSame('object', $schema['type']);
+    $this->assertInstanceOf(\stdClass::class, $schema['properties']);
+    $this->assertSame('{}', json_encode($schema['properties']));
+  }
+
   private function mockInputDefinition(
     string $dataType,
     bool $required,

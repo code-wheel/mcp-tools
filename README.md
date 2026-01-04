@@ -78,8 +78,10 @@ drush en mcp_tools
 
 ```bash
 drush en mcp_tools_stdio
-drush mcp-tools:serve
+drush mcp-tools:serve --uid=1
 ```
+
+Tip: Drush often boots as uid 0 (anonymous). For local development, use `--uid=1`. For shared environments, use a dedicated user with only the MCP Tools permissions you need.
 
 ### Remote MCP (HTTP) setup (experimental)
 
@@ -213,7 +215,7 @@ X-MCP-Scope: read,write
 ?mcp_scope=read,write
 
 # Via environment (for STDIO transport)
-MCP_SCOPE=read,write drush mcp-tools:serve
+MCP_SCOPE=read,write drush mcp-tools:serve --uid=1
 ```
 
 Scopes are always limited by `access.allowed_scopes`. When no trusted override is present, `access.default_scopes` are used.
@@ -835,11 +837,11 @@ Signature verification: When a secret is configured, requests include an `X-MCP-
 drush en mcp_tools_stdio -y
 
 # Run the MCP server over STDIO (Claude Desktop, Claude Code, etc).
-drush mcp-tools:serve
+drush mcp-tools:serve --uid=1
 
 # With specific scopes (local only)
-MCP_SCOPE=read,write drush mcp-tools:serve
-# or: drush mcp-tools:serve --scope=read,write
+MCP_SCOPE=read,write drush mcp-tools:serve --uid=1
+# or: drush mcp-tools:serve --uid=1 --scope=read,write
 ```
 
 ### Remote (HTTP) — experimental

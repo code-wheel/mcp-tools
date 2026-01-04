@@ -13,13 +13,15 @@ Add to your Claude Code configuration (`.claude/settings.json` or global setting
   "mcpServers": {
     "drupal-local": {
       "command": "drush",
-      "args": ["mcp-tools:serve", "--quiet", "--scope=read,write"],
+      "args": ["mcp-tools:serve", "--quiet", "--uid=1", "--scope=read,write"],
       "cwd": "/path/to/your/drupal/site",
       "env": {}
     }
   }
 }
 ```
+
+Note: For local development you can use `--uid=1`. For staging/production, use a dedicated Drupal user with only the MCP Tools permissions you need.
 
 ### 2. For Read-Only Access (Production)
 
@@ -28,7 +30,7 @@ Add to your Claude Code configuration (`.claude/settings.json` or global setting
   "mcpServers": {
     "drupal-prod": {
       "command": "drush",
-      "args": ["mcp-tools:serve", "--quiet", "--scope=read"],
+      "args": ["mcp-tools:serve", "--quiet", "--uid=123", "--scope=read"],
       "cwd": "/path/to/drupal",
       "env": {}
     }

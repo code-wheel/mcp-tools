@@ -67,7 +67,9 @@ final class ToolApiSchemaConverter {
 
     $schema = [
       'type' => 'object',
-      'properties' => $properties,
+      // MCP clients expect JSON Schema "properties" to be an object. In PHP,
+      // an empty array would JSON-encode to `[]`, so use an empty object.
+      'properties' => !empty($properties) ? $properties : new \stdClass(),
     ];
 
     if (!empty($required)) {
@@ -225,4 +227,3 @@ final class ToolApiSchemaConverter {
   }
 
 }
-

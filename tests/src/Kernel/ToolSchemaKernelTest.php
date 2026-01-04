@@ -96,10 +96,15 @@ final class ToolSchemaKernelTest extends KernelTestBase {
       $schema = $converter->toolDefinitionToInputSchema($definition);
       $this->assertIsArray($schema, $toolId);
       $this->assertSame('object', $schema['type'] ?? NULL, $toolId);
-      $this->assertIsArray($schema['properties'] ?? NULL, $toolId);
+      $properties = $schema['properties'] ?? NULL;
+      $this->assertTrue(is_array($properties) || $properties instanceof \stdClass, $toolId);
 
       $encoded = json_encode($schema);
       $this->assertNotFalse($encoded, $toolId);
+
+      $decoded = json_decode((string) $encoded);
+      $this->assertInstanceOf(\stdClass::class, $decoded, $toolId);
+      $this->assertTrue(isset($decoded->properties) && is_object($decoded->properties), $toolId);
     }
   }
 
