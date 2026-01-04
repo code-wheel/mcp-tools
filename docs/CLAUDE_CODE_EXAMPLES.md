@@ -13,11 +13,9 @@ Add to your Claude Code configuration (`.claude/settings.json` or global setting
   "mcpServers": {
     "drupal-local": {
       "command": "drush",
-      "args": ["mcp:serve"],
+      "args": ["mcp-tools:serve", "--quiet", "--scope=read,write"],
       "cwd": "/path/to/your/drupal/site",
-      "env": {
-        "MCP_SCOPE": "read,write"
-      }
+      "env": {}
     }
   }
 }
@@ -30,11 +28,9 @@ Add to your Claude Code configuration (`.claude/settings.json` or global setting
   "mcpServers": {
     "drupal-prod": {
       "command": "drush",
-      "args": ["mcp:serve"],
+      "args": ["mcp-tools:serve", "--quiet", "--scope=read"],
       "cwd": "/path/to/drupal",
-      "env": {
-        "MCP_SCOPE": "read"
-      }
+      "env": {}
     }
   }
 }
@@ -42,13 +38,14 @@ Add to your Claude Code configuration (`.claude/settings.json` or global setting
 
 ### 3. HTTP Transport (Remote Server)
 
+This requires enabling `mcp_tools_remote` and configuring the endpoint at `/admin/config/services/mcp-tools/remote`.
+
 ```json
 {
   "mcpServers": {
     "drupal-remote": {
-      "url": "https://your-site.com/_mcp",
+      "url": "https://your-site.com/_mcp_tools",
       "headers": {
-        "X-MCP-Scope": "read,write",
         "Authorization": "Bearer your-api-key"
       }
     }
@@ -266,10 +263,11 @@ mcp_analysis_broken_links()
 
 ### "Permission denied" errors
 
-Check that your MCP_SCOPE includes the required permission:
-- `read` for read-only operations
-- `write` for content/structure changes
-- `admin` for applying recipes or templates
+MCP Tools access is enforced at multiple layers:
+
+- **MCP scope** (read/write/admin)
+- **Drupal permissions** (`mcp_tools use {category}` for the tool category)
+- **Global site mode** (read-only or config-only)
 
 ### Rate limiting
 
