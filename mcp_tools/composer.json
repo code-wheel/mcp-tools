@@ -14,12 +14,6 @@
   "support": {
     "issues": "https://www.drupal.org/project/issues/mcp_tools"
   },
-  "repositories": [
-    {
-      "type": "vcs",
-      "url": "https://github.com/code-wheel/mcp-http-security"
-    }
-  ],
   "require": {
     "php": ">=8.3",
     "drupal/core": "^10.3 || ^11",
