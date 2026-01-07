@@ -32,12 +32,12 @@ claude mcp add --scope project drupal -- drush mcp-tools:stdio --uri=https://you
 
 <p><strong>Or add <code>.mcp.json</code> to your Drupal project root:</strong></p>
 <code>{
-"mcpServers": {
-"drupal": {
-"command": "drush",
-"args": ["mcp-tools:stdio", "--uri=https://your-site.ddev.site"]
-}
-}
+  "mcpServers": {
+    "drupal": {
+      "command": "drush",
+      "args": ["mcp-tools:stdio", "--uri=https://your-site.ddev.site"]
+    }
+  }
 }</code>
 
 <h3>Option B: HTTP Transport (Remote/Docker)</h3>
@@ -52,15 +52,15 @@ drush mcp-tools:remote-key-create --label="Claude" --scopes=read,write</code>
 
 <p><strong>Or add to <code>.mcp.json</code>:</strong></p>
 <code>{
-"mcpServers": {
-"drupal": {
-"type": "http",
-"url": "http://localhost:8080/_mcp_tools",
-"headers": {
-"Authorization": "Bearer YOUR_API_KEY"
-}
-}
-}
+  "mcpServers": {
+    "drupal": {
+      "type": "http",
+      "url": "http://localhost:8080/_mcp_tools",
+      "headers": {
+        "Authorization": "Bearer YOUR_API_KEY"
+      }
+    }
+  }
 }</code>
 
 <p>Manage keys at <code>/admin/config/services/mcp-tools/remote</code> or via <code>drush mcp-tools:remote-key-list</code>.</p>
