@@ -1,0 +1,5 @@
+mcp_tools_remote.settings:
+  title: 'Remote'
+  route_name: mcp_tools_remote.settings
+  base_route: mcp_tools.settings
+  weight: 20

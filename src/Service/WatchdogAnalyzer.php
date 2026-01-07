@@ -80,7 +80,7 @@ class WatchdogAnalyzer {
         'severity' => self::SEVERITY_LABELS[$row->severity] ?? 'unknown',
         'severity_level' => (int) $row->severity,
         'message' => $this->formatMessage($row->message, $row->variables),
-        'timestamp' => date('Y-m-d H:i:s', $row->timestamp),
+        'timestamp' => date('Y-m-d H:i:s', (int) $row->timestamp),
       ];
     }
 

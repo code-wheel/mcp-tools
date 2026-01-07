@@ -24,6 +24,109 @@ function mcp_tools_remote_requirements(string $phase): array {
     }
   }
 
+  // Runtime-only checks for configuration.
+  if ($phase === 'runtime') {
+    $config = \Drupal::config('mcp_tools_remote.settings');
+    $enabled = (bool) $config->get('enabled');
+
+    if ($enabled) {
+      $uid = (int) $config->get('uid');
+
+      // Check if execution user is configured.
+      if ($uid < 2) {
+        $requirements['mcp_tools_remote_user'] = [
+          'title' => t('MCP Remote: Execution user'),
+          'value' => t('Not configured'),
+          'description' => t('The MCP Remote endpoint requires a dedicated execution user (uid 2+). Create a service account and configure it at <a href=":url">MCP Remote settings</a>.', [
+            ':url' => '/admin/config/services/mcp-tools/remote',
+          ]),
+          'severity' => REQUIREMENT_ERROR,
+        ];
+      }
+      else {
+        // Check if user exists and has MCP permissions.
+        $user = \Drupal::entityTypeManager()->getStorage('user')->load($uid);
+        if (!$user) {
+          $requirements['mcp_tools_remote_user'] = [
+            'title' => t('MCP Remote: Execution user'),
+            'value' => t('User @uid not found', ['@uid' => $uid]),
+            'description' => t('The configured execution user (uid @uid) does not exist. Update the setting at <a href=":url">MCP Remote settings</a>.', [
+              '@uid' => $uid,
+              ':url' => '/admin/config/services/mcp-tools/remote',
+            ]),
+            'severity' => REQUIREMENT_ERROR,
+          ];
+        }
+        else {
+          // Check for MCP permissions.
+          $mcp_permissions = _mcp_tools_remote_get_user_mcp_permissions($user);
+          if (empty($mcp_permissions)) {
+            $requirements['mcp_tools_remote_permissions'] = [
+              'title' => t('MCP Remote: User permissions'),
+              'value' => t('No MCP permissions'),
+              'description' => t('The execution user "@name" has no MCP Tools permissions. Grant permissions like "mcp_tools use content" or "mcp_tools use site_tools" to the user\'s role(s). See <a href=":perm_url">Permissions</a>.', [
+                '@name' => $user->getAccountName(),
+                ':perm_url' => '/admin/people/permissions#module-mcp_tools',
+              ]),
+              'severity' => REQUIREMENT_WARNING,
+            ];
+          }
+          else {
+            $requirements['mcp_tools_remote_user'] = [
+              'title' => t('MCP Remote: Execution user'),
+              'value' => t('@name (@count permissions)', [
+                '@name' => $user->getAccountName(),
+                '@count' => count($mcp_permissions),
+              ]),
+              'severity' => REQUIREMENT_OK,
+            ];
+          }
+        }
+      }
+
+      // Check for API keys.
+      $key_manager = \Drupal::service('mcp_tools_remote.api_key_manager');
+      $keys = $key_manager->listKeys();
+      if (empty($keys)) {
+        $requirements['mcp_tools_remote_keys'] = [
+          'title' => t('MCP Remote: API keys'),
+          'value' => t('No keys configured'),
+          'description' => t('No API keys have been created. Run: <code>drush mcp-tools:remote-key-create --label="My Client" --scopes="read,write"</code>'),
+          'severity' => REQUIREMENT_WARNING,
+        ];
+      }
+      else {
+        $requirements['mcp_tools_remote_keys'] = [
+          'title' => t('MCP Remote: API keys'),
+          'value' => t('@count key(s) configured', ['@count' => count($keys)]),
+          'severity' => REQUIREMENT_OK,
+        ];
+      }
+    }
+  }
+
   return $requirements;
+}
+
+/**
+ * Get MCP-related permissions that a user has.
+ *
+ * @param \Drupal\user\UserInterface $user
+ *   The user account.
+ *
+ * @return array
+ *   List of MCP permission names the user has.
+ */
+function _mcp_tools_remote_get_user_mcp_permissions($user): array {
+  $all_permissions = \Drupal::service('user.permissions')->getPermissions();
+  $mcp_permissions = [];
+
+  foreach ($all_permissions as $perm_name => $perm_info) {
+    if (str_starts_with($perm_name, 'mcp_tools ') && $user->hasPermission($perm_name)) {
+      $mcp_permissions[] = $perm_name;
+    }
+  }
+
+  return $mcp_permissions;
 }
 

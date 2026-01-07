@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools_remote\Form;
 
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Url;
 use Drupal\mcp_tools_remote\Service\ApiKeyManager;
+use Drupal\user\PermissionHandlerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -16,6 +19,8 @@ final class RemoteSettingsForm extends ConfigFormBase {
 
   public function __construct(
     private readonly ApiKeyManager $apiKeyManager,
+    private readonly EntityTypeManagerInterface $entityTypeManager,
+    private readonly PermissionHandlerInterface $permissionHandler,
   ) {}
 
   /**
@@ -24,6 +29,8 @@ final class RemoteSettingsForm extends ConfigFormBase {
   public static function create(ContainerInterface $container): static {
     return new static(
       $container->get('mcp_tools_remote.api_key_manager'),
+      $container->get('entity_type.manager'),
+      $container->get('user.permissions'),
     );
   }
 
@@ -50,7 +57,7 @@ final class RemoteSettingsForm extends ConfigFormBase {
     $form['warning'] = [
       '#type' => 'markup',
       '#markup' => '<div class="messages messages--warning"><p>' .
-        $this->t('This module is experimental and should only be used on trusted internal networks. Prefer the STDIO transport (`mcp_tools_stdio`) for local development. Remote execution as uid 1 is blocked at runtime.') .
+        $this->t('This module is experimental and should only be used on trusted internal networks. Prefer the STDIO transport (<code>mcp_tools_stdio</code>) for local development.') .
         '</p></div>',
     ];
 
@@ -64,40 +71,102 @@ final class RemoteSettingsForm extends ConfigFormBase {
     $form['allowed_ips'] = [
       '#type' => 'textarea',
       '#title' => $this->t('Allowed client IPs (optional)'),
-      '#description' => $this->t('When provided, only these IPs/CIDRs may access the endpoint. One per line (examples: <code>127.0.0.1</code>, <code>10.0.0.0/8</code>). Leave empty to allow any IP (not recommended).'),
+      '#description' => $this->t('One per line. Examples: <code>127.0.0.1</code>, <code>10.0.0.0/8</code>. Leave empty to allow any IP.'),
       '#default_value' => implode("\n", $config->get('allowed_ips') ?? []),
-      '#rows' => 4,
+      '#rows' => 3,
     ];
 
     $form['allowed_origins'] = [
       '#type' => 'textarea',
       '#title' => $this->t('Allowed origins (optional)'),
-      '#description' => $this->t('Defense-in-depth against DNS rebinding. When provided, requests must match by <code>Origin</code>/<code>Referer</code>/<code>Host</code>. One host per line (examples: <code>localhost</code>, <code>example.com</code>, <code>*.example.com</code>). Leave empty to allow any origin.'),
+      '#description' => $this->t('Defense-in-depth against DNS rebinding. One host per line.'),
       '#default_value' => implode("\n", $config->get('allowed_origins') ?? []),
-      '#rows' => 4,
+      '#rows' => 3,
     ];
 
-    $form['uid'] = [
+    // Execution user section.
+    $form['execution'] = [
+      '#type' => 'details',
+      '#title' => $this->t('Execution User'),
+      '#open' => TRUE,
+    ];
+
+    $form['execution']['uid'] = [
       '#type' => 'number',
       '#title' => $this->t('Execution user ID'),
-      '#description' => $this->t('Tools will execute as this Drupal user (for attribution and access context). Recommended: use a dedicated service account (avoid uid 1) with only the required MCP Tools permissions.'),
+      '#description' => $this->t('Tools execute as this Drupal user. Use a dedicated service account (uid 2+).'),
       '#default_value' => (int) ($config->get('uid') ?? 1),
       '#min' => 1,
     ];
 
-    $form['server_name'] = [
+    // Show current user status.
+    $uid = (int) ($config->get('uid') ?? 1);
+    if ($uid > 1) {
+      $user = $this->entityTypeManager->getStorage('user')->load($uid);
+      if ($user) {
+        $mcp_permissions = $this->getUserMcpPermissions($user);
+        $count = count($mcp_permissions);
+
+        if ($count === 0) {
+          $form['execution']['status'] = [
+            '#type' => 'markup',
+            '#markup' => '<div class="messages messages--error">' .
+              $this->t('User "@name" has no MCP permissions. <a href=":url">Set up permissions</a>.', [
+                '@name' => $user->getAccountName(),
+                ':url' => Url::fromRoute('mcp_tools.permissions')->toString(),
+              ]) . '</div>',
+          ];
+        }
+        else {
+          $form['execution']['status'] = [
+            '#type' => 'markup',
+            '#markup' => '<div class="messages messages--status">' .
+              $this->t('User "@name" has @count MCP permission(s). <a href=":url">View details</a>.', [
+                '@name' => $user->getAccountName(),
+                '@count' => $count,
+                ':url' => Url::fromRoute('mcp_tools.permissions')->toString(),
+              ]) . '</div>',
+          ];
+        }
+      }
+      else {
+        $form['execution']['status'] = [
+          '#type' => 'markup',
+          '#markup' => '<div class="messages messages--error">' .
+            $this->t('User @uid does not exist.', ['@uid' => $uid]) . '</div>',
+        ];
+      }
+    }
+    else {
+      $form['execution']['status'] = [
+        '#type' => 'markup',
+        '#markup' => '<div class="messages messages--warning">' .
+          $this->t('Configure a dedicated execution user (uid 2+). <a href=":url">Set up permissions</a> first.', [
+            ':url' => Url::fromRoute('mcp_tools.permissions')->toString(),
+          ]) . '</div>',
+      ];
+    }
+
+    // Server settings.
+    $form['server'] = [
+      '#type' => 'details',
+      '#title' => $this->t('Server Settings'),
+      '#open' => FALSE,
+    ];
+
+    $form['server']['server_name'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Server name'),
       '#default_value' => (string) ($config->get('server_name') ?? 'Drupal MCP Tools'),
     ];
 
-    $form['server_version'] = [
+    $form['server']['server_version'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Server version'),
       '#default_value' => (string) ($config->get('server_version') ?? '1.0.0'),
     ];
 
-    $form['pagination_limit'] = [
+    $form['server']['pagination_limit'] = [
       '#type' => 'number',
       '#title' => $this->t('Pagination limit'),
       '#default_value' => (int) ($config->get('pagination_limit') ?? 50),
@@ -105,26 +174,26 @@ final class RemoteSettingsForm extends ConfigFormBase {
       '#max' => 1000,
     ];
 
-    $form['include_all_tools'] = [
+    $form['server']['include_all_tools'] = [
       '#type' => 'checkbox',
       '#title' => $this->t('Expose all Tool API tools'),
-      '#description' => $this->t('When disabled (recommended), only tools whose provider starts with <code>mcp_tools</code> are exposed.'),
+      '#description' => $this->t('When disabled, only MCP Tools are exposed.'),
       '#default_value' => (bool) $config->get('include_all_tools'),
     ];
 
+    // API Keys section.
     $form['keys'] = [
       '#type' => 'details',
-      '#title' => $this->t('API keys'),
+      '#title' => $this->t('API Keys'),
       '#open' => TRUE,
     ];
 
     $form['keys']['help'] = [
       '#type' => 'markup',
       '#markup' => '<p>' . $this->t('Manage keys via Drush:') . '</p><pre><code>' .
-        "drush mcp-tools:remote-setup\n" .
-        "drush mcp-tools:remote-key-create --label=\"My Key\" --scopes=read --ttl=86400\n" .
+        "drush mcp-tools:remote-key-create --label=\"My Key\" --scopes=read,write\n" .
         "drush mcp-tools:remote-key-list\n" .
-        "drush mcp-tools:remote-key-revoke KEY_ID\n" .
+        "drush mcp-tools:remote-key-revoke KEY_ID" .
         '</code></pre>',
     ];
 
@@ -132,12 +201,12 @@ final class RemoteSettingsForm extends ConfigFormBase {
     $rows = [];
     foreach ($keys as $id => $data) {
       $rows[] = [
-        'id' => $id,
-        'label' => $data['label'] ?? '',
-        'scopes' => implode(',', $data['scopes'] ?? []),
-        'created' => $data['created'] ?? '',
-        'last_used' => $data['last_used'] ?? '',
-        'expires' => $data['expires'] ?? '',
+        $id,
+        $data['label'] ?? '',
+        implode(', ', $data['scopes'] ?? []),
+        $data['created'] ?? '',
+        $data['last_used'] ?? '-',
+        $data['expires'] ?? 'never',
       ];
     }
 
@@ -151,8 +220,8 @@ final class RemoteSettingsForm extends ConfigFormBase {
         $this->t('Last used'),
         $this->t('Expires'),
       ],
-      '#rows' => array_map(static fn(array $row): array => array_values($row), $rows),
-      '#empty' => $this->t('No keys found.'),
+      '#rows' => $rows,
+      '#empty' => $this->t('No API keys. Create one using the Drush command above.'),
     ];
 
     return parent::buildForm($form, $form_state);
@@ -165,7 +234,7 @@ final class RemoteSettingsForm extends ConfigFormBase {
     parent::validateForm($form, $form_state);
 
     if ((bool) $form_state->getValue('enabled') && (int) $form_state->getValue('uid') === 1) {
-      $form_state->setErrorByName('uid', $this->t('For safety, do not run the remote HTTP endpoint as uid 1. Create a dedicated service account and enter its user ID.'));
+      $form_state->setErrorByName('uid', $this->t('Do not run the remote endpoint as uid 1. Create a dedicated service account.'));
     }
   }
 
@@ -191,6 +260,22 @@ final class RemoteSettingsForm extends ConfigFormBase {
       ->save();
 
     parent::submitForm($form, $form_state);
+  }
+
+  /**
+   * Get MCP-related permissions that a user has.
+   */
+  private function getUserMcpPermissions($user): array {
+    $all_permissions = $this->permissionHandler->getPermissions();
+    $mcp_permissions = [];
+
+    foreach ($all_permissions as $perm_name => $perm_info) {
+      if (str_starts_with($perm_name, 'mcp_tools ') && $user->hasPermission($perm_name)) {
+        $mcp_permissions[] = $perm_name;
+      }
+    }
+
+    return $mcp_permissions;
   }
 
 }

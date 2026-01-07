@@ -8,3 +8,9 @@ mcp_tools.status:
   route_name: mcp_tools.status
   base_route: mcp_tools.settings
   weight: 10
+
+mcp_tools.permissions:
+  title: 'Permissions'
+  route_name: mcp_tools.permissions
+  base_route: mcp_tools.settings
+  weight: 5

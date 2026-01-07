@@ -13,3 +13,11 @@ mcp_tools.status:
     _title: 'MCP Tools Status'
   requirements:
     _permission: 'administer site configuration'
+
+mcp_tools.permissions:
+  path: '/admin/config/services/mcp-tools/permissions'
+  defaults:
+    _form: '\Drupal\mcp_tools\Form\PermissionsForm'
+    _title: 'MCP Tools Permissions'
+  requirements:
+    _permission: 'administer site configuration'
