@@ -4,6 +4,54 @@ All notable changes to the MCP Tools module will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.0.0-alpha22] - 2026-01-07
+
+### Added
+
+- **New standalone package**: [code-wheel/mcp-http-security](https://github.com/code-wheel/mcp-http-security) extracted for the PHP MCP ecosystem
+  - API key management with secure hashing (SHA-256 + pepper)
+  - IP allowlisting with CIDR support (IPv4/IPv6)
+  - Origin/hostname allowlisting with wildcard subdomains
+  - PSR-15 SecurityMiddleware for any PHP framework
+  - Multiple storage backends: Array, File, PDO
+- **Drupal adapters** for the extracted package:
+  - `DrupalStateStorage` - bridges Drupal State API to StorageInterface
+  - `DrupalClock` - bridges Drupal TimeInterface to PSR-20 ClockInterface
+
+### Changed
+
+- `mcp_tools_remote` now delegates to `code-wheel/mcp-http-security` package
+- Backward compatible: existing API keys continue to work unchanged
+- Cleaner architecture with proper separation of concerns
+
+### Dependencies
+
+- Added `code-wheel/mcp-http-security: ^1.0` requirement
+
+## [1.0.0-alpha21] - 2026-01-07
+
+### Added
+
+- **100% service test coverage**: All 48 services now have unit or kernel tests
+  - New kernel tests for contrib-dependent services: EntityClone, Metatag, Pathauto, Scheduler, SearchApi, Sitemap, UltimateCron
+  - Extended StructureServicesKernelTest with TaxonomyService coverage
+  - Added kernel tests for Redirect, Webform services
+  - ToolSchemaKernelTest expanded with MCP contract validations
+- **Admin UI improvements**:
+  - Permissions tab showing tool access by scope/category
+  - Remote settings tab for HTTP endpoint configuration
+- **Docker development environment**: `docker-compose.yml` + setup scripts for contributors
+- **Strategic roadmap**: Community-driven roadmap items for post-adoption phase
+
+### Fixed
+
+- `date()` type errors in AnalyzePerformance and other analysis tools
+- Unit tests no longer require contrib module dependencies
+
+### Changed
+
+- Clarified contrib module extraction plans (separate module, not submodule)
+
 ## [1.0.0-alpha20] - 2026-01-04
 
 ### Added
