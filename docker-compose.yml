@@ -1,0 +1,103 @@
+# MCP Tools - Local Development Environment
+#
+# Usage:
+#   docker compose up -d          # Start the environment
+#   docker compose exec drupal bash  # Shell into container
+#   docker compose down           # Stop everything
+#
+# First-time setup:
+#   docker compose up -d
+#   docker compose exec drupal bash -c "
+#     composer require drupal/tool:^1.0@alpha &&
+#     drush si minimal -y &&
+#     drush en mcp_tools mcp_tools_stdio -y &&
+#     drush cr
+#   "
+#
+# Access:
+#   Site: http://localhost:8080
+#   Admin: admin / admin (after install)
+
+services:
+  drupal:
+    image: drupal:10.3-php8.3-apache
+    container_name: mcp_tools_drupal
+    ports:
+      - "8080:80"
+    volumes:
+      # Mount MCP Tools module
+      - .:/var/www/html/modules/custom/mcp_tools:cached
+      # Persist Drupal files
+      - drupal_files:/var/www/html/sites/default/files
+      # Persist vendor for faster rebuilds
+      - drupal_vendor:/var/www/html/vendor
+    environment:
+      # Database connection
+      DRUPAL_DATABASE_HOST: database
+      DRUPAL_DATABASE_PORT: 3306
+      DRUPAL_DATABASE_NAME: drupal
+      DRUPAL_DATABASE_USER: drupal
+      DRUPAL_DATABASE_PASSWORD: drupal
+      # Testing
+      SIMPLETEST_DB: mysql://drupal:drupal@database:3306/drupal
+      SIMPLETEST_BASE_URL: http://localhost:8080
+      BROWSERTEST_OUTPUT_DIRECTORY: /var/www/html/sites/default/files/browser_output
+      # PHP settings
+      PHP_MEMORY_LIMIT: 512M
+      PHP_MAX_EXECUTION_TIME: 300
+    depends_on:
+      database:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  database:
+    image: mariadb:10.11
+    container_name: mcp_tools_db
+    environment:
+      MARIADB_ROOT_PASSWORD: root
+      MARIADB_DATABASE: drupal
+      MARIADB_USER: drupal
+      MARIADB_PASSWORD: drupal
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # Optional: PHPMyAdmin for database inspection
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: mcp_tools_pma
+    ports:
+      - "8081:80"
+    environment:
+      PMA_HOST: database
+      PMA_USER: drupal
+      PMA_PASSWORD: drupal
+    depends_on:
+      - database
+    profiles:
+      - tools
+
+  # Optional: Mailpit for email testing
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: mcp_tools_mail
+    ports:
+      - "8025:8025"  # Web UI
+      - "1025:1025"  # SMTP
+    profiles:
+      - tools
+
+volumes:
+  db_data:
+  drupal_files:
+  drupal_vendor:

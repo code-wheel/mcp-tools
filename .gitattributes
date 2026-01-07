@@ -25,6 +25,12 @@
 /behat.yml               export-ignore
 /behat.yml.dist          export-ignore
 
+# Docker & Build
+/docker-compose.yml      export-ignore
+/docker-compose.*.yml    export-ignore
+/Makefile                export-ignore
+/Dockerfile              export-ignore
+
 # Documentation (keep README and CHANGELOG, exclude dev docs)
 /CONTRIBUTING.md         export-ignore
 /ROADMAP.md              export-ignore
