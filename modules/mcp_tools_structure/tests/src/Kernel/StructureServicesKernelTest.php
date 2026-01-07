@@ -8,9 +8,10 @@ use Drupal\KernelTests\KernelTestBase;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools_structure\Service\ContentTypeService;
 use Drupal\mcp_tools_structure\Service\FieldService;
+use Drupal\mcp_tools_structure\Service\TaxonomyService;
 
 /**
- * Kernel tests for ContentTypeService and FieldService.
+ * Kernel tests for ContentTypeService, FieldService, and TaxonomyService.
  *
  * @group mcp_tools_structure
  */
@@ -26,6 +27,7 @@ final class StructureServicesKernelTest extends KernelTestBase {
     'text',
     'filter',
     'node',
+    'taxonomy',
     'dblog',
     'update',
     'tool',
@@ -37,6 +39,8 @@ final class StructureServicesKernelTest extends KernelTestBase {
 
   private FieldService $fieldService;
 
+  private TaxonomyService $taxonomyService;
+
   protected function setUp(): void {
     parent::setUp();
 
@@ -45,9 +49,12 @@ final class StructureServicesKernelTest extends KernelTestBase {
     $this->installSchema('dblog', ['watchdog']);
     $this->installEntitySchema('user');
     $this->installEntitySchema('node');
+    $this->installEntitySchema('taxonomy_term');
+    $this->installEntitySchema('taxonomy_vocabulary');
 
     $this->contentTypeService = $this->container->get('mcp_tools_structure.content_type');
     $this->fieldService = $this->container->get('mcp_tools_structure.field');
+    $this->taxonomyService = $this->container->get('mcp_tools_structure.taxonomy');
 
     // Structure services enforce write scope via AccessManager.
     $this->container->get('mcp_tools.access_manager')->setScopes([
@@ -347,6 +354,189 @@ final class StructureServicesKernelTest extends KernelTestBase {
 
     // Test add field.
     $result = $this->fieldService->addField('node', 'scopetest', 'testfield', 'string', 'Test');
+    $this->assertFalse($result['success']);
+    $this->assertStringContainsString('Write operations not allowed', $result['error']);
+  }
+
+  // ==========================================================================
+  // TaxonomyService Tests
+  // ==========================================================================
+
+  /**
+   * Test listing vocabularies when none exist.
+   */
+  public function testListVocabulariesEmpty(): void {
+    $result = $this->taxonomyService->listVocabularies();
+
+    $this->assertTrue($result['success']);
+    $this->assertSame(0, $result['data']['total']);
+    $this->assertEmpty($result['data']['vocabularies']);
+  }
+
+  /**
+   * Test creating and listing vocabularies.
+   */
+  public function testCreateAndListVocabularies(): void {
+    $this->taxonomyService->createVocabulary('tags', 'Tags', 'Content tags');
+    $this->taxonomyService->createVocabulary('categories', 'Categories', 'Content categories');
+
+    $result = $this->taxonomyService->listVocabularies();
+
+    $this->assertTrue($result['success']);
+    $this->assertSame(2, $result['data']['total']);
+    $this->assertCount(2, $result['data']['vocabularies']);
+
+    // Should be sorted by label.
+    $this->assertSame('categories', $result['data']['vocabularies'][0]['id']);
+    $this->assertSame('tags', $result['data']['vocabularies'][1]['id']);
+  }
+
+  /**
+   * Test getting vocabulary details.
+   */
+  public function testGetVocabulary(): void {
+    $this->taxonomyService->createVocabulary('test_vocab', 'Test Vocabulary', 'A test vocabulary');
+
+    $result = $this->taxonomyService->getVocabulary('test_vocab');
+
+    $this->assertTrue($result['success']);
+    $this->assertSame('test_vocab', $result['data']['id']);
+    $this->assertSame('Test Vocabulary', $result['data']['label']);
+    $this->assertSame('A test vocabulary', $result['data']['description']);
+    $this->assertArrayHasKey('terms', $result['data']);
+    $this->assertSame(0, $result['data']['total_terms']);
+  }
+
+  /**
+   * Test getting non-existent vocabulary.
+   */
+  public function testGetVocabularyNotFound(): void {
+    $result = $this->taxonomyService->getVocabulary('nonexistent');
+
+    $this->assertFalse($result['success']);
+    $this->assertStringContainsString('not found', $result['error']);
+  }
+
+  /**
+   * Test creating vocabulary with invalid machine name.
+   */
+  public function testCreateVocabularyInvalidMachineName(): void {
+    // Starts with number.
+    $result = $this->taxonomyService->createVocabulary('123vocab', 'Invalid', '');
+    $this->assertFalse($result['success']);
+    $this->assertStringContainsString('Invalid machine name', $result['error']);
+
+    // Contains uppercase.
+    $result = $this->taxonomyService->createVocabulary('MyVocab', 'Invalid', '');
+    $this->assertFalse($result['success']);
+
+    // Contains special characters.
+    $result = $this->taxonomyService->createVocabulary('my-vocab', 'Invalid', '');
+    $this->assertFalse($result['success']);
+  }
+
+  /**
+   * Test creating duplicate vocabulary.
+   */
+  public function testCreateVocabularyDuplicate(): void {
+    $this->taxonomyService->createVocabulary('duplicate', 'Duplicate', '');
+
+    $result = $this->taxonomyService->createVocabulary('duplicate', 'Duplicate 2', '');
+
+    $this->assertFalse($result['success']);
+    $this->assertStringContainsString('already exists', $result['error']);
+  }
+
+  /**
+   * Test creating and listing terms.
+   */
+  public function testCreateAndListTerms(): void {
+    $this->taxonomyService->createVocabulary('terms_test', 'Terms Test', '');
+
+    $result1 = $this->taxonomyService->createTerm('terms_test', 'Term One');
+    $this->assertTrue($result1['success']);
+    $this->assertSame('Term One', $result1['data']['name']);
+
+    $result2 = $this->taxonomyService->createTerm('terms_test', 'Term Two');
+    $this->assertTrue($result2['success']);
+
+    $vocab = $this->taxonomyService->getVocabulary('terms_test');
+    $this->assertSame(2, $vocab['data']['total_terms']);
+  }
+
+  /**
+   * Test creating term in non-existent vocabulary.
+   */
+  public function testCreateTermInNonExistentVocabulary(): void {
+    $result = $this->taxonomyService->createTerm('nonexistent', 'Test Term');
+
+    $this->assertFalse($result['success']);
+    $this->assertStringContainsString('not found', $result['error']);
+  }
+
+  /**
+   * Test creating duplicate term.
+   */
+  public function testCreateTermDuplicate(): void {
+    $this->taxonomyService->createVocabulary('dup_terms', 'Dup Terms', '');
+    $this->taxonomyService->createTerm('dup_terms', 'Same Name');
+
+    $result = $this->taxonomyService->createTerm('dup_terms', 'Same Name');
+
+    $this->assertFalse($result['success']);
+    $this->assertStringContainsString('already exists', $result['error']);
+  }
+
+  /**
+   * Test creating multiple terms at once.
+   */
+  public function testCreateTermsBatch(): void {
+    $this->taxonomyService->createVocabulary('batch_test', 'Batch Test', '');
+
+    $result = $this->taxonomyService->createTerms('batch_test', [
+      'Term A',
+      'Term B',
+      'Term C',
+    ]);
+
+    $this->assertTrue($result['success']);
+    $this->assertSame(3, $result['data']['created_count']);
+    $this->assertSame(0, $result['data']['error_count']);
+  }
+
+  /**
+   * Test taxonomy write operations require write scope.
+   */
+  public function testTaxonomyWriteOperationsRequireWriteScope(): void {
+    // Disable write scope.
+    $this->container->get('mcp_tools.access_manager')->setScopes([
+      AccessManager::SCOPE_READ,
+    ]);
+
+    // Test create vocabulary.
+    $result = $this->taxonomyService->createVocabulary('test', 'Test', '');
+    $this->assertFalse($result['success']);
+    $this->assertStringContainsString('Write operations not allowed', $result['error']);
+
+    // Re-enable to create a vocabulary for term tests.
+    $this->container->get('mcp_tools.access_manager')->setScopes([
+      AccessManager::SCOPE_READ,
+      AccessManager::SCOPE_WRITE,
+    ]);
+    $this->taxonomyService->createVocabulary('termvocab', 'Term Vocab', '');
+
+    // Disable again.
+    $this->container->get('mcp_tools.access_manager')->setScopes([
+      AccessManager::SCOPE_READ,
+    ]);
+
+    // Test create term.
+    $result = $this->taxonomyService->createTerm('termvocab', 'Test Term');
+    $this->assertFalse($result['success']);
+    $this->assertStringContainsString('Write operations not allowed', $result['error']);
+
+    // Test create terms batch.
+    $result = $this->taxonomyService->createTerms('termvocab', ['A', 'B']);
     $this->assertFalse($result['success']);
     $this->assertStringContainsString('Write operations not allowed', $result['error']);
   }
