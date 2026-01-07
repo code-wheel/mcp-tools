@@ -12,7 +12,15 @@ MCP Tools provides **curated, high-value tools** that solve real problems—not 
 
 ## Current State (v1.0-alpha20)
 
-### 214 Tools Total (30 Read + 184 Write/Analysis)
+### What We Have
+
+- **214 tools** - Feature complete (30 read + 184 write/analysis)
+- **Strong security model** - Multi-layer access control, audit logging
+- **Good CI/CD** - GitHub Actions + DrupalCI
+- **Excellent documentation** - README, Architecture docs, per-submodule READMEs
+- **Real users** - Momentum is building
+
+### Tool Breakdown
 
 - **28 read-only tools** in the base module for site introspection
 - **182 write/analysis tools** across 29 submodules
@@ -21,6 +29,29 @@ MCP Tools provides **curated, high-value tools** that solve real problems—not 
 - 38 destructive operations properly annotated
 
 See [CHANGELOG.md](CHANGELOG.md) for full tool listing by submodule.
+
+### Module Organization
+
+**Core Drupal only (21 modules)** - depend on `drupal:*` modules:
+- cache, cron, batch, templates, users, analysis, remote, moderation, blocks, config, layout_builder, media, image_styles, migration, structure, recipes, theme, menus, views, stdio, content
+
+**Contrib dependencies (11 modules):**
+
+| Module | Requires |
+|--------|----------|
+| `mcp_tools_paragraphs` | paragraphs |
+| `mcp_tools_redirect` | redirect |
+| `mcp_tools_webform` | webform |
+| `mcp_tools_pathauto` | pathauto |
+| `mcp_tools_metatag` | metatag |
+| `mcp_tools_scheduler` | scheduler |
+| `mcp_tools_search_api` | search_api |
+| `mcp_tools_sitemap` | simple_sitemap |
+| `mcp_tools_entity_clone` | entity_clone |
+| `mcp_tools_ultimate_cron` | ultimate_cron |
+| `mcp_tools_mcp_server` | mcp_server |
+
+**Architecture Decision:** Keep granular submodules (not consolidated). This follows Drupal conventions - 1:1 mapping with contrib modules, minimal code loading, independent releases, easy discoverability.
 
 ---
 
@@ -63,7 +94,31 @@ mcp_tools/                           # Base module (28 read-only tools)
 
 ---
 
+## Testing Debt
+
+Unit tests were removed for services that depend on contrib modules. These need kernel/functional tests with proper module bootstrapping.
+
+| Deleted Test | Module | Needs |
+|--------------|--------|-------|
+| `ParagraphsServiceTest` | mcp_tools_paragraphs | Kernel test with paragraphs installed |
+| `RedirectServiceTest` | mcp_tools_redirect | Kernel test with redirect installed |
+| `ContentTypeServiceTest` | mcp_tools_structure | Kernel test (uses EntityTypeManager) |
+| `FieldServiceTest` | mcp_tools_structure | Kernel test (uses FieldStorageConfig) |
+| `WebformServiceTest` | mcp_tools_webform | Kernel test with webform installed |
+
+---
+
 ## Future Roadmap
+
+### Immediate (P0) - Quality & Developer Experience
+
+| Task | Description | Status |
+|------|-------------|--------|
+| Docker dev environment | Full `docker-compose.yml` for contributors | 🔲 Todo |
+| Test layering | Separate unit/kernel/integration tests | 🔲 Todo |
+| CI matrix for contrib | Test each contrib module independently | 🔲 Todo |
+| Restore deleted tests | Kernel tests for contrib-dependent services | 🔲 Todo |
+| E2E test expansion | Expand mcp_stdio_e2e.py / mcp_http_e2e.py coverage | 🔲 Todo |
 
 ### Short-term (P1) - COMPLETED
 
@@ -75,22 +130,76 @@ mcp_tools/                           # Base module (28 read-only tools)
 | Text Formats tools | ListTextFormats, GetTextFormat | ✅ Done |
 | Architecture documentation | docs/ARCHITECTURE.md | ✅ Done |
 
-### Medium-term (P2)
+### Medium-term (P2) - Stability & Polish
 
 | Task | Description | Status |
 |------|-------------|--------|
+| Contract tests | Verify tool schemas match expected output formats | 🔲 Todo |
+| Failure mode testing | Test permission denied, rate limits, edge cases | 🔲 Todo |
+| Improve error messages | Actionable guidance when tools fail | 🔲 Todo |
+| Dry-run mode | Preview what a tool would do without executing | 🔲 Todo |
 | Service consolidation | Merge small related services | Deferred |
-| Additional testing | Integration tests, edge cases | Ongoing |
 
-### Future Considerations
+### User Adoption (P3) - Building Momentum
 
-| Task | Description | Decision |
-|------|-------------|----------|
-| Multi-site support | Manage multiple Drupal instances | Not planned - complex, limited demand |
-| Submodule consolidation | Merge SEO modules | Not planned - current structure mirrors contrib modules |
-| Webhook extraction | Move to submodule | Not planned - minimal benefit |
+| Task | Description | Status |
+|------|-------------|--------|
+| Publish use cases | Blog posts/videos showing real workflows | 🔲 Todo |
+| Create demo site | Sandbox where people can try MCP Tools | 🔲 Todo |
+| Collect testimonials | Real user stories for social proof | 🔲 Todo |
+| DrupalCon talk | Present at DrupalCon / Drupal camps | 🔲 Todo |
+| Usage telemetry | Optional anonymous stats (which tools are popular) | 🔲 Todo |
 
-**Note:** The module is feature-complete at 214 tools. Future work will focus on bug fixes, compatibility updates, and community-requested features.
+### Community-Driven (Post-Adoption)
+
+These items are **not planned** until there's demonstrated community interest. They will be prioritized based on issue queue requests and adoption metrics.
+
+#### Additional Contrib Integrations
+
+| Module | Tools | Status |
+|--------|-------|--------|
+| Commerce | Products, orders, carts, payments | Waiting for demand |
+| ECA | Event-Condition-Action rules | Waiting for demand |
+| Group | Group content, membership | Waiting for demand |
+| Feeds | Import configuration | Waiting for demand |
+
+#### AI-Specific Features
+
+| Feature | Description | Status |
+|---------|-------------|--------|
+| Context summaries | `mcp_get_site_context` - compact site overview for LLM context windows | Waiting for demand |
+| Guided workflows | Multi-step wizards (e.g., "setup blog" orchestration) | Waiting for demand |
+| Schema introspection | Enhanced field type documentation for LLM understanding | Waiting for demand |
+
+#### Architecture Changes
+
+| Task | Description | Rationale |
+|------|-------------|-----------|
+| Contrib module extraction | Move contrib integrations to `drupal/mcp_tools_contrib` | **Not recommended** - current 1:1 submodule structure is correct Drupal pattern |
+| Multi-site support | Manage multiple Drupal instances | Complex, limited demand - not planned |
+| Submodule consolidation | Merge related modules | **Not recommended** - granular modules enable selective installation |
+
+#### Standalone Package Extraction
+
+The following components have been extracted as standalone Composer packages for the broader PHP MCP ecosystem:
+
+| Package | Description | Status |
+|---------|-------------|--------|
+| [code-wheel/mcp-http-security](https://github.com/code-wheel/mcp-http-security) | Secure HTTP transport wrapper with API key auth, IP/Origin allowlisting, PSR-15 middleware | ✅ Released v1.0.1 |
+| `drupal-tool-mcp-bridge` | Bridge Drupal's Tool API plugins to MCP server tools | Waiting for demand |
+
+**Released in alpha22:**
+- `code-wheel/mcp-http-security` - Framework-agnostic security for PHP MCP servers
+  - API key management with secure hashing (SHA-256 + pepper)
+  - Multiple storage backends: Array, File, PDO
+  - IP allowlisting with CIDR support (IPv4/IPv6)
+  - Origin/hostname allowlisting with wildcard subdomains
+  - PSR-15 SecurityMiddleware
+  - PSR-20 Clock support
+
+**Integration:** `mcp_tools_remote` now delegates to the extracted package via Drupal adapters (`DrupalStateStorage`, `DrupalClock`).
+
+**Note:** The module is feature-complete at 154 tools. Focus is on stability, testing, and adoption - resist feature creep.
 
 ---
 
@@ -130,6 +239,82 @@ The following permissions cannot be granted via MCP:
 - `synchronize configuration`
 - `import configuration`
 - `export configuration`
+
+---
+
+## Testing Strategy
+
+### Test Layering
+
+```
+Unit Tests (no Drupal, no contrib)
+├── Test pure PHP logic only
+├── Mock ALL Drupal services
+└── Run fast, no bootstrap
+
+Kernel Tests (Drupal core only)
+├── Test services with real Drupal APIs
+├── Use drupal:* modules only
+└── Run with minimal Drupal bootstrap
+
+Integration Tests (per-contrib)
+├── Separate test suite per contrib module
+├── Only run when that contrib is installed
+├── Use @requires module annotation
+```
+
+### CI Matrix Approach
+
+```yaml
+jobs:
+  test-core:
+    # Unit tests + kernel tests for core-only submodules
+
+  test-paragraphs:
+    # Install paragraphs, run mcp_tools_paragraphs tests
+
+  test-webform:
+    # Install webform, run mcp_tools_webform tests
+
+  # ... one job per contrib integration
+```
+
+### Example Test Structure
+
+```php
+/**
+ * @requires module paragraphs
+ * @group mcp_tools_paragraphs
+ */
+class ParagraphsServiceKernelTest extends KernelTestBase {
+  protected static $modules = ['paragraphs', 'mcp_tools', 'mcp_tools_paragraphs'];
+  // ...
+}
+```
+
+---
+
+## Development Environment
+
+### Local Development
+
+**DDEV (recommended):**
+```bash
+ddev start
+ddev composer install
+ddev drush si minimal -y
+ddev drush en mcp_tools -y
+ddev test  # Run all tests
+```
+
+**Docker Compose:**
+```bash
+docker compose up -d
+docker compose exec drupal drush si minimal -y
+docker compose exec drupal drush en mcp_tools -y
+```
+
+See `docker-compose.yml` for the full local development environment.
 
 ---
 

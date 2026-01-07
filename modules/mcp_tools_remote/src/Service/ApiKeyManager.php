@@ -4,25 +4,42 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools_remote\Service;
 
+use CodeWheel\McpSecurity\ApiKey\ApiKey;
+use CodeWheel\McpSecurity\ApiKey\ApiKeyManager as BaseApiKeyManager;
+use CodeWheel\McpSecurity\ApiKey\ApiKeyManagerInterface;
 use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Core\PrivateKey;
 use Drupal\Core\State\StateInterface;
+use Drupal\mcp_tools_remote\Clock\DrupalClock;
+use Drupal\mcp_tools_remote\Storage\DrupalStateStorage;
 
 /**
  * Manages API keys for the MCP Tools remote HTTP endpoint.
+ *
+ * Delegates to code-wheel/mcp-http-security package while maintaining
+ * backward compatibility with the existing Drupal API.
  *
  * Keys are stored hashed in State (not exported to config).
  */
 final class ApiKeyManager {
 
-  private const STATE_KEY = 'mcp_tools_remote.api_keys';
-  private const KEY_PREFIX = 'mcp_tools';
+  /**
+   * The underlying API key manager from the extracted package.
+   */
+  private readonly ApiKeyManagerInterface $manager;
 
   public function __construct(
-    private readonly StateInterface $state,
-    private readonly PrivateKey $privateKey,
-    private readonly TimeInterface $time,
-  ) {}
+    StateInterface $state,
+    PrivateKey $privateKey,
+    TimeInterface $time,
+  ) {
+    $storage = new DrupalStateStorage($state);
+    $clock = new DrupalClock($time);
+    $pepper = (string) $privateKey->get();
+
+    // Use 'mcp_tools' prefix for backward compatibility with existing keys.
+    $this->manager = new BaseApiKeyManager($storage, $clock, $pepper, 'mcp_tools');
+  }
 
   /**
    * Creates a new API key.
@@ -39,37 +56,7 @@ final class ApiKeyManager {
    *   Key ID and the full API key (shown once).
    */
   public function createKey(string $label, array $scopes, ?int $ttlSeconds = NULL): array {
-    $label = trim($label);
-    if ($label === '') {
-      $label = 'Unnamed key';
-    }
-
-    $keyId = $this->generateKeyId();
-    $secret = $this->generateSecret();
-    $now = $this->time->getRequestTime();
-
-    $expires = NULL;
-    if ($ttlSeconds !== NULL && $ttlSeconds > 0) {
-      $expires = $now + $ttlSeconds;
-    }
-
-    $record = [
-      'label' => $label,
-      'scopes' => array_values(array_unique(array_filter(array_map('strval', $scopes)))),
-      'hash' => $this->hashSecret($secret),
-      'created' => $now,
-      'last_used' => NULL,
-      'expires' => $expires,
-    ];
-
-    $all = $this->state->get(self::STATE_KEY, []);
-    $all[$keyId] = $record;
-    $this->state->set(self::STATE_KEY, $all);
-
-    return [
-      'key_id' => $keyId,
-      'api_key' => self::KEY_PREFIX . '.' . $keyId . '.' . $secret,
-    ];
+    return $this->manager->createKey($label, $scopes, $ttlSeconds);
   }
 
   /**
@@ -79,23 +66,13 @@ final class ApiKeyManager {
    *   Key metadata keyed by key ID.
    */
   public function listKeys(): array {
-    $all = $this->state->get(self::STATE_KEY, []);
+    $keys = $this->manager->listKeys();
     $out = [];
 
-    foreach ($all as $keyId => $record) {
-      if (!is_array($record)) {
-        continue;
-      }
-      $out[$keyId] = [
-        'label' => (string) ($record['label'] ?? ''),
-        'scopes' => array_values(array_filter($record['scopes'] ?? [])),
-        'created' => $record['created'] ?? NULL,
-        'last_used' => $record['last_used'] ?? NULL,
-        'expires' => $record['expires'] ?? NULL,
-      ];
+    foreach ($keys as $keyId => $apiKey) {
+      $out[$keyId] = $this->apiKeyToArray($apiKey);
     }
 
-    ksort($out);
     return $out;
   }
 
@@ -103,13 +80,7 @@ final class ApiKeyManager {
    * Revokes (deletes) a key by ID.
    */
   public function revokeKey(string $keyId): bool {
-    $all = $this->state->get(self::STATE_KEY, []);
-    if (!isset($all[$keyId])) {
-      return FALSE;
-    }
-    unset($all[$keyId]);
-    $this->state->set(self::STATE_KEY, $all);
-    return TRUE;
+    return $this->manager->revokeKey($keyId);
   }
 
   /**
@@ -119,63 +90,31 @@ final class ApiKeyManager {
    *   Key metadata, or NULL if invalid.
    */
   public function validate(string $apiKey): ?array {
-    $apiKey = trim($apiKey);
-    if ($apiKey === '') {
+    $result = $this->manager->validate($apiKey);
+    if ($result === NULL) {
       return NULL;
     }
-
-    $parts = explode('.', $apiKey, 3);
-    if (count($parts) !== 3) {
-      return NULL;
-    }
-
-    [$prefix, $keyId, $secret] = $parts;
-    if ($prefix !== self::KEY_PREFIX || $keyId === '' || $secret === '') {
-      return NULL;
-    }
-
-    $all = $this->state->get(self::STATE_KEY, []);
-    $record = $all[$keyId] ?? NULL;
-    if (!is_array($record) || empty($record['hash'])) {
-      return NULL;
-    }
-
-    $expires = $record['expires'] ?? NULL;
-    if (is_numeric($expires) && $expires > 0 && $expires < $this->time->getRequestTime()) {
-      return NULL;
-    }
-
-    $expected = (string) $record['hash'];
-    $actual = $this->hashSecret($secret);
-
-    if (!hash_equals($expected, $actual)) {
-      return NULL;
-    }
-
-    // Update last-used timestamp.
-    $record['last_used'] = $this->time->getRequestTime();
-    $all[$keyId] = $record;
-    $this->state->set(self::STATE_KEY, $all);
 
     return [
-      'key_id' => $keyId,
-      'label' => (string) ($record['label'] ?? ''),
-      'scopes' => array_values(array_filter($record['scopes'] ?? [])),
+      'key_id' => $result->keyId,
+      'label' => $result->label,
+      'scopes' => $result->scopes,
     ];
   }
 
-  private function generateKeyId(): string {
-    return substr(bin2hex(random_bytes(8)), 0, 12);
-  }
-
-  private function generateSecret(): string {
-    $raw = random_bytes(32);
-    return rtrim(strtr(base64_encode($raw), '+/', '-_'), '=');
-  }
-
-  private function hashSecret(string $secret): string {
-    $pepper = (string) $this->privateKey->get();
-    return hash('sha256', $pepper . ':' . $secret);
+  /**
+   * Converts an ApiKey object to array format for backward compatibility.
+   *
+   * @return array<string, mixed>
+   */
+  private function apiKeyToArray(ApiKey $apiKey): array {
+    return [
+      'label' => $apiKey->label,
+      'scopes' => $apiKey->scopes,
+      'created' => $apiKey->created,
+      'last_used' => $apiKey->lastUsed,
+      'expires' => $apiKey->expires,
+    ];
   }
 
 }

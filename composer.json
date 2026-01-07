@@ -14,10 +14,17 @@
   "support": {
     "issues": "https://www.drupal.org/project/issues/mcp_tools"
   },
+  "repositories": [
+    {
+      "type": "vcs",
+      "url": "https://github.com/code-wheel/mcp-http-security"
+    }
+  ],
   "require": {
     "php": ">=8.3",
     "drupal/core": "^10.3 || ^11",
     "drupal/tool": "^1.0@alpha",
-    "mcp/sdk": "^0.2.2"
+    "mcp/sdk": "^0.2.2",
+    "code-wheel/mcp-http-security": "^1.0"
   }
 }
