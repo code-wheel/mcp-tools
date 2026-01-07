@@ -44,7 +44,7 @@ claude mcp add --scope project drupal -- drush mcp-tools:stdio --uri=https://you
 drush mcp-tools:remote-key-create --label="Claude" --scopes=read,write</pre>
 <p>Copy the key shown (it's only displayed once).</p>
 <p><strong>Claude Code one-liner:</strong></p>
-<pre>claude mcp add --transport http -H "Authorization: Bearer YOUR_API_KEY" drupal http://localhost:8080/_mcp_tools</pre>
+<pre>claude mcp add drupal http://localhost:8080/_mcp_tools --transport http -H "Authorization: Bearer YOUR_API_KEY"</pre>
 <p><strong>Or add to <code>.mcp.json</code>:</strong></p>
 <pre>{
   "mcpServers": {
