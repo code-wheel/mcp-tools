@@ -3,14 +3,14 @@
 <p><strong>MCP Tools</strong> connects Drupal to AI assistants (Claude, Cursor, Windsurf) via the <a href="https://modelcontextprotocol.io">Model Context Protocol</a>. Describe what you want in plain English — the AI handles the Drupal work.</p>
 
 <p><strong>Example</strong></p>
-<pre>You: "Create a blog with articles, categories, tags, and an editor role"
-AI:  Creates the content type, taxonomies, fields, role, and permissions</pre>
+<code>You: "Create a blog with articles, categories, tags, and an editor role"
+AI:  Creates the content type, taxonomies, fields, role, and permissions</code>
 
 <h3>Quick Start</h3>
 <ol>
-  <li><strong>Install:</strong>
-    <pre>composer require drupal/mcp_tools
-drush en mcp_tools -y</pre>
+  <li><strong>Install:</strong><br/>
+    <code>composer require drupal/mcp_tools</code><br/>
+    <code>drush en mcp_tools -y</code>
   </li>
   <li><strong>Configure:</strong> Visit <code>/admin/config/services/mcp-tools</code> and choose a preset:
     <ul>
@@ -24,29 +24,34 @@ drush en mcp_tools -y</pre>
 
 <h3>Option A: STDIO Transport (Recommended for Local)</h3>
 <p>Enable the STDIO module:</p>
-<pre>drush en mcp_tools_stdio -y</pre>
+<code>drush en mcp_tools_stdio -y</code>
+
 <p><strong>Claude Code (run from your Drupal directory):</strong></p>
-<pre>cd /path/to/drupal
-claude mcp add --scope project drupal -- drush mcp-tools:stdio --uri=https://your-site.ddev.site</pre>
+<code>cd /path/to/drupal
+claude mcp add --scope project drupal -- drush mcp-tools:stdio --uri=https://your-site.ddev.site</code>
+
 <p><strong>Or add <code>.mcp.json</code> to your Drupal project root:</strong></p>
-<pre>{
+<code>{
   "mcpServers": {
     "drupal": {
       "command": "drush",
       "args": ["mcp-tools:stdio", "--uri=https://your-site.ddev.site"]
     }
   }
-}</pre>
+}</code>
 
 <h3>Option B: HTTP Transport (Remote/Docker)</h3>
 <p>Enable the remote module and generate an API key:</p>
-<pre>drush en mcp_tools_remote -y
-drush mcp-tools:remote-key-create --label="Claude" --scopes=read,write</pre>
+<code>drush en mcp_tools_remote -y
+drush mcp-tools:remote-key-create --label="Claude" --scopes=read,write</code>
+
 <p>Copy the key shown (it's only displayed once).</p>
+
 <p><strong>Claude Code one-liner:</strong></p>
-<pre>claude mcp add drupal http://localhost:8080/_mcp_tools --transport http -H "Authorization: Bearer YOUR_API_KEY"</pre>
+<code>claude mcp add drupal http://localhost:8080/_mcp_tools --transport http -H "Authorization: Bearer YOUR_API_KEY"</code>
+
 <p><strong>Or add to <code>.mcp.json</code>:</strong></p>
-<pre>{
+<code>{
   "mcpServers": {
     "drupal": {
       "type": "http",
@@ -56,7 +61,8 @@ drush mcp-tools:remote-key-create --label="Claude" --scopes=read,write</pre>
       }
     }
   }
-}</pre>
+}</code>
+
 <p>Manage keys at <code>/admin/config/services/mcp-tools/remote</code> or via <code>drush mcp-tools:remote-key-list</code>.</p>
 
 <h3>What's Included</h3>
@@ -87,6 +93,5 @@ drush mcp-tools:remote-key-create --label="Claude" --scopes=read,write</pre>
 <p>
   <a href="https://github.com/code-wheel/mcp-tools">GitHub</a> ·
   <a href="https://github.com/code-wheel/mcp-tools/blob/master/docs/CLAUDE_CODE_EXAMPLES.md">Claude Code Examples</a> ·
-  <a href="https://www.drupal.org/project/issues/mcp_tools">Issue Queue</a> ·
-  <a href="https://codewheel.ai">CodeWheel</a>
+  <a href="https://www.drupal.org/project/issues/mcp_tools">Issue Queue</a>
 </p>
