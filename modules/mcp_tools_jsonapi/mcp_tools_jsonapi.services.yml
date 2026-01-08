@@ -1,0 +1,11 @@
+services:
+  mcp_tools_jsonapi.service:
+    class: Drupal\mcp_tools_jsonapi\Service\JsonApiService
+    arguments:
+      - '@entity_type.manager'
+      - '@jsonapi.resource_type.repository'
+      - '@entity.repository'
+      - '@config.factory'
+      - '@mcp_tools.access_manager'
+      - '@mcp_tools.audit_logger'
+      - '@current_user'

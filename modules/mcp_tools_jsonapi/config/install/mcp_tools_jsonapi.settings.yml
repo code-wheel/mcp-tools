@@ -1,0 +1,30 @@
+# MCP Tools JSON:API settings.
+
+# Entity type access control.
+# By default, only content entities (nodes, media, terms, etc.) are exposed.
+# System entities and sensitive types are blocked.
+
+# Explicitly allowed entity types (empty = allow all content entities).
+# Use entity_type_id values like: node, media, taxonomy_term, paragraph.
+allowed_entity_types: []
+
+# Blocked entity types (always takes precedence over allowed).
+# These are blocked by default for security.
+blocked_entity_types:
+  - user
+  - shortcut
+  - shortcut_set
+  - menu_link_content
+  - path_alias
+  - redirect
+  - webform_submission
+
+# Whether to allow write operations (create/update/delete).
+# When false, only read operations are permitted regardless of scope.
+allow_write_operations: true
+
+# Maximum items per list request.
+max_items_per_page: 50
+
+# Whether to include related entities in responses.
+include_relationships: false

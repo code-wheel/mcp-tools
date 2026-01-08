@@ -121,6 +121,7 @@ class McpToolsCommands extends DrushCommands {
       'mcp_tools_analysis' => 'Site analysis',
       'mcp_tools_moderation' => 'Content moderation',
       'mcp_tools_image_styles' => 'Image styles',
+      'mcp_tools_jsonapi' => 'Generic entity CRUD via JSON:API',
     ];
 
     // Contrib-dependent submodules.

@@ -42,6 +42,7 @@ final class ToolSmokeKernelTest extends KernelTestBase {
     'mcp_tools_theme',
     'mcp_tools_users',
     'mcp_tools_views',
+    'mcp_tools_jsonapi',
 
     // Required dependencies (core + Tool API).
     'tool',
@@ -62,6 +63,8 @@ final class ToolSmokeKernelTest extends KernelTestBase {
     'user',
     'views',
     'workflows',
+    'jsonapi',
+    'serialization',
   ];
 
   /**
@@ -79,8 +82,8 @@ final class ToolSmokeKernelTest extends KernelTestBase {
       static fn(mixed $definition): bool => $definition instanceof ToolDefinition && str_starts_with($definition->getProvider(), 'mcp_tools')
     );
 
-    // Base module + core-only submodules provide 154 tools.
-    $this->assertCount(154, $mcpDefinitions);
+    // Base module + core-only submodules provide 160 tools.
+    $this->assertCount(160, $mcpDefinitions);
 
     $account = $this->createMock(AccountInterface::class);
     $account->method('hasPermission')->willReturn(FALSE);

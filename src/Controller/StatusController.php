@@ -130,6 +130,7 @@ class StatusController extends ControllerBase {
       'mcp_tools_analysis' => $this->t('Site analysis'),
       'mcp_tools_moderation' => $this->t('Content moderation'),
       'mcp_tools_image_styles' => $this->t('Image styles'),
+      'mcp_tools_jsonapi' => $this->t('Generic entity CRUD via JSON:API'),
     ];
 
     // Contrib-dependent submodules.

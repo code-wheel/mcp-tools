@@ -41,6 +41,7 @@ final class ToolSchemaKernelTest extends KernelTestBase {
     'mcp_tools_theme',
     'mcp_tools_users',
     'mcp_tools_views',
+    'mcp_tools_jsonapi',
 
     // Required dependencies (core + Tool API).
     'tool',
@@ -61,6 +62,8 @@ final class ToolSchemaKernelTest extends KernelTestBase {
     'user',
     'views',
     'workflows',
+    'jsonapi',
+    'serialization',
   ];
 
   /**
@@ -78,8 +81,8 @@ final class ToolSchemaKernelTest extends KernelTestBase {
       static fn(mixed $definition): bool => $definition instanceof ToolDefinition && str_starts_with((string) $definition->getProvider(), 'mcp_tools')
     );
 
-    // Base module + core-only submodules provide 154 tools.
-    $this->assertCount(154, $mcpDefinitions);
+    // Base module + core-only submodules provide 160 tools.
+    $this->assertCount(160, $mcpDefinitions);
 
     $converter = new ToolApiSchemaConverter();
     foreach ($mcpDefinitions as $pluginId => $definition) {

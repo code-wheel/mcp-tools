@@ -1,0 +1,12 @@
+name: 'MCP Tools: JSON:API'
+type: module
+description: 'Generic entity access via JSON:API for AI agents. Provides fallback CRUD tools for any entity type.'
+package: MCP Tools
+core_version_requirement: ^10.3 || ^11
+lifecycle: experimental
+
+dependencies:
+  - mcp_tools:mcp_tools
+  - drupal:jsonapi
+
+configure: mcp_tools_jsonapi.settings

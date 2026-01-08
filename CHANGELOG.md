@@ -8,6 +8,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **`mcp_tools_jsonapi` submodule**: Generic entity CRUD via JSON:API (6 new tools)
+  - `mcp_jsonapi_discover_types` - Discover all available entity types/bundles
+  - `mcp_jsonapi_get_entity` - Retrieve entity by UUID
+  - `mcp_jsonapi_list_entities` - List entities with filtering and pagination
+  - `mcp_jsonapi_create_entity` - Create any entity type
+  - `mcp_jsonapi_update_entity` - Update entity by UUID
+  - `mcp_jsonapi_delete_entity` - Delete entity by UUID
+  - Configurable allowlist/blocklist for entity types
+  - Security: user, shortcut, shortcut_set always blocked
+  - Settings form at `/admin/config/services/mcp-tools/jsonapi`
 - **`mcp:dev-profile` command**: One-command setup for development - applies development preset and enables recommended submodules
 - **Grouped submodule display**: Status page and `mcp:status` now show all 33 submodules grouped by category (core-only, contrib-dependent, infrastructure)
 

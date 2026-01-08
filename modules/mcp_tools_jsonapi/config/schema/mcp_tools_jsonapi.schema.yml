@@ -1,0 +1,25 @@
+mcp_tools_jsonapi.settings:
+  type: config_object
+  label: 'MCP Tools JSON:API settings'
+  mapping:
+    allowed_entity_types:
+      type: sequence
+      label: 'Allowed entity types'
+      sequence:
+        type: string
+        label: 'Entity type ID'
+    blocked_entity_types:
+      type: sequence
+      label: 'Blocked entity types'
+      sequence:
+        type: string
+        label: 'Entity type ID'
+    allow_write_operations:
+      type: boolean
+      label: 'Allow write operations'
+    max_items_per_page:
+      type: integer
+      label: 'Maximum items per page'
+    include_relationships:
+      type: boolean
+      label: 'Include relationships in responses'

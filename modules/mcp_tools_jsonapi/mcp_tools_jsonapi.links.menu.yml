@@ -1,0 +1,6 @@
+mcp_tools_jsonapi.settings:
+  title: 'JSON:API'
+  description: 'Configure JSON:API entity access for MCP tools.'
+  route_name: mcp_tools_jsonapi.settings
+  parent: mcp_tools.settings
+  weight: 20
