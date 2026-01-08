@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [1.0.0-alpha25] - 2026-01-08
 
+### Added
+
+- **`mcp:dev-profile` command**: One-command setup for development - applies development preset and enables recommended submodules
+- **Grouped submodule display**: Status page and `mcp:status` now show all 33 submodules grouped by category (core-only, contrib-dependent, infrastructure)
+
 ### Security
 
 - **UserService**: Added admin role protection to `blockUser()` - users with administrator role cannot be blocked via MCP
@@ -17,6 +22,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - **ContentTypeService**: Fixed critical infinite recursion bug in `getEntityFieldManager()` that called itself instead of the service container
 - **TaxonomyService**: Fixed N+1 query issues with new `getTermCountsByVocabulary()` and `batchLoadParents()` methods
+- **mcp:status**: Tool counts now queried dynamically instead of hardcoded
 
 ### Changed
 
