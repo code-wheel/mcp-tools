@@ -106,7 +106,7 @@ Enable only what you need. These bundles are common starting points:
 
 **Optional (to expose tools over MCP):**
 - **Recommended (local dev):** `mcp_tools_stdio` submodule (STDIO via Drush)
-- **Experimental (remote HTTP):** `mcp_tools_remote` submodule (API key auth + optional IP allowlist and key TTL; requires a dedicated execution user, not uid 1)
+- **Experimental (remote HTTP):** `mcp_tools_remote` submodule (API key auth + optional IP allowlist; configure execution user at `/admin/config/services/mcp-tools/remote`)
 - **Optional bridge:** `mcp_tools_mcp_server` submodule (generates MCP Server tool configs for MCP Tools)
 - **Alternative:** [MCP Server](https://www.drupal.org/project/mcp_server) module (note: upstream Composer metadata issue: https://www.drupal.org/project/mcp_server/issues/3560993)
 
