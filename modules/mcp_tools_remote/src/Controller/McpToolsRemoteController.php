@@ -217,7 +217,7 @@ final class McpToolsRemoteController implements ContainerInjectionInterface {
     }
 
     // Use the package's hostname extraction.
-    return OriginValidator::extractHostname($candidate);
+    return (new OriginValidator([]))->extractHostname($candidate);
   }
 
 }
