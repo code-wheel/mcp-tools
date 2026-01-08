@@ -4,6 +4,17 @@ All notable changes to the MCP Tools module will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.0.0-alpha23] - 2026-01-08
+
+### Fixed
+
+- **Restored 4 unit tests** that were incorrectly marked as testing debt:
+  - `RedirectServiceTest` - fixed assertion to match actual API (success=true, found=false)
+  - `ContentTypeServiceTest` - fixed with proper DI for EntityFieldManagerInterface
+  - `FieldServiceTest` - updated for new addField() signature and getFieldTypes() format
+  - `WebformServiceTest` - fixed method names (listSubmissions→getSubmissions), removed dead tests
+- `ContentTypeService` now uses proper dependency injection instead of static `\Drupal::service()` calls
+
 ## [1.0.0-alpha22] - 2026-01-07
 
 ### Added
@@ -23,15 +34,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - `mcp_tools_remote` now delegates to `code-wheel/mcp-http-security` package
 - Backward compatible: existing API keys continue to work unchanged
 - Cleaner architecture with proper separation of concerns
-
-### Fixed
-
-- **Restored 4 unit tests** that were incorrectly marked as testing debt:
-  - `RedirectServiceTest` - fixed assertion to match actual API (success=true, found=false)
-  - `ContentTypeServiceTest` - fixed with proper DI for EntityFieldManagerInterface
-  - `FieldServiceTest` - updated for new addField() signature and getFieldTypes() format
-  - `WebformServiceTest` - fixed method names (listSubmissions→getSubmissions), removed dead tests
-- `ContentTypeService` now uses proper dependency injection instead of static `\Drupal::service()` calls
 
 ### Dependencies
 
