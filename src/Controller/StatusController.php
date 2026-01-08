@@ -102,43 +102,104 @@ class StatusController extends ControllerBase {
       '#items' => $rateItems,
     ];
 
-    // Enabled submodules.
+    // Enabled submodules - grouped by category.
     $build['modules'] = [
       '#type' => 'details',
       '#title' => $this->t('Enabled Submodules'),
       '#open' => TRUE,
     ];
 
-    $submodules = [
+    // Core-only submodules (no contrib dependencies).
+    $coreSubmodules = [
       'mcp_tools_content' => $this->t('Content CRUD'),
-      'mcp_tools_structure' => $this->t('Content types, fields, taxonomy, roles'),
+      'mcp_tools_structure' => $this->t('Content types, fields, roles, taxonomy'),
       'mcp_tools_users' => $this->t('User management'),
       'mcp_tools_menus' => $this->t('Menu management'),
       'mcp_tools_views' => $this->t('Views management'),
       'mcp_tools_blocks' => $this->t('Block placement'),
       'mcp_tools_media' => $this->t('Media management'),
-      'mcp_tools_webform' => $this->t('Webform integration'),
       'mcp_tools_theme' => $this->t('Theme settings'),
       'mcp_tools_layout_builder' => $this->t('Layout Builder'),
       'mcp_tools_recipes' => $this->t('Drupal Recipes'),
       'mcp_tools_config' => $this->t('Configuration management'),
+      'mcp_tools_cache' => $this->t('Cache management'),
+      'mcp_tools_cron' => $this->t('Cron management'),
+      'mcp_tools_batch' => $this->t('Batch operations'),
+      'mcp_tools_templates' => $this->t('Site templates'),
+      'mcp_tools_migration' => $this->t('Content migration'),
+      'mcp_tools_analysis' => $this->t('Site analysis'),
+      'mcp_tools_moderation' => $this->t('Content moderation'),
+      'mcp_tools_image_styles' => $this->t('Image styles'),
     ];
 
-    $moduleItems = [];
-    foreach ($submodules as $module => $description) {
+    // Contrib-dependent submodules.
+    $contribSubmodules = [
+      'mcp_tools_webform' => $this->t('Webform (requires webform)'),
+      'mcp_tools_paragraphs' => $this->t('Paragraphs (requires paragraphs)'),
+      'mcp_tools_redirect' => $this->t('Redirects (requires redirect)'),
+      'mcp_tools_pathauto' => $this->t('Path auto (requires pathauto)'),
+      'mcp_tools_metatag' => $this->t('Metatag (requires metatag)'),
+      'mcp_tools_scheduler' => $this->t('Scheduler (requires scheduler)'),
+      'mcp_tools_search_api' => $this->t('Search API (requires search_api)'),
+      'mcp_tools_sitemap' => $this->t('Sitemap (requires simple_sitemap)'),
+      'mcp_tools_entity_clone' => $this->t('Entity clone (requires entity_clone)'),
+      'mcp_tools_ultimate_cron' => $this->t('Ultimate Cron (requires ultimate_cron)'),
+    ];
+
+    // Infrastructure submodules.
+    $infraSubmodules = [
+      'mcp_tools_stdio' => $this->t('STDIO transport'),
+      'mcp_tools_remote' => $this->t('HTTP transport'),
+      'mcp_tools_observability' => $this->t('Event logging'),
+      'mcp_tools_mcp_server' => $this->t('MCP Server bridge (requires mcp_server)'),
+    ];
+
+    $build['modules']['core_heading'] = [
+      '#markup' => '<strong>' . $this->t('Core-only submodules:') . '</strong>',
+    ];
+
+    $coreItems = [];
+    foreach ($coreSubmodules as $module => $description) {
       $enabled = $this->moduleHandler()->moduleExists($module);
-      $moduleItems[] = [
-        '#markup' => $this->t('@module: @status - @desc', [
-          '@module' => $module,
-          '@status' => $enabled ? '✓ Enabled' : '✗ Disabled',
-          '@desc' => $description,
-        ]),
+      $coreItems[] = [
+        '#markup' => ($enabled ? '✓' : '✗') . ' ' . $module . ' - ' . $description,
       ];
     }
-
-    $build['modules']['list'] = [
+    $build['modules']['core_list'] = [
       '#theme' => 'item_list',
-      '#items' => $moduleItems,
+      '#items' => $coreItems,
+    ];
+
+    $build['modules']['contrib_heading'] = [
+      '#markup' => '<strong>' . $this->t('Contrib-dependent submodules:') . '</strong>',
+    ];
+
+    $contribItems = [];
+    foreach ($contribSubmodules as $module => $description) {
+      $enabled = $this->moduleHandler()->moduleExists($module);
+      $contribItems[] = [
+        '#markup' => ($enabled ? '✓' : '✗') . ' ' . $module . ' - ' . $description,
+      ];
+    }
+    $build['modules']['contrib_list'] = [
+      '#theme' => 'item_list',
+      '#items' => $contribItems,
+    ];
+
+    $build['modules']['infra_heading'] = [
+      '#markup' => '<strong>' . $this->t('Infrastructure submodules:') . '</strong>',
+    ];
+
+    $infraItems = [];
+    foreach ($infraSubmodules as $module => $description) {
+      $enabled = $this->moduleHandler()->moduleExists($module);
+      $infraItems[] = [
+        '#markup' => ($enabled ? '✓' : '✗') . ' ' . $module . ' - ' . $description,
+      ];
+    }
+    $build['modules']['infra_list'] = [
+      '#theme' => 'item_list',
+      '#items' => $infraItems,
     ];
 
     // Remote HTTP endpoint status (optional submodule).

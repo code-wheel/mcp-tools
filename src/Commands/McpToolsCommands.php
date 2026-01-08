@@ -97,45 +97,97 @@ class McpToolsCommands extends DrushCommands {
       );
     }
 
-    // Enabled Submodules.
+    // Enabled Submodules - grouped by category.
     $this->io()->section('Enabled Submodules');
-    $submodules = [
-      'mcp_tools_content' => 'Content CRUD (4 tools)',
-      'mcp_tools_structure' => 'Structure: content types, fields, roles (12 tools)',
-      'mcp_tools_users' => 'User management (5 tools)',
-      'mcp_tools_menus' => 'Menu management (5 tools)',
-      'mcp_tools_views' => 'Views management (6 tools)',
-      'mcp_tools_blocks' => 'Block placement (5 tools)',
-      'mcp_tools_media' => 'Media management (6 tools)',
-      'mcp_tools_webform' => 'Webform integration (7 tools)',
-      'mcp_tools_theme' => 'Theme settings (8 tools)',
-      'mcp_tools_layout_builder' => 'Layout Builder (9 tools)',
-      'mcp_tools_recipes' => 'Drupal Recipes (6 tools)',
-      'mcp_tools_config' => 'Configuration management (5 tools)',
+
+    // Core-only submodules (no contrib dependencies).
+    $coreSubmodules = [
+      'mcp_tools_content' => 'Content CRUD',
+      'mcp_tools_structure' => 'Content types, fields, roles, taxonomy',
+      'mcp_tools_users' => 'User management',
+      'mcp_tools_menus' => 'Menu management',
+      'mcp_tools_views' => 'Views management',
+      'mcp_tools_blocks' => 'Block placement',
+      'mcp_tools_media' => 'Media management',
+      'mcp_tools_theme' => 'Theme settings',
+      'mcp_tools_layout_builder' => 'Layout Builder',
+      'mcp_tools_recipes' => 'Drupal Recipes',
+      'mcp_tools_config' => 'Configuration management',
+      'mcp_tools_cache' => 'Cache management',
+      'mcp_tools_cron' => 'Cron management',
+      'mcp_tools_batch' => 'Batch operations',
+      'mcp_tools_templates' => 'Site templates',
+      'mcp_tools_migration' => 'Content migration',
+      'mcp_tools_analysis' => 'Site analysis',
+      'mcp_tools_moderation' => 'Content moderation',
+      'mcp_tools_image_styles' => 'Image styles',
+    ];
+
+    // Contrib-dependent submodules.
+    $contribSubmodules = [
+      'mcp_tools_webform' => 'Webform (requires webform)',
+      'mcp_tools_paragraphs' => 'Paragraphs (requires paragraphs)',
+      'mcp_tools_redirect' => 'Redirects (requires redirect)',
+      'mcp_tools_pathauto' => 'Path auto (requires pathauto)',
+      'mcp_tools_metatag' => 'Metatag (requires metatag)',
+      'mcp_tools_scheduler' => 'Scheduler (requires scheduler)',
+      'mcp_tools_search_api' => 'Search API (requires search_api)',
+      'mcp_tools_sitemap' => 'Sitemap (requires simple_sitemap)',
+      'mcp_tools_entity_clone' => 'Entity clone (requires entity_clone)',
+      'mcp_tools_ultimate_cron' => 'Ultimate Cron (requires ultimate_cron)',
+    ];
+
+    // Infrastructure submodules.
+    $infraSubmodules = [
+      'mcp_tools_stdio' => 'STDIO transport',
+      'mcp_tools_remote' => 'HTTP transport',
+      'mcp_tools_observability' => 'Event logging',
+      'mcp_tools_mcp_server' => 'MCP Server bridge (requires mcp_server)',
     ];
 
     $rows = [];
-    $enabledCount = 0;
-    $toolCount = 22; // Base module tools.
+    $enabledCore = 0;
+    $enabledContrib = 0;
+    $enabledInfra = 0;
 
-    foreach ($submodules as $module => $description) {
+    $this->io()->text('<info>Core-only submodules:</info>');
+    foreach ($coreSubmodules as $module => $description) {
       $enabled = $this->moduleHandler->moduleExists($module);
       if ($enabled) {
-        $enabledCount++;
-        // Extract tool count from description.
-        if (preg_match('/\((\d+) tools?\)/', $description, $matches)) {
-          $toolCount += (int) $matches[1];
-        }
+        $enabledCore++;
       }
-      $rows[] = [
-        $module,
-        $enabled ? '<info>✓ Enabled</info>' : '<comment>✗ Disabled</comment>',
-        $description,
-      ];
+      $rows[] = [$module, $enabled ? '<info>✓</info>' : '<comment>✗</comment>', $description];
     }
+    $this->io()->table(['Module', '', 'Description'], $rows);
 
-    $this->io()->table(['Module', 'Status', 'Description'], $rows);
-    $this->io()->text("Enabled: $enabledCount/12 submodules, $toolCount total tools available");
+    $rows = [];
+    $this->io()->text('<info>Contrib-dependent submodules:</info>');
+    foreach ($contribSubmodules as $module => $description) {
+      $enabled = $this->moduleHandler->moduleExists($module);
+      if ($enabled) {
+        $enabledContrib++;
+      }
+      $rows[] = [$module, $enabled ? '<info>✓</info>' : '<comment>✗</comment>', $description];
+    }
+    $this->io()->table(['Module', '', 'Description'], $rows);
+
+    $rows = [];
+    $this->io()->text('<info>Infrastructure submodules:</info>');
+    foreach ($infraSubmodules as $module => $description) {
+      $enabled = $this->moduleHandler->moduleExists($module);
+      if ($enabled) {
+        $enabledInfra++;
+      }
+      $rows[] = [$module, $enabled ? '<info>✓</info>' : '<comment>✗</comment>', $description];
+    }
+    $this->io()->table(['Module', '', 'Description'], $rows);
+
+    // Get actual tool count from tool manager.
+    $toolCount = $this->countMcpTools();
+    $totalSubmodules = count($coreSubmodules) + count($contribSubmodules) + count($infraSubmodules);
+    $enabledCount = $enabledCore + $enabledContrib + $enabledInfra;
+
+    $this->io()->text("Enabled: $enabledCount/$totalSubmodules submodules, $toolCount MCP tools available");
 
     // Security Warnings.
     $this->io()->section('Security Recommendations');
@@ -535,6 +587,109 @@ class McpToolsCommands extends DrushCommands {
   public function resetLimits(): void {
     $this->rateLimiter->resetLimits();
     $this->io()->success('Rate limits reset for current client.');
+  }
+
+  /**
+   * Apply development profile: enable core submodules and set development mode.
+   */
+  #[CLI\Command(name: 'mcp:dev-profile', aliases: ['mcp-dev'])]
+  #[CLI\Usage(name: 'drush mcp:dev-profile', description: 'Apply development preset and enable recommended submodules')]
+  #[CLI\Option(name: 'skip-modules', description: 'Skip enabling submodules (only apply config preset)')]
+  public function devProfile(array $options = ['skip-modules' => FALSE]): void {
+    $this->io()->title('MCP Tools Development Profile');
+
+    // Apply development mode preset.
+    $config = $this->configFactory->getEditable('mcp_tools.settings');
+    $config->set('mode', 'development');
+    $config->set('access.read_only_mode', FALSE);
+    $config->set('access.config_only_mode', FALSE);
+    $config->set('access.default_scopes', ['read', 'write']);
+    $config->set('access.allowed_scopes', ['read', 'write', 'admin']);
+    $config->set('access.audit_logging', FALSE);
+    $config->set('rate_limiting.enabled', FALSE);
+    $config->save();
+
+    $this->io()->success('Applied development mode preset.');
+
+    if (!empty($options['skip-modules'])) {
+      $this->io()->text('Skipped module installation (--skip-modules).');
+      return;
+    }
+
+    // Enable recommended core-only submodules for development.
+    $recommendedModules = [
+      'mcp_tools_content',
+      'mcp_tools_structure',
+      'mcp_tools_users',
+      'mcp_tools_menus',
+      'mcp_tools_views',
+      'mcp_tools_blocks',
+      'mcp_tools_media',
+      'mcp_tools_theme',
+      'mcp_tools_config',
+      'mcp_tools_cache',
+      'mcp_tools_templates',
+      'mcp_tools_analysis',
+      'mcp_tools_stdio',
+    ];
+
+    $toInstall = [];
+    foreach ($recommendedModules as $module) {
+      if (!$this->moduleHandler->moduleExists($module)) {
+        // Check if module exists in the filesystem.
+        $moduleInfo = $this->moduleList->getExtensionInfo($module);
+        if (!empty($moduleInfo)) {
+          $toInstall[] = $module;
+        }
+      }
+    }
+
+    if (empty($toInstall)) {
+      $this->io()->text('All recommended submodules are already enabled.');
+    }
+    else {
+      $this->io()->text('Enabling: ' . implode(', ', $toInstall));
+      try {
+        $this->moduleInstaller->install($toInstall);
+        $this->io()->success('Enabled ' . count($toInstall) . ' submodules.');
+      }
+      catch (\Exception $e) {
+        $this->io()->error('Failed to enable modules: ' . $e->getMessage());
+        return;
+      }
+    }
+
+    $toolCount = $this->countMcpTools();
+    $this->io()->newLine();
+    $this->io()->text("Development profile applied. $toolCount MCP tools now available.");
+    $this->io()->text('');
+    $this->io()->text('Next steps:');
+    $this->io()->text('  1) Start STDIO server: drush mcp-tools:serve --uid=1');
+    $this->io()->text('  2) Configure your MCP client (see docs/CLIENT_INTEGRATIONS.md)');
+    $this->io()->text('  3) Run drush mcp:status to verify configuration');
+  }
+
+  /**
+   * Count MCP tools from the tool manager.
+   *
+   * @return int
+   *   Number of MCP tools available.
+   */
+  private function countMcpTools(): int {
+    $definitions = $this->toolManager->getDefinitions();
+    $count = 0;
+
+    foreach ($definitions as $definition) {
+      if (!$definition instanceof ToolDefinition) {
+        continue;
+      }
+      $provider = $definition->getProvider() ?? '';
+      if (is_string($provider) && str_starts_with($provider, 'mcp_tools')) {
+        $count++;
+      }
+    }
+
+    return $count;
   }
 
   /**
