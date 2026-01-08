@@ -24,6 +24,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Backward compatible: existing API keys continue to work unchanged
 - Cleaner architecture with proper separation of concerns
 
+### Fixed
+
+- **Restored 4 unit tests** that were incorrectly marked as testing debt:
+  - `RedirectServiceTest` - fixed assertion to match actual API (success=true, found=false)
+  - `ContentTypeServiceTest` - fixed with proper DI for EntityFieldManagerInterface
+  - `FieldServiceTest` - updated for new addField() signature and getFieldTypes() format
+  - `WebformServiceTest` - fixed method names (listSubmissions→getSubmissions), removed dead tests
+- `ContentTypeService` now uses proper dependency injection instead of static `\Drupal::service()` calls
+
 ### Dependencies
 
 - Added `code-wheel/mcp-http-security: ^1.0` requirement
