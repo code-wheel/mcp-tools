@@ -4,6 +4,29 @@ All notable changes to the MCP Tools module will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.0.0-alpha25] - 2026-01-08
+
+### Security
+
+- **UserService**: Added admin role protection to `blockUser()` - users with administrator role cannot be blocked via MCP
+- **UserService**: Added input validation (username max 60 chars, email max 254 chars, email format validation)
+- **RoleService**: Expanded `DANGEROUS_PERMISSIONS` from 10 to 19 entries including `administer blocks`, `administer views`, `create url aliases`
+- **MenuService**: Enhanced URI validation to decode URL-encoded characters and prevent bypass attempts (e.g., `%6Aavascript:`)
+
+### Fixed
+
+- **ContentTypeService**: Fixed critical infinite recursion bug in `getEntityFieldManager()` that called itself instead of the service container
+- **TaxonomyService**: Fixed N+1 query issues with new `getTermCountsByVocabulary()` and `batchLoadParents()` methods
+
+### Changed
+
+- **Bloat cleanup**: Removed Policy engine, Component system, telemetry module, workflows module, and example module
+- **Config cleanup**: Removed `policy` section from `mcp_tools.settings.yml` and schema
+- **Documentation**: Removed WordPress references, updated tool counts, removed COMPONENTS.md
+- **Lifecycle consistency**: Added `lifecycle: experimental` to 9 submodules missing it
+- **Package standardization**: Standardized `package: MCP Tools` across all submodules
+- **Test updates**: Updated ToolSchemaKernelTest tool count (156 → 154), removed deleted modules from test lists
+
 ## [1.0.0-alpha24] - 2026-01-08
 
 ### Changed
