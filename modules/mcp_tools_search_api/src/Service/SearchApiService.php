@@ -408,6 +408,131 @@ class SearchApiService {
   }
 
   /**
+   * Search content using a Search API index.
+   *
+   * @param string $indexId
+   *   The index ID to search.
+   * @param string $keywords
+   *   Search keywords.
+   * @param array $filters
+   *   Optional filters (field => value pairs).
+   * @param int $limit
+   *   Maximum results to return.
+   * @param int $offset
+   *   Pagination offset.
+   *
+   * @return array
+   *   Search results with items and metadata.
+   */
+  public function search(string $indexId, string $keywords, array $filters = [], int $limit = 25, int $offset = 0): array {
+    $index = $this->loadIndex($indexId);
+    if (!$index) {
+      return [
+        'success' => FALSE,
+        'error' => "Index '$indexId' not found.",
+        'code' => 'NOT_FOUND',
+      ];
+    }
+
+    if (!$index->status()) {
+      return [
+        'success' => FALSE,
+        'error' => "Index '$indexId' is disabled.",
+        'code' => 'INDEX_DISABLED',
+      ];
+    }
+
+    try {
+      $query = $index->query();
+
+      // Set search keywords.
+      if (!empty($keywords)) {
+        $query->keys($keywords);
+      }
+
+      // Apply filters.
+      foreach ($filters as $field => $value) {
+        // Validate field name to prevent injection.
+        if (!preg_match('/^[a-z_][a-z0-9_]*$/i', $field)) {
+          continue;
+        }
+        // Check if field exists in index.
+        if ($index->getField($field)) {
+          $query->addCondition($field, $value);
+        }
+      }
+
+      // Set pagination.
+      $query->range($offset, min($limit, 100));
+
+      // Execute search.
+      $results = $query->execute();
+
+      $items = [];
+      foreach ($results->getResultItems() as $resultItem) {
+        $item = [
+          'id' => $resultItem->getId(),
+          'score' => $resultItem->getScore(),
+        ];
+
+        // Try to get the original entity.
+        try {
+          $entity = $resultItem->getOriginalObject()->getValue();
+          if ($entity) {
+            $item['entity_type'] = $entity->getEntityTypeId();
+            $item['bundle'] = $entity->bundle();
+            $item['entity_id'] = $entity->id();
+            $item['label'] = $entity->label();
+            $item['uuid'] = $entity->uuid();
+
+            // Add URL if available.
+            if ($entity->hasLinkTemplate('canonical')) {
+              try {
+                $item['url'] = $entity->toUrl('canonical')->toString();
+              }
+              catch (\Exception $e) {
+                // URL generation failed, skip.
+              }
+            }
+          }
+        }
+        catch (\Exception $e) {
+          // Could not load entity, include basic info only.
+        }
+
+        // Include excerpt if available.
+        $excerpt = $resultItem->getExcerpt();
+        if ($excerpt) {
+          $item['excerpt'] = strip_tags($excerpt);
+        }
+
+        $items[] = $item;
+      }
+
+      return [
+        'success' => TRUE,
+        'data' => [
+          'items' => $items,
+          'total' => $results->getResultCount(),
+          'returned' => count($items),
+          'limit' => $limit,
+          'offset' => $offset,
+          'has_more' => ($offset + count($items)) < $results->getResultCount(),
+          'index' => $indexId,
+          'keywords' => $keywords,
+        ],
+      ];
+    }
+    catch (\Exception $e) {
+      return [
+        'success' => FALSE,
+        'error' => 'Search failed: ' . $e->getMessage(),
+        'code' => 'SEARCH_ERROR',
+      ];
+    }
+  }
+
+  /**
    * Load an index by ID.
    *
    * @param string $id

@@ -18,8 +18,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - Configurable allowlist/blocklist for entity types
   - Security: user, shortcut, shortcut_set always blocked
   - Settings form at `/admin/config/services/mcp-tools/jsonapi`
+- **`mcp_search_api_search` tool**: Search content via Search API indexes with keywords, filters, and pagination (added to `mcp_tools_search_api`)
 - **`mcp:dev-profile` command**: One-command setup for development - applies development preset and enables recommended submodules
-- **Grouped submodule display**: Status page and `mcp:status` now show all 33 submodules grouped by category (core-only, contrib-dependent, infrastructure)
+- **Grouped submodule display**: Status page and `mcp:status` now show all 34 submodules grouped by category (core-only, contrib-dependent, infrastructure)
 
 ### Security
 
