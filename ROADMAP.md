@@ -10,7 +10,38 @@ MCP Tools provides **curated, high-value tools** that solve real problems—not 
 
 ---
 
-## Current State (v1.0-alpha23)
+## Pre-Release Fixes (alpha25)
+
+Issues identified via comprehensive security and UX/DX scan.
+
+### Security Fixes
+
+| Priority | Issue | File | Status |
+|----------|-------|------|--------|
+| MEDIUM | Path traversal - accepts absolute paths without canonicalization | `RecipesService.php:570` | ✅ Fixed |
+| LOW | `unserialize()` usage | `WatchdogAnalyzer.php`, `AnalysisService.php` | ✅ Already mitigated |
+
+### UX/DX Fixes
+
+| Priority | Issue | File | Status |
+|----------|-------|------|--------|
+| HIGH | Permission mismatch `'administer mcp tools'` vs `'mcp_tools administer'` | `mcp_tools_jsonapi.routing.yml` | ✅ Fixed |
+| MEDIUM | Config schema lacks min/max constraints for integers | `mcp_tools.schema.yml` | N/A - Drupal schema doesn't support; form validates |
+| MEDIUM | Executor role auto-grants ALL permissions | `RemoteSettingsForm.php` | ✅ Fixed |
+| LOW | Routing title inconsistency | `mcp_tools_jsonapi.routing.yml` | ✅ Fixed |
+
+### Test Coverage Gaps
+
+| Component | Gap | Status |
+|-----------|-----|--------|
+| JsonApiService | No unit tests | ✅ Added |
+| SearchApiService.search() | No unit tests | ✅ Added |
+| Tool Plugins (222) | 0% coverage | Deferred - covered by kernel smoke tests |
+| Commands (4) | 0% coverage | Deferred - tested via E2E scripts |
+
+---
+
+## Current State (v1.0-alpha25)
 
 ### What We Have
 

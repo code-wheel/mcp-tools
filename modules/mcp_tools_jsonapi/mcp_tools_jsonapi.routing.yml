@@ -2,6 +2,6 @@ mcp_tools_jsonapi.settings:
   path: '/admin/config/services/mcp-tools/jsonapi'
   defaults:
     _form: '\Drupal\mcp_tools_jsonapi\Form\JsonApiSettingsForm'
-    _title: 'JSON:API Settings'
+    _title: 'MCP Tools JSON:API Settings'
   requirements:
-    _permission: 'administer mcp tools'
+    _permission: 'mcp_tools administer'

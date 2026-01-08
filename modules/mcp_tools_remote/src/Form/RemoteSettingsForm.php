@@ -308,15 +308,41 @@ final class RemoteSettingsForm extends ConfigFormBase {
       ]);
       $role->grantPermission('access content');
 
-      // Grant all MCP tools permissions.
+      // Grant read-oriented MCP permissions by default (safe).
+      // Write-heavy categories must be added manually for security.
+      $safeCategories = [
+        'site_health',
+        'site_tools',
+        'content',
+        'content_tools',
+        'config',
+        'config_tools',
+        'users',
+        'user_tools',
+        'discovery',
+        'cache',
+        'cron',
+        'analysis',
+        'moderation',
+      ];
+
       $permissions = $this->permissionHandler->getPermissions();
+      $grantedCount = 0;
       foreach ($permissions as $permission => $info) {
-        if (str_starts_with($permission, 'mcp_tools use ')) {
+        if (!str_starts_with($permission, 'mcp_tools use ')) {
+          continue;
+        }
+        // Extract category from permission (e.g., "mcp_tools use content" -> "content").
+        $category = substr($permission, strlen('mcp_tools use '));
+        if (in_array($category, $safeCategories, TRUE)) {
           $role->grantPermission($permission);
+          $grantedCount++;
         }
       }
       $role->save();
-      $this->messenger()->addStatus($this->t('Created <em>MCP Executor</em> role with all MCP Tools permissions.'));
+      $this->messenger()->addStatus($this->t('Created <em>MCP Executor</em> role with @count read-oriented permissions. Add write permissions (structure, batch, migration, etc.) manually if needed.', [
+        '@count' => $grantedCount,
+      ]));
     }
 
     // Create the mcp_executor user if it doesn't exist.

@@ -568,9 +568,43 @@ class RecipesService {
    *   The recipe path or NULL if not found.
    */
   protected function findRecipe(string $recipeName): ?string {
-    // First check if it's an absolute path.
-    if (str_starts_with($recipeName, '/') && is_dir($recipeName) && file_exists($recipeName . '/recipe.yml')) {
-      return $recipeName;
+    // Reject path traversal attempts.
+    if (str_contains($recipeName, '..')) {
+      return NULL;
+    }
+
+    // Check if it's an absolute path.
+    if (str_starts_with($recipeName, '/')) {
+      // Canonicalize the path to prevent traversal.
+      $realPath = realpath($recipeName);
+      if ($realPath === FALSE) {
+        return NULL;
+      }
+
+      // Verify it's within an allowed recipe directory.
+      $isAllowed = FALSE;
+      foreach ($this->getRecipeDirectories() as $allowedDir) {
+        $realAllowedDir = realpath($allowedDir);
+        if ($realAllowedDir !== FALSE && str_starts_with($realPath, $realAllowedDir . '/')) {
+          $isAllowed = TRUE;
+          break;
+        }
+      }
+
+      // Also allow paths within the Drupal root.
+      $drupalRoot = realpath(DRUPAL_ROOT);
+      if ($drupalRoot !== FALSE && str_starts_with($realPath, $drupalRoot . '/')) {
+        $isAllowed = TRUE;
+      }
+
+      if (!$isAllowed) {
+        return NULL;
+      }
+
+      if (is_dir($realPath) && file_exists($realPath . '/recipe.yml')) {
+        return $realPath;
+      }
+      return NULL;
     }
 
     // Search in known directories.
