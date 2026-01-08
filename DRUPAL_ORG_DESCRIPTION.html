@@ -41,9 +41,17 @@ claude mcp add --scope project drupal -- drush mcp-tools:stdio --uri=https://you
 }</code>
 
 <h3>Option B: HTTP Transport (Remote/Docker)</h3>
-<p>Enable the remote module and generate an API key:</p>
-<code>drush en mcp_tools_remote -y
-drush mcp-tools:remote-key-create --label="Claude" --scopes=read,write</code>
+<p>Enable the remote module:</p>
+<code>drush en mcp_tools_remote -y</code>
+
+<p><strong>Configure execution user:</strong> Visit <code>/admin/config/services/mcp-tools/remote</code></p>
+<ul>
+<li><strong>Quick setup:</strong> Check "Use site admin (uid 1)" — simple for development</li>
+<li><strong>Production:</strong> Click "Create MCP Executor Account" for a dedicated service account</li>
+</ul>
+
+<p><strong>Generate an API key:</strong></p>
+<code>drush mcp-tools:remote-key-create --label="Claude" --scopes=read,write</code>
 
 <p>Copy the key shown (it's only displayed once).</p>
 
