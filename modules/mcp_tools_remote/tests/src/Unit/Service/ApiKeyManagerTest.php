@@ -10,10 +10,8 @@ use Drupal\Core\State\StateInterface;
 use Drupal\mcp_tools_remote\Service\ApiKeyManager;
 use Drupal\Tests\UnitTestCase;
 
-/**
- * @coversDefaultClass \Drupal\mcp_tools_remote\Service\ApiKeyManager
- * @group mcp_tools_remote
- */
+#[\PHPUnit\Framework\Attributes\CoversClass(\Drupal\mcp_tools_remote\Service\ApiKeyManager::class)]
+#[\PHPUnit\Framework\Attributes\Group('mcp_tools_remote')]
 final class ApiKeyManagerTest extends UnitTestCase {
 
   private StateInterface $state;
@@ -43,11 +41,6 @@ final class ApiKeyManagerTest extends UnitTestCase {
     $this->time->method('getRequestTime')->willReturn(1700000000);
   }
 
-  /**
-   * @covers ::createKey
-   * @covers ::validate
-   * @covers ::listKeys
-   */
   public function testCreateValidateAndList(): void {
     $manager = new ApiKeyManager($this->state, $this->privateKey, $this->time);
 
@@ -70,10 +63,6 @@ final class ApiKeyManagerTest extends UnitTestCase {
     $this->assertNull($keys[$created['key_id']]['expires']);
   }
 
-  /**
-   * @covers ::createKey
-   * @covers ::validate
-   */
   public function testValidateRejectsExpiredKeys(): void {
     $now = 1700000000;
     $time = $this->createMock(TimeInterface::class);
@@ -90,9 +79,6 @@ final class ApiKeyManagerTest extends UnitTestCase {
     $this->assertNull($manager->validate($created['api_key']));
   }
 
-  /**
-   * @covers ::validate
-   */
   public function testValidateRejectsInvalidKeys(): void {
     $manager = new ApiKeyManager($this->state, $this->privateKey, $this->time);
 
@@ -114,9 +100,6 @@ final class ApiKeyManagerTest extends UnitTestCase {
     $this->assertNull($manager->validate($badSecret));
   }
 
-  /**
-   * @covers ::revokeKey
-   */
   public function testRevokeKey(): void {
     $manager = new ApiKeyManager($this->state, $this->privateKey, $this->time);
 

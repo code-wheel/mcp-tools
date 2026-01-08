@@ -152,7 +152,11 @@ def _wait_for_http(url: str, timeout_seconds: float = 10) -> None:
     last_error: Exception | None = None
     while time.time() < deadline:
         try:
-            req = urllib.request.Request(url=url, method="GET")
+            req = urllib.request.Request(
+                url=url,
+                method="GET",
+                headers={"Accept": "text/event-stream"},
+            )
             with urllib.request.urlopen(req, timeout=2):
                 return
         except Exception as e:
@@ -217,7 +221,7 @@ def _run_sequence(base_url: str, api_key: str, expect_write_allowed: bool) -> No
         "id": 1,
         "method": "initialize",
         "params": {
-            "protocolVersion": "2024-11-05",
+            "protocolVersion": "2025-06-18",
             "clientInfo": {"name": "mcp_tools_ci", "version": "0.0.0"},
             "capabilities": {},
         },
@@ -333,7 +337,7 @@ def _run_config_only_sequence(base_url: str, api_key: str) -> None:
         "id": 101,
         "method": "initialize",
         "params": {
-            "protocolVersion": "2024-11-05",
+            "protocolVersion": "2025-06-18",
             "clientInfo": {"name": "mcp_tools_ci_config_only", "version": "0.0.0"},
             "capabilities": {},
         },
@@ -531,7 +535,7 @@ def main() -> int:
                     "id": 998,
                     "method": "initialize",
                     "params": {
-                        "protocolVersion": "2024-11-05",
+                        "protocolVersion": "2025-06-18",
                         "clientInfo": {"name": "mcp_tools_ci_allowlist", "version": "0.0.0"},
                         "capabilities": {},
                     },
@@ -560,7 +564,7 @@ def main() -> int:
                     "id": 997,
                     "method": "initialize",
                     "params": {
-                        "protocolVersion": "2024-11-05",
+                        "protocolVersion": "2025-06-18",
                         "clientInfo": {"name": "mcp_tools_ci_origin_allowlist", "version": "0.0.0"},
                         "capabilities": {},
                     },
@@ -588,7 +592,7 @@ def main() -> int:
                     "id": 996,
                     "method": "initialize",
                     "params": {
-                        "protocolVersion": "2024-11-05",
+                        "protocolVersion": "2025-06-18",
                         "clientInfo": {"name": "mcp_tools_ci_origin_header", "version": "0.0.0"},
                         "capabilities": {},
                     },
@@ -617,7 +621,7 @@ def main() -> int:
                 "id": 999,
                 "method": "initialize",
                 "params": {
-                    "protocolVersion": "2024-11-05",
+                    "protocolVersion": "2025-06-18",
                     "clientInfo": {"name": "mcp_tools_ci", "version": "0.0.0"},
                     "capabilities": {},
                 },

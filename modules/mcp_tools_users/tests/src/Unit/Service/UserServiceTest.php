@@ -17,9 +17,9 @@ use Drupal\user\RoleInterface;
 /**
  * Tests for UserService.
  *
- * @coversDefaultClass \Drupal\mcp_tools_users\Service\UserService
- * @group mcp_tools_users
  */
+#[\PHPUnit\Framework\Attributes\CoversClass(\Drupal\mcp_tools_users\Service\UserService::class)]
+#[\PHPUnit\Framework\Attributes\Group('mcp_tools_users')]
 class UserServiceTest extends UnitTestCase {
 
   protected EntityTypeManagerInterface $entityTypeManager;
@@ -64,9 +64,6 @@ class UserServiceTest extends UnitTestCase {
     );
   }
 
-  /**
-   * @covers ::createUser
-   */
   public function testCreateUserAccessDenied(): void {
     $this->accessManager->method('canWrite')->willReturn(FALSE);
     $this->accessManager->method('getWriteAccessDenied')->willReturn([
@@ -80,9 +77,6 @@ class UserServiceTest extends UnitTestCase {
     $this->assertFalse($result['success']);
   }
 
-  /**
-   * @covers ::createUser
-   */
   public function testCreateUserDuplicateUsername(): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
 
@@ -99,9 +93,6 @@ class UserServiceTest extends UnitTestCase {
     $this->assertStringContainsString('already exists', $result['error']);
   }
 
-  /**
-   * @covers ::createUser
-   */
   public function testCreateUserDuplicateEmail(): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
 
@@ -124,9 +115,6 @@ class UserServiceTest extends UnitTestCase {
     $this->assertStringContainsString('already in use', $result['error']);
   }
 
-  /**
-   * @covers ::updateUser
-   */
   public function testUpdateUserProtectsUid1(): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
 
@@ -138,9 +126,6 @@ class UserServiceTest extends UnitTestCase {
     $this->assertStringContainsString('uid 1', $result['error']);
   }
 
-  /**
-   * @covers ::updateUser
-   */
   public function testUpdateUserNotFound(): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
     $this->userStorage->method('load')->with(999)->willReturn(NULL);
@@ -152,9 +137,6 @@ class UserServiceTest extends UnitTestCase {
     $this->assertStringContainsString('not found', $result['error']);
   }
 
-  /**
-   * @covers ::updateUser
-   */
   public function testUpdateUserAccessDenied(): void {
     $this->accessManager->method('canWrite')->willReturn(FALSE);
     $this->accessManager->method('getWriteAccessDenied')->willReturn([
@@ -168,9 +150,6 @@ class UserServiceTest extends UnitTestCase {
     $this->assertFalse($result['success']);
   }
 
-  /**
-   * @covers ::blockUser
-   */
   public function testBlockUserProtectsUid1(): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
 
@@ -182,9 +161,6 @@ class UserServiceTest extends UnitTestCase {
     $this->assertStringContainsString('uid 1', $result['error']);
   }
 
-  /**
-   * @covers ::blockUser
-   */
   public function testBlockUserNotFound(): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
     $this->userStorage->method('load')->with(999)->willReturn(NULL);
@@ -196,9 +172,6 @@ class UserServiceTest extends UnitTestCase {
     $this->assertStringContainsString('not found', $result['error']);
   }
 
-  /**
-   * @covers ::blockUser
-   */
   public function testBlockUserAlreadyBlocked(): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
 
@@ -216,9 +189,6 @@ class UserServiceTest extends UnitTestCase {
     $this->assertStringContainsString('already blocked', $result['data']['message']);
   }
 
-  /**
-   * @covers ::activateUser
-   */
   public function testActivateUserNotFound(): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
     $this->userStorage->method('load')->with(999)->willReturn(NULL);
@@ -230,9 +200,6 @@ class UserServiceTest extends UnitTestCase {
     $this->assertStringContainsString('not found', $result['error']);
   }
 
-  /**
-   * @covers ::activateUser
-   */
   public function testActivateUserAlreadyActive(): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
 
@@ -250,9 +217,6 @@ class UserServiceTest extends UnitTestCase {
     $this->assertStringContainsString('already active', $result['data']['message']);
   }
 
-  /**
-   * @covers ::assignRoles
-   */
   public function testAssignRolesAccessDenied(): void {
     $this->accessManager->method('canWrite')->willReturn(FALSE);
     $this->accessManager->method('getWriteAccessDenied')->willReturn([
@@ -266,9 +230,6 @@ class UserServiceTest extends UnitTestCase {
     $this->assertFalse($result['success']);
   }
 
-  /**
-   * @covers ::assignRoles
-   */
   public function testAssignRolesNotFound(): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
     $this->userStorage->method('load')->with(999)->willReturn(NULL);
@@ -280,10 +241,6 @@ class UserServiceTest extends UnitTestCase {
     $this->assertStringContainsString('not found', $result['error']);
   }
 
-  /**
-   * @covers ::filterRoles
-   * @covers ::assignRoles
-   */
   public function testAssignRolesFiltersAdministrator(): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
 
@@ -319,7 +276,6 @@ class UserServiceTest extends UnitTestCase {
   /**
    * Test that filterRoles correctly removes administrator.
    *
-   * @covers ::filterRoles
    */
   public function testFilterRolesRemovesAdministrator(): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);

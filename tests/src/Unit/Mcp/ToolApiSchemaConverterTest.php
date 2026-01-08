@@ -12,15 +12,10 @@ use Drupal\tool\Tool\ToolDefinition;
 use Drupal\tool\Tool\ToolOperation;
 use Drupal\tool\TypedData\InputDefinitionInterface;
 
-/**
- * @coversDefaultClass \Drupal\mcp_tools\Mcp\ToolApiSchemaConverter
- * @group mcp_tools
- */
+#[\PHPUnit\Framework\Attributes\CoversClass(\Drupal\mcp_tools\Mcp\ToolApiSchemaConverter::class)]
+#[\PHPUnit\Framework\Attributes\Group('mcp_tools')]
 final class ToolApiSchemaConverterTest extends UnitTestCase {
 
-  /**
-   * @covers ::toolDefinitionToAnnotations
-   */
   public function testToolDefinitionToAnnotationsReadOnlyHintIsDerived(): void {
     $converter = new ToolApiSchemaConverter();
 
@@ -53,9 +48,6 @@ final class ToolApiSchemaConverterTest extends UnitTestCase {
     $this->assertTrue($writeAnnotations['destructiveHint']);
   }
 
-  /**
-   * @covers ::toolDefinitionToInputSchema
-   */
   public function testToolDefinitionToInputSchemaMapsTypesAndConstraints(): void {
     $converter = new ToolApiSchemaConverter();
 
@@ -153,9 +145,6 @@ final class ToolApiSchemaConverterTest extends UnitTestCase {
     $this->assertSame('object', $properties['meta']['type']);
   }
 
-  /**
-   * @covers ::toolDefinitionToInputSchema
-   */
   public function testToolDefinitionToInputSchemaEncodesEmptyPropertiesAsObject(): void {
     $converter = new ToolApiSchemaConverter();
 

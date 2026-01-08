@@ -10,15 +10,10 @@ use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\mcp_tools\Service\SystemStatusService;
 use Drupal\Tests\UnitTestCase;
 
-/**
- * @coversDefaultClass \Drupal\mcp_tools\Service\SystemStatusService
- * @group mcp_tools
- */
+#[\PHPUnit\Framework\Attributes\CoversClass(\Drupal\mcp_tools\Service\SystemStatusService::class)]
+#[\PHPUnit\Framework\Attributes\Group('mcp_tools')]
 final class SystemStatusServiceTest extends UnitTestCase {
 
-  /**
-   * @covers ::getPhpInfo
-   */
   public function testGetPhpInfoIncludesExpectedKeys(): void {
     $service = new SystemStatusService(
       $this->createMock(ModuleHandlerInterface::class),
@@ -32,9 +27,6 @@ final class SystemStatusServiceTest extends UnitTestCase {
     $this->assertIsArray($info['extensions']);
   }
 
-  /**
-   * @covers ::getRequirements
-   */
   public function testGetRequirementsAggregatesModuleRequirementsAndSortsBySeverity(): void {
     $moduleHandler = $this->createMock(ModuleHandlerInterface::class);
     $moduleHandler->method('getModuleList')->willReturn([
@@ -67,9 +59,6 @@ final class SystemStatusServiceTest extends UnitTestCase {
     $this->assertSame(2, count($errorsOnly['items']));
   }
 
-  /**
-   * @covers ::getDatabaseStatus
-   */
   public function testGetDatabaseStatusIncludesTableCountWhenAvailable(): void {
     $schema = $this->createMock(Schema::class);
     $schema->method('findTables')->with('%')->willReturn(['a' => 'a', 'b' => 'b']);

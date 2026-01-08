@@ -61,16 +61,27 @@ class UserService {
       return $this->accessManager->getWriteAccessDenied();
     }
 
+    // Validate input lengths to prevent abuse.
+    if (strlen($username) > 60) {
+      return ['success' => FALSE, 'error' => 'Username cannot exceed 60 characters.'];
+    }
+    if (strlen($email) > 254) {
+      return ['success' => FALSE, 'error' => 'Email cannot exceed 254 characters.'];
+    }
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+      return ['success' => FALSE, 'error' => 'Invalid email format.'];
+    }
+
     // Check if username already exists.
     $existingUser = $this->entityTypeManager->getStorage('user')->loadByProperties(['name' => $username]);
     if (!empty($existingUser)) {
-      return ['success' => FALSE, 'error' => "Username '$username' already exists."];
+      return ['success' => FALSE, 'error' => 'Unable to create user. Username may already exist or be invalid.'];
     }
 
     // Check if email already exists.
     $existingEmail = $this->entityTypeManager->getStorage('user')->loadByProperties(['mail' => $email]);
     if (!empty($existingEmail)) {
-      return ['success' => FALSE, 'error' => "Email '$email' is already in use."];
+      return ['success' => FALSE, 'error' => 'Unable to create user. Email may already be in use or be invalid.'];
     }
 
     try {
@@ -243,6 +254,11 @@ class UserService {
     $user = $this->entityTypeManager->getStorage('user')->load($uid);
     if (!$user) {
       return ['success' => FALSE, 'error' => "User with ID $uid not found. Use mcp_list_users or mcp_find_user to locate users."];
+    }
+
+    // Protect users with administrator role.
+    if ($this->userHasAdminRole($user)) {
+      return ['success' => FALSE, 'error' => 'Cannot block users with administrator privileges via MCP.'];
     }
 
     if (!$user->isActive()) {
@@ -462,6 +478,28 @@ class UserService {
   public function isRoleBlocked(string $role): bool {
     $filtered = $this->filterRoles([$role]);
     return empty($filtered);
+  }
+
+  /**
+   * Check if a user has administrator-level privileges.
+   *
+   * SECURITY: Users with admin roles cannot be blocked/deleted via MCP
+   * to prevent lockout attacks.
+   *
+   * @param \Drupal\user\UserInterface $user
+   *   The user entity.
+   *
+   * @return bool
+   *   TRUE if the user has administrator privileges.
+   */
+  protected function userHasAdminRole($user): bool {
+    $roles = $user->getRoles(TRUE);
+    foreach ($roles as $role) {
+      if ($this->isRoleBlocked($role)) {
+        return TRUE;
+      }
+    }
+    return FALSE;
   }
 
 }

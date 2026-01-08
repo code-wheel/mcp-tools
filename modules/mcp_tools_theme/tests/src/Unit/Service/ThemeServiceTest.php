@@ -19,9 +19,9 @@ use Drupal\Tests\UnitTestCase;
 /**
  * Tests for ThemeService.
  *
- * @coversDefaultClass \Drupal\mcp_tools_theme\Service\ThemeService
- * @group mcp_tools_theme
  */
+#[\PHPUnit\Framework\Attributes\CoversClass(\Drupal\mcp_tools_theme\Service\ThemeService::class)]
+#[\PHPUnit\Framework\Attributes\Group('mcp_tools_theme')]
 class ThemeServiceTest extends UnitTestCase {
 
   protected ThemeHandlerInterface $themeHandler;
@@ -74,9 +74,6 @@ class ThemeServiceTest extends UnitTestCase {
     );
   }
 
-  /**
-   * @covers ::getActiveTheme
-   */
   public function testGetActiveTheme(): void {
     $activeTheme = $this->createMock(ActiveTheme::class);
     $activeTheme->method('getName')->willReturn('olivero');
@@ -96,9 +93,6 @@ class ThemeServiceTest extends UnitTestCase {
     $this->assertEquals('claro', $result['data']['admin_theme']);
   }
 
-  /**
-   * @covers ::listThemes
-   */
   public function testListThemesInstalledOnly(): void {
     $oliveroTheme = $this->createMock(Extension::class);
     $oliveroTheme->info = [
@@ -131,9 +125,6 @@ class ThemeServiceTest extends UnitTestCase {
     $this->assertEquals('claro', $result['data']['admin_theme']);
   }
 
-  /**
-   * @covers ::setDefaultTheme
-   */
   public function testSetDefaultThemeAccessDenied(): void {
     $this->accessManager->method('canWrite')->willReturn(FALSE);
     $this->accessManager->method('getWriteAccessDenied')->willReturn([
@@ -148,9 +139,6 @@ class ThemeServiceTest extends UnitTestCase {
     $this->assertStringContainsString('denied', $result['error']);
   }
 
-  /**
-   * @covers ::setDefaultTheme
-   */
   public function testSetDefaultThemeNotInstalled(): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
     $this->themeHandler->method('themeExists')->willReturn(FALSE);
@@ -161,9 +149,6 @@ class ThemeServiceTest extends UnitTestCase {
     $this->assertFalse($result['success']);
   }
 
-  /**
-   * @covers ::setAdminTheme
-   */
   public function testSetAdminThemeAccessDenied(): void {
     $this->accessManager->method('canWrite')->willReturn(FALSE);
     $this->accessManager->method('getWriteAccessDenied')->willReturn([
@@ -177,9 +162,6 @@ class ThemeServiceTest extends UnitTestCase {
     $this->assertFalse($result['success']);
   }
 
-  /**
-   * @covers ::enableTheme
-   */
   public function testEnableThemeAccessDenied(): void {
     $this->accessManager->method('canWrite')->willReturn(FALSE);
     $this->accessManager->method('getWriteAccessDenied')->willReturn([
@@ -193,9 +175,6 @@ class ThemeServiceTest extends UnitTestCase {
     $this->assertFalse($result['success']);
   }
 
-  /**
-   * @covers ::disableTheme
-   */
   public function testDisableThemeAccessDenied(): void {
     $this->accessManager->method('canWrite')->willReturn(FALSE);
     $this->accessManager->method('getWriteAccessDenied')->willReturn([
@@ -209,9 +188,6 @@ class ThemeServiceTest extends UnitTestCase {
     $this->assertFalse($result['success']);
   }
 
-  /**
-   * @covers ::disableTheme
-   */
   public function testDisableThemeCannotDisableDefault(): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
     $this->themeHandler->method('themeExists')->willReturn(TRUE);
@@ -228,9 +204,6 @@ class ThemeServiceTest extends UnitTestCase {
     $this->assertStringContainsString('Cannot disable', $result['error']);
   }
 
-  /**
-   * @covers ::disableTheme
-   */
   public function testDisableThemeCannotDisableAdmin(): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
     $this->themeHandler->method('themeExists')->willReturn(TRUE);
@@ -247,9 +220,6 @@ class ThemeServiceTest extends UnitTestCase {
     $this->assertStringContainsString('Cannot disable', $result['error']);
   }
 
-  /**
-   * @covers ::getThemeSettings
-   */
   public function testGetThemeSettings(): void {
     $themeSettingsConfig = $this->createMock(ImmutableConfig::class);
     $themeSettingsConfig->method('getRawData')->willReturn([
@@ -280,9 +250,6 @@ class ThemeServiceTest extends UnitTestCase {
     $this->assertTrue($result['success'], $result['error'] ?? 'Expected getThemeSettings() to succeed.');
   }
 
-  /**
-   * @covers ::updateThemeSettings
-   */
   public function testUpdateThemeSettingsAccessDenied(): void {
     $this->accessManager->method('canWrite')->willReturn(FALSE);
     $this->accessManager->method('getWriteAccessDenied')->willReturn([

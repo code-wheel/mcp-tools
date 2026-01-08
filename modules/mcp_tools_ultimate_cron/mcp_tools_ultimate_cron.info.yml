@@ -3,6 +3,7 @@ type: module
 description: 'MCP Tools integration for Ultimate Cron job management.'
 core_version_requirement: ^10.3 || ^11
 package: MCP Tools
+lifecycle: experimental
 dependencies:
   - mcp_tools:mcp_tools
   - ultimate_cron:ultimate_cron

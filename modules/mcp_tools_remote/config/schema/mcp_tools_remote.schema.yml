@@ -8,6 +8,9 @@ mcp_tools_remote.settings:
     uid:
       type: integer
       label: 'Drupal user ID for execution'
+    allow_uid1:
+      type: boolean
+      label: 'Allow uid 1 execution override'
     allowed_ips:
       type: sequence
       label: 'Allowed client IPs for access'
@@ -26,9 +29,15 @@ mcp_tools_remote.settings:
     server_version:
       type: string
       label: 'Server version'
+    server_id:
+      type: string
+      label: 'Server profile ID'
     pagination_limit:
       type: integer
       label: 'Pagination limit'
     include_all_tools:
       type: boolean
       label: 'Expose all Tool API tools'
+    gateway_mode:
+      type: boolean
+      label: 'Enable gateway mode'

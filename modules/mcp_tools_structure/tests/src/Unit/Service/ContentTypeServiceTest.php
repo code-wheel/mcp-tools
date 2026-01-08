@@ -19,9 +19,9 @@ use Drupal\Tests\UnitTestCase;
 /**
  * Tests for ContentTypeService.
  *
- * @coversDefaultClass \Drupal\mcp_tools_structure\Service\ContentTypeService
- * @group mcp_tools_structure
  */
+#[\PHPUnit\Framework\Attributes\CoversClass(\Drupal\mcp_tools_structure\Service\ContentTypeService::class)]
+#[\PHPUnit\Framework\Attributes\Group('mcp_tools_structure')]
 class ContentTypeServiceTest extends UnitTestCase {
 
   protected EntityTypeManagerInterface $entityTypeManager;
@@ -96,9 +96,6 @@ class ContentTypeServiceTest extends UnitTestCase {
     return $query;
   }
 
-  /**
-   * @covers ::listContentTypes
-   */
   public function testListContentTypesEmpty(): void {
     $this->nodeTypeStorage->method('loadMultiple')->willReturn([]);
 
@@ -109,9 +106,6 @@ class ContentTypeServiceTest extends UnitTestCase {
     $this->assertEmpty($result['data']['types']);
   }
 
-  /**
-   * @covers ::listContentTypes
-   */
   public function testListContentTypesWithTypes(): void {
     $type1 = $this->createMockNodeType('article', 'Article', 'A news article');
     $type2 = $this->createMockNodeType('page', 'Basic Page', 'A basic page');
@@ -130,9 +124,6 @@ class ContentTypeServiceTest extends UnitTestCase {
     $this->assertCount(2, $result['data']['types']);
   }
 
-  /**
-   * @covers ::getContentType
-   */
   public function testGetContentTypeNotFound(): void {
     $this->nodeTypeStorage->method('load')->willReturn(NULL);
 
@@ -143,9 +134,6 @@ class ContentTypeServiceTest extends UnitTestCase {
     $this->assertStringContainsString('not found', $result['error']);
   }
 
-  /**
-   * @covers ::getContentType
-   */
   public function testGetContentTypeSuccess(): void {
     $type = $this->createMockNodeType('article', 'Article', 'A news article');
     $this->nodeTypeStorage->method('load')->willReturn($type);
@@ -158,9 +146,6 @@ class ContentTypeServiceTest extends UnitTestCase {
     $this->assertEquals('Article', $result['data']['label']);
   }
 
-  /**
-   * @covers ::createContentType
-   */
   public function testCreateContentTypeAccessDenied(): void {
     $this->accessManager->method('canWrite')->willReturn(FALSE);
     $this->accessManager->method('getWriteAccessDenied')->willReturn([
@@ -176,9 +161,6 @@ class ContentTypeServiceTest extends UnitTestCase {
     $this->assertEquals('INSUFFICIENT_SCOPE', $result['code']);
   }
 
-  /**
-   * @covers ::createContentType
-   */
   public function testCreateContentTypeInvalidMachineName(): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
 
@@ -189,9 +171,6 @@ class ContentTypeServiceTest extends UnitTestCase {
     $this->assertStringContainsString('Invalid machine name', $result['error']);
   }
 
-  /**
-   * @covers ::createContentType
-   */
   public function testCreateContentTypeAlreadyExists(): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
     $existing = $this->createMockNodeType('test', 'Test');
@@ -204,9 +183,6 @@ class ContentTypeServiceTest extends UnitTestCase {
     $this->assertStringContainsString('already exists', $result['error']);
   }
 
-  /**
-   * @covers ::deleteContentType
-   */
   public function testDeleteContentTypeAccessDenied(): void {
     $this->accessManager->method('canWrite')->willReturn(FALSE);
     $this->accessManager->method('getWriteAccessDenied')->willReturn([
@@ -221,9 +197,6 @@ class ContentTypeServiceTest extends UnitTestCase {
     $this->assertFalse($result['success']);
   }
 
-  /**
-   * @covers ::deleteContentType
-   */
   public function testDeleteContentTypeNotFound(): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
     $this->nodeTypeStorage->method('load')->willReturn(NULL);
@@ -235,9 +208,6 @@ class ContentTypeServiceTest extends UnitTestCase {
     $this->assertStringContainsString('not found', $result['error']);
   }
 
-  /**
-   * @covers ::deleteContentType
-   */
   public function testDeleteContentTypeHasContent(): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
     $type = $this->createMockNodeType('test', 'Test');

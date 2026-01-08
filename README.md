@@ -21,7 +21,11 @@ CI runs tests against all supported Drupal versions on every push.
 
 MCP Tools provides curated, high-value tools that solve real problems—not generic CRUD. Inspired by [Sentry MCP](https://docs.sentry.io/product/sentry-mcp/).
 
-**Current:** 205 tools total (23 read-only + 182 write/analysis operations across 29 submodules)
+**Current:** 215 tools total (25 read-only + 190 write/analysis operations across 33 submodules)
+
+**Resources:** MCP Tools now exposes read-only resources (e.g., `drupal://site/status`, `drupal://site/snapshot`) for lightweight site context, including blueprint + config drift summary.
+**Prompts:** MCP Tools now exposes prompts (e.g., `mcp_tools/site-brief`) for reusable analysis instructions.
+**Observability hooks:** MCP Tools dispatches tool execution events for custom logging, metrics, or webhooks.
 
 **Full AI-powered site building** - create content types, fields, roles, taxonomies, views, blocks, media, webforms, themes, layouts, and apply recipes through natural conversation.
 
@@ -83,6 +87,17 @@ drush mcp-tools:serve --uid=1
 
 Tip: Drush often boots as uid 0 (anonymous). For local development, use `--uid=1`. For shared environments, use a dedicated user with only the MCP Tools permissions you need.
 
+**Gateway mode (optional):** expose only the discover/info/execute tools to reduce tool list size.
+
+```bash
+drush mcp-tools:serve --uid=1 --gateway
+```
+
+Gateway tools:
+- `mcp_tools/discover-tools`
+- `mcp_tools/get-tool-info`
+- `mcp_tools/execute-tool`
+
 ### Remote MCP (HTTP) setup (experimental)
 
 ```bash
@@ -94,12 +109,35 @@ Configure the endpoint at `/_mcp_tools` in your MCP client, and send the key as 
 
 Only use this on trusted internal networks. Configure the execution user at `/admin/config/services/mcp-tools/remote` (use "uid 1" checkbox for development, or create a dedicated mcp_executor account for production). Consider setting IP and Origin/Host allowlists, and keep keys read-only unless absolutely necessary.
 
+To reduce tool list size for remote clients, enable **Gateway mode** in the remote settings UI. This exposes only the discover/info/execute tools while still allowing execution of any allowed tool by name.
+
+## Observability hooks
+
+MCP Tools dispatches PSR-14 events during tool execution. Subscribe to these classes:
+- `Drupal\mcp_tools\Mcp\Event\ToolExecutionStartedEvent`
+- `Drupal\mcp_tools\Mcp\Event\ToolExecutionSucceededEvent`
+- `Drupal\mcp_tools\Mcp\Event\ToolExecutionFailedEvent`
+
+Events include tool name, plugin ID, sanitized arguments, request ID, and execution duration. Failed events include a reason constant (e.g., `REASON_VALIDATION`, `REASON_ACCESS_DENIED`).
+
+Enable the optional `mcp_tools_observability` submodule to log execution events to watchdog.
+
+## Docs
+
+- `mcp_tools/docs/QUICKSTART.md` — 5-minute onboarding
+- `mcp_tools/docs/TROUBLESHOOTING.md` — Common errors and fixes
+- `mcp_tools/docs/CLIENT_INTEGRATIONS.md` — MCP client configs (STDIO + HTTP)
+- `mcp_tools/docs/USE_CASES.md` — Real-world workflows
+- `mcp_tools/docs/DEMO_SITE.md` — Demo site playbook
+- `mcp_tools/docs/DRUPALCON_TALK.md` — Talk outline
+- `mcp_tools/docs/TESTIMONIALS.md` — Testimonial collection template
+
 ## Architecture: Granular Submodules
 
 MCP Tools uses a **modular architecture** where each functional area is a separate submodule. This allows you to enable only the capabilities you need.
 
 ```
-mcp_tools/                        # Base module (22 read-only tools)
+mcp_tools/                        # Base module (25 read-only tools)
 ├── src/
 │   ├── Form/SettingsForm.php     # Admin UI at /admin/config/services/mcp-tools
 │   └── Service/
@@ -121,6 +159,7 @@ mcp_tools/                        # Base module (22 read-only tools)
     ├── mcp_tools_layout_builder/ # Layout Builder (9 tools)
     ├── mcp_tools_recipes/        # Drupal Recipes (6 tools)
     ├── mcp_tools_config/         # Configuration management (5 tools)
+    ├── mcp_tools_observability/  # Tool execution logging subscriber
     ├── mcp_tools_paragraphs/     # Paragraphs integration (6 tools)
     ├── mcp_tools_moderation/     # Content Moderation (6 tools)
     ├── mcp_tools_scheduler/      # Scheduled publish (5 tools)
@@ -218,7 +257,33 @@ X-MCP-Scope: read,write
 MCP_SCOPE=read,write drush mcp-tools:serve --uid=1
 ```
 
+## Server Profiles (YAML-only)
+
+Define multiple MCP server profiles in `mcp_tools_servers.settings.yml` and select them via the STDIO `--server` option or the remote `server_id` setting.
+
+New installs include `development`, `staging`, and `production` presets; update `default_server` to point at the one you want.
+
+```yaml
+default_server: default
+servers:
+  default:
+    name: 'Drupal MCP Tools'
+    version: '1.0.0'
+    pagination_limit: 50
+    include_all_tools: false
+    gateway_mode: false
+    enable_resources: true
+    enable_prompts: true
+    component_public_only: false
+    transports: ['http', 'stdio']
+    scopes: ['read', 'write']
+    # permission_callback: 'my_module.server_access:check'
+```
+
 Scopes are always limited by `access.allowed_scopes`. When no trusted override is present, `access.default_scopes` are used.
+
+Set `transports` to limit which entrypoints (HTTP/STDIO) can run a profile; leave empty or omit to allow all transports.
+Set `component_public_only` to expose only components explicitly marked as public.
 
 Available scopes:
 - `read` - Read-only operations
@@ -857,6 +922,28 @@ drush mcp-tools:remote-key-create --label="My Key" --scopes=read --ttl=86400
 Configure your MCP client to use `/_mcp_tools` and send the key as `Authorization: Bearer …` or `X-MCP-Api-Key: …`.
 
 Configure the endpoint at `/admin/config/services/mcp-tools/remote` (use "uid 1" for development or create a dedicated mcp_executor account; consider IP and Origin/Host allowlists).
+
+### CLI Helpers
+
+```bash
+# List server profiles.
+drush mcp:servers
+
+# Apply the recommended development preset and enable bundles.
+drush mcp:dev-profile
+
+# Inspect a server profile and list components.
+drush mcp:server-info --server=default --tools --resources --prompts
+
+# Smoke-test server configuration and dependencies.
+drush mcp:server-smoke --server=default
+
+# Validate component registry definitions.
+drush mcp:components-validate
+
+# Scaffold a component module.
+drush mcp:scaffold --machine-name=my_module --name="My MCP Module"
+```
 
 ### Alternative: drupal/mcp_server
 

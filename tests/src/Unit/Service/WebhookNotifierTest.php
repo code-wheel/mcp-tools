@@ -17,9 +17,9 @@ use Psr\Log\LoggerInterface;
 /**
  * Tests for WebhookNotifier.
  *
- * @coversDefaultClass \Drupal\mcp_tools\Service\WebhookNotifier
- * @group mcp_tools
  */
+#[\PHPUnit\Framework\Attributes\CoversClass(\Drupal\mcp_tools\Service\WebhookNotifier::class)]
+#[\PHPUnit\Framework\Attributes\Group('mcp_tools')]
 final class WebhookNotifierTest extends UnitTestCase {
 
   /**
@@ -60,9 +60,6 @@ final class WebhookNotifierTest extends UnitTestCase {
     );
   }
 
-  /**
-   * @covers ::notify
-   */
   public function testNotifyReturnsTrueWhenWebhooksDisabled(): void {
     $httpClient = $this->createMock(ClientInterface::class);
     $httpClient->expects($this->never())->method('request');
@@ -80,10 +77,6 @@ final class WebhookNotifierTest extends UnitTestCase {
     $this->assertTrue($result);
   }
 
-  /**
-   * @covers ::notify
-   * @covers ::getPendingCount
-   */
   public function testNotifyQueuesWhenBatchingEnabled(): void {
     $httpClient = $this->createMock(ClientInterface::class);
     $httpClient->expects($this->never())->method('request');
@@ -107,10 +100,6 @@ final class WebhookNotifierTest extends UnitTestCase {
     $this->assertSame(1, $notifier->getPendingCount());
   }
 
-  /**
-   * @covers ::notify
-   * @covers ::flush
-   */
   public function testFlushSendsQueuedPayloadAndSignsAndRedactsDetails(): void {
     $response = $this->createMock(ResponseInterface::class);
     $response->method('getStatusCode')->willReturn(200);
@@ -170,9 +159,6 @@ final class WebhookNotifierTest extends UnitTestCase {
     $this->assertSame(0, $notifier->getPendingCount());
   }
 
-  /**
-   * @covers ::notify
-   */
   public function testNotifyRejectsBlockedWebhookUrl(): void {
     $httpClient = $this->createMock(ClientInterface::class);
     $httpClient->expects($this->never())->method('request');

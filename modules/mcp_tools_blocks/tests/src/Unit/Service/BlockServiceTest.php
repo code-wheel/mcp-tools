@@ -18,9 +18,9 @@ use Drupal\Tests\UnitTestCase;
 /**
  * Tests for BlockService.
  *
- * @coversDefaultClass \Drupal\mcp_tools_blocks\Service\BlockService
- * @group mcp_tools_blocks
  */
+#[\PHPUnit\Framework\Attributes\CoversClass(\Drupal\mcp_tools_blocks\Service\BlockService::class)]
+#[\PHPUnit\Framework\Attributes\Group('mcp_tools_blocks')]
 class BlockServiceTest extends UnitTestCase {
 
   protected EntityTypeManagerInterface $entityTypeManager;
@@ -71,9 +71,6 @@ class BlockServiceTest extends UnitTestCase {
     );
   }
 
-  /**
-   * @covers ::placeBlock
-   */
   public function testPlaceBlockAccessDenied(): void {
     $this->accessManager->method('canWrite')->willReturn(FALSE);
     $this->accessManager->method('getWriteAccessDenied')->willReturn([
@@ -88,9 +85,6 @@ class BlockServiceTest extends UnitTestCase {
     $this->assertStringContainsString('denied', $result['error']);
   }
 
-  /**
-   * @covers ::placeBlock
-   */
   public function testPlaceBlockPluginNotFound(): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
     $this->blockManager->method('getDefinitions')->willReturn([]);
@@ -102,9 +96,6 @@ class BlockServiceTest extends UnitTestCase {
     $this->assertStringContainsString('not found', $result['error']);
   }
 
-  /**
-   * @covers ::placeBlock
-   */
   public function testPlaceBlockThemeNotFound(): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
     $this->blockManager->method('getDefinitions')->willReturn([
@@ -120,9 +111,6 @@ class BlockServiceTest extends UnitTestCase {
     $this->assertStringContainsString('not found', $result['error']);
   }
 
-  /**
-   * @covers ::removeBlock
-   */
   public function testRemoveBlockAccessDenied(): void {
     $this->accessManager->method('canWrite')->willReturn(FALSE);
     $this->accessManager->method('getWriteAccessDenied')->willReturn([
@@ -136,9 +124,6 @@ class BlockServiceTest extends UnitTestCase {
     $this->assertFalse($result['success']);
   }
 
-  /**
-   * @covers ::removeBlock
-   */
   public function testRemoveBlockNotFound(): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
     $this->blockStorage->method('load')->with('nonexistent')->willReturn(NULL);
@@ -150,9 +135,6 @@ class BlockServiceTest extends UnitTestCase {
     $this->assertStringContainsString('not found', $result['error']);
   }
 
-  /**
-   * @covers ::removeBlock
-   */
   public function testRemoveBlockSuccess(): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
 
@@ -171,9 +153,6 @@ class BlockServiceTest extends UnitTestCase {
     $this->assertEquals('olivero_branding', $result['data']['block_id']);
   }
 
-  /**
-   * @covers ::configureBlock
-   */
   public function testConfigureBlockAccessDenied(): void {
     $this->accessManager->method('canWrite')->willReturn(FALSE);
     $this->accessManager->method('getWriteAccessDenied')->willReturn([
@@ -187,9 +166,6 @@ class BlockServiceTest extends UnitTestCase {
     $this->assertFalse($result['success']);
   }
 
-  /**
-   * @covers ::configureBlock
-   */
   public function testConfigureBlockNotFound(): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
     $this->blockStorage->method('load')->with('nonexistent')->willReturn(NULL);
@@ -201,9 +177,6 @@ class BlockServiceTest extends UnitTestCase {
     $this->assertStringContainsString('not found', $result['error']);
   }
 
-  /**
-   * @covers ::configureBlock
-   */
   public function testConfigureBlockNoChanges(): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
 
@@ -218,9 +191,6 @@ class BlockServiceTest extends UnitTestCase {
     $this->assertStringContainsString('No changes', $result['data']['message']);
   }
 
-  /**
-   * @covers ::listAvailableBlocks
-   */
   public function testListAvailableBlocks(): void {
     $this->blockManager->method('getDefinitions')->willReturn([
       'system_branding_block' => [
@@ -243,9 +213,6 @@ class BlockServiceTest extends UnitTestCase {
     $this->assertCount(2, $result['data']['blocks']);
   }
 
-  /**
-   * @covers ::listRegions
-   */
   public function testListRegionsThemeNotFound(): void {
     $this->themeExists = FALSE;
 

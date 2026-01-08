@@ -15,10 +15,8 @@ use Drupal\mcp_tools_recipes\Service\RecipesService;
 use Drupal\Tests\UnitTestCase;
 use Psr\Log\LoggerInterface;
 
-/**
- * @coversDefaultClass \Drupal\mcp_tools_recipes\Service\RecipesService
- * @group mcp_tools_recipes
- */
+#[\PHPUnit\Framework\Attributes\CoversClass(\Drupal\mcp_tools_recipes\Service\RecipesService::class)]
+#[\PHPUnit\Framework\Attributes\Group('mcp_tools_recipes')]
 final class RecipesServiceTest extends UnitTestCase {
 
   private string $appRoot;
@@ -63,9 +61,6 @@ final class RecipesServiceTest extends UnitTestCase {
     return $fileSystem;
   }
 
-  /**
-   * @covers ::listRecipes
-   */
   public function testListRecipesFindsSiteAndCoreRecipes(): void {
     $moduleList = $this->createMock(ModuleExtensionList::class);
     $moduleList->method('getAllInstalledInfo')->willReturn([]);
@@ -94,9 +89,6 @@ final class RecipesServiceTest extends UnitTestCase {
     $this->assertContains('core_recipe', $names);
   }
 
-  /**
-   * @covers ::getRecipe
-   */
   public function testGetRecipeReturnsNotFound(): void {
     $moduleList = $this->createMock(ModuleExtensionList::class);
     $moduleList->method('getAllInstalledInfo')->willReturn([]);
@@ -110,9 +102,6 @@ final class RecipesServiceTest extends UnitTestCase {
     $this->assertSame('RECIPE_NOT_FOUND', $result['code']);
   }
 
-  /**
-   * @covers ::getRecipe
-   */
   public function testGetRecipeIncludesFiles(): void {
     $moduleList = $this->createMock(ModuleExtensionList::class);
     $moduleList->method('getAllInstalledInfo')->willReturn([]);
@@ -143,9 +132,6 @@ final class RecipesServiceTest extends UnitTestCase {
     $this->assertContains('content/readme.txt', $fileNames);
   }
 
-  /**
-   * @covers ::validateRecipe
-   */
   public function testValidateRecipeReportsYamlAndDependencyErrors(): void {
     $moduleList = $this->createMock(ModuleExtensionList::class);
     $moduleList->method('getAllInstalledInfo')->willReturn([]);
@@ -189,9 +175,6 @@ YAML);
     $this->assertTrue((bool) array_filter($warnings, static fn(string $w): bool => str_contains($w, 'disabled_module')));
   }
 
-  /**
-   * @covers ::createRecipe
-   */
   public function testCreateRecipeRejectsInvalidMachineName(): void {
     $accessManager = $this->createMock(AccessManager::class);
     $accessManager->method('canAdmin')->willReturn(TRUE);
@@ -205,9 +188,6 @@ YAML);
     $this->assertSame('INVALID_NAME', $result['code']);
   }
 
-  /**
-   * @covers ::createRecipe
-   */
   public function testCreateRecipeWritesRecipeAndConfigFiles(): void {
     $accessManager = $this->createMock(AccessManager::class);
     $accessManager->method('canAdmin')->willReturn(TRUE);

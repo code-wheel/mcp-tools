@@ -17,18 +17,39 @@ class RoleService {
 
   /**
    * Dangerous permissions that cannot be granted via MCP.
+   *
+   * SECURITY: This list prevents privilege escalation attacks.
+   * Any permission that could allow bypassing MCP security controls
+   * or granting elevated access should be included here.
    */
   protected const DANGEROUS_PERMISSIONS = [
+    // Core administration permissions.
     'administer permissions',
     'administer users',
     'administer site configuration',
     'administer modules',
     'administer software updates',
     'administer themes',
+    'administer menu',
+    // Access bypass permissions.
     'bypass node access',
+    'access all views',
+    // Configuration management.
     'synchronize configuration',
     'import configuration',
     'export configuration',
+    // User management.
+    'cancel account',
+    'select account cancellation method',
+    // Translation (can modify any content).
+    'translate interface',
+    // URL/path manipulation.
+    'administer url aliases',
+    'create url aliases',
+    // Block administration.
+    'administer blocks',
+    // Views administration.
+    'administer views',
   ];
 
   public function __construct(

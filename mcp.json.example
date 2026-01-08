@@ -1,10 +1,22 @@
 {
   "mcpServers": {
-    "drupal-docker": {
+    "drupal-stdio": {
+      "command": "drush",
+      "args": [
+        "--root=/path/to/drupal",
+        "mcp-tools:serve",
+        "--server=development",
+        "--uid=1"
+      ],
+      "env": {
+        "MCP_SCOPE": "read,write"
+      }
+    },
+    "drupal-http": {
       "type": "http",
-      "url": "http://localhost:8080/_mcp_tools",
+      "url": "https://example.com/_mcp_tools",
       "headers": {
-        "Authorization": "Bearer YOUR_API_KEY_HERE"
+        "Authorization": "Bearer YOUR_API_KEY"
       }
     }
   }

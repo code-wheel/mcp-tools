@@ -9,8 +9,8 @@ use Drupal\Tests\UnitTestCase;
 /**
  * Verifies every MCP Tools category has a corresponding permission defined.
  *
- * @group mcp_tools
  */
+#[\PHPUnit\Framework\Attributes\Group('mcp_tools')]
 final class CategoryPermissionsTest extends UnitTestCase {
 
   public function testAllToolCategoriesHavePermissions(): void {

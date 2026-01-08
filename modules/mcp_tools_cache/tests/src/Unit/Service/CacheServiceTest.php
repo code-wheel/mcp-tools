@@ -36,10 +36,8 @@ use Drupal\mcp_tools_cache\Service\CacheService;
 use Drupal\Tests\UnitTestCase;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
-/**
- * @coversDefaultClass \Drupal\mcp_tools_cache\Service\CacheService
- * @group mcp_tools_cache
- */
+#[\PHPUnit\Framework\Attributes\CoversClass(\Drupal\mcp_tools_cache\Service\CacheService::class)]
+#[\PHPUnit\Framework\Attributes\Group('mcp_tools_cache')]
 final class CacheServiceTest extends UnitTestCase {
 
   private function withDrupalContainer(ContainerBuilder $container, callable $callback): void {
@@ -73,9 +71,6 @@ final class CacheServiceTest extends UnitTestCase {
     );
   }
 
-  /**
-   * @covers ::clearAllCaches
-   */
   public function testClearAllCachesUsesFlushFunction(): void {
     unset($GLOBALS['mcp_tools_cache_test_flushed']);
 
@@ -87,10 +82,6 @@ final class CacheServiceTest extends UnitTestCase {
     $this->assertTrue((bool) ($GLOBALS['mcp_tools_cache_test_flushed'] ?? FALSE));
   }
 
-  /**
-   * @covers ::clearCacheBin
-   * @covers ::getAvailableBins
-   */
   public function testClearCacheBinValidatesKnownBins(): void {
     $schema = $this->createMock(Schema::class);
     $schema->method('tableExists')->willReturn(FALSE);
@@ -117,12 +108,6 @@ final class CacheServiceTest extends UnitTestCase {
     });
   }
 
-  /**
-   * @covers ::getCacheStatus
-   * @covers ::getCacheBackend
-   * @covers ::estimateBinSize
-   * @covers ::getCacheTagsTableSize
-   */
   public function testGetCacheStatusIncludesCustomBinsAndSizes(): void {
     $schema = $this->createMock(Schema::class);
     $schema->method('tableExists')->willReturnCallback(static function (string $table): bool {
@@ -159,9 +144,6 @@ final class CacheServiceTest extends UnitTestCase {
     });
   }
 
-  /**
-   * @covers ::rebuild
-   */
   public function testRebuildValidatesTypeAndInvokesServices(): void {
     unset($GLOBALS['mcp_tools_cache_test_css_js_flushed']);
 

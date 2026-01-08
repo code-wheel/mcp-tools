@@ -4,12 +4,23 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools\Commands;
 
+use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
+use Drupal\Core\Extension\ModuleExtensionList;
+use Drupal\Core\Extension\ModuleInstallerInterface;
+use Drupal\mcp_tools\Mcp\McpToolsServerFactory;
+use Drupal\mcp_tools\Mcp\Prompt\PromptRegistry;
+use Drupal\mcp_tools\Mcp\Resource\ResourceRegistry;
+use Drupal\mcp_tools\Mcp\ServerConfigRepository;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\RateLimiter;
 use Drush\Attributes as CLI;
 use Drush\Commands\DrushCommands;
 use Drupal\tool\Tool\ToolDefinition;
+use Drupal\tool\Tool\ToolManager;
+use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
+use FilesystemIterator;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -21,6 +32,13 @@ class McpToolsCommands extends DrushCommands {
     protected AccessManager $accessManager,
     protected RateLimiter $rateLimiter,
     protected ModuleHandlerInterface $moduleHandler,
+    protected ConfigFactoryInterface $configFactory,
+    protected ServerConfigRepository $serverConfigRepository,
+    protected ResourceRegistry $resourceRegistry,
+    protected PromptRegistry $promptRegistry,
+    protected ToolManager $toolManager,
+    protected ModuleInstallerInterface $moduleInstaller,
+    protected ModuleExtensionList $moduleList,
   ) {
     parent::__construct();
   }
@@ -33,6 +51,13 @@ class McpToolsCommands extends DrushCommands {
       $container->get('mcp_tools.access_manager'),
       $container->get('mcp_tools.rate_limiter'),
       $container->get('module_handler'),
+      $container->get('config.factory'),
+      $container->get('mcp_tools.server_config_repository'),
+      $container->get('mcp_tools.resource_registry'),
+      $container->get('mcp_tools.prompt_registry'),
+      $container->get('plugin.manager.tool'),
+      $container->get('module_installer'),
+      $container->get('extension.list.module'),
     );
   }
 
@@ -150,9 +175,7 @@ class McpToolsCommands extends DrushCommands {
 
     // Get all tool plugins.
     if ($this->moduleHandler->moduleExists('tool')) {
-      /** @var \Drupal\tool\Tool\ToolManager $toolManager */
-      $toolManager = \Drupal::service('plugin.manager.tool');
-      $definitions = $toolManager->getDefinitions();
+      $definitions = $this->toolManager->getDefinitions();
 
       foreach ($definitions as $id => $definition) {
         if (!$definition instanceof ToolDefinition) {
@@ -189,6 +212,322 @@ class McpToolsCommands extends DrushCommands {
   }
 
   /**
+   * List configured MCP server profiles.
+   */
+  #[CLI\Command(name: 'mcp:servers', aliases: ['mcp-servers'])]
+  #[CLI\Usage(name: 'drush mcp:servers', description: 'List configured MCP server profiles')]
+  #[CLI\Option(name: 'format', description: 'Output format (table, json)')]
+  public function servers(array $options = ['format' => 'table']): void {
+    $servers = $this->serverConfigRepository->getServers();
+
+    if (empty($servers)) {
+      $this->io()->warning('No MCP server profiles found.');
+      return;
+    }
+
+    $defaultId = $this->serverConfigRepository->getDefaultServerId($servers);
+
+    if ($options['format'] === 'json') {
+      $this->io()->text(json_encode([
+        'default_server' => $defaultId,
+        'servers' => $servers,
+      ], JSON_PRETTY_PRINT));
+      return;
+    }
+
+    $rows = [];
+    foreach ($servers as $id => $server) {
+      $rows[] = [
+        $id,
+        $server['name'] ?? 'Unknown',
+        $id === $defaultId ? 'yes' : '',
+        !empty($server['scopes']) ? implode(', ', (array) $server['scopes']) : '-',
+        !empty($server['gateway_mode']) ? 'gateway' : 'full',
+        !empty($server['include_all_tools']) ? 'all' : 'mcp_tools',
+        !empty($server['enable_resources']) ? 'yes' : 'no',
+        !empty($server['enable_prompts']) ? 'yes' : 'no',
+      ];
+    }
+
+    $this->io()->title('MCP Server Profiles');
+    $this->io()->table(['ID', 'Name', 'Default', 'Scopes', 'Mode', 'Tools', 'Resources', 'Prompts'], $rows);
+  }
+
+  /**
+   * Show details for a single MCP server profile.
+   */
+  #[CLI\Command(name: 'mcp:server-info', aliases: ['mcp-server'])]
+  #[CLI\Usage(name: 'drush mcp:server-info --server=default', description: 'Show details for a server profile')]
+  #[CLI\Option(name: 'server', description: 'Server profile ID')]
+  #[CLI\Option(name: 'format', description: 'Output format (table, json)')]
+  #[CLI\Option(name: 'tools', description: 'List tool names for this server')]
+  #[CLI\Option(name: 'resources', description: 'List resources for this server')]
+  #[CLI\Option(name: 'prompts', description: 'List prompts for this server')]
+  public function serverInfo(array $options = ['server' => NULL, 'format' => 'table', 'tools' => FALSE, 'resources' => FALSE, 'prompts' => FALSE]): void {
+    $serverId = isset($options['server']) && is_string($options['server']) ? trim($options['server']) : NULL;
+    $server = $this->serverConfigRepository->getServer($serverId);
+
+    if (!$server) {
+      $this->io()->error('Unknown MCP server profile' . ($serverId ? ": {$serverId}" : '') . '.');
+      return;
+    }
+
+    $allowedTools = $this->getAllowedTools((bool) ($server['include_all_tools'] ?? FALSE));
+    $toolNames = array_map(
+      static fn(string $id): string => McpToolsServerFactory::pluginIdToMcpName($id),
+      array_keys($allowedTools),
+    );
+    sort($toolNames);
+
+    $resourceCount = 0;
+    $resourceTemplates = 0;
+    if (!empty($server['enable_resources'])) {
+      $resources = $this->resourceRegistry->getResources();
+      $templates = $this->resourceRegistry->getResourceTemplates();
+      $resourceCount = count($this->dedupeListByKey($resources, 'uri'));
+      $resourceTemplates = count($this->dedupeListByKey($templates, 'uriTemplate'));
+    }
+
+    $promptCount = 0;
+    if (!empty($server['enable_prompts'])) {
+      $prompts = $this->promptRegistry->getPrompts();
+      $promptCount = count($this->dedupeListByKey($prompts, 'name'));
+    }
+
+    $availableToolCount = count($allowedTools);
+    $exposedToolCount = !empty($server['gateway_mode']) ? 3 : $availableToolCount;
+
+    if ($options['format'] === 'json') {
+      $payload = [
+        'id' => $server['id'] ?? $serverId,
+        'name' => $server['name'] ?? 'Drupal MCP Tools',
+        'version' => $server['version'] ?? '1.0.0',
+        'pagination_limit' => $server['pagination_limit'] ?? 50,
+        'scopes' => $server['scopes'] ?? [],
+        'gateway_mode' => (bool) ($server['gateway_mode'] ?? FALSE),
+        'include_all_tools' => (bool) ($server['include_all_tools'] ?? FALSE),
+        'enable_resources' => (bool) ($server['enable_resources'] ?? TRUE),
+        'enable_prompts' => (bool) ($server['enable_prompts'] ?? TRUE),
+        'transports' => $server['transports'] ?? [],
+        'counts' => [
+          'available_tools' => $availableToolCount,
+          'exposed_tools' => $exposedToolCount,
+          'resources' => $resourceCount,
+          'resource_templates' => $resourceTemplates,
+          'prompts' => $promptCount,
+        ],
+      ];
+
+      if (!empty($options['tools'])) {
+        $payload['tools'] = $toolNames;
+      }
+      if (!empty($options['resources'])) {
+        $payload['resources'] = !empty($server['enable_resources'])
+          ? array_values(array_column($this->resourceRegistry->getResources(), 'uri'))
+          : [];
+        $payload['resource_templates'] = !empty($server['enable_resources'])
+          ? array_values(array_column($this->resourceRegistry->getResourceTemplates(), 'uriTemplate'))
+          : [];
+      }
+      if (!empty($options['prompts'])) {
+        $payload['prompts'] = !empty($server['enable_prompts'])
+          ? array_values(array_column($this->promptRegistry->getPrompts(), 'name'))
+          : [];
+      }
+
+      $this->io()->text(json_encode($payload, JSON_PRETTY_PRINT));
+      return;
+    }
+
+    $this->io()->title('MCP Server Profile: ' . ($server['id'] ?? $serverId));
+    $this->io()->definitionList(
+      ['Name' => $server['name'] ?? 'Drupal MCP Tools'],
+      ['Version' => $server['version'] ?? '1.0.0'],
+      ['Scopes' => !empty($server['scopes']) ? implode(', ', (array) $server['scopes']) : '-'],
+      ['Gateway mode' => !empty($server['gateway_mode']) ? 'Enabled' : 'Disabled'],
+      ['Include all tools' => !empty($server['include_all_tools']) ? 'Yes' : 'No'],
+      ['Resources enabled' => !empty($server['enable_resources']) ? 'Yes' : 'No'],
+      ['Prompts enabled' => !empty($server['enable_prompts']) ? 'Yes' : 'No'],
+      ['Transports' => !empty($server['transports']) ? implode(', ', (array) $server['transports']) : 'all'],
+      ['Pagination limit' => (string) ($server['pagination_limit'] ?? 50)],
+    );
+
+    $this->io()->section('Component Counts');
+    $this->io()->definitionList(
+      ['Available tools' => (string) $availableToolCount],
+      ['Exposed tools' => (string) $exposedToolCount],
+      ['Resources' => (string) $resourceCount],
+      ['Resource templates' => (string) $resourceTemplates],
+      ['Prompts' => (string) $promptCount],
+    );
+
+    if (!empty($options['tools'])) {
+      $this->io()->section('Tools');
+      $this->io()->listing($toolNames ?: ['(none)']);
+    }
+
+    if (!empty($options['resources'])) {
+      $resources = !empty($server['enable_resources'])
+        ? array_values(array_column($this->dedupeListByKey($this->resourceRegistry->getResources(), 'uri'), 'uri'))
+        : [];
+      $templates = !empty($server['enable_resources'])
+        ? array_values(array_column($this->dedupeListByKey($this->resourceRegistry->getResourceTemplates(), 'uriTemplate'), 'uriTemplate'))
+        : [];
+      $this->io()->section('Resources');
+      $this->io()->listing($resources ?: ['(none)']);
+      $this->io()->section('Resource Templates');
+      $this->io()->listing($templates ?: ['(none)']);
+    }
+
+    if (!empty($options['prompts'])) {
+      $prompts = !empty($server['enable_prompts'])
+        ? array_values(array_column($this->dedupeListByKey($this->promptRegistry->getPrompts(), 'name'), 'name'))
+        : [];
+      $this->io()->section('Prompts');
+      $this->io()->listing($prompts ?: ['(none)']);
+    }
+  }
+
+  /**
+   * Smoke-test server configuration and dependencies.
+   */
+  #[CLI\Command(name: 'mcp:server-smoke', aliases: ['mcp-smoke'])]
+  #[CLI\Usage(name: 'drush mcp:server-smoke --server=default', description: 'Smoke-test server config and dependencies')]
+  #[CLI\Option(name: 'server', description: 'Server profile ID')]
+  public function serverSmoke(array $options = ['server' => NULL]): void {
+    $serverId = isset($options['server']) && is_string($options['server']) ? trim($options['server']) : NULL;
+    $server = $this->serverConfigRepository->getServer($serverId);
+
+    if (!$server) {
+      $this->io()->error('Unknown MCP server profile' . ($serverId ? ": {$serverId}" : '') . '.');
+      return;
+    }
+
+    $issues = [];
+
+    if (!class_exists(\Mcp\Server::class)) {
+      $issues[] = 'Missing dependency: mcp/sdk (composer require mcp/sdk:^0.2).';
+    }
+
+    if (!$this->moduleHandler->moduleExists('tool')) {
+      $issues[] = 'Drupal Tool API module is not enabled.';
+    }
+
+    $access = $this->serverConfigRepository->checkAccess($server, NULL);
+    if (!$access['allowed']) {
+      $issues[] = $access['message'] ?? 'Access denied by server permission callback.';
+    }
+
+    $allowedTools = $this->getAllowedTools((bool) ($server['include_all_tools'] ?? FALSE));
+    if (empty($allowedTools)) {
+      $issues[] = 'No Tool API tools are available for this server profile.';
+    }
+
+    if (!empty($server['enable_resources'])) {
+      $resources = $this->resourceRegistry->getResources();
+      $templates = $this->resourceRegistry->getResourceTemplates();
+      $resourceCount = count($this->dedupeListByKey($resources, 'uri'));
+      $resourceTemplates = count($this->dedupeListByKey($templates, 'uriTemplate'));
+      if ($resourceCount === 0 && $resourceTemplates === 0) {
+        $issues[] = 'Resources are enabled but none are registered.';
+      }
+    }
+
+    if (!empty($server['enable_prompts'])) {
+      $prompts = $this->promptRegistry->getPrompts();
+      if (count($this->dedupeListByKey($prompts, 'name')) === 0) {
+        $issues[] = 'Prompts are enabled but none are registered.';
+      }
+    }
+
+    if (!empty($issues)) {
+      $this->io()->warning('Smoke test detected issues:');
+      $this->io()->listing($issues);
+      return;
+    }
+
+    $this->io()->success('Smoke test passed.');
+  }
+
+  /**
+   * Scaffold a simple MCP component module.
+   */
+  #[CLI\Command(name: 'mcp:scaffold', aliases: ['mcp-scaffold'])]
+  #[CLI\Usage(name: 'drush mcp:scaffold --machine-name=my_module', description: 'Scaffold a module with MCP component registration')]
+  #[CLI\Option(name: 'machine-name', description: 'Module machine name (e.g. my_module)')]
+  #[CLI\Option(name: 'name', description: 'Human-readable module name')]
+  #[CLI\Option(name: 'description', description: 'Module description')]
+  #[CLI\Option(name: 'destination', description: 'Destination directory (defaults to DRUPAL_ROOT/modules/custom)')]
+  #[CLI\Option(name: 'force', description: 'Overwrite existing files if the module directory exists')]
+  public function scaffold(array $options = [
+    'machine-name' => NULL,
+    'name' => NULL,
+    'description' => NULL,
+    'destination' => NULL,
+    'force' => FALSE,
+  ]): void {
+    $machineName = isset($options['machine-name']) && is_string($options['machine-name'])
+      ? trim($options['machine-name'])
+      : '';
+
+    if ($machineName === '') {
+      $this->io()->error('Missing --machine-name (e.g. my_module).');
+      return;
+    }
+
+    if (!preg_match('/^[a-z][a-z0-9_]*$/', $machineName)) {
+      $this->io()->error('Invalid machine name. Use lowercase letters, numbers, and underscores.');
+      return;
+    }
+
+    $humanName = isset($options['name']) && is_string($options['name']) && $options['name'] !== ''
+      ? trim($options['name'])
+      : ucwords(str_replace('_', ' ', $machineName));
+
+    $description = isset($options['description']) && is_string($options['description']) && $options['description'] !== ''
+      ? trim($options['description'])
+      : 'MCP Tools components for ' . $humanName . '.';
+
+    $destination = isset($options['destination']) && is_string($options['destination']) && $options['destination'] !== ''
+      ? rtrim($options['destination'], DIRECTORY_SEPARATOR)
+      : rtrim(\Drupal::root() . DIRECTORY_SEPARATOR . 'modules' . DIRECTORY_SEPARATOR . 'custom', DIRECTORY_SEPARATOR);
+
+    $modulePath = $destination . DIRECTORY_SEPARATOR . $machineName;
+    $force = (bool) ($options['force'] ?? FALSE);
+
+    if (is_dir($modulePath) && !$force) {
+      $this->io()->error('Destination already exists. Re-run with --force to overwrite files.');
+      return;
+    }
+
+    if (!is_dir($destination) && !mkdir($destination, 0775, TRUE) && !is_dir($destination)) {
+      $this->io()->error('Failed to create destination directory: ' . $destination);
+      return;
+    }
+
+    $templateRoot = $this->getScaffoldTemplateRoot();
+    if ($templateRoot === NULL) {
+      $this->io()->error('Scaffold templates not found.');
+      return;
+    }
+
+    $replacements = [
+      '{{ machine_name }}' => $machineName,
+      '{{ name }}' => $humanName,
+      '{{ description }}' => $description,
+    ];
+
+    $created = $this->renderScaffoldTemplates($templateRoot, $modulePath, $replacements, $force, $machineName);
+    if (empty($created)) {
+      $this->io()->warning('No files were generated.');
+      return;
+    }
+
+    $this->io()->success('Scaffolded module: ' . $modulePath);
+    $this->io()->listing($created);
+  }
+
+  /**
    * Reset rate limits for the current client.
    */
   #[CLI\Command(name: 'mcp:reset-limits', aliases: ['mcp-reset'])]
@@ -196,6 +535,124 @@ class McpToolsCommands extends DrushCommands {
   public function resetLimits(): void {
     $this->rateLimiter->resetLimits();
     $this->io()->success('Rate limits reset for current client.');
+  }
+
+  /**
+   * Returns allowed Tool API plugin definitions for a server profile.
+   *
+   * @return array<string, \Drupal\tool\Tool\ToolDefinition>
+   */
+  private function getAllowedTools(bool $includeAllTools, string $providerPrefix = 'mcp_tools'): array {
+    $definitions = $this->toolManager->getDefinitions();
+    $allowed = [];
+
+    foreach ($definitions as $id => $definition) {
+      if (!$definition instanceof ToolDefinition) {
+        continue;
+      }
+      $provider = $definition->getProvider() ?? '';
+      if (!$includeAllTools && (!is_string($provider) || !str_starts_with($provider, $providerPrefix))) {
+        continue;
+      }
+      $allowed[(string) $id] = $definition;
+    }
+
+    return $allowed;
+  }
+
+  /**
+   * Deduplicates component lists by key.
+   *
+   * @param array<int, array<string, mixed>> $items
+   * @param string $key
+   *
+   * @return array<int, array<string, mixed>>
+   */
+  private function dedupeListByKey(array $items, string $key): array {
+    $seen = [];
+    $deduped = [];
+
+    foreach ($items as $item) {
+      $value = $item[$key] ?? NULL;
+      if (!is_string($value) || $value === '') {
+        continue;
+      }
+      if (isset($seen[$value])) {
+        continue;
+      }
+      $seen[$value] = TRUE;
+      $deduped[] = $item;
+    }
+
+    return $deduped;
+  }
+
+  /**
+   * Resolve the template directory for scaffold generation.
+   */
+  private function getScaffoldTemplateRoot(): ?string {
+    $base = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . 'scaffold';
+    $path = $base . DIRECTORY_SEPARATOR . 'hook';
+    if (!is_dir($path)) {
+      return NULL;
+    }
+
+    return $path;
+  }
+
+  /**
+   * Render scaffold templates into the destination module directory.
+   *
+   * @return string[]
+   *   List of generated file paths.
+   */
+  private function renderScaffoldTemplates(string $templateRoot, string $destination, array $replacements, bool $force, string $machineName): array {
+    $created = [];
+
+    $iterator = new RecursiveIteratorIterator(
+      new RecursiveDirectoryIterator($templateRoot, FilesystemIterator::SKIP_DOTS)
+    );
+
+    foreach ($iterator as $file) {
+      if (!$file->isFile()) {
+        continue;
+      }
+
+      $relativePath = substr($file->getPathname(), strlen($templateRoot) + 1);
+      $relativePath = str_replace('MODULE', $machineName, $relativePath);
+      if (str_ends_with($relativePath, '.tpl')) {
+        $relativePath = substr($relativePath, 0, -4);
+      }
+
+      $targetPath = $destination . DIRECTORY_SEPARATOR . $relativePath;
+      $targetDir = dirname($targetPath);
+
+      if (!is_dir($targetDir) && !mkdir($targetDir, 0775, TRUE) && !is_dir($targetDir)) {
+        $this->io()->error('Failed to create directory: ' . $targetDir);
+        return [];
+      }
+
+      if (file_exists($targetPath) && !$force) {
+        $this->io()->error('File already exists: ' . $targetPath);
+        return [];
+      }
+
+      $contents = file_get_contents($file->getPathname());
+      if ($contents === FALSE) {
+        $this->io()->error('Failed to read template: ' . $file->getPathname());
+        return [];
+      }
+
+      $rendered = str_replace(array_keys($replacements), array_values($replacements), $contents);
+      if (file_put_contents($targetPath, $rendered) === FALSE) {
+        $this->io()->error('Failed to write file: ' . $targetPath);
+        return [];
+      }
+
+      $created[] = $targetPath;
+    }
+
+    return $created;
   }
 
 }

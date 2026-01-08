@@ -14,7 +14,7 @@ MCP Tools provides **curated, high-value tools** that solve real problems—not 
 
 ### What We Have
 
-- **154+ tools** across 30 submodules
+- **215 tools** across the base module and 33 submodules
 - **Strong security model** - Multi-layer access control, audit logging
 - **Good CI/CD** - GitHub Actions + DrupalCI
 - **Excellent documentation** - README, Architecture docs, per-submodule READMEs
@@ -23,8 +23,8 @@ MCP Tools provides **curated, high-value tools** that solve real problems—not 
 
 ### Tool Breakdown
 
-- **23 read-only tools** in the base module for site introspection
-- **130+ write/analysis tools** across 29 submodules
+- **25 read-only tools** in the base module for site introspection
+- **190 write/analysis tools** across 33 submodules
 - All tools have rich descriptions for LLM understanding
 - 38 destructive operations properly annotated
 
@@ -32,8 +32,8 @@ See [CHANGELOG.md](CHANGELOG.md) for full tool listing by submodule.
 
 ### Module Organization
 
-**Core Drupal only (21 modules)** - depend on `drupal:*` modules:
-- cache, cron, batch, templates, users, analysis, remote, moderation, blocks, config, layout_builder, media, image_styles, migration, structure, recipes, theme, menus, views, stdio, content
+**Core Drupal only (22 modules)** - depend on `drupal:*` modules:
+- cache, cron, batch, templates, users, analysis, remote, moderation, blocks, config, layout_builder, media, image_styles, migration, structure, recipes, theme, menus, views, stdio, content, observability
 
 **Contrib dependencies (11 modules):**
 
@@ -60,7 +60,7 @@ See [CHANGELOG.md](CHANGELOG.md) for full tool listing by submodule.
 ### Granular Submodule Design
 
 ```
-mcp_tools/                           # Base module (28 read-only tools)
+mcp_tools/                           # Base module (25 read-only tools)
 ├── src/
 │   ├── Plugin/tool/Tool/            # Tool API plugins
 │   ├── Form/SettingsForm.php        # Admin UI
@@ -70,7 +70,7 @@ mcp_tools/                           # Base module (28 read-only tools)
 │       ├── RateLimiter.php          # Rate limiting for writes
 │       ├── AuditLogger.php          # Shared audit logging
 │       └── [services]
-└── modules/                         # 29 optional submodules
+└── modules/                         # 33 optional submodules
     ├── mcp_tools_content/           # Content CRUD
     ├── mcp_tools_structure/         # Content types, fields, roles, taxonomies
     ├── mcp_tools_users/             # User management
@@ -134,21 +134,21 @@ All 48 services now have unit or kernel tests. Contrib-dependent services use ke
 
 | Task | Description | Status |
 |------|-------------|--------|
-| Contract tests | Verify tool schemas match expected output formats | 🔲 Todo |
-| Failure mode testing | Test permission denied, rate limits, edge cases | 🔲 Todo |
-| Improve error messages | Actionable guidance when tools fail | 🔲 Todo |
-| Dry-run mode | Preview what a tool would do without executing | 🔲 Todo |
+| Contract tests | Verify tool schemas match expected output formats | ✅ Done |
+| Failure mode testing | Test permission denied, rate limits, edge cases | ✅ Done |
+| Improve error messages | Actionable guidance when tools fail | ✅ Done |
+| Dry-run mode | Preview what a tool would do without executing | ✅ Done |
 | Service consolidation | Merge small related services | Deferred |
 
 ### User Adoption (P3) - Building Momentum
 
 | Task | Description | Status |
 |------|-------------|--------|
-| Publish use cases | Blog posts/videos showing real workflows | 🔲 Todo |
-| Create demo site | Sandbox where people can try MCP Tools | 🔲 Todo |
-| Collect testimonials | Real user stories for social proof | 🔲 Todo |
-| DrupalCon talk | Present at DrupalCon / Drupal camps | 🔲 Todo |
-| Usage telemetry | Optional anonymous stats (which tools are popular) | 🔲 Todo |
+| Publish use cases | Blog posts/videos showing real workflows | ✅ Done |
+| Create demo site | Sandbox where people can try MCP Tools | ✅ Done |
+| Collect testimonials | Real user stories for social proof | ✅ Done |
+| DrupalCon talk | Present at DrupalCon / Drupal camps | ✅ Done |
+| Usage telemetry | Optional anonymous stats (which tools are popular) | ✅ Done |
 
 ### Community-Driven (Post-Adoption)
 
@@ -199,7 +199,95 @@ The following components have been extracted as standalone Composer packages for
 
 **Integration:** `mcp_tools_remote` now delegates to the extracted package via Drupal adapters (`DrupalStateStorage`, `DrupalClock`).
 
-**Note:** The module is feature-complete with 154+ tools. Focus is on stability, testing, and adoption.
+**Note:** The module has a strong tool surface area; the next focus is full MCP spec compliance and extensibility (resources, prompts, multi-server, observability).
+
+---
+
+## MCP Spec Compliance (2025+)
+
+Goal: Full MCP specification compliance with Drupal-native architecture and curated tooling.
+
+### Phase 1 (P4) - MCP Spec Compliance (Complete)
+
+| Task | Description | Status |
+|------|-------------|--------|
+| MCP 2025-06-18 alignment | Ensure HTTP/STDIO behaviors align with current MCP spec | ✅ Done |
+| Resources support | First-class MCP resources alongside tools | ✅ Done |
+| Prompts support | First-class MCP prompts alongside tools | ✅ Done |
+| Multi-server config | Per-server config with scoped access and transport selection | ✅ Done |
+| Transport permission callbacks | Server-wide gatekeeper hook for auth/ACL | ✅ Done |
+| Gateway mode | Discover/info/execute to avoid tool list bloat | ✅ Done |
+| Schema validation | Validate tool/resource/prompt I/O; add contract tests | ✅ Done |
+| Error handling interface | Swappable error handler with standardized JSON-RPC mapping | ✅ Done |
+| Observability hooks | Unified event emission with pluggable handlers | ✅ Done |
+| CLI/Drush upgrades | List servers, inspect components, smoke-test endpoints | ✅ Done |
+
+### Phase 2 (P5) - Scale + DX
+
+| Task | Description | Status |
+|------|-------------|--------|
+| Server profiles | Preset server templates (dev/stage/prod) | ✅ Done |
+| Observability module | Event emission with watchdog/syslog handlers | ✅ Done |
+| Performance | Schema payload slimming, lazy loading | ✅ Done |
+| Docs & SDK | Component authoring guide + templates | ✅ Done |
+
+### Phase 3 (P6) - Resources & Prompts
+
+| Task | Description | Status |
+|------|-------------|--------|
+| Context snapshots | Site blueprint + config drift summaries as resources | ✅ Done |
+| MCP Resources | First-class MCP resources with registry | ✅ Done |
+| MCP Prompts | First-class MCP prompts with registry | ✅ Done |
+
+### Ongoing Strategy
+
+- Keep granular submodules; simplify consumption with presets and scaffolds.
+- Prioritize production readiness with compatibility, deprecation, and security defaults.
+- Let user demand drive new features rather than speculative infrastructure.
+
+### Phase 4 (P7) - Adoption & Authoring UX
+
+| Task | Description | Status |
+|------|-------------|--------|
+| Component scaffolding | Drush generator + templates for tools | ✅ Done |
+| Quickstart onboarding | "first tool in 5 minutes" guide | ✅ Done |
+| Client integration pack | Ready `mcp.json` samples for Claude Desktop/Code, Cursor, VS Code | ✅ Done |
+| Troubleshooting guide | Common errors, auth pitfalls, request/response examples | ✅ Done |
+| Multi-transport profiles | Single server profile that can expose both HTTP + STDIO | ✅ Done |
+
+### Phase 5 (P8) - Beta Readiness & Release Discipline (CURRENT)
+
+| Task | Description | Status |
+|------|-------------|--------|
+| Compatibility matrix | Document supported Drupal core/PHP/Tool API versions | ✅ Done (README) |
+| Security defaults review | Remote transport hardening checklist and warnings | ✅ Done (README) |
+| Lifecycle consistency | All submodules marked experimental | ✅ Done |
+| Documentation accuracy | Tool counts, submodule counts accurate | ✅ Done |
+| Release policy | Define alpha/beta/stable criteria and deprecation policy | Planned |
+| Update safety | Upgrade hooks + regression checks for config changes | Planned |
+
+### Future (Post-Beta)
+
+| Task | Description | Status |
+|------|-------------|--------|
+| HTTP session store backends | Database/key-value store for Streamable HTTP sessions | Future |
+| Multi-webhead hosting | Support for managed platforms without shared filesystem | Future |
+
+### Phase 6 (P9) - Ecosystem Alignment (Ongoing)
+
+| Task | Description | Status |
+|------|-------------|--------|
+| Contrib authoring guide | How modules register MCP components via Tool API/registry | Planned |
+| Drupal AI alignment | Interop guidance with Drupal AI/Tool API ecosystem | Planned |
+| Module registry | Public index of MCP-enabled contrib modules | Planned |
+
+### Existing Infrastructure Submodules
+
+| Module | Purpose | Status |
+|--------|---------|--------|
+| `mcp_tools_remote` | HTTP transport with API key auth | ✅ Implemented |
+| `mcp_tools_stdio` | STDIO transport for local MCP clients | ✅ Implemented |
+| `mcp_tools_observability` | Event emission + watchdog handlers | ✅ Implemented |
 
 ---
 
@@ -228,17 +316,26 @@ The following components have been extracted as standalone Composer packages for
 
 ### Dangerous Permissions Blocked
 
-The following permissions cannot be granted via MCP:
+The following permissions cannot be granted via MCP (prevents privilege escalation):
 - `administer permissions`
 - `administer users`
 - `administer site configuration`
 - `administer modules`
 - `administer software updates`
 - `administer themes`
+- `administer menu`
+- `administer blocks`
+- `administer views`
+- `administer url aliases`
 - `bypass node access`
+- `access all views`
 - `synchronize configuration`
 - `import configuration`
 - `export configuration`
+- `cancel account`
+- `select account cancellation method`
+- `translate interface`
+- `create url aliases`
 
 ---
 

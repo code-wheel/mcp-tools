@@ -10,8 +10,8 @@ use Drupal\mcp_tools\Service\AccessManager;
 /**
  * Kernel tests for MCP Tools access control integration.
  *
- * @group mcp_tools
  */
+#[\PHPUnit\Framework\Attributes\Group('mcp_tools')]
 class AccessControlKernelTest extends KernelTestBase {
 
   /**

@@ -13,10 +13,8 @@ use Drupal\mcp_tools\Service\AuditLogger;
 use Drupal\mcp_tools_config\Service\ConfigManagementService;
 use Drupal\Tests\UnitTestCase;
 
-/**
- * @coversDefaultClass \Drupal\mcp_tools_config\Service\ConfigManagementService
- * @group mcp_tools_config
- */
+#[\PHPUnit\Framework\Attributes\CoversClass(\Drupal\mcp_tools_config\Service\ConfigManagementService::class)]
+#[\PHPUnit\Framework\Attributes\Group('mcp_tools_config')]
 final class ConfigManagementServiceTest extends UnitTestCase {
 
   private MemoryStorage $active;
@@ -60,9 +58,6 @@ final class ConfigManagementServiceTest extends UnitTestCase {
     );
   }
 
-  /**
-   * @covers ::getConfigChanges
-   */
   public function testGetConfigChangesDetectsCreateUpdateDelete(): void {
     $this->active->write('new.config', ['x' => 1]);
     $this->active->write('system.site', ['name' => 'active']);
@@ -83,9 +78,6 @@ final class ConfigManagementServiceTest extends UnitTestCase {
     $this->assertContains('obsolete.config', $data['changes']['delete']);
   }
 
-  /**
-   * @covers ::exportConfig
-   */
   public function testExportConfigRequiresAdminScope(): void {
     $this->accessManager->method('canAdmin')->willReturn(FALSE);
 
@@ -96,9 +88,6 @@ final class ConfigManagementServiceTest extends UnitTestCase {
     $this->assertSame('INSUFFICIENT_SCOPE', $result['code']);
   }
 
-  /**
-   * @covers ::exportConfig
-   */
   public function testExportConfigNoChangesReturnsEarly(): void {
     $this->accessManager->method('canAdmin')->willReturn(TRUE);
     $this->active->write('system.site', ['name' => 'same']);
@@ -111,10 +100,6 @@ final class ConfigManagementServiceTest extends UnitTestCase {
     $this->assertSame(0, $result['data']['exported']);
   }
 
-  /**
-   * @covers ::exportConfig
-   * @covers ::trackChange
-   */
   public function testExportConfigWritesAndDeletesAndClearsTrackedChanges(): void {
     $this->accessManager->method('canAdmin')->willReturn(TRUE);
 
@@ -140,9 +125,6 @@ final class ConfigManagementServiceTest extends UnitTestCase {
     $this->assertArrayNotHasKey('mcp_tools.config_changes', $this->stateStorage);
   }
 
-  /**
-   * @covers ::getConfigDiff
-   */
   public function testGetConfigDiffReturnsExpectedStatuses(): void {
     $service = $this->createService();
 
@@ -173,9 +155,6 @@ final class ConfigManagementServiceTest extends UnitTestCase {
     $this->assertNotEmpty($changed['data']['diff']);
   }
 
-  /**
-   * @covers ::previewOperation
-   */
   public function testPreviewOperationAddsDryRunMetadata(): void {
     $this->active->write('node.type.article', ['type' => 'article']);
 
@@ -192,10 +171,6 @@ final class ConfigManagementServiceTest extends UnitTestCase {
     $this->assertTrue($result['data']['already_exists']);
   }
 
-  /**
-   * @covers ::trackChange
-   * @covers ::getMcpChanges
-   */
   public function testTrackChangeDeduplicatesByConfigName(): void {
     $service = $this->createService();
 
@@ -208,9 +183,6 @@ final class ConfigManagementServiceTest extends UnitTestCase {
     $this->assertSame('update', $result['data']['changes'][0]['operation']);
   }
 
-  /**
-   * @covers ::previewOperation
-   */
   public function testPreviewOperationSupportsRoleOperations(): void {
     $this->active->write('user.role.editor', [
       'id' => 'editor',
@@ -249,9 +221,6 @@ final class ConfigManagementServiceTest extends UnitTestCase {
     $this->assertSame(['user.role.editor'], $delete['data']['configs_deleted']);
   }
 
-  /**
-   * @covers ::previewOperation
-   */
   public function testPreviewOperationSupportsDeleteContentTypeAndField(): void {
     $this->active->write('node.type.article', ['type' => 'article']);
     $this->active->write('field.storage.node.field_foo', ['type' => 'string']);
@@ -275,9 +244,6 @@ final class ConfigManagementServiceTest extends UnitTestCase {
     $this->assertSame(['field.field.node.article.field_foo'], $deleteField['data']['configs_deleted']);
   }
 
-  /**
-   * @covers ::previewOperation
-   */
   public function testPreviewOperationReturnsErrorForUnknownOperation(): void {
     $service = $this->createService();
 
@@ -286,11 +252,6 @@ final class ConfigManagementServiceTest extends UnitTestCase {
     $this->assertStringContainsString('Unknown operation', $result['error']);
   }
 
-  /**
-   * @covers ::previewOperation
-   * @covers ::previewExportConfig
-   * @covers ::previewImportConfig
-   */
   public function testPreviewExportAndImportConfigSummarizeChanges(): void {
     $this->active->write('system.site', ['name' => 'active']);
     $this->active->write('only.active', ['x' => 1]);
@@ -314,11 +275,6 @@ final class ConfigManagementServiceTest extends UnitTestCase {
     $this->assertSame(1, $import['data']['will_delete']);
   }
 
-  /**
-   * @covers ::previewOperation
-   * @covers ::previewDeleteConfig
-   * @covers ::findDependents
-   */
   public function testPreviewDeleteConfigReportsDependents(): void {
     $this->active->write('foo.bar', ['a' => 1]);
     $this->active->write('dependent.config', [
@@ -336,10 +292,6 @@ final class ConfigManagementServiceTest extends UnitTestCase {
     $this->assertStringContainsString('WARNING', $result['data']['description']);
   }
 
-  /**
-   * @covers ::previewOperation
-   * @covers ::previewAddField
-   */
   public function testPreviewAddFieldNormalizesFieldNameAndOmitsExistingStorage(): void {
     $this->active->write('field.storage.node.field_foo', ['type' => 'string']);
 
@@ -358,11 +310,6 @@ final class ConfigManagementServiceTest extends UnitTestCase {
     $this->assertSame(['field.field.node.article.field_foo'], array_values($result['data']['configs_created']));
   }
 
-  /**
-   * @covers ::previewOperation
-   * @covers ::previewCreateVocabulary
-   * @covers ::previewCreateView
-   */
   public function testPreviewCreateVocabularyAndViewDetectExistingConfigs(): void {
     $this->active->write('taxonomy.vocabulary.tags', ['vid' => 'tags']);
     $this->active->write('views.view.frontpage', ['id' => 'frontpage']);

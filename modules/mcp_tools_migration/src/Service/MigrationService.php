@@ -97,19 +97,19 @@ class MigrationService {
     }
 
     // Parse CSV data.
-    $lines = str_getcsv($csvData, "\n");
+    $lines = str_getcsv($csvData, "\n", '"', '\\');
     if (count($lines) < 2) {
       return ['success' => FALSE, 'error' => 'CSV must contain a header row and at least one data row.'];
     }
 
-    $headers = str_getcsv(array_shift($lines));
+    $headers = str_getcsv(array_shift($lines), ',', '"', '\\');
     $items = [];
 
     foreach ($lines as $line) {
       if (empty(trim($line))) {
         continue;
       }
-      $values = str_getcsv($line);
+      $values = str_getcsv($line, ',', '"', '\\');
       if (count($values) !== count($headers)) {
         continue;
       }

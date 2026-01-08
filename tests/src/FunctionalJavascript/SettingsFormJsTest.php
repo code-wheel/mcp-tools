@@ -11,8 +11,8 @@ use Drupal\FunctionalJavascriptTests\WebDriverTestBase;
  *
  * Tests #states visibility and form behavior requiring JavaScript.
  *
- * @group mcp_tools
  */
+#[\PHPUnit\Framework\Attributes\Group('mcp_tools')]
 class SettingsFormJsTest extends WebDriverTestBase {
 
   /**

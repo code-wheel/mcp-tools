@@ -10,6 +10,8 @@ use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\KernelTests\KernelTestBase;
 use Drupal\mcp_tools\Mcp\ToolApiCallToolHandler;
+use Drupal\mcp_tools\Mcp\ToolApiSchemaConverter;
+use Drupal\mcp_tools\Mcp\ToolInputValidator;
 use Drupal\tool\ExecutableResult;
 use Drupal\tool\Tool\ToolBase;
 use Drupal\tool\Tool\ToolDefinition;
@@ -24,8 +26,8 @@ use Psr\Log\NullLogger;
 /**
  * Kernel coverage for ToolApiCallToolHandler input upcasting.
  *
- * @group mcp_tools
  */
+#[\PHPUnit\Framework\Attributes\Group('mcp_tools')]
 final class ToolApiCallToolHandlerKernelTest extends KernelTestBase {
 
   /**
@@ -79,7 +81,13 @@ final class ToolApiCallToolHandlerKernelTest extends KernelTestBase {
     ]);
     $toolManager->method('createInstance')->with('mcp_tools:test')->willReturn($tool);
 
-    $handler = new ToolApiCallToolHandler($toolManager, new NullLogger());
+    $handler = new ToolApiCallToolHandler(
+      $toolManager,
+      new NullLogger(),
+      FALSE,
+      'mcp_tools',
+      new ToolInputValidator(new ToolApiSchemaConverter(), new NullLogger()),
+    );
 
     $request = (new CallToolRequest('mcp_tools___test', [
       'count' => '5',
@@ -100,4 +108,3 @@ final class ToolApiCallToolHandlerKernelTest extends KernelTestBase {
   }
 
 }
-

@@ -413,9 +413,14 @@ class MenuService {
       return ['valid' => FALSE, 'uri' => NULL, 'reason' => 'URI cannot be empty'];
     }
 
-    // Check against blocked patterns first (most dangerous).
+    // SECURITY: Decode URL-encoded characters to prevent bypass attempts.
+    // Check both original and decoded versions against blocked patterns.
+    $decodedUri = rawurldecode($uri);
+    $normalizedUri = preg_replace('/\s+/', '', strtolower($decodedUri));
+
+    // Check against blocked patterns (most dangerous) on both original and decoded.
     foreach (self::BLOCKED_URI_PATTERNS as $pattern) {
-      if (preg_match($pattern, $uri)) {
+      if (preg_match($pattern, $uri) || preg_match($pattern, $decodedUri) || preg_match($pattern, $normalizedUri)) {
         return ['valid' => FALSE, 'uri' => NULL, 'reason' => 'URI scheme is not allowed for security reasons'];
       }
     }

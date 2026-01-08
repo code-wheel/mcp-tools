@@ -16,10 +16,8 @@ use Drupal\mcp_tools\Service\AuditLogger;
 use Drupal\mcp_tools_layout_builder\Service\LayoutBuilderService;
 use Drupal\Tests\UnitTestCase;
 
-/**
- * @coversDefaultClass \Drupal\mcp_tools_layout_builder\Service\LayoutBuilderService
- * @group mcp_tools_layout_builder
- */
+#[\PHPUnit\Framework\Attributes\CoversClass(\Drupal\mcp_tools_layout_builder\Service\LayoutBuilderService::class)]
+#[\PHPUnit\Framework\Attributes\Group('mcp_tools_layout_builder')]
 final class LayoutBuilderServiceTest extends UnitTestCase {
 
   private function createDisplay(array $sections, bool $enabled = TRUE): object {
@@ -65,9 +63,6 @@ final class LayoutBuilderServiceTest extends UnitTestCase {
     );
   }
 
-  /**
-   * @covers ::enableLayoutBuilder
-   */
   public function testEnableLayoutBuilderRespectsWriteAccess(): void {
     $accessManager = $this->createMock(AccessManager::class);
     $accessManager->method('canWrite')->willReturn(FALSE);
@@ -87,11 +82,6 @@ final class LayoutBuilderServiceTest extends UnitTestCase {
     $this->assertSame('INSUFFICIENT_SCOPE', $result['code']);
   }
 
-  /**
-   * @covers ::enableLayoutBuilder
-   * @covers ::getOrCreateDisplay
-   * @covers ::loadDisplay
-   */
   public function testEnableLayoutBuilderEnablesAndSaves(): void {
     $display = $this->createDisplay([], FALSE);
 
@@ -115,9 +105,6 @@ final class LayoutBuilderServiceTest extends UnitTestCase {
     $this->assertTrue($result['data']['layout_builder_enabled']);
   }
 
-  /**
-   * @covers ::addSection
-   */
   public function testAddSectionValidatesLayoutDefinition(): void {
     $display = $this->createDisplay([], TRUE);
 
@@ -141,10 +128,6 @@ final class LayoutBuilderServiceTest extends UnitTestCase {
     $this->assertStringContainsString('not found', $result['error']);
   }
 
-  /**
-   * @covers ::addSection
-   * @covers ::removeSection
-   */
   public function testAddAndRemoveSectionUpdatesCount(): void {
     $display = $this->createDisplay([new Section('layout_onecol')], TRUE);
 
@@ -172,10 +155,6 @@ final class LayoutBuilderServiceTest extends UnitTestCase {
     $this->assertSame(1, $removed['data']['section_count']);
   }
 
-  /**
-   * @covers ::addBlock
-   * @covers ::removeBlock
-   */
   public function testAddAndRemoveBlockLifecycle(): void {
     $display = $this->createDisplay([new Section('layout_onecol')], TRUE);
 
@@ -216,9 +195,6 @@ final class LayoutBuilderServiceTest extends UnitTestCase {
     $this->assertSame('uuid-123', $removed['data']['removed_block_uuid']);
   }
 
-  /**
-   * @covers ::listLayoutPlugins
-   */
   public function testListLayoutPluginsSortsByCategoryThenLabel(): void {
     $display = $this->createDisplay([], TRUE);
 

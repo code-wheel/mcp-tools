@@ -62,7 +62,7 @@ final class RemoteSettingsForm extends ConfigFormBase {
     $form['warning'] = [
       '#type' => 'markup',
       '#markup' => '<div class="messages messages--warning"><p>' .
-        $this->t('This module is experimental and should only be used on trusted internal networks. Prefer the STDIO transport (`mcp_tools_stdio`) for local development. Remote execution as uid 1 is blocked at runtime.') .
+        $this->t('This module is experimental and should only be used on trusted internal networks. Prefer the STDIO transport (`mcp_tools_stdio`) for local development. Remote execution as uid 1 is blocked unless explicitly enabled below.') .
         '</p></div>',
     ];
 
@@ -84,13 +84,14 @@ final class RemoteSettingsForm extends ConfigFormBase {
     $form['allowed_origins'] = [
       '#type' => 'textarea',
       '#title' => $this->t('Allowed origins (optional)'),
-      '#description' => $this->t('Defense-in-depth against DNS rebinding. When provided, requests must match by <code>Origin</code>/<code>Referer</code>/<code>Host</code>. One host per line (examples: <code>localhost</code>, <code>example.com</code>, <code>*.example.com</code>). Leave empty to allow any origin.'),
+      '#description' => $this->t('Defense-in-depth against DNS rebinding. MCP Streamable HTTP requires Origin validation. When provided, requests must match by <code>Origin</code>/<code>Referer</code>/<code>Host</code>. One host per line (examples: <code>localhost</code>, <code>example.com</code>, <code>*.example.com</code>). If empty, requests with an <code>Origin</code> header must match the request <code>Host</code>.'),
       '#default_value' => implode("\n", $config->get('allowed_origins') ?? []),
       '#rows' => 4,
     ];
 
     // Load the current execution user for the autocomplete default.
     $uid = (int) ($config->get('uid') ?? 0);
+    $allowUid1 = (bool) $config->get('allow_uid1');
     $executionUser = NULL;
     if ($uid > 1) {
       $executionUser = $this->entityTypeManager->getStorage('user')->load($uid);
@@ -109,7 +110,7 @@ final class RemoteSettingsForm extends ConfigFormBase {
     $form['execution_user_wrapper']['execution_user'] = [
       '#type' => 'entity_autocomplete',
       '#title' => $this->t('Select user'),
-      '#description' => $this->t('Tools execute as this user for attribution and access control. Use a dedicated service account. <strong>uid 1 is blocked for security.</strong>'),
+      '#description' => $this->t('Tools execute as this user for attribution and access control. Use a dedicated service account. <strong>uid 1 requires explicit override below.</strong>'),
       '#target_type' => 'user',
       '#selection_settings' => [
         'include_anonymous' => FALSE,
@@ -124,8 +125,8 @@ final class RemoteSettingsForm extends ConfigFormBase {
     $form['execution_user_wrapper']['use_uid1'] = [
       '#type' => 'checkbox',
       '#title' => $this->t('Use site admin (uid 1)'),
-      '#description' => $this->t('Run tools as the main admin account. Simple for development.'),
-      '#default_value' => $uid === 1,
+      '#description' => $this->t('Run tools as the main admin account. For local/dev only; enables the uid 1 override.'),
+      '#default_value' => $uid === 1 || $allowUid1,
     ];
 
     if (!$executorExists) {
@@ -196,6 +197,13 @@ final class RemoteSettingsForm extends ConfigFormBase {
       '#title' => $this->t('Expose all Tool API tools'),
       '#description' => $this->t('When disabled (recommended), only tools whose provider starts with <code>mcp_tools</code> are exposed.'),
       '#default_value' => (bool) $config->get('include_all_tools'),
+    ];
+
+    $form['gateway_mode'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Enable gateway mode'),
+      '#description' => $this->t('Expose only the gateway tools (discover/info/execute) to reduce tool list size. Execution can still call any allowed tool by name.'),
+      '#default_value' => (bool) $config->get('gateway_mode'),
     ];
 
     $form['keys'] = [
@@ -275,12 +283,14 @@ final class RemoteSettingsForm extends ConfigFormBase {
     $this->config('mcp_tools_remote.settings')
       ->set('enabled', (bool) $form_state->getValue('enabled'))
       ->set('uid', $uid)
+      ->set('allow_uid1', $useUid1)
       ->set('allowed_ips', $allowedIps)
       ->set('allowed_origins', $allowedOrigins)
       ->set('server_name', (string) $form_state->getValue('server_name'))
       ->set('server_version', (string) $form_state->getValue('server_version'))
       ->set('pagination_limit', (int) $form_state->getValue('pagination_limit'))
       ->set('include_all_tools', (bool) $form_state->getValue('include_all_tools'))
+      ->set('gateway_mode', (bool) $form_state->getValue('gateway_mode'))
       ->save();
 
     parent::submitForm($form, $form_state);

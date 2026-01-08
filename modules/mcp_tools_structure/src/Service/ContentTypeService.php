@@ -30,7 +30,7 @@ class ContentTypeService {
    */
   protected function getEntityFieldManager(): EntityFieldManagerInterface {
     if ($this->entityFieldManager === NULL) {
-      $this->entityFieldManager = $this->getEntityFieldManager();
+      $this->entityFieldManager = \Drupal::service('entity_field.manager');
     }
     return $this->entityFieldManager;
   }

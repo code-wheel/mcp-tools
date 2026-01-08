@@ -15,9 +15,9 @@ use Drupal\views\Entity\View;
 /**
  * Tests for ViewsService.
  *
- * @coversDefaultClass \Drupal\mcp_tools_views\Service\ViewsService
- * @group mcp_tools_views
  */
+#[\PHPUnit\Framework\Attributes\CoversClass(\Drupal\mcp_tools_views\Service\ViewsService::class)]
+#[\PHPUnit\Framework\Attributes\Group('mcp_tools_views')]
 class ViewsServiceTest extends UnitTestCase {
 
   protected EntityTypeManagerInterface $entityTypeManager;
@@ -53,9 +53,6 @@ class ViewsServiceTest extends UnitTestCase {
     );
   }
 
-  /**
-   * @covers ::createView
-   */
   public function testCreateViewAccessDenied(): void {
     $this->accessManager->method('canWrite')->willReturn(FALSE);
     $this->accessManager->method('getWriteAccessDenied')->willReturn([
@@ -70,10 +67,7 @@ class ViewsServiceTest extends UnitTestCase {
     $this->assertStringContainsString('denied', $result['error']);
   }
 
-  /**
-   * @covers ::createView
-   * @dataProvider invalidMachineNameProvider
-   */
+  #[\PHPUnit\Framework\Attributes\DataProvider('invalidMachineNameProvider')]
   public function testCreateViewInvalidMachineName(string $invalidName): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
 
@@ -97,9 +91,6 @@ class ViewsServiceTest extends UnitTestCase {
     ];
   }
 
-  /**
-   * @covers ::createView
-   */
   public function testCreateViewAlreadyExists(): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
 
@@ -113,10 +104,7 @@ class ViewsServiceTest extends UnitTestCase {
     $this->assertStringContainsString('already exists', $result['error']);
   }
 
-  /**
-   * @covers ::createView
-   * @dataProvider invalidBaseTableProvider
-   */
+  #[\PHPUnit\Framework\Attributes\DataProvider('invalidBaseTableProvider')]
   public function testCreateViewInvalidBaseTable(string $invalidTable): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
     $this->viewStorage->method('load')->willReturn(NULL);
@@ -139,9 +127,6 @@ class ViewsServiceTest extends UnitTestCase {
     ];
   }
 
-  /**
-   * @covers ::deleteView
-   */
   public function testDeleteViewAccessDenied(): void {
     $this->accessManager->method('canWrite')->willReturn(FALSE);
     $this->accessManager->method('getWriteAccessDenied')->willReturn([
@@ -155,9 +140,6 @@ class ViewsServiceTest extends UnitTestCase {
     $this->assertFalse($result['success']);
   }
 
-  /**
-   * @covers ::deleteView
-   */
   public function testDeleteViewNotFound(): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
     $this->viewStorage->method('load')->with('nonexistent')->willReturn(NULL);
@@ -169,10 +151,7 @@ class ViewsServiceTest extends UnitTestCase {
     $this->assertStringContainsString('not found', $result['error']);
   }
 
-  /**
-   * @covers ::deleteView
-   * @dataProvider coreViewsProvider
-   */
+  #[\PHPUnit\Framework\Attributes\DataProvider('coreViewsProvider')]
   public function testDeleteViewProtectsCoreViews(string $coreViewId): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
 
@@ -200,9 +179,6 @@ class ViewsServiceTest extends UnitTestCase {
     ];
   }
 
-  /**
-   * @covers ::addDisplay
-   */
   public function testAddDisplayAccessDenied(): void {
     $this->accessManager->method('canWrite')->willReturn(FALSE);
     $this->accessManager->method('getWriteAccessDenied')->willReturn([
@@ -216,9 +192,6 @@ class ViewsServiceTest extends UnitTestCase {
     $this->assertFalse($result['success']);
   }
 
-  /**
-   * @covers ::addDisplay
-   */
   public function testAddDisplayViewNotFound(): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
     $this->viewStorage->method('load')->with('nonexistent')->willReturn(NULL);
@@ -230,9 +203,6 @@ class ViewsServiceTest extends UnitTestCase {
     $this->assertStringContainsString('not found', $result['error']);
   }
 
-  /**
-   * @covers ::addDisplay
-   */
   public function testAddDisplayInvalidType(): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
 
@@ -246,9 +216,6 @@ class ViewsServiceTest extends UnitTestCase {
     $this->assertStringContainsString('Invalid display type', $result['error']);
   }
 
-  /**
-   * @covers ::setViewStatus
-   */
   public function testSetViewStatusAccessDenied(): void {
     $this->accessManager->method('canWrite')->willReturn(FALSE);
     $this->accessManager->method('getWriteAccessDenied')->willReturn([
@@ -262,9 +229,6 @@ class ViewsServiceTest extends UnitTestCase {
     $this->assertFalse($result['success']);
   }
 
-  /**
-   * @covers ::setViewStatus
-   */
   public function testSetViewStatusNotFound(): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
     $this->viewStorage->method('load')->with('nonexistent')->willReturn(NULL);
@@ -276,9 +240,6 @@ class ViewsServiceTest extends UnitTestCase {
     $this->assertStringContainsString('not found', $result['error']);
   }
 
-  /**
-   * @covers ::createContentListView
-   */
   public function testCreateContentListViewAccessDenied(): void {
     $this->accessManager->method('canWrite')->willReturn(FALSE);
     $this->accessManager->method('getWriteAccessDenied')->willReturn([

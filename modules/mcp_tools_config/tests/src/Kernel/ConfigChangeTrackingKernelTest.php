@@ -6,9 +6,7 @@ namespace Drupal\Tests\mcp_tools_config\Kernel;
 
 use Drupal\KernelTests\KernelTestBase;
 
-/**
- * @group mcp_tools_config
- */
+#[\PHPUnit\Framework\Attributes\Group('mcp_tools_config')]
 final class ConfigChangeTrackingKernelTest extends KernelTestBase {
 
   /**

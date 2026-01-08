@@ -1,0 +1,45 @@
+default_server: default
+servers:
+  default:
+    name: 'Drupal MCP Tools'
+    version: '1.0.0'
+    pagination_limit: 50
+    include_all_tools: false
+    gateway_mode: false
+    enable_resources: true
+    enable_prompts: true
+    component_public_only: false
+    transports: ['http', 'stdio']
+  development:
+    name: 'Drupal MCP Tools (Development)'
+    version: '1.0.0'
+    pagination_limit: 50
+    include_all_tools: false
+    gateway_mode: false
+    enable_resources: true
+    enable_prompts: true
+    component_public_only: false
+    transports: ['http', 'stdio']
+    scopes: ['read', 'write', 'admin']
+  staging:
+    name: 'Drupal MCP Tools (Staging)'
+    version: '1.0.0'
+    pagination_limit: 50
+    include_all_tools: false
+    gateway_mode: true
+    enable_resources: true
+    enable_prompts: true
+    component_public_only: false
+    transports: ['http', 'stdio']
+    scopes: ['read', 'write']
+  production:
+    name: 'Drupal MCP Tools (Production)'
+    version: '1.0.0'
+    pagination_limit: 50
+    include_all_tools: false
+    gateway_mode: true
+    enable_resources: true
+    enable_prompts: true
+    component_public_only: false
+    transports: ['http', 'stdio']
+    scopes: ['read']

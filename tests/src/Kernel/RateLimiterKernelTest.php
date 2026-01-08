@@ -10,8 +10,8 @@ use Drupal\mcp_tools\Service\RateLimiter;
 /**
  * Kernel tests for MCP Tools rate limiter integration.
  *
- * @group mcp_tools
  */
+#[\PHPUnit\Framework\Attributes\Group('mcp_tools')]
 class RateLimiterKernelTest extends KernelTestBase {
 
   /**

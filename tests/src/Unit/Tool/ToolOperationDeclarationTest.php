@@ -12,13 +12,11 @@ use Drupal\Tests\UnitTestCase;
  * This intentionally does not bootstrap Drupal. It scans tool plugin source
  * files to prevent accidental mislabeling of read/write operations.
  *
- * @group mcp_tools
  */
+#[\PHPUnit\Framework\Attributes\Group('mcp_tools')]
 final class ToolOperationDeclarationTest extends UnitTestCase {
 
-  /**
-   * @coversNothing
-   */
+  #[\PHPUnit\Framework\Attributes\CoversNothing]
   public function testOperationDeclarationsMatchIntent(): void {
     $moduleRoot = dirname(__DIR__, 4);
     $toolFiles = $this->findToolPluginFiles($moduleRoot);

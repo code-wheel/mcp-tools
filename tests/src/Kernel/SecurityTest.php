@@ -10,8 +10,8 @@ use Drupal\mcp_tools\Service\AccessManager;
 /**
  * Security-focused tests for MCP Tools.
  *
- * @group mcp_tools
  */
+#[\PHPUnit\Framework\Attributes\Group('mcp_tools')]
 class SecurityTest extends KernelTestBase {
 
   /**

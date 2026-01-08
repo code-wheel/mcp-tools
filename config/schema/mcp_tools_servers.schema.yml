@@ -1,0 +1,73 @@
+mcp_tools_servers.settings:
+  type: config_object
+  label: 'MCP Tools server profiles'
+  mapping:
+    default_server:
+      type: string
+      label: 'Default server profile ID'
+    servers:
+      type: mapping
+      label: 'Server profiles'
+      mapping:
+        default:
+          type: mcp_tools_servers.server
+          label: 'Default server profile'
+        development:
+          type: mcp_tools_servers.server
+          label: 'Development server profile'
+        staging:
+          type: mcp_tools_servers.server
+          label: 'Staging server profile'
+        production:
+          type: mcp_tools_servers.server
+          label: 'Production server profile'
+        '*':
+          type: mcp_tools_servers.server
+          label: 'Server profile'
+
+mcp_tools_servers.server:
+  type: mapping
+  label: 'Server profile'
+  mapping:
+    name:
+      type: string
+      label: 'Server name'
+    version:
+      type: string
+      label: 'Server version'
+    pagination_limit:
+      type: integer
+      label: 'Pagination limit'
+    include_all_tools:
+      type: boolean
+      label: 'Expose all Tool API tools'
+    gateway_mode:
+      type: boolean
+      label: 'Enable gateway mode'
+    enable_resources:
+      type: boolean
+      label: 'Enable resources'
+    enable_prompts:
+      type: boolean
+      label: 'Enable prompts'
+    component_public_only:
+      type: boolean
+      label: 'Expose only public components'
+    transports:
+      type: sequence
+      label: 'Allowed transports'
+      sequence:
+        type: string
+        label: 'Transport'
+    enabled:
+      type: boolean
+      label: 'Enabled'
+    scopes:
+      type: sequence
+      label: 'Default scopes'
+      sequence:
+        type: string
+        label: 'Scope'
+    permission_callback:
+      type: string
+      label: 'Permission callback'

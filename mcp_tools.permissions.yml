@@ -153,6 +153,11 @@ mcp_tools use templates:
   description: 'Access site template creation and application tools via MCP.'
   restrict access: true
 
+mcp_tools use workflows:
+  title: 'Use MCP workflows tools (category: workflows)'
+  description: 'Access guided workflow definitions and steps via MCP.'
+  restrict access: true
+
 mcp_tools use theme:
   title: 'Use MCP theme tools (category: theme)'
   description: 'Access theme settings and configuration tools via MCP.'

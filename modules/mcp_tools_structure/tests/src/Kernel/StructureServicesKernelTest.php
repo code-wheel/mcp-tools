@@ -9,9 +9,7 @@ use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools_structure\Service\ContentTypeService;
 use Drupal\mcp_tools_structure\Service\FieldService;
 
-/**
- * @group mcp_tools_structure
- */
+#[\PHPUnit\Framework\Attributes\Group('mcp_tools_structure')]
 final class StructureServicesKernelTest extends KernelTestBase {
 
   /**

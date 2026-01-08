@@ -121,18 +121,18 @@ python3 scripts/mcp_http_e2e.py --drupal-root /path/to/drupal --base-url http://
 
 declare(strict_types=1);
 
-namespace Drupal\Tests\mcp_tools_example\Unit\Service;
+namespace Drupal\Tests\mcp_tools_content\Unit\Service;
 
-use Drupal\mcp_tools_example\Service\ExampleService;
+use Drupal\mcp_tools_content\Service\ContentService;
 use Drupal\Tests\UnitTestCase;
 
 /**
- * @coversDefaultClass \Drupal\mcp_tools_example\Service\ExampleService
+ * @coversDefaultClass \Drupal\mcp_tools_content\Service\ContentService
  * @group mcp_tools
  */
-class ExampleServiceTest extends UnitTestCase {
+class ContentServiceTest extends UnitTestCase {
 
-  protected ExampleService $service;
+  protected ContentService $service;
 
   protected function setUp(): void {
     parent::setUp();

@@ -13,8 +13,8 @@ use Drupal\tool\Tool\ToolManager;
 /**
  * Smoke tests for MCP Tools Tool API plugins.
  *
- * @group mcp_tools
  */
+#[\PHPUnit\Framework\Attributes\Group('mcp_tools')]
 final class ToolSmokeKernelTest extends KernelTestBase {
 
   /**
@@ -70,7 +70,6 @@ final class ToolSmokeKernelTest extends KernelTestBase {
   public function testCoreToolsInstantiateAndAccessDoesNotThrow(): void {
     $this->installConfig(['mcp_tools']);
 
-    /** @var \Drupal\tool\Tool\ToolManager $toolManager */
     $toolManager = $this->container->get('plugin.manager.tool');
     $this->assertInstanceOf(ToolManager::class, $toolManager);
 

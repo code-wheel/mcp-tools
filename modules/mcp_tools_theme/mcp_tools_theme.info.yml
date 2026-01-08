@@ -1,7 +1,8 @@
 name: 'MCP Tools - Theme'
 type: module
 description: 'MCP tools for theme settings management.'
-package: MCP
+package: MCP Tools
 core_version_requirement: ^10.3 || ^11
+lifecycle: experimental
 dependencies:
   - mcp_tools:mcp_tools

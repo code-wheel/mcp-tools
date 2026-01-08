@@ -14,9 +14,9 @@ use Drupal\Tests\UnitTestCase;
 /**
  * Tests for WebformService.
  *
- * @coversDefaultClass \Drupal\mcp_tools_webform\Service\WebformService
- * @group mcp_tools_webform
  */
+#[\PHPUnit\Framework\Attributes\CoversClass(\Drupal\mcp_tools_webform\Service\WebformService::class)]
+#[\PHPUnit\Framework\Attributes\Group('mcp_tools_webform')]
 class WebformServiceTest extends UnitTestCase {
 
   protected EntityTypeManagerInterface $entityTypeManager;
@@ -55,9 +55,6 @@ class WebformServiceTest extends UnitTestCase {
     );
   }
 
-  /**
-   * @covers ::listWebforms
-   */
   public function testListWebformsEmpty(): void {
     $this->webformStorage->method('loadMultiple')->willReturn([]);
 
@@ -68,9 +65,6 @@ class WebformServiceTest extends UnitTestCase {
     $this->assertEmpty($result['data']['webforms']);
   }
 
-  /**
-   * @covers ::getWebform
-   */
   public function testGetWebformNotFound(): void {
     $this->webformStorage->method('load')->willReturn(NULL);
 
@@ -81,9 +75,6 @@ class WebformServiceTest extends UnitTestCase {
     $this->assertStringContainsString('not found', $result['error']);
   }
 
-  /**
-   * @covers ::getSubmissions
-   */
   public function testGetSubmissionsWebformNotFound(): void {
     $this->webformStorage->method('load')->willReturn(NULL);
 
@@ -94,9 +85,6 @@ class WebformServiceTest extends UnitTestCase {
     $this->assertStringContainsString('not found', $result['error']);
   }
 
-  /**
-   * @covers ::deleteSubmission
-   */
   public function testDeleteSubmissionAccessDenied(): void {
     $this->accessManager->method('canWrite')->willReturn(FALSE);
     $this->accessManager->method('getWriteAccessDenied')->willReturn([
@@ -112,9 +100,6 @@ class WebformServiceTest extends UnitTestCase {
     $this->assertEquals('INSUFFICIENT_SCOPE', $result['code']);
   }
 
-  /**
-   * @covers ::deleteSubmission
-   */
   public function testDeleteSubmissionNotFound(): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
     $this->submissionStorage->method('load')->willReturn(NULL);

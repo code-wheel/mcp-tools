@@ -8,16 +8,10 @@ use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Trait\WriteAccessTrait;
 use Drupal\Tests\UnitTestCase;
 
-/**
- * @coversDefaultClass \Drupal\mcp_tools\Trait\WriteAccessTrait
- * @group mcp_tools
- */
+#[\PHPUnit\Framework\Attributes\CoversClass(\Drupal\mcp_tools\Trait\WriteAccessTrait::class)]
+#[\PHPUnit\Framework\Attributes\Group('mcp_tools')]
 final class WriteAccessTraitTest extends UnitTestCase {
 
-  /**
-   * @covers ::checkWriteAccess
-   * @covers ::setAccessManager
-   */
   public function testCheckWriteAccessReturnsNullWhenAllowed(): void {
     $accessManager = $this->createMock(AccessManager::class);
     $accessManager->expects($this->once())
@@ -36,10 +30,6 @@ final class WriteAccessTraitTest extends UnitTestCase {
     $this->assertNull($tool->publicCheck());
   }
 
-  /**
-   * @covers ::checkWriteAccess
-   * @covers ::setAccessManager
-   */
   public function testCheckWriteAccessReturnsDeniedPayload(): void {
     $accessManager = $this->createMock(AccessManager::class);
     $accessManager->method('canWrite')->willReturn(FALSE);
@@ -64,10 +54,6 @@ final class WriteAccessTraitTest extends UnitTestCase {
     $this->assertSame('INSUFFICIENT_SCOPE', $denied['code']);
   }
 
-  /**
-   * @covers ::checkAdminAccess
-   * @covers ::setAccessManager
-   */
   public function testCheckAdminAccessReturnsNullWhenAllowed(): void {
     $accessManager = $this->createMock(AccessManager::class);
     $accessManager->method('checkWriteAccess')->with('admin', 'admin')->willReturn([
@@ -87,10 +73,6 @@ final class WriteAccessTraitTest extends UnitTestCase {
     $this->assertNull($tool->publicCheck());
   }
 
-  /**
-   * @covers ::checkAdminAccess
-   * @covers ::setAccessManager
-   */
   public function testCheckAdminAccessReturnsStructuredErrorWhenDenied(): void {
     $accessManager = $this->createMock(AccessManager::class);
     $accessManager->method('checkWriteAccess')->with('admin', 'admin')->willReturn([

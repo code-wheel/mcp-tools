@@ -7,6 +7,11 @@ namespace Drupal\mcp_tools\Mcp;
 use Drupal\Component\Plugin\PluginManagerInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\tool\Tool\ToolDefinition;
+use Drupal\mcp_tools\Mcp\Event\ToolExecutionFailedEvent;
+use Drupal\mcp_tools\Mcp\Event\ToolExecutionStartedEvent;
+use Drupal\mcp_tools\Mcp\Event\ToolExecutionSucceededEvent;
+use Drupal\mcp_tools\Mcp\Error\DefaultToolErrorHandler;
+use Drupal\mcp_tools\Mcp\Error\ToolErrorHandlerInterface;
 use Drupal\tool\Tool\ToolInterface;
 use Drupal\tool\TypedData\InputDefinitionInterface;
 use Drupal\tool\TypedData\ListInputDefinition;
@@ -19,6 +24,7 @@ use Mcp\Schema\Request\CallToolRequest;
 use Mcp\Schema\Result\CallToolResult;
 use Mcp\Server\Handler\Request\RequestHandlerInterface;
 use Mcp\Server\Session\SessionInterface;
+use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -36,6 +42,9 @@ final class ToolApiCallToolHandler implements RequestHandlerInterface {
     private readonly LoggerInterface $logger,
     private readonly bool $includeAllTools = FALSE,
     private readonly string $allowedProviderPrefix = 'mcp_tools',
+    private readonly ?ToolInputValidator $inputValidator = NULL,
+    private readonly ?ToolErrorHandlerInterface $errorHandler = NULL,
+    private readonly ?EventDispatcherInterface $eventDispatcher = NULL,
   ) {}
 
   /**
@@ -51,8 +60,11 @@ final class ToolApiCallToolHandler implements RequestHandlerInterface {
   public function handle(Request $request, SessionInterface $session): Response|Error {
     assert($request instanceof CallToolRequest);
 
+    $startedAt = microtime(TRUE);
+    $requestId = $request->getId();
     $toolName = $request->name;
     $arguments = $request->arguments ?? [];
+    $sanitizedArguments = $this->sanitizeArguments($arguments);
 
     $pluginId = $this->mcpNameToPluginId($toolName);
 
@@ -68,22 +80,67 @@ final class ToolApiCallToolHandler implements RequestHandlerInterface {
       return Error::forMethodNotFound("Unknown tool: {$toolName}", $request->getId());
     }
 
+    $this->dispatchEvent(new ToolExecutionStartedEvent(
+      $toolName,
+      $pluginId,
+      $sanitizedArguments,
+      $requestId,
+      $startedAt,
+    ));
+
+    $toolErrorHandler = $this->errorHandler ?? new DefaultToolErrorHandler($this->logger);
+    $validator = $this->inputValidator ?? new ToolInputValidator(new ToolApiSchemaConverter(), $this->logger);
+    $inputDefinitions = $definition->getInputDefinitions();
+    $normalizedArguments = $this->normalizeArgumentsForValidation($inputDefinitions, $arguments);
+    if (!empty($inputDefinitions)) {
+      $validation = $validator->validate($definition, $normalizedArguments);
+      if (!$validation['valid']) {
+        $result = $toolErrorHandler->validationFailed($toolName, $validation['errors']);
+        $this->dispatchEvent(new ToolExecutionFailedEvent(
+          $toolName,
+          $pluginId,
+          $sanitizedArguments,
+          ToolExecutionFailedEvent::REASON_VALIDATION,
+          $result,
+          NULL,
+          $this->calculateDurationMs($startedAt),
+          $requestId,
+        ));
+        return new Response($requestId, $result);
+      }
+    }
+
     try {
       $tool = $this->toolManager->createInstance($pluginId);
     }
     catch (\Throwable $e) {
-      $this->logger->error('Failed to create tool instance: @tool | @message', [
-        '@tool' => $pluginId,
-        '@message' => $e->getMessage(),
-      ]);
-
-      $content = [new TextContent('Tool instantiation failed: ' . $e->getMessage())];
-      return new Response($request->getId(), CallToolResult::error($content));
+      $result = $toolErrorHandler->instantiationFailed($pluginId, $e);
+      $this->dispatchEvent(new ToolExecutionFailedEvent(
+        $toolName,
+        $pluginId,
+        $sanitizedArguments,
+        ToolExecutionFailedEvent::REASON_INSTANTIATION,
+        $result,
+        $e,
+        $this->calculateDurationMs($startedAt),
+        $requestId,
+      ));
+      return new Response($requestId, $result);
     }
 
     if (!$tool instanceof ToolInterface) {
-      $content = [new TextContent("Tool plugin {$pluginId} does not implement ToolInterface.")];
-      return new Response($request->getId(), CallToolResult::error($content));
+      $result = $toolErrorHandler->invalidTool($pluginId, "Tool plugin {$pluginId} does not implement ToolInterface.");
+      $this->dispatchEvent(new ToolExecutionFailedEvent(
+        $toolName,
+        $pluginId,
+        $sanitizedArguments,
+        ToolExecutionFailedEvent::REASON_INVALID_TOOL,
+        $result,
+        NULL,
+        $this->calculateDurationMs($startedAt),
+        $requestId,
+      ));
+      return new Response($requestId, $result);
     }
 
     // Set input values with best-effort upcasting.
@@ -100,13 +157,18 @@ final class ToolApiCallToolHandler implements RequestHandlerInterface {
 
     // Check access.
     if (!$tool->access()) {
-      $structured = [
-        'success' => FALSE,
-        'error' => 'Access denied.',
-        'tool' => $toolName,
-      ];
-      $content = [new TextContent('Access denied.')];
-      return new Response($request->getId(), new CallToolResult($content, TRUE, $structured));
+      $result = $toolErrorHandler->accessDenied($toolName);
+      $this->dispatchEvent(new ToolExecutionFailedEvent(
+        $toolName,
+        $pluginId,
+        $sanitizedArguments,
+        ToolExecutionFailedEvent::REASON_ACCESS_DENIED,
+        $result,
+        NULL,
+        $this->calculateDurationMs($startedAt),
+        $requestId,
+      ));
+      return new Response($requestId, $result);
     }
 
     try {
@@ -148,21 +210,44 @@ final class ToolApiCallToolHandler implements RequestHandlerInterface {
       }
 
       $content = [new TextContent($text)];
-      return new Response($request->getId(), new CallToolResult($content, !$result->isSuccess(), $structured));
+      $callToolResult = new CallToolResult($content, !$result->isSuccess(), $structured);
+      if ($result->isSuccess()) {
+        $this->dispatchEvent(new ToolExecutionSucceededEvent(
+          $toolName,
+          $pluginId,
+          $sanitizedArguments,
+          $callToolResult,
+          $this->calculateDurationMs($startedAt),
+          $requestId,
+        ));
+      }
+      else {
+        $this->dispatchEvent(new ToolExecutionFailedEvent(
+          $toolName,
+          $pluginId,
+          $sanitizedArguments,
+          ToolExecutionFailedEvent::REASON_RESULT,
+          $callToolResult,
+          NULL,
+          $this->calculateDurationMs($startedAt),
+          $requestId,
+        ));
+      }
+      return new Response($requestId, $callToolResult);
     }
     catch (\Throwable $e) {
-      $this->logger->error('Tool execution failed: @tool | @message', [
-        '@tool' => $pluginId,
-        '@message' => $e->getMessage(),
-      ]);
-
-      $structured = [
-        'success' => FALSE,
-        'error' => $e->getMessage(),
-        'tool' => $toolName,
-      ];
-      $content = [new TextContent('Tool execution failed: ' . $e->getMessage())];
-      return new Response($request->getId(), new CallToolResult($content, TRUE, $structured));
+      $result = $toolErrorHandler->executionFailed($toolName, $e);
+      $this->dispatchEvent(new ToolExecutionFailedEvent(
+        $toolName,
+        $pluginId,
+        $sanitizedArguments,
+        ToolExecutionFailedEvent::REASON_EXECUTION,
+        $result,
+        $e,
+        $this->calculateDurationMs($startedAt),
+        $requestId,
+      ));
+      return new Response($requestId, $result);
     }
   }
 
@@ -247,6 +332,80 @@ final class ToolApiCallToolHandler implements RequestHandlerInterface {
     }
 
     return $value;
+  }
+
+  /**
+   * Prepares arguments for validation by applying best-effort upcasting.
+   *
+   * @param array<string, \Drupal\tool\TypedData\InputDefinitionInterface> $inputDefinitions
+   *   Tool input definitions.
+   * @param array<string, mixed> $arguments
+   *   Raw arguments.
+   *
+   * @return array<string, mixed>
+   *   Normalized arguments.
+   */
+  private function normalizeArgumentsForValidation(array $inputDefinitions, array $arguments): array {
+    $normalized = $arguments;
+    foreach ($inputDefinitions as $name => $definition) {
+      if (!array_key_exists($name, $normalized)) {
+        continue;
+      }
+      $normalized[$name] = $this->upcastArgument($normalized[$name], $definition);
+    }
+
+    return $normalized;
+  }
+
+  /**
+   * Dispatches tool execution events without blocking tool execution.
+   */
+  private function dispatchEvent(object $event): void {
+    if ($this->eventDispatcher === NULL) {
+      return;
+    }
+
+    try {
+      $this->eventDispatcher->dispatch($event);
+    }
+    catch (\Throwable $e) {
+      $this->logger->error('Failed to dispatch MCP tool event: @event | @message', [
+        '@event' => $event::class,
+        '@message' => $e->getMessage(),
+      ]);
+    }
+  }
+
+  /**
+   * Redacts sensitive values from tool arguments for observability payloads.
+   *
+   * @param array<string, mixed> $arguments
+   *   Raw tool arguments.
+   *
+   * @return array<string, mixed>
+   *   Sanitized arguments.
+   */
+  private function sanitizeArguments(array $arguments): array {
+    $sensitiveKeys = ['password', 'pass', 'secret', 'token', 'key', 'api_key', 'apikey'];
+    $sanitized = $arguments;
+
+    array_walk_recursive($sanitized, static function (&$value, $key) use ($sensitiveKeys): void {
+      foreach ($sensitiveKeys as $sensitiveKey) {
+        if (stripos((string) $key, $sensitiveKey) !== FALSE) {
+          $value = '[REDACTED]';
+          return;
+        }
+      }
+    });
+
+    return $sanitized;
+  }
+
+  /**
+   * Converts a start timestamp into a duration in milliseconds.
+   */
+  private function calculateDurationMs(float $startedAt): float {
+    return max(0.0, (microtime(TRUE) - $startedAt) * 1000.0);
   }
 
 }

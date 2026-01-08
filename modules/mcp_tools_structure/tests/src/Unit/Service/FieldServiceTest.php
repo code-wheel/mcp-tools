@@ -18,9 +18,9 @@ use Drupal\Tests\UnitTestCase;
 /**
  * Tests for FieldService.
  *
- * @coversDefaultClass \Drupal\mcp_tools_structure\Service\FieldService
- * @group mcp_tools_structure
  */
+#[\PHPUnit\Framework\Attributes\CoversClass(\Drupal\mcp_tools_structure\Service\FieldService::class)]
+#[\PHPUnit\Framework\Attributes\Group('mcp_tools_structure')]
 class FieldServiceTest extends UnitTestCase {
 
   protected EntityTypeManagerInterface $entityTypeManager;
@@ -69,9 +69,6 @@ class FieldServiceTest extends UnitTestCase {
     );
   }
 
-  /**
-   * @covers ::getFieldTypes
-   */
   public function testGetFieldTypes(): void {
     // Mock the field type manager to return definitions for types we query.
     $this->fieldTypeManager->method('getDefinition')
@@ -100,9 +97,6 @@ class FieldServiceTest extends UnitTestCase {
     $this->assertContains('entity_reference', $typeIds);
   }
 
-  /**
-   * @covers ::addField
-   */
   public function testAddFieldAccessDenied(): void {
     $this->accessManager->method('canWrite')->willReturn(FALSE);
     $this->accessManager->method('getWriteAccessDenied')->willReturn([
@@ -118,9 +112,6 @@ class FieldServiceTest extends UnitTestCase {
     $this->assertEquals('INSUFFICIENT_SCOPE', $result['code']);
   }
 
-  /**
-   * @covers ::addField
-   */
   public function testAddFieldInvalidName(): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
 
@@ -131,9 +122,6 @@ class FieldServiceTest extends UnitTestCase {
     $this->assertStringContainsString('Invalid field name', $result['error']);
   }
 
-  /**
-   * @covers ::addField
-   */
   public function testAddFieldNameTooLong(): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
 
@@ -144,9 +132,6 @@ class FieldServiceTest extends UnitTestCase {
     $this->assertStringContainsString('32 characters', $result['error']);
   }
 
-  /**
-   * @covers ::addField
-   */
   public function testAddFieldInvalidType(): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
 
@@ -157,9 +142,6 @@ class FieldServiceTest extends UnitTestCase {
     $this->assertStringContainsString('Unknown field type', $result['error']);
   }
 
-  /**
-   * @covers ::addField
-   */
   public function testAddFieldBundleNotFound(): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
     $this->nodeTypeStorage->method('load')->willReturn(NULL);
@@ -171,9 +153,6 @@ class FieldServiceTest extends UnitTestCase {
     $this->assertStringContainsString('does not exist', $result['error']);
   }
 
-  /**
-   * @covers ::addField
-   */
   public function testAddFieldAlreadyExists(): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
 
@@ -192,9 +171,6 @@ class FieldServiceTest extends UnitTestCase {
     $this->assertStringContainsString('already exists', $result['error']);
   }
 
-  /**
-   * @covers ::deleteField
-   */
   public function testDeleteFieldAccessDenied(): void {
     $this->accessManager->method('canWrite')->willReturn(FALSE);
     $this->accessManager->method('getWriteAccessDenied')->willReturn([
@@ -209,9 +185,6 @@ class FieldServiceTest extends UnitTestCase {
     $this->assertFalse($result['success']);
   }
 
-  /**
-   * @covers ::deleteField
-   */
   public function testDeleteFieldNotFound(): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
     $this->fieldConfigStorage->method('load')->willReturn(NULL);
@@ -223,9 +196,6 @@ class FieldServiceTest extends UnitTestCase {
     $this->assertStringContainsString('not found', $result['error']);
   }
 
-  /**
-   * @covers ::addField
-   */
   public function testAddFieldNormalizesName(): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
     $nodeType = $this->createMock(NodeTypeInterface::class);

@@ -16,9 +16,9 @@ use Drupal\Tests\UnitTestCase;
 /**
  * Tests for RedirectService.
  *
- * @coversDefaultClass \Drupal\mcp_tools_redirect\Service\RedirectService
- * @group mcp_tools_redirect
  */
+#[\PHPUnit\Framework\Attributes\CoversClass(\Drupal\mcp_tools_redirect\Service\RedirectService::class)]
+#[\PHPUnit\Framework\Attributes\Group('mcp_tools_redirect')]
 class RedirectServiceTest extends UnitTestCase {
 
   protected EntityTypeManagerInterface $entityTypeManager;
@@ -53,9 +53,6 @@ class RedirectServiceTest extends UnitTestCase {
     );
   }
 
-  /**
-   * @covers ::listRedirects
-   */
   public function testListRedirectsEmpty(): void {
     $countQuery = $this->createMock(QueryInterface::class);
     $countQuery->method('accessCheck')->willReturnSelf();
@@ -80,9 +77,6 @@ class RedirectServiceTest extends UnitTestCase {
     $this->assertEmpty($result['data']['redirects']);
   }
 
-  /**
-   * @covers ::getRedirect
-   */
   public function testGetRedirectNotFound(): void {
     $this->redirectStorage->method('load')->willReturn(NULL);
 
@@ -93,9 +87,6 @@ class RedirectServiceTest extends UnitTestCase {
     $this->assertStringContainsString('not found', $result['error']);
   }
 
-  /**
-   * @covers ::createRedirect
-   */
   public function testCreateRedirectAccessDenied(): void {
     $this->accessManager->method('canWrite')->willReturn(FALSE);
     $this->accessManager->method('getWriteAccessDenied')->willReturn([
@@ -111,9 +102,6 @@ class RedirectServiceTest extends UnitTestCase {
     $this->assertEquals('INSUFFICIENT_SCOPE', $result['code']);
   }
 
-  /**
-   * @covers ::createRedirect
-   */
   public function testCreateRedirectInvalidStatusCode(): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
 
@@ -124,9 +112,6 @@ class RedirectServiceTest extends UnitTestCase {
     $this->assertStringContainsString('Invalid status code', $result['error']);
   }
 
-  /**
-   * @covers ::createRedirect
-   */
   public function testCreateRedirectEmptySource(): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
 
@@ -137,9 +122,6 @@ class RedirectServiceTest extends UnitTestCase {
     $this->assertStringContainsString('cannot be empty', $result['error']);
   }
 
-  /**
-   * @covers ::createRedirect
-   */
   public function testCreateRedirectEmptyDestination(): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
 
@@ -150,9 +132,6 @@ class RedirectServiceTest extends UnitTestCase {
     $this->assertStringContainsString('cannot be empty', $result['error']);
   }
 
-  /**
-   * @covers ::deleteRedirect
-   */
   public function testDeleteRedirectAccessDenied(): void {
     $this->accessManager->method('canWrite')->willReturn(FALSE);
     $this->accessManager->method('getWriteAccessDenied')->willReturn([
@@ -167,9 +146,6 @@ class RedirectServiceTest extends UnitTestCase {
     $this->assertFalse($result['success']);
   }
 
-  /**
-   * @covers ::deleteRedirect
-   */
   public function testDeleteRedirectNotFound(): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
     $this->redirectStorage->method('load')->willReturn(NULL);
@@ -181,9 +157,6 @@ class RedirectServiceTest extends UnitTestCase {
     $this->assertStringContainsString('not found', $result['error']);
   }
 
-  /**
-   * @covers ::findBySource
-   */
   public function testFindBySourceNotFound(): void {
     $query = $this->createMock(QueryInterface::class);
     $query->method('accessCheck')->willReturnSelf();
@@ -202,9 +175,6 @@ class RedirectServiceTest extends UnitTestCase {
     $this->assertStringContainsString('No redirect found', $result['data']['message']);
   }
 
-  /**
-   * @covers ::listRedirects
-   */
   public function testListRedirectsWithPagination(): void {
     $countQuery = $this->createMock(QueryInterface::class);
     $countQuery->method('accessCheck')->willReturnSelf();

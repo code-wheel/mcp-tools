@@ -3,6 +3,10 @@ services:
     class: Drupal\mcp_tools_stdio\Commands\McpToolsStdioCommands
     arguments:
       - '@plugin.manager.tool'
+      - '@mcp_tools.resource_registry'
+      - '@mcp_tools.prompt_registry'
+      - '@mcp_tools.server_config_repository'
+      - '@mcp_tools.tool_error_handler'
       - '@mcp_tools.access_manager'
       - '@entity_type.manager'
       - '@account_switcher'

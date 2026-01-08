@@ -14,14 +14,11 @@ use Drupal\Tests\UnitTestCase;
 /**
  * Tests for ConfigAnalysisService.
  *
- * @coversDefaultClass \Drupal\mcp_tools\Service\ConfigAnalysisService
- * @group mcp_tools
  */
+#[\PHPUnit\Framework\Attributes\CoversClass(\Drupal\mcp_tools\Service\ConfigAnalysisService::class)]
+#[\PHPUnit\Framework\Attributes\Group('mcp_tools')]
 class ConfigAnalysisServiceTest extends UnitTestCase {
 
-  /**
-   * @covers ::getConfig
-   */
   public function testGetConfigRedactsSensitiveKeysByDefault(): void {
     $targetConfig = $this->createMock(Config::class);
     $targetConfig->method('isNew')->willReturn(FALSE);
@@ -58,9 +55,6 @@ class ConfigAnalysisServiceTest extends UnitTestCase {
     $this->assertEquals('[REDACTED]', $result['data']['nested']['token_value']);
   }
 
-  /**
-   * @covers ::getConfig
-   */
   public function testGetConfigIncludesSensitiveWhenEnabled(): void {
     $targetConfig = $this->createMock(Config::class);
     $targetConfig->method('isNew')->willReturn(FALSE);
@@ -88,9 +82,6 @@ class ConfigAnalysisServiceTest extends UnitTestCase {
     $this->assertEquals('abc123', $result['data']['api_key']);
   }
 
-  /**
-   * @covers ::getConfig
-   */
   public function testGetConfigReturnsErrorWhenMissing(): void {
     $targetConfig = $this->createMock(Config::class);
     $targetConfig->method('isNew')->willReturn(TRUE);

@@ -17,9 +17,9 @@ use Drupal\user\RoleInterface;
 /**
  * Tests for RoleService.
  *
- * @coversDefaultClass \Drupal\mcp_tools_structure\Service\RoleService
- * @group mcp_tools_structure
  */
+#[\PHPUnit\Framework\Attributes\CoversClass(\Drupal\mcp_tools_structure\Service\RoleService::class)]
+#[\PHPUnit\Framework\Attributes\Group('mcp_tools_structure')]
 class RoleServiceTest extends UnitTestCase {
 
   protected EntityTypeManagerInterface $entityTypeManager;
@@ -62,9 +62,6 @@ class RoleServiceTest extends UnitTestCase {
     );
   }
 
-  /**
-   * @covers ::createRole
-   */
   public function testCreateRoleAccessDenied(): void {
     $this->accessManager->method('canWrite')->willReturn(FALSE);
     $this->accessManager->method('getWriteAccessDenied')->willReturn([
@@ -78,10 +75,7 @@ class RoleServiceTest extends UnitTestCase {
     $this->assertFalse($result['success']);
   }
 
-  /**
-   * @covers ::createRole
-   * @dataProvider invalidMachineNameProvider
-   */
+  #[\PHPUnit\Framework\Attributes\DataProvider('invalidMachineNameProvider')]
   public function testCreateRoleInvalidMachineName(string $invalidName): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
 
@@ -105,9 +99,6 @@ class RoleServiceTest extends UnitTestCase {
     ];
   }
 
-  /**
-   * @covers ::createRole
-   */
   public function testCreateRoleMachineNameTooLong(): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
 
@@ -118,10 +109,7 @@ class RoleServiceTest extends UnitTestCase {
     $this->assertStringContainsString('32 characters', $result['error']);
   }
 
-  /**
-   * @covers ::createRole
-   * @dataProvider reservedRoleIdProvider
-   */
+  #[\PHPUnit\Framework\Attributes\DataProvider('reservedRoleIdProvider')]
   public function testCreateRoleReservedIds(string $reservedId): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
 
@@ -143,9 +131,6 @@ class RoleServiceTest extends UnitTestCase {
     ];
   }
 
-  /**
-   * @covers ::createRole
-   */
   public function testCreateRoleAlreadyExists(): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
 
@@ -159,10 +144,6 @@ class RoleServiceTest extends UnitTestCase {
     $this->assertStringContainsString('already exists', $result['error']);
   }
 
-  /**
-   * @covers ::createRole
-   * @covers ::validatePermissions
-   */
   public function testCreateRoleWithDangerousPermissions(): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
     $this->roleStorage->method('load')->with('power_user')->willReturn(NULL);
@@ -181,10 +162,6 @@ class RoleServiceTest extends UnitTestCase {
     $this->assertStringContainsString('administer users', $result['error']);
   }
 
-  /**
-   * @covers ::createRole
-   * @covers ::validatePermissions
-   */
   public function testCreateRoleWithInvalidPermissions(): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
     $this->roleStorage->method('load')->with('custom_role')->willReturn(NULL);
@@ -202,9 +179,6 @@ class RoleServiceTest extends UnitTestCase {
     $this->assertStringContainsString('fake_permission', $result['error']);
   }
 
-  /**
-   * @covers ::deleteRole
-   */
   public function testDeleteRoleAccessDenied(): void {
     $this->accessManager->method('canWrite')->willReturn(FALSE);
     $this->accessManager->method('getWriteAccessDenied')->willReturn([
@@ -218,10 +192,7 @@ class RoleServiceTest extends UnitTestCase {
     $this->assertFalse($result['success']);
   }
 
-  /**
-   * @covers ::deleteRole
-   * @dataProvider coreRoleIdProvider
-   */
+  #[\PHPUnit\Framework\Attributes\DataProvider('coreRoleIdProvider')]
   public function testDeleteRolePreventsDeleteOfCoreRoles(string $coreRole): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
 
@@ -242,9 +213,6 @@ class RoleServiceTest extends UnitTestCase {
     ];
   }
 
-  /**
-   * @covers ::deleteRole
-   */
   public function testDeleteRoleNotFound(): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
     $this->roleStorage->method('load')->with('nonexistent')->willReturn(NULL);
@@ -256,9 +224,6 @@ class RoleServiceTest extends UnitTestCase {
     $this->assertStringContainsString('not found', $result['error']);
   }
 
-  /**
-   * @covers ::grantPermissions
-   */
   public function testGrantPermissionsAccessDenied(): void {
     $this->accessManager->method('canWrite')->willReturn(FALSE);
     $this->accessManager->method('getWriteAccessDenied')->willReturn([
@@ -272,9 +237,6 @@ class RoleServiceTest extends UnitTestCase {
     $this->assertFalse($result['success']);
   }
 
-  /**
-   * @covers ::grantPermissions
-   */
   public function testGrantPermissionsRoleNotFound(): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
     $this->roleStorage->method('load')->with('nonexistent')->willReturn(NULL);
@@ -286,10 +248,6 @@ class RoleServiceTest extends UnitTestCase {
     $this->assertStringContainsString('not found', $result['error']);
   }
 
-  /**
-   * @covers ::grantPermissions
-   * @covers ::validatePermissions
-   */
   public function testGrantPermissionsBlocksDangerousPermissions(): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
 
@@ -309,11 +267,7 @@ class RoleServiceTest extends UnitTestCase {
     $this->assertStringContainsString('bypass node access', $result['error']);
   }
 
-  /**
-   * @covers ::grantPermissions
-   * @covers ::validatePermissions
-   * @dataProvider dangerousPermissionsProvider
-   */
+  #[\PHPUnit\Framework\Attributes\DataProvider('dangerousPermissionsProvider')]
   public function testGrantPermissionsBlocksAllDangerousPermissions(string $dangerousPermission): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
 
@@ -349,9 +303,6 @@ class RoleServiceTest extends UnitTestCase {
     ];
   }
 
-  /**
-   * @covers ::revokePermissions
-   */
   public function testRevokePermissionsAccessDenied(): void {
     $this->accessManager->method('canWrite')->willReturn(FALSE);
     $this->accessManager->method('getWriteAccessDenied')->willReturn([
@@ -365,9 +316,6 @@ class RoleServiceTest extends UnitTestCase {
     $this->assertFalse($result['success']);
   }
 
-  /**
-   * @covers ::revokePermissions
-   */
   public function testRevokePermissionsRoleNotFound(): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
     $this->roleStorage->method('load')->with('nonexistent')->willReturn(NULL);
@@ -379,9 +327,6 @@ class RoleServiceTest extends UnitTestCase {
     $this->assertStringContainsString('not found', $result['error']);
   }
 
-  /**
-   * @covers ::revokePermissions
-   */
   public function testRevokePermissionsTracksDidntHave(): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
 

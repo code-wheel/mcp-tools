@@ -147,7 +147,7 @@ def _initialize_and_list_tools(proc: subprocess.Popen[str], sel: selectors.BaseS
             "id": request_id,
             "method": "initialize",
             "params": {
-                "protocolVersion": "2024-11-05",
+                "protocolVersion": "2025-06-18",
                 "clientInfo": {"name": "mcp_tools_ci", "version": "0.0.0"},
                 "capabilities": {},
             },

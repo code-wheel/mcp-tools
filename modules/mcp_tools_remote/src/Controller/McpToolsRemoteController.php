@@ -12,6 +12,10 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Session\AccountSwitcherInterface;
 use Drupal\Component\Plugin\PluginManagerInterface;
 use Drupal\mcp_tools\Mcp\McpToolsServerFactory;
+use Drupal\mcp_tools\Mcp\Error\ToolErrorHandlerInterface;
+use Drupal\mcp_tools\Mcp\Prompt\PromptRegistry;
+use Drupal\mcp_tools\Mcp\Resource\ResourceRegistry;
+use Drupal\mcp_tools\Mcp\ServerConfigRepository;
 use Drupal\mcp_tools\Mcp\ToolApiSchemaConverter;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools_remote\Service\ApiKeyManager;
@@ -37,6 +41,10 @@ final class McpToolsRemoteController implements ContainerInjectionInterface {
     private readonly ApiKeyManager $apiKeyManager,
     private readonly AccessManager $accessManager,
     private readonly PluginManagerInterface $toolManager,
+    private readonly ResourceRegistry $resourceRegistry,
+    private readonly PromptRegistry $promptRegistry,
+    private readonly ServerConfigRepository $serverConfigRepository,
+    private readonly ToolErrorHandlerInterface $toolErrorHandler,
     private readonly EntityTypeManagerInterface $entityTypeManagerService,
     private readonly AccountSwitcherInterface $accountSwitcher,
     private readonly EventDispatcherInterface $eventDispatcher,
@@ -49,6 +57,10 @@ final class McpToolsRemoteController implements ContainerInjectionInterface {
       $container->get('mcp_tools_remote.api_key_manager'),
       $container->get('mcp_tools.access_manager'),
       $container->get('plugin.manager.tool'),
+      $container->get('mcp_tools.resource_registry'),
+      $container->get('mcp_tools.prompt_registry'),
+      $container->get('mcp_tools.server_config_repository'),
+      $container->get('mcp_tools.tool_error_handler'),
       $container->get('entity_type.manager'),
       $container->get('account_switcher'),
       $container->get('event_dispatcher'),
@@ -91,16 +103,18 @@ final class McpToolsRemoteController implements ContainerInjectionInterface {
       $allowedOrigins = [];
     }
 
-    if (!empty($allowedOrigins)) {
-      $originValidator = new OriginValidator($allowedOrigins);
-      $hostname = $this->extractHostname($request);
-      if (!$hostname || !$originValidator->isAllowed($hostname)) {
-        return new Response('Not found.', 404);
-      }
+    $originCheck = $this->validateOrigin($request, $allowedOrigins);
+    if ($originCheck) {
+      return $originCheck;
     }
 
     if (!class_exists(\Mcp\Server::class)) {
       return new Response('Missing dependency: mcp/sdk', 500);
+    }
+
+    $acceptCheck = $this->validateAcceptHeader($request);
+    if ($acceptCheck) {
+      return $acceptCheck;
     }
 
     $apiKey = $this->extractApiKey($request);
@@ -109,6 +123,23 @@ final class McpToolsRemoteController implements ContainerInjectionInterface {
       $response = new JsonResponse(['error' => 'Authentication required'], 401);
       $response->headers->set('WWW-Authenticate', 'Bearer realm="mcp_tools_remote"');
       return $response;
+    }
+
+    $serverId = trim((string) ($remoteConfig->get('server_id') ?? ''));
+    $serverConfig = $serverId !== '' ? $this->serverConfigRepository->getServer($serverId) : NULL;
+    if ($serverId !== '' && !$serverConfig) {
+      return new Response('Configured MCP server profile not found: ' . $serverId, 500);
+    }
+
+    if ($serverConfig) {
+      $access = $this->serverConfigRepository->checkAccess($serverConfig, $request);
+      if (!$access['allowed']) {
+        return new Response($access['message'] ?? 'Access denied.', 403);
+      }
+
+      if (!$this->serverConfigRepository->allowsTransport($serverConfig, 'http')) {
+        return new Response('Server profile does not allow HTTP transport.', 403);
+      }
     }
 
     // Provide a trusted rate-limit client identifier derived from the API key.
@@ -124,6 +155,13 @@ final class McpToolsRemoteController implements ContainerInjectionInterface {
       $scopes = ['read'];
     }
 
+    if ($serverConfig && !empty($serverConfig['scopes'])) {
+      $scopes = array_values(array_intersect($scopes, (array) $serverConfig['scopes']));
+      if (empty($scopes)) {
+        return new Response('Access denied: no permitted scopes for this server profile.', 403);
+      }
+    }
+
     // Force scopes for this request (do not trust client-provided scope headers).
     $this->accessManager->setScopes($scopes);
 
@@ -131,6 +169,10 @@ final class McpToolsRemoteController implements ContainerInjectionInterface {
     $uid = (int) ($remoteConfig->get('uid') ?? 0);
     if ($uid === 0) {
       return new Response('Execution user not configured. Visit /admin/config/services/mcp-tools/remote to set up.', 500);
+    }
+    $allowUid1 = (bool) $remoteConfig->get('allow_uid1');
+    if ($uid === 1 && !$allowUid1) {
+      return new Response('Execution user uid 1 is not allowed. Enable "Use site admin (uid 1)" in remote settings to override.', 500);
     }
     $account = $this->entityTypeManagerService->getStorage('user')->load($uid);
     if (!$account) {
@@ -145,18 +187,46 @@ final class McpToolsRemoteController implements ContainerInjectionInterface {
         $schemaConverter,
         $this->logger,
         $this->eventDispatcher,
+        $this->resourceRegistry,
+        $this->promptRegistry,
+        $this->toolErrorHandler,
       );
 
+      $serverName = $serverConfig
+        ? (string) ($serverConfig['name'] ?? 'Drupal MCP Tools')
+        : (string) ($remoteConfig->get('server_name') ?? 'Drupal MCP Tools');
+      $serverVersion = $serverConfig
+        ? (string) ($serverConfig['version'] ?? '1.0.0')
+        : (string) ($remoteConfig->get('server_version') ?? '1.0.0');
+      $paginationLimit = $serverConfig
+        ? (int) ($serverConfig['pagination_limit'] ?? 50)
+        : (int) ($remoteConfig->get('pagination_limit') ?? 50);
+      $includeAllTools = $serverConfig
+        ? (bool) ($serverConfig['include_all_tools'] ?? FALSE)
+        : (bool) ($remoteConfig->get('include_all_tools') ?? FALSE);
+      $gatewayMode = $serverConfig
+        ? (bool) ($serverConfig['gateway_mode'] ?? FALSE)
+        : (bool) ($remoteConfig->get('gateway_mode') ?? FALSE);
+      $enableResources = $serverConfig
+        ? (bool) ($serverConfig['enable_resources'] ?? TRUE)
+        : TRUE;
+      $enablePrompts = $serverConfig
+        ? (bool) ($serverConfig['enable_prompts'] ?? TRUE)
+        : TRUE;
+
       $server = $serverFactory->create(
-        (string) ($remoteConfig->get('server_name') ?? 'Drupal MCP Tools'),
-        (string) ($remoteConfig->get('server_version') ?? '1.0.0'),
-        (int) ($remoteConfig->get('pagination_limit') ?? 50),
-        (bool) ($remoteConfig->get('include_all_tools') ?? FALSE),
+        $serverName,
+        $serverVersion,
+        $paginationLimit,
+        $includeAllTools,
         new FileSessionStore(
           rtrim(sys_get_temp_dir(), \DIRECTORY_SEPARATOR) . \DIRECTORY_SEPARATOR . 'mcp_tools_remote_sessions_' . substr(hash('sha256', \Drupal::root()), 0, 12),
           3600,
         ),
         3600,
+        $gatewayMode,
+        $enableResources,
+        $enablePrompts,
       );
 
       $httpFactory = new HttpFactory();
@@ -218,6 +288,78 @@ final class McpToolsRemoteController implements ContainerInjectionInterface {
 
     // Use the package's hostname extraction.
     return (new OriginValidator([]))->extractHostname($candidate);
+  }
+
+  /**
+   * Validate the Origin header per MCP Streamable HTTP guidance.
+   */
+  private function validateOrigin(Request $request, array $allowedOrigins): ?Response {
+    $originHeader = trim((string) $request->headers->get('Origin', ''));
+    $requestHost = $request->getHost();
+
+    if ($originHeader !== '') {
+      $originHost = $this->extractHostnameFromHeader($originHeader);
+      if (!$originHost) {
+        return new Response('Not found.', 404);
+      }
+
+      if (!empty($allowedOrigins)) {
+        $originValidator = new OriginValidator($allowedOrigins);
+        if (!$originValidator->isAllowed($originHost)) {
+          return new Response('Not found.', 404);
+        }
+      }
+      else {
+        if ($requestHost === '' || strcasecmp($originHost, $requestHost) !== 0) {
+          return new Response('Not found.', 404);
+        }
+      }
+
+      return NULL;
+    }
+
+    if (!empty($allowedOrigins)) {
+      $hostname = $this->extractHostname($request);
+      if (!$hostname) {
+        return new Response('Not found.', 404);
+      }
+      $originValidator = new OriginValidator($allowedOrigins);
+      if (!$originValidator->isAllowed($hostname)) {
+        return new Response('Not found.', 404);
+      }
+    }
+
+    return NULL;
+  }
+
+  /**
+   * Ensure clients advertise required Accept types for Streamable HTTP.
+   */
+  private function validateAcceptHeader(Request $request): ?Response {
+    $method = strtoupper($request->getMethod());
+    if ($method !== 'GET' && $method !== 'POST') {
+      return NULL;
+    }
+
+    $accept = strtolower((string) $request->headers->get('Accept', ''));
+    if ($method === 'POST') {
+      if (!str_contains($accept, 'application/json') || !str_contains($accept, 'text/event-stream')) {
+        return new Response('Not acceptable.', 406);
+      }
+      return NULL;
+    }
+
+    if ($method === 'GET') {
+      if (!str_contains($accept, 'text/event-stream')) {
+        return new Response('Not acceptable.', 406);
+      }
+    }
+
+    return NULL;
+  }
+
+  private function extractHostnameFromHeader(string $value): ?string {
+    return (new OriginValidator([]))->extractHostname($value);
   }
 
 }

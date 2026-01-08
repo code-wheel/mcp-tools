@@ -10,10 +10,8 @@ use Drupal\Core\Database\Connection;
 use Drupal\mcp_tools\Service\ContentAnalysisService;
 use Drupal\Tests\UnitTestCase;
 
-/**
- * @coversDefaultClass \Drupal\mcp_tools\Service\ContentAnalysisService
- * @group mcp_tools
- */
+#[\PHPUnit\Framework\Attributes\CoversClass(\Drupal\mcp_tools\Service\ContentAnalysisService::class)]
+#[\PHPUnit\Framework\Attributes\Group('mcp_tools')]
 final class ContentAnalysisServiceTest extends UnitTestCase {
 
   private function createService(): ContentAnalysisService {
@@ -24,9 +22,6 @@ final class ContentAnalysisServiceTest extends UnitTestCase {
     );
   }
 
-  /**
-   * @covers ::searchContent
-   */
   public function testSearchContentRequiresMinimumLength(): void {
     $service = $this->createService();
     $result = $service->searchContent('ab');
@@ -35,13 +30,9 @@ final class ContentAnalysisServiceTest extends UnitTestCase {
     $this->assertSame([], $result['results']);
   }
 
-  /**
-   * @covers ::simplifyFieldValue
-   */
   public function testSimplifyFieldValueMapsCommonTypes(): void {
     $service = $this->createService();
     $method = new \ReflectionMethod($service, 'simplifyFieldValue');
-    $method->setAccessible(TRUE);
 
     $this->assertNull($method->invoke($service, [], 'string'));
     $this->assertSame('x', $method->invoke($service, [['value' => 'x']], 'string'));
@@ -51,4 +42,3 @@ final class ContentAnalysisServiceTest extends UnitTestCase {
   }
 
 }
-

@@ -12,15 +12,10 @@ use Drupal\Core\Queue\QueueWorkerManagerInterface;
 use Drupal\mcp_tools\Service\QueueService;
 use Drupal\Tests\UnitTestCase;
 
-/**
- * @coversDefaultClass \Drupal\mcp_tools\Service\QueueService
- * @group mcp_tools
- */
+#[\PHPUnit\Framework\Attributes\CoversClass(\Drupal\mcp_tools\Service\QueueService::class)]
+#[\PHPUnit\Framework\Attributes\Group('mcp_tools')]
 final class QueueServiceTest extends UnitTestCase {
 
-  /**
-   * @covers ::getQueueStatus
-   */
   public function testGetQueueStatusIncludesWorkersAndDatabaseQueues(): void {
     $queueFactory = $this->createMock(QueueFactory::class);
     $queueWorkerManager = $this->createMock(QueueWorkerManagerInterface::class);
@@ -70,9 +65,6 @@ final class QueueServiceTest extends UnitTestCase {
     $this->assertSame(10, $queues[0]['items']);
   }
 
-  /**
-   * @covers ::getQueueDetails
-   */
   public function testGetQueueDetailsIncludesOldestItemAgeWhenAvailable(): void {
     $queueFactory = $this->createMock(QueueFactory::class);
     $queueWorkerManager = $this->createMock(QueueWorkerManagerInterface::class);

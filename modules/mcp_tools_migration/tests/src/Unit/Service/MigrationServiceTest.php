@@ -15,10 +15,8 @@ use Drupal\mcp_tools\Service\AuditLogger;
 use Drupal\mcp_tools_migration\Service\MigrationService;
 use Drupal\Tests\UnitTestCase;
 
-/**
- * @coversDefaultClass \Drupal\mcp_tools_migration\Service\MigrationService
- * @group mcp_tools_migration
- */
+#[\PHPUnit\Framework\Attributes\CoversClass(\Drupal\mcp_tools_migration\Service\MigrationService::class)]
+#[\PHPUnit\Framework\Attributes\Group('mcp_tools_migration')]
 final class MigrationServiceTest extends UnitTestCase {
 
   private array $stateStorage = [];
@@ -69,9 +67,6 @@ final class MigrationServiceTest extends UnitTestCase {
     );
   }
 
-  /**
-   * @covers ::importFromCsv
-   */
   public function testImportFromCsvParsesRowsAndDelegatesToImportFromJson(): void {
     $accessManager = $this->createMock(AccessManager::class);
     $accessManager->method('canWrite')->willReturn(TRUE);
@@ -99,9 +94,6 @@ final class MigrationServiceTest extends UnitTestCase {
     $this->assertSame([['title' => 'Hello', 'body' => 'A,B']], $service->captured);
   }
 
-  /**
-   * @covers ::importFromJson
-   */
   public function testImportFromJsonReturnsValidationErrors(): void {
     $accessManager = $this->createMock(AccessManager::class);
     $accessManager->method('canWrite')->willReturn(TRUE);
@@ -135,11 +127,6 @@ final class MigrationServiceTest extends UnitTestCase {
     $this->assertNotEmpty($result['validation_errors']);
   }
 
-  /**
-   * @covers ::importFromJson
-   * @covers ::setImportStatus
-   * @covers ::getImportStatus
-   */
   public function testImportFromJsonCreatesNodesAndUpdatesImportStatus(): void {
     $accessManager = $this->createMock(AccessManager::class);
     $accessManager->method('canWrite')->willReturn(TRUE);
@@ -201,10 +188,6 @@ final class MigrationServiceTest extends UnitTestCase {
     $this->assertSame('completed', $status['data']['status']);
   }
 
-  /**
-   * @covers ::validateImport
-   * @covers ::getFieldMapping
-   */
   public function testValidateImportReportsMissingTitleAndUnknownFields(): void {
     $nodeType = new class() {
       public function label(): string { return 'Article'; }
@@ -248,11 +231,6 @@ final class MigrationServiceTest extends UnitTestCase {
     $this->assertGreaterThan(0, $result['data']['warning_count']);
   }
 
-  /**
-   * @covers ::exportToCsv
-   * @covers ::exportToJson
-   * @covers ::extractFieldValue
-   */
   public function testExportFormatsIncludeCustomFields(): void {
     $nodeTypeStorage = $this->createMock(EntityStorageInterface::class);
     $nodeTypeStorage->method('load')->with('article')->willReturn(new \stdClass());
@@ -304,9 +282,6 @@ final class MigrationServiceTest extends UnitTestCase {
     $this->assertSame(123, $json['data']['items'][0]['field_tags']['target_id']);
   }
 
-  /**
-   * @covers ::csvEscape
-   */
   public function testCsvEscapeQuotesAndEscapesValues(): void {
     $service = $this->createService();
 
@@ -316,10 +291,6 @@ final class MigrationServiceTest extends UnitTestCase {
     $this->assertSame('"a,b"', $service->escape('a,b'));
   }
 
-  /**
-   * @covers ::isProtectedField
-   * @covers ::getProtectedFields
-   */
   public function testProtectedFieldBlocklistAndPatterns(): void {
     $service = $this->createService();
 

@@ -10,11 +10,14 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\Component\Plugin\PluginManagerInterface;
 use Drupal\mcp_tools\Mcp\ToolApiCallToolHandler;
+use Drupal\mcp_tools\Mcp\ToolApiSchemaConverter;
+use Drupal\mcp_tools\Mcp\ToolInputValidator;
 use Drupal\Tests\UnitTestCase;
 use Drupal\tool\ExecutableResult;
 use Drupal\tool\Tool\ToolBase;
 use Drupal\tool\Tool\ToolDefinition;
 use Drupal\tool\Tool\ToolOperation;
+use Drupal\tool\TypedData\InputDefinitionInterface;
 use Mcp\Schema\JsonRpc\Error;
 use Mcp\Schema\JsonRpc\Response;
 use Mcp\Schema\Request\CallToolRequest;
@@ -25,19 +28,22 @@ use Psr\Log\NullLogger;
 /**
  * Tests for ToolApiCallToolHandler.
  *
- * @coversDefaultClass \Drupal\mcp_tools\Mcp\ToolApiCallToolHandler
- * @group mcp_tools
  */
+#[\PHPUnit\Framework\Attributes\CoversClass(\Drupal\mcp_tools\Mcp\ToolApiCallToolHandler::class)]
+#[\PHPUnit\Framework\Attributes\Group('mcp_tools')]
 final class ToolApiCallToolHandlerTest extends UnitTestCase {
 
-  /**
-   * @covers ::handle
-   */
   public function testUnknownToolReturnsMethodNotFoundError(): void {
     $toolManager = $this->createMock(PluginManagerInterface::class);
     $toolManager->method('getDefinitions')->willReturn([]);
 
-    $handler = new ToolApiCallToolHandler($toolManager, new NullLogger());
+    $handler = new ToolApiCallToolHandler(
+      $toolManager,
+      new NullLogger(),
+      FALSE,
+      'mcp_tools',
+      new ToolInputValidator(new ToolApiSchemaConverter(), new NullLogger()),
+    );
 
     $request = (new CallToolRequest('mcp_tools___missing', []))->withId(1);
     $session = $this->createMock(SessionInterface::class);
@@ -50,9 +56,6 @@ final class ToolApiCallToolHandlerTest extends UnitTestCase {
     $this->assertStringContainsString('Unknown tool:', $result->message);
   }
 
-  /**
-   * @covers ::handle
-   */
   public function testProviderIsFilteredWhenIncludeAllToolsFalse(): void {
     $toolManager = $this->createMock(PluginManagerInterface::class);
 
@@ -69,7 +72,13 @@ final class ToolApiCallToolHandlerTest extends UnitTestCase {
       'other:test' => $otherDefinition,
     ]);
 
-    $handler = new ToolApiCallToolHandler($toolManager, new NullLogger(), FALSE, 'mcp_tools');
+    $handler = new ToolApiCallToolHandler(
+      $toolManager,
+      new NullLogger(),
+      FALSE,
+      'mcp_tools',
+      new ToolInputValidator(new ToolApiSchemaConverter(), new NullLogger()),
+    );
 
     $request = (new CallToolRequest('other___test', []))->withId('req-1');
     $session = $this->createMock(SessionInterface::class);
@@ -81,9 +90,6 @@ final class ToolApiCallToolHandlerTest extends UnitTestCase {
     $this->assertSame(Error::METHOD_NOT_FOUND, $result->code);
   }
 
-  /**
-   * @covers ::handle
-   */
   public function testCallToolReturnsResponseWithStructuredContent(): void {
     $toolManager = $this->createMock(PluginManagerInterface::class);
 
@@ -147,7 +153,13 @@ final class ToolApiCallToolHandlerTest extends UnitTestCase {
     ]);
     $toolManager->method('createInstance')->with('mcp_tools:test')->willReturn($tool);
 
-    $handler = new ToolApiCallToolHandler($toolManager, new NullLogger());
+    $handler = new ToolApiCallToolHandler(
+      $toolManager,
+      new NullLogger(),
+      FALSE,
+      'mcp_tools',
+      new ToolInputValidator(new ToolApiSchemaConverter(), new NullLogger()),
+    );
 
     $request = (new CallToolRequest('mcp_tools___test', []))->withId(99);
 
@@ -163,9 +175,6 @@ final class ToolApiCallToolHandlerTest extends UnitTestCase {
     $this->assertSame(['foo' => 'bar'], $result->result->structuredContent['data'] ?? NULL);
   }
 
-  /**
-   * @covers ::handle
-   */
   public function testAccessDeniedReturnsIsErrorResult(): void {
     $toolManager = $this->createMock(PluginManagerInterface::class);
 
@@ -202,7 +211,13 @@ final class ToolApiCallToolHandlerTest extends UnitTestCase {
     ]);
     $toolManager->method('createInstance')->with('mcp_tools:denied')->willReturn($tool);
 
-    $handler = new ToolApiCallToolHandler($toolManager, new NullLogger());
+    $handler = new ToolApiCallToolHandler(
+      $toolManager,
+      new NullLogger(),
+      FALSE,
+      'mcp_tools',
+      new ToolInputValidator(new ToolApiSchemaConverter(), new NullLogger()),
+    );
 
     $request = (new CallToolRequest('mcp_tools___denied', []))->withId('req-2');
     $session = $this->createMock(SessionInterface::class);
@@ -213,6 +228,52 @@ final class ToolApiCallToolHandlerTest extends UnitTestCase {
     $this->assertInstanceOf(CallToolResult::class, $result->result);
     $this->assertTrue($result->result->isError);
     $this->assertSame('Access denied.', $result->result->structuredContent['error'] ?? NULL);
+  }
+
+  public function testInvalidArgumentsReturnErrorResult(): void {
+    $toolManager = $this->createMock(PluginManagerInterface::class);
+
+    $countDefinition = $this->createMock(InputDefinitionInterface::class);
+    $countDefinition->method('getDataType')->willReturn('integer');
+    $countDefinition->method('isRequired')->willReturn(TRUE);
+    $countDefinition->method('getDescription')->willReturn(NULL);
+    $countDefinition->method('getConstraints')->willReturn([]);
+    $countDefinition->method('isMultiple')->willReturn(FALSE);
+
+    $definition = new ToolDefinition([
+      'id' => 'mcp_tools:validate',
+      'provider' => 'mcp_tools',
+      'label' => new TranslatableMarkup('Validate'),
+      'description' => new TranslatableMarkup('Validation tool'),
+      'operation' => ToolOperation::Read,
+      'destructive' => FALSE,
+      'input_definitions' => [
+        'count' => $countDefinition,
+      ],
+    ]);
+
+    $toolManager->method('getDefinitions')->willReturn([
+      'mcp_tools:validate' => $definition,
+    ]);
+
+    $handler = new ToolApiCallToolHandler(
+      $toolManager,
+      new NullLogger(),
+      FALSE,
+      'mcp_tools',
+      new ToolInputValidator(new ToolApiSchemaConverter(), new NullLogger()),
+    );
+
+    $request = (new CallToolRequest('mcp_tools___validate', ['count' => 'not-a-number']))->withId('invalid-1');
+    $session = $this->createMock(SessionInterface::class);
+
+    $result = $handler->handle($request, $session);
+
+    $this->assertInstanceOf(Response::class, $result);
+    $this->assertInstanceOf(CallToolResult::class, $result->result);
+    $this->assertTrue($result->result->isError);
+    $this->assertSame(FALSE, $result->result->structuredContent['success'] ?? NULL);
+    $this->assertArrayHasKey('validation_errors', $result->result->structuredContent);
   }
 
 }

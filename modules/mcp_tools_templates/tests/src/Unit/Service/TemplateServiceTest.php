@@ -15,9 +15,9 @@ use Drupal\Tests\UnitTestCase;
 /**
  * Tests for TemplateService.
  *
- * @coversDefaultClass \Drupal\mcp_tools_templates\Service\TemplateService
- * @group mcp_tools_templates
  */
+#[\PHPUnit\Framework\Attributes\CoversClass(\Drupal\mcp_tools_templates\Service\TemplateService::class)]
+#[\PHPUnit\Framework\Attributes\Group('mcp_tools_templates')]
 final class TemplateServiceTest extends UnitTestCase {
 
   private ConfigFactoryInterface $configFactory;
@@ -33,9 +33,6 @@ final class TemplateServiceTest extends UnitTestCase {
     $this->auditLogger = $this->createMock(AuditLogger::class);
   }
 
-  /**
-   * @covers ::listTemplates
-   */
   public function testListTemplatesReturnsExpectedBasics(): void {
     $service = new TemplateService(
       $this->createMock(EntityTypeManagerInterface::class),
@@ -65,9 +62,6 @@ final class TemplateServiceTest extends UnitTestCase {
     }
   }
 
-  /**
-   * @covers ::getTemplate
-   */
   public function testGetTemplateReturnsNotFound(): void {
     $service = new TemplateService(
       $this->createMock(EntityTypeManagerInterface::class),
@@ -83,9 +77,6 @@ final class TemplateServiceTest extends UnitTestCase {
     $this->assertContains('blog', $result['available_templates']);
   }
 
-  /**
-   * @covers ::applyTemplate
-   */
   public function testApplyTemplateRequiresAdminScope(): void {
     $accessManager = $this->createMock(AccessManager::class);
     $accessManager->method('canAdmin')->willReturn(FALSE);
@@ -103,9 +94,6 @@ final class TemplateServiceTest extends UnitTestCase {
     $this->assertSame('INSUFFICIENT_SCOPE', $result['code']);
   }
 
-  /**
-   * @covers ::applyTemplate
-   */
   public function testApplyTemplateRespectsComponentFilterAndLogsSuccess(): void {
     $accessManager = $this->createMock(AccessManager::class);
     $accessManager->method('canAdmin')->willReturn(TRUE);
@@ -162,9 +150,6 @@ final class TemplateServiceTest extends UnitTestCase {
     $this->assertSame(['vocabularies', 'roles'], $service->called);
   }
 
-  /**
-   * @covers ::applyTemplate
-   */
   public function testApplyTemplateLogsFailureWhenErrorsOccur(): void {
     $accessManager = $this->createMock(AccessManager::class);
     $accessManager->method('canAdmin')->willReturn(TRUE);
@@ -214,9 +199,6 @@ final class TemplateServiceTest extends UnitTestCase {
     $this->assertCount(1, $result['data']['errors']);
   }
 
-  /**
-   * @covers ::exportAsTemplate
-   */
   public function testExportAsTemplateValidatesAdminScopeAndMachineName(): void {
     $deniedAccessManager = $this->createMock(AccessManager::class);
     $deniedAccessManager->method('canAdmin')->willReturn(FALSE);
@@ -245,9 +227,6 @@ final class TemplateServiceTest extends UnitTestCase {
     $this->assertSame('INVALID_NAME', $invalid['code']);
   }
 
-  /**
-   * @covers ::previewTemplate
-   */
   public function testPreviewTemplateShowsCreatesWhenNothingExists(): void {
     $nodeTypeStorage = $this->createMock(EntityStorageInterface::class);
     $nodeTypeStorage->method('load')->willReturn(NULL);
@@ -304,9 +283,6 @@ final class TemplateServiceTest extends UnitTestCase {
     $this->assertContains('field_image', $article['fields']);
   }
 
-  /**
-   * @covers ::previewTemplate
-   */
   public function testPreviewTemplateReportsMediaConflictWhenStorageUnavailable(): void {
     $nodeTypeStorage = $this->createMock(EntityStorageInterface::class);
     $nodeTypeStorage->method('load')->willReturn(NULL);

@@ -20,9 +20,9 @@ use Symfony\Component\HttpFoundation\RequestStack;
 /**
  * Tests for AuditLogger service.
  *
- * @coversDefaultClass \Drupal\mcp_tools\Service\AuditLogger
- * @group mcp_tools
  */
+#[\PHPUnit\Framework\Attributes\CoversClass(\Drupal\mcp_tools\Service\AuditLogger::class)]
+#[\PHPUnit\Framework\Attributes\Group('mcp_tools')]
 class AuditLoggerTest extends UnitTestCase {
 
   protected ConfigFactoryInterface $configFactory;
@@ -81,10 +81,6 @@ class AuditLoggerTest extends UnitTestCase {
     );
   }
 
-  /**
-   * @covers ::log
-   * @covers ::logSuccess
-   */
   public function testLogSuccessLogsNotice(): void {
     $this->config->method('get')
       ->with('access.audit_logging')
@@ -124,10 +120,6 @@ class AuditLoggerTest extends UnitTestCase {
     $this->toolCallContext->leave();
   }
 
-  /**
-   * @covers ::log
-   * @covers ::logFailure
-   */
   public function testLogFailureLogsError(): void {
     $this->config->method('get')
       ->with('access.audit_logging')
@@ -148,9 +140,6 @@ class AuditLoggerTest extends UnitTestCase {
     $auditLogger->logFailure('delete_content', 'node', '456');
   }
 
-  /**
-   * @covers ::log
-   */
   public function testLogWithDetails(): void {
     $this->config->method('get')
       ->with('access.audit_logging')
@@ -173,9 +162,6 @@ class AuditLoggerTest extends UnitTestCase {
     ]);
   }
 
-  /**
-   * @covers ::log
-   */
   public function testLogDisabledByConfig(): void {
     $this->config->method('get')
       ->with('access.audit_logging')
@@ -188,9 +174,6 @@ class AuditLoggerTest extends UnitTestCase {
     $auditLogger->logSuccess('create_content', 'node', '123');
   }
 
-  /**
-   * @covers ::sanitizeDetails
-   */
   public function testSanitizeDetailsRedactsPassword(): void {
     $this->config->method('get')
       ->with('access.audit_logging')
@@ -217,9 +200,6 @@ class AuditLoggerTest extends UnitTestCase {
     ]);
   }
 
-  /**
-   * @covers ::sanitizeDetails
-   */
   public function testSanitizeDetailsRedactsMultipleSensitiveKeys(): void {
     $this->config->method('get')
       ->with('access.audit_logging')
@@ -252,9 +232,6 @@ class AuditLoggerTest extends UnitTestCase {
     ]);
   }
 
-  /**
-   * @covers ::sanitizeDetails
-   */
   public function testSanitizeDetailsHandlesNestedArrays(): void {
     $this->config->method('get')
       ->with('access.audit_logging')
@@ -289,9 +266,6 @@ class AuditLoggerTest extends UnitTestCase {
     ]);
   }
 
-  /**
-   * @covers ::log
-   */
   public function testLogWithAnonymousUser(): void {
     $anonymousUser = $this->createMock(AccountProxyInterface::class);
     $anonymousUser->method('getAccountName')->willReturn('');
@@ -324,9 +298,6 @@ class AuditLoggerTest extends UnitTestCase {
     $auditLogger->logSuccess('view_content', 'node', '1');
   }
 
-  /**
-   * @covers ::log
-   */
   public function testLogUsesTrustedRequestClientIdWhenPresent(): void {
     $this->config->method('get')
       ->with('access.audit_logging')

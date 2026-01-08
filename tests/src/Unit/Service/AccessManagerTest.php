@@ -15,9 +15,9 @@ use Symfony\Component\HttpFoundation\RequestStack;
 /**
  * Tests for AccessManager service.
  *
- * @coversDefaultClass \Drupal\mcp_tools\Service\AccessManager
- * @group mcp_tools
  */
+#[\PHPUnit\Framework\Attributes\CoversClass(\Drupal\mcp_tools\Service\AccessManager::class)]
+#[\PHPUnit\Framework\Attributes\Group('mcp_tools')]
 class AccessManagerTest extends UnitTestCase {
 
   protected ConfigFactoryInterface $configFactory;
@@ -52,9 +52,6 @@ class AccessManagerTest extends UnitTestCase {
     );
   }
 
-  /**
-   * @covers ::canRead
-   */
   public function testCanReadWithReadScope(): void {
     $this->config->method('get')
       ->willReturnMap([
@@ -68,9 +65,6 @@ class AccessManagerTest extends UnitTestCase {
     $this->assertTrue($accessManager->canRead());
   }
 
-  /**
-   * @covers ::canRead
-   */
   public function testCanReadWithoutReadScope(): void {
     $this->config->method('get')
       ->willReturnMap([
@@ -85,9 +79,6 @@ class AccessManagerTest extends UnitTestCase {
     $this->assertFalse($accessManager->canRead());
   }
 
-  /**
-   * @covers ::canRead
-   */
   public function testCanReadFallsBackToReadWhenScopesEmpty(): void {
     $this->config->method('get')
       ->willReturnMap([
@@ -103,9 +94,6 @@ class AccessManagerTest extends UnitTestCase {
     $this->assertSame([AccessManager::SCOPE_READ], $accessManager->getCurrentScopes());
   }
 
-  /**
-   * @covers ::isConfigOnlyMode
-   */
   public function testIsConfigOnlyMode(): void {
     $this->config->method('get')
       ->willReturnMap([
@@ -118,9 +106,6 @@ class AccessManagerTest extends UnitTestCase {
     $this->assertTrue($accessManager->isConfigOnlyMode());
   }
 
-  /**
-   * @covers ::isWriteKindAllowed
-   */
   public function testIsWriteKindAllowedWhenConfigOnlyDisabled(): void {
     $this->config->method('get')
       ->willReturnMap([
@@ -136,9 +121,6 @@ class AccessManagerTest extends UnitTestCase {
     $this->assertTrue($accessManager->isWriteKindAllowed('unknown'));
   }
 
-  /**
-   * @covers ::isWriteKindAllowed
-   */
   public function testIsWriteKindAllowedDefaultsToConfigOnly(): void {
     $this->config->method('get')
       ->willReturnMap([
@@ -155,9 +137,6 @@ class AccessManagerTest extends UnitTestCase {
     $this->assertFalse($accessManager->isWriteKindAllowed('unknown'));
   }
 
-  /**
-   * @covers ::isWriteKindAllowed
-   */
   public function testIsWriteKindAllowedWithConfiguredKinds(): void {
     $this->config->method('get')
       ->willReturnMap([
@@ -173,9 +152,6 @@ class AccessManagerTest extends UnitTestCase {
     $this->assertFalse($accessManager->isWriteKindAllowed(AccessManager::WRITE_KIND_CONTENT));
   }
 
-  /**
-   * @covers ::isWriteKindAllowed
-   */
   public function testIsWriteKindAllowedFallsBackWhenAllowedKindsEmpty(): void {
     $this->config->method('get')
       ->willReturnMap([
@@ -191,9 +167,6 @@ class AccessManagerTest extends UnitTestCase {
     $this->assertFalse($accessManager->isWriteKindAllowed(AccessManager::WRITE_KIND_OPS));
   }
 
-  /**
-   * @covers ::canWrite
-   */
   public function testCanWriteWithWriteScope(): void {
     $this->config->method('get')
       ->willReturnMap([
@@ -207,9 +180,6 @@ class AccessManagerTest extends UnitTestCase {
     $this->assertTrue($accessManager->canWrite());
   }
 
-  /**
-   * @covers ::canWrite
-   */
   public function testCanWriteBlockedByReadOnlyMode(): void {
     $this->config->method('get')
       ->willReturnMap([
@@ -223,9 +193,6 @@ class AccessManagerTest extends UnitTestCase {
     $this->assertFalse($accessManager->canWrite());
   }
 
-  /**
-   * @covers ::canWrite
-   */
   public function testCanWriteWithoutWriteScope(): void {
     $this->config->method('get')
       ->willReturnMap([
@@ -239,9 +206,6 @@ class AccessManagerTest extends UnitTestCase {
     $this->assertFalse($accessManager->canWrite());
   }
 
-  /**
-   * @covers ::canAdmin
-   */
   public function testCanAdminWithAdminScope(): void {
     $this->config->method('get')
       ->willReturnMap([
@@ -255,9 +219,6 @@ class AccessManagerTest extends UnitTestCase {
     $this->assertTrue($accessManager->canAdmin());
   }
 
-  /**
-   * @covers ::canAdmin
-   */
   public function testCanAdminBlockedByReadOnlyMode(): void {
     $this->config->method('get')
       ->willReturnMap([
@@ -271,9 +232,6 @@ class AccessManagerTest extends UnitTestCase {
     $this->assertFalse($accessManager->canAdmin());
   }
 
-  /**
-   * @covers ::getCurrentScopes
-   */
   public function testGetCurrentScopesFromHeader(): void {
     $this->config->method('get')
       ->willReturnMap([
@@ -295,9 +253,6 @@ class AccessManagerTest extends UnitTestCase {
     $this->assertNotContains(AccessManager::SCOPE_ADMIN, $scopes);
   }
 
-  /**
-   * @covers ::getCurrentScopes
-   */
   public function testGetCurrentScopesFromQueryParam(): void {
     $this->config->method('get')
       ->willReturnMap([
@@ -316,9 +271,6 @@ class AccessManagerTest extends UnitTestCase {
     $this->assertContains(AccessManager::SCOPE_ADMIN, $scopes);
   }
 
-  /**
-   * @covers ::getCurrentScopes
-   */
   public function testGetCurrentScopesFiltersInvalidScopes(): void {
     $this->config->method('get')
       ->willReturnMap([
@@ -342,9 +294,6 @@ class AccessManagerTest extends UnitTestCase {
     $this->assertNotContains('superadmin', $scopes);
   }
 
-  /**
-   * @covers ::setScopes
-   */
   public function testSetScopes(): void {
     $this->requestStack->method('getCurrentRequest')->willReturn(NULL);
 
@@ -356,9 +305,6 @@ class AccessManagerTest extends UnitTestCase {
     $this->assertTrue($accessManager->hasScope(AccessManager::SCOPE_ADMIN));
   }
 
-  /**
-   * @covers ::setScopes
-   */
   public function testSetScopesFiltersInvalid(): void {
     $this->requestStack->method('getCurrentRequest')->willReturn(NULL);
 
@@ -370,9 +316,6 @@ class AccessManagerTest extends UnitTestCase {
     $this->assertContains(AccessManager::SCOPE_READ, $scopes);
   }
 
-  /**
-   * @covers ::getWriteAccessDenied
-   */
   public function testGetWriteAccessDeniedInReadOnlyMode(): void {
     $this->config->method('get')
       ->willReturnMap([
@@ -390,9 +333,6 @@ class AccessManagerTest extends UnitTestCase {
     $this->assertEquals('READ_ONLY_MODE', $response['code']);
   }
 
-  /**
-   * @covers ::getWriteAccessDenied
-   */
   public function testGetWriteAccessDeniedInsufficientScope(): void {
     $this->config->method('get')
       ->willReturnMap([
@@ -410,9 +350,6 @@ class AccessManagerTest extends UnitTestCase {
     $this->assertEquals('INSUFFICIENT_SCOPE', $response['code']);
   }
 
-  /**
-   * @covers ::isReadOnlyMode
-   */
   public function testIsReadOnlyModeTrue(): void {
     $this->config->method('get')
       ->with('access.read_only_mode')
@@ -422,9 +359,6 @@ class AccessManagerTest extends UnitTestCase {
     $this->assertTrue($accessManager->isReadOnlyMode());
   }
 
-  /**
-   * @covers ::isReadOnlyMode
-   */
   public function testIsReadOnlyModeFalse(): void {
     $this->config->method('get')
       ->with('access.read_only_mode')
@@ -434,9 +368,6 @@ class AccessManagerTest extends UnitTestCase {
     $this->assertFalse($accessManager->isReadOnlyMode());
   }
 
-  /**
-   * @covers ::hasScope
-   */
   public function testHasScopeReturnsTrueForValidScope(): void {
     $this->requestStack->method('getCurrentRequest')->willReturn(NULL);
 
@@ -447,9 +378,6 @@ class AccessManagerTest extends UnitTestCase {
     $this->assertTrue($accessManager->hasScope(AccessManager::SCOPE_WRITE));
   }
 
-  /**
-   * @covers ::hasScope
-   */
   public function testHasScopeReturnsFalseForMissingScope(): void {
     $this->requestStack->method('getCurrentRequest')->willReturn(NULL);
 

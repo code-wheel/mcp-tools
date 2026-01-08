@@ -16,13 +16,38 @@ use Drupal\tool\TypedData\MapInputDefinition;
 final class ToolApiSchemaConverter {
 
   /**
+   * In-memory caches keyed by caller-provided IDs.
+   *
+   * @var array<string, array<string, mixed>>
+   */
+  private array $inputSchemaCache = [];
+
+  /**
+   * @var array<string, array<string, mixed>>
+   */
+  private array $annotationCache = [];
+
+  /**
    * Builds an MCP inputSchema JSON Schema from a Tool API ToolDefinition.
+   *
+   * @param string|null $cacheKey
+   *   Optional cache key (for example, a plugin ID).
    *
    * @return array<string, mixed>
    *   MCP-compatible JSON Schema.
    */
-  public function toolDefinitionToInputSchema(ToolDefinition $definition): array {
-    return $this->inputDefinitionsToSchema($definition->getInputDefinitions());
+  public function toolDefinitionToInputSchema(ToolDefinition $definition, ?string $cacheKey = NULL): array {
+    if ($cacheKey !== NULL && isset($this->inputSchemaCache[$cacheKey])) {
+      return $this->inputSchemaCache[$cacheKey];
+    }
+
+    $schema = $this->inputDefinitionsToSchema($definition->getInputDefinitions());
+
+    if ($cacheKey !== NULL) {
+      $this->inputSchemaCache[$cacheKey] = $schema;
+    }
+
+    return $schema;
   }
 
   /**
@@ -31,7 +56,11 @@ final class ToolApiSchemaConverter {
    * @return array<string, mixed>
    *   Keys correspond to Mcp\Schema\ToolAnnotations fields.
    */
-  public function toolDefinitionToAnnotations(ToolDefinition $definition): array {
+  public function toolDefinitionToAnnotations(ToolDefinition $definition, ?string $cacheKey = NULL): array {
+    if ($cacheKey !== NULL && isset($this->annotationCache[$cacheKey])) {
+      return $this->annotationCache[$cacheKey];
+    }
+
     $operation = $definition->getOperation() ?? ToolOperation::Transform;
     $readOnly = $operation === ToolOperation::Read;
 
@@ -41,7 +70,7 @@ final class ToolApiSchemaConverter {
     // This could be refined per-tool in the future.
     $idempotent = $readOnly ? TRUE : NULL;
 
-    return [
+    $annotations = [
       'title' => (string) $definition->getLabel(),
       'readOnlyHint' => $readOnly,
       'destructiveHint' => $definition->isDestructive() ?: NULL,
@@ -49,6 +78,12 @@ final class ToolApiSchemaConverter {
       // Drupal site operations are a closed world (not web search, etc).
       'openWorldHint' => FALSE,
     ];
+
+    if ($cacheKey !== NULL) {
+      $this->annotationCache[$cacheKey] = $annotations;
+    }
+
+    return $annotations;
   }
 
   /**

@@ -5,5 +5,12 @@ services:
       - '@mcp_tools.access_manager'
       - '@mcp_tools.rate_limiter'
       - '@module_handler'
+      - '@config.factory'
+      - '@mcp_tools.server_config_repository'
+      - '@mcp_tools.resource_registry'
+      - '@mcp_tools.prompt_registry'
+      - '@plugin.manager.tool'
+      - '@module_installer'
+      - '@extension.list.module'
     tags:
       - { name: drush.command }

@@ -13,8 +13,8 @@ use Drupal\tool\Tool\ToolManager;
 /**
  * Verifies Tool API registration and access gating for MCP Tools.
  *
- * @group mcp_tools
  */
+#[\PHPUnit\Framework\Attributes\Group('mcp_tools')]
 final class ToolRegistrationKernelTest extends KernelTestBase {
 
   /**
@@ -41,7 +41,6 @@ final class ToolRegistrationKernelTest extends KernelTestBase {
   public function testToolDefinitionsLoad(): void {
     $this->installConfig(['mcp_tools']);
 
-    /** @var \Drupal\tool\Tool\ToolManager $toolManager */
     $toolManager = $this->container->get('plugin.manager.tool');
     $this->assertInstanceOf(ToolManager::class, $toolManager);
 
@@ -56,7 +55,6 @@ final class ToolRegistrationKernelTest extends KernelTestBase {
   public function testToolAccessIsGated(): void {
     $this->installConfig(['mcp_tools']);
 
-    /** @var \Drupal\tool\Tool\ToolManager $toolManager */
     $toolManager = $this->container->get('plugin.manager.tool');
 
     $readTool = $toolManager->createInstance('mcp_tools_get_site_status');
@@ -95,7 +93,6 @@ final class ToolRegistrationKernelTest extends KernelTestBase {
   public function testConfigOnlyModeGatesWriteKinds(): void {
     $this->installConfig(['mcp_tools']);
 
-    /** @var \Drupal\tool\Tool\ToolManager $toolManager */
     $toolManager = $this->container->get('plugin.manager.tool');
 
     $configWriteTool = $toolManager->createInstance('mcp_structure_create_content_type');

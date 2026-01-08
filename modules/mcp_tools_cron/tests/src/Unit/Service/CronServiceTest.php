@@ -17,10 +17,8 @@ use Drupal\Core\State\StateInterface;
 use Drupal\mcp_tools_cron\Service\CronService;
 use Drupal\Tests\UnitTestCase;
 
-/**
- * @coversDefaultClass \Drupal\mcp_tools_cron\Service\CronService
- * @group mcp_tools_cron
- */
+#[\PHPUnit\Framework\Attributes\CoversClass(\Drupal\mcp_tools_cron\Service\CronService::class)]
+#[\PHPUnit\Framework\Attributes\Group('mcp_tools_cron')]
 final class CronServiceTest extends UnitTestCase {
 
   private function createService(array $overrides = []): CronService {
@@ -34,9 +32,6 @@ final class CronServiceTest extends UnitTestCase {
     );
   }
 
-  /**
-   * @covers ::getCronStatus
-   */
   public function testGetCronStatusIncludesJobsFromHooksAndQueueWorkers(): void {
     $state = $this->createMock(StateInterface::class);
     $state->method('get')->willReturnMap([
@@ -80,9 +75,6 @@ final class CronServiceTest extends UnitTestCase {
     $this->assertGreaterThanOrEqual(3, $status['jobs_count']);
   }
 
-  /**
-   * @covers ::runCron
-   */
   public function testRunCronReturnsSuccessWhenCronRuns(): void {
     $cron = $this->createMock(CronInterface::class);
     $cron->method('run')->willReturn(TRUE);
@@ -108,9 +100,6 @@ final class CronServiceTest extends UnitTestCase {
     $this->assertSame(date('Y-m-d H:i:s', 1700000100), $result['current_run']);
   }
 
-  /**
-   * @covers ::runQueue
-   */
   public function testRunQueueReturnsNotFoundForUnknownQueue(): void {
     $queueWorkerManager = $this->createMock(QueueWorkerManagerInterface::class);
     $queueWorkerManager->method('getDefinitions')->willReturn(['known' => []]);
@@ -125,9 +114,6 @@ final class CronServiceTest extends UnitTestCase {
     $this->assertContains('known', $result['available_queues']);
   }
 
-  /**
-   * @covers ::runQueue
-   */
   public function testRunQueueProcessesItems(): void {
     $queueWorkerManager = $this->createMock(QueueWorkerManagerInterface::class);
     $queueWorkerManager->method('getDefinitions')->willReturn([
@@ -159,9 +145,6 @@ final class CronServiceTest extends UnitTestCase {
     $this->assertSame(0, $result['failed']);
   }
 
-  /**
-   * @covers ::updateSettings
-   */
   public function testUpdateSettingsValidatesAndSavesThreshold(): void {
     $editable = $this->createMock(Config::class);
     $editable->method('get')->with('threshold.autorun')->willReturn(100);
@@ -183,9 +166,6 @@ final class CronServiceTest extends UnitTestCase {
     $this->assertSame(200, $result['changes']['threshold']['new']);
   }
 
-  /**
-   * @covers ::resetCronKey
-   */
   public function testResetCronKeyStoresNewKey(): void {
     $state = $this->createMock(StateInterface::class);
     $state->expects($this->once())->method('set')->with(

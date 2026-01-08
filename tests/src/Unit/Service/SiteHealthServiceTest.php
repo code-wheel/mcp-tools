@@ -13,15 +13,10 @@ use Drupal\Core\State\StateInterface;
 use Drupal\mcp_tools\Service\SiteHealthService;
 use Drupal\Tests\UnitTestCase;
 
-/**
- * @coversDefaultClass \Drupal\mcp_tools\Service\SiteHealthService
- * @group mcp_tools
- */
+#[\PHPUnit\Framework\Attributes\CoversClass(\Drupal\mcp_tools\Service\SiteHealthService::class)]
+#[\PHPUnit\Framework\Attributes\Group('mcp_tools')]
 final class SiteHealthServiceTest extends UnitTestCase {
 
-  /**
-   * @covers ::getCronStatus
-   */
   public function testGetCronStatusReturnsUnknownWhenNeverRun(): void {
     $modules = $this->createMock(ModuleExtensionList::class);
     $modules->method('getAllInstalledInfo')->willReturn([]);
@@ -53,9 +48,6 @@ final class SiteHealthServiceTest extends UnitTestCase {
     $this->assertNull($status['seconds_since_last_run']);
   }
 
-  /**
-   * @covers ::getInstalledModules
-   */
   public function testGetInstalledModulesFiltersCoreByDefault(): void {
     $modules = $this->createMock(ModuleExtensionList::class);
     $modules->method('getAllInstalledInfo')->willReturn([
@@ -86,9 +78,6 @@ final class SiteHealthServiceTest extends UnitTestCase {
     $this->assertContains('views', $namesWithCore);
   }
 
-  /**
-   * @covers ::getSiteStatus
-   */
   public function testGetSiteStatusIncludesModuleSummary(): void {
     $modules = $this->createMock(ModuleExtensionList::class);
     $modules->method('getAllInstalledInfo')->willReturn([

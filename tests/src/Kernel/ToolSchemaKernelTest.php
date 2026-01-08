@@ -12,8 +12,8 @@ use Drupal\tool\Tool\ToolManager;
 /**
  * Ensures all core tool definitions can be converted to MCP schemas.
  *
- * @group mcp_tools
  */
+#[\PHPUnit\Framework\Attributes\Group('mcp_tools')]
 final class ToolSchemaKernelTest extends KernelTestBase {
 
   /**
@@ -69,7 +69,6 @@ final class ToolSchemaKernelTest extends KernelTestBase {
   public function testToolSchemasConvert(): void {
     $this->installConfig(['mcp_tools']);
 
-    /** @var \Drupal\tool\Tool\ToolManager $toolManager */
     $toolManager = $this->container->get('plugin.manager.tool');
     $this->assertInstanceOf(ToolManager::class, $toolManager);
 

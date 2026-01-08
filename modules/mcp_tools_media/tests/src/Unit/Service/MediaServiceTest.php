@@ -16,9 +16,9 @@ use Drupal\Tests\UnitTestCase;
 /**
  * Tests for MediaService.
  *
- * @coversDefaultClass \Drupal\mcp_tools_media\Service\MediaService
- * @group mcp_tools_media
  */
+#[\PHPUnit\Framework\Attributes\CoversClass(\Drupal\mcp_tools_media\Service\MediaService::class)]
+#[\PHPUnit\Framework\Attributes\Group('mcp_tools_media')]
 class MediaServiceTest extends UnitTestCase {
 
   protected EntityTypeManagerInterface $entityTypeManager;
@@ -64,9 +64,6 @@ class MediaServiceTest extends UnitTestCase {
     );
   }
 
-  /**
-   * @covers ::createMediaType
-   */
   public function testCreateMediaTypeAccessDenied(): void {
     $this->accessManager->method('canWrite')->willReturn(FALSE);
     $this->accessManager->method('getWriteAccessDenied')->willReturn([
@@ -81,9 +78,6 @@ class MediaServiceTest extends UnitTestCase {
     $this->assertStringContainsString('denied', $result['error']);
   }
 
-  /**
-   * @covers ::createMediaType
-   */
   public function testCreateMediaTypeAlreadyExists(): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
 
@@ -97,9 +91,6 @@ class MediaServiceTest extends UnitTestCase {
     $this->assertStringContainsString('already exists', $result['error']);
   }
 
-  /**
-   * @covers ::deleteMediaType
-   */
   public function testDeleteMediaTypeAccessDenied(): void {
     $this->accessManager->method('canWrite')->willReturn(FALSE);
     $this->accessManager->method('getWriteAccessDenied')->willReturn([
@@ -113,9 +104,6 @@ class MediaServiceTest extends UnitTestCase {
     $this->assertFalse($result['success']);
   }
 
-  /**
-   * @covers ::deleteMediaType
-   */
   public function testDeleteMediaTypeNotFound(): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
     $this->mediaTypeStorage->method('load')->with('nonexistent')->willReturn(NULL);
@@ -127,9 +115,6 @@ class MediaServiceTest extends UnitTestCase {
     $this->assertStringContainsString('not found', $result['error']);
   }
 
-  /**
-   * @covers ::uploadFile
-   */
   public function testUploadFileAccessDenied(): void {
     $this->accessManager->method('canWrite')->willReturn(FALSE);
     $this->accessManager->method('getWriteAccessDenied')->willReturn([
@@ -143,10 +128,7 @@ class MediaServiceTest extends UnitTestCase {
     $this->assertFalse($result['success']);
   }
 
-  /**
-   * @covers ::uploadFile
-   * @dataProvider invalidDirectoryProvider
-   */
+  #[\PHPUnit\Framework\Attributes\DataProvider('invalidDirectoryProvider')]
   public function testUploadFileInvalidDirectory(string $directory): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
 
@@ -171,9 +153,6 @@ class MediaServiceTest extends UnitTestCase {
     ];
   }
 
-  /**
-   * @covers ::uploadFile
-   */
   public function testUploadFileValidDirectory(): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
     $this->fileSystem->method('prepareDirectory')->willReturn(TRUE);
@@ -189,9 +168,6 @@ class MediaServiceTest extends UnitTestCase {
     }
   }
 
-  /**
-   * @covers ::uploadFile
-   */
   public function testUploadFileRejectsInvalidBase64(): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
 
@@ -202,9 +178,6 @@ class MediaServiceTest extends UnitTestCase {
     $this->assertStringContainsString('Invalid base64', $result['error']);
   }
 
-  /**
-   * @covers ::uploadFile
-   */
   public function testUploadFileBlocksDangerousExtensions(): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
 
@@ -215,9 +188,6 @@ class MediaServiceTest extends UnitTestCase {
     $this->assertSame('INVALID_FILE_TYPE', $result['code']);
   }
 
-  /**
-   * @covers ::uploadFile
-   */
   public function testUploadFileRejectsOversizedPayloads(): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
 

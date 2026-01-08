@@ -8,15 +8,10 @@ use Drupal\Core\Database\Connection;
 use Drupal\mcp_tools\Service\WatchdogAnalyzer;
 use Drupal\Tests\UnitTestCase;
 
-/**
- * @coversDefaultClass \Drupal\mcp_tools\Service\WatchdogAnalyzer
- * @group mcp_tools
- */
+#[\PHPUnit\Framework\Attributes\CoversClass(\Drupal\mcp_tools\Service\WatchdogAnalyzer::class)]
+#[\PHPUnit\Framework\Attributes\Group('mcp_tools')]
 final class WatchdogAnalyzerTest extends UnitTestCase {
 
-  /**
-   * @covers ::formatMessage
-   */
   public function testFormatMessageSubstitutesVariables(): void {
     $service = new class($this->createMock(Connection::class)) extends WatchdogAnalyzer {
 
@@ -32,9 +27,6 @@ final class WatchdogAnalyzerTest extends UnitTestCase {
     $this->assertSame('Hello Alice', $service->format($message, $vars));
   }
 
-  /**
-   * @covers ::formatMessage
-   */
   public function testFormatMessageReturnsRawOnBadVariables(): void {
     $service = new class($this->createMock(Connection::class)) extends WatchdogAnalyzer {
 
@@ -47,9 +39,6 @@ final class WatchdogAnalyzerTest extends UnitTestCase {
     $this->assertSame('Raw message', $service->format('Raw message', 'not-serialized'));
   }
 
-  /**
-   * @covers ::formatMessage
-   */
   public function testFormatMessageSkipsOversizedSerializedVariables(): void {
     $service = new class($this->createMock(Connection::class)) extends WatchdogAnalyzer {
 

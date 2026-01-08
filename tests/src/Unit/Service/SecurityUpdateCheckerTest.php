@@ -42,10 +42,8 @@ use Drupal\Tests\UnitTestCase;
 use Drupal\update\UpdateManagerInterface;
 use Drupal\update\UpdateProcessorInterface;
 
-/**
- * @coversDefaultClass \Drupal\mcp_tools\Service\SecurityUpdateChecker
- * @group mcp_tools
- */
+#[\PHPUnit\Framework\Attributes\CoversClass(\Drupal\mcp_tools\Service\SecurityUpdateChecker::class)]
+#[\PHPUnit\Framework\Attributes\Group('mcp_tools')]
 final class SecurityUpdateCheckerTest extends UnitTestCase {
 
   protected function tearDown(): void {
@@ -61,9 +59,6 @@ final class SecurityUpdateCheckerTest extends UnitTestCase {
     );
   }
 
-  /**
-   * @covers ::getAvailableUpdates
-   */
   public function testGetAvailableUpdatesReturnsErrorWhenUpdateDataUnavailable(): void {
     $GLOBALS['mcp_tools_test_update_get_available'] = static fn(): array|false => FALSE;
     $GLOBALS['mcp_tools_test_update_calculate_project_data'] = static fn(): array => [];
@@ -75,10 +70,6 @@ final class SecurityUpdateCheckerTest extends UnitTestCase {
     $this->assertSame([], $result['updates']);
   }
 
-  /**
-   * @covers ::getAvailableUpdates
-   * @covers ::getSecurityUpdates
-   */
   public function testGetAvailableUpdatesFiltersAndSortsSecurityFirst(): void {
     $GLOBALS['mcp_tools_test_update_get_available'] = static fn(): array|false => ['dummy' => []];
     $GLOBALS['mcp_tools_test_update_calculate_project_data'] = static function (): array {
@@ -126,9 +117,6 @@ final class SecurityUpdateCheckerTest extends UnitTestCase {
     $this->assertSame('security', $securityOnly['updates'][0]['name']);
   }
 
-  /**
-   * @covers ::getCoreStatus
-   */
   public function testGetCoreStatusReturnsErrorWhenCoreMissing(): void {
     $GLOBALS['mcp_tools_test_update_get_available'] = static fn(): array|false => ['not_drupal' => []];
     $GLOBALS['mcp_tools_test_update_calculate_project_data'] = static fn(): array => [];
@@ -139,9 +127,6 @@ final class SecurityUpdateCheckerTest extends UnitTestCase {
     $this->assertArrayHasKey('error', $result);
   }
 
-  /**
-   * @covers ::getCoreStatus
-   */
   public function testGetCoreStatusReturnsMappedStatus(): void {
     $GLOBALS['mcp_tools_test_update_get_available'] = static fn(): array|false => ['drupal' => []];
     $GLOBALS['mcp_tools_test_update_calculate_project_data'] = static function (): array {

@@ -1,15 +1,20 @@
 enabled: false
 # Execution user ID - set during install or via admin UI.
-# 0 means not configured, 1 is blocked for security.
+# 0 means not configured; uid 1 requires explicit override.
 uid: 0
+# Allow uid 1 execution override (not recommended outside local/dev).
+allow_uid1: false
 # Optional allowlist of client IPs/CIDRs that may access the HTTP endpoint.
 # When empty, any IP is allowed (not recommended for public networks).
 allowed_ips: []
 # Optional allowlist of client origins (DNS rebinding defense-in-depth).
 # When non-empty, requests must match by Origin/Referer/Host. One host per line.
+# If empty, requests with an Origin header must match the Host header.
 # Supports exact hosts (example.com) and wildcard subdomains (*.example.com).
 allowed_origins: []
 server_name: 'Drupal MCP Tools'
 server_version: '1.0.0'
+server_id: ''
 pagination_limit: 50
 include_all_tools: false
+gateway_mode: false

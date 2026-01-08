@@ -7,10 +7,8 @@ namespace Drupal\Tests\mcp_tools\Unit\Service;
 use Drupal\mcp_tools\Service\McpToolCallContext;
 use Drupal\Tests\UnitTestCase;
 
-/**
- * @coversDefaultClass \Drupal\mcp_tools\Service\McpToolCallContext
- * @group mcp_tools
- */
+#[\PHPUnit\Framework\Attributes\CoversClass(\Drupal\mcp_tools\Service\McpToolCallContext::class)]
+#[\PHPUnit\Framework\Attributes\Group('mcp_tools')]
 final class McpToolCallContextTest extends UnitTestCase {
 
   public function testContextTracksNestedExecution(): void {

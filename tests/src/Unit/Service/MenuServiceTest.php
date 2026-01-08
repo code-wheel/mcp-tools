@@ -10,15 +10,10 @@ use Drupal\Core\Menu\MenuLinkTreeInterface;
 use Drupal\mcp_tools\Service\MenuService;
 use Drupal\Tests\UnitTestCase;
 
-/**
- * @coversDefaultClass \Drupal\mcp_tools\Service\MenuService
- * @group mcp_tools
- */
+#[\PHPUnit\Framework\Attributes\CoversClass(\Drupal\mcp_tools\Service\MenuService::class)]
+#[\PHPUnit\Framework\Attributes\Group('mcp_tools')]
 final class MenuServiceTest extends UnitTestCase {
 
-  /**
-   * @covers ::getMenuTree
-   */
   public function testGetMenuTreeReturnsErrorWhenMenuMissing(): void {
     $menuStorage = $this->createMock(EntityStorageInterface::class);
     $menuStorage->method('load')->with('main')->willReturn(NULL);
@@ -33,9 +28,6 @@ final class MenuServiceTest extends UnitTestCase {
     $this->assertStringContainsString('not found', $result['error']);
   }
 
-  /**
-   * @covers ::getMenus
-   */
   public function testGetMenusCountsLinksRecursively(): void {
     $menu1 = new class() {
       public function id(): string { return 'main'; }
@@ -72,9 +64,6 @@ final class MenuServiceTest extends UnitTestCase {
     $this->assertSame(2, $result['menus'][0]['link_count']);
   }
 
-  /**
-   * @covers ::getMenuTree
-   */
   public function testGetMenuTreeBuildsNestedArray(): void {
     $menu = new class() {
       public function label(): string { return 'Main navigation'; }

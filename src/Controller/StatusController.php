@@ -223,8 +223,11 @@ class StatusController extends ControllerBase {
 
         $uid = (int) ($remoteConfig->get('uid') ?? 0);
         if ($uid === 1) {
+          $allowUid1 = (bool) $remoteConfig->get('allow_uid1');
           $warnings[] = [
-            '#markup' => '<span style="color: orange;">⚠</span> ' . $this->t('Remote endpoint is configured to run as uid 1. Use a dedicated service account (uid 1 is blocked at runtime).'),
+            '#markup' => '<span style="color: orange;">⚠</span> ' . ($allowUid1
+              ? $this->t('Remote endpoint is configured to run as uid 1 with the override enabled. Use a dedicated service account for production.')
+              : $this->t('Remote endpoint is configured to run as uid 1. Execution will be blocked unless "Use site admin (uid 1)" is enabled in remote settings.')),
           ];
         }
 

@@ -15,10 +15,8 @@ use Drupal\mcp_tools\Service\AuditLogger;
 use Drupal\mcp_tools_batch\Service\BatchService;
 use Drupal\Tests\UnitTestCase;
 
-/**
- * @coversDefaultClass \Drupal\mcp_tools_batch\Service\BatchService
- * @group mcp_tools_batch
- */
+#[\PHPUnit\Framework\Attributes\CoversClass(\Drupal\mcp_tools_batch\Service\BatchService::class)]
+#[\PHPUnit\Framework\Attributes\Group('mcp_tools_batch')]
 final class BatchServiceTest extends UnitTestCase {
 
   private function createService(): BatchService {
@@ -53,9 +51,6 @@ final class BatchServiceTest extends UnitTestCase {
     );
   }
 
-  /**
-   * @covers ::normalizeFieldValue
-   */
   public function testNormalizeFieldValueMapsKnownTypes(): void {
     $service = $this->createService();
 
@@ -102,9 +97,6 @@ final class BatchServiceTest extends UnitTestCase {
     $this->assertSame('x', $service->normalizeField('field_missing', 'x', $definitions));
   }
 
-  /**
-   * @covers ::normalizeRedirectDestination
-   */
   public function testNormalizeRedirectDestinationProducesInternalUris(): void {
     $service = $this->createService();
 
@@ -115,9 +107,6 @@ final class BatchServiceTest extends UnitTestCase {
     $this->assertSame('route:<front>', $service->normalizeDestination('route:<front>'));
   }
 
-  /**
-   * @covers ::createMultipleContent
-   */
   public function testCreateMultipleContentCreatesItemsViaStorage(): void {
     $accessManager = $this->createMock(AccessManager::class);
     $accessManager->method('canWrite')->willReturn(TRUE);
@@ -197,9 +186,6 @@ final class BatchServiceTest extends UnitTestCase {
     $this->assertSame('/node/123', $result['data']['created'][0]['url']);
   }
 
-  /**
-   * @covers ::createMultipleRedirects
-   */
   public function testCreateMultipleRedirectsFailsWhenRedirectModuleMissing(): void {
     $accessManager = $this->createMock(AccessManager::class);
     $accessManager->method('canWrite')->willReturn(TRUE);

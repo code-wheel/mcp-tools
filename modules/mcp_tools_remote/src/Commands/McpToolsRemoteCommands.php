@@ -101,7 +101,8 @@ final class McpToolsRemoteCommands extends DrushCommands {
   #[CLI\Option(name: 'username', description: 'Username for the execution user (default: mcp_tools_remote)')]
   #[CLI\Option(name: 'role', description: 'Role machine name to create/assign (default: mcp_tools_remote_executor)')]
   #[CLI\Option(name: 'categories', description: 'Comma-separated MCP Tools categories to grant (default: site_health,content,config,structure,views,blocks,menus,users,media)')]
-  public function setupRemote(array $options = ['username' => 'mcp_tools_remote', 'role' => 'mcp_tools_remote_executor', 'categories' => 'site_health,content,config,structure,views,blocks,menus,users,media']): void {
+  #[CLI\Option(name: 'allow-uid1', description: 'Allow using uid 1 as the execution user (not recommended)')]
+  public function setupRemote(array $options = ['username' => 'mcp_tools_remote', 'role' => 'mcp_tools_remote_executor', 'categories' => 'site_health,content,config,structure,views,blocks,menus,users,media', 'allow-uid1' => FALSE]): void {
     $username = trim((string) ($options['username'] ?? 'mcp_tools_remote'));
     if ($username === '') {
       $username = 'mcp_tools_remote';
@@ -116,6 +117,8 @@ final class McpToolsRemoteCommands extends DrushCommands {
     if (empty($categories)) {
       $categories = ['site_health', 'content', 'config', 'structure', 'views', 'blocks', 'menus', 'users', 'media'];
     }
+
+    $allowUid1 = (bool) ($options['allow-uid1'] ?? $options['allow_uid1'] ?? FALSE);
 
     // Ensure role exists and has MCP Tools category permissions.
     $role = $this->entityTypeManager->getStorage('user_role')->load($roleId);
@@ -157,8 +160,8 @@ final class McpToolsRemoteCommands extends DrushCommands {
     }
 
     $uid = (int) $user->id();
-    if ($uid === 1) {
-      $this->io()->error('Refusing to use uid 1 for remote execution. Choose a different username.');
+    if ($uid === 1 && !$allowUid1) {
+      $this->io()->error('Refusing to use uid 1 for remote execution. Re-run with --allow-uid1 to override.');
       return;
     }
 
@@ -168,6 +171,7 @@ final class McpToolsRemoteCommands extends DrushCommands {
     // Set remote execution UID in config.
     $this->configFactory->getEditable('mcp_tools_remote.settings')
       ->set('uid', $uid)
+      ->set('allow_uid1', $uid === 1 ? $allowUid1 : FALSE)
       ->save();
 
     $this->io()->success('Remote execution user configured.');

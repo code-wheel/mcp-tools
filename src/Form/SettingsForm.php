@@ -27,41 +27,6 @@ class SettingsForm extends ConfigFormBase {
   }
 
   /**
-   * Configuration presets for different environments.
-   */
-  protected const MODE_PRESETS = [
-    'development' => [
-      'access.read_only_mode' => FALSE,
-      'access.config_only_mode' => FALSE,
-      'access.default_scopes' => ['read', 'write'],
-      'access.allowed_scopes' => ['read', 'write', 'admin'],
-      'access.audit_logging' => FALSE,
-      'rate_limiting.enabled' => FALSE,
-    ],
-    'staging' => [
-      'access.read_only_mode' => FALSE,
-      'access.config_only_mode' => TRUE,
-      'access.config_only_allowed_write_kinds' => ['config'],
-      'access.default_scopes' => ['read', 'write'],
-      'access.allowed_scopes' => ['read', 'write'],
-      'access.audit_logging' => TRUE,
-      'rate_limiting.enabled' => TRUE,
-      'rate_limiting.max_writes_per_minute' => 30,
-      'rate_limiting.max_deletes_per_hour' => 20,
-    ],
-    'production' => [
-      'access.read_only_mode' => TRUE,
-      'access.config_only_mode' => FALSE,
-      'access.default_scopes' => ['read'],
-      'access.allowed_scopes' => ['read'],
-      'access.audit_logging' => TRUE,
-      'rate_limiting.enabled' => TRUE,
-      'rate_limiting.max_writes_per_minute' => 10,
-      'rate_limiting.max_deletes_per_hour' => 5,
-    ],
-  ];
-
-  /**
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state): array {
@@ -464,8 +429,9 @@ class SettingsForm extends ConfigFormBase {
     $config->set('mode', $mode);
 
     // If switching to a preset mode (not custom), apply preset values.
-    if ($mode !== 'custom' && $mode !== $previousMode && isset(self::MODE_PRESETS[$mode])) {
-      foreach (self::MODE_PRESETS[$mode] as $key => $value) {
+    $presets = $this->getPresets();
+    if ($mode !== 'custom' && $mode !== $previousMode && isset($presets[$mode])) {
+      foreach ($presets[$mode] as $key => $value) {
         $config->set($key, $value);
       }
       $this->messenger()->addStatus($this->t('Applied @mode mode preset settings.', ['@mode' => $mode]));
@@ -536,6 +502,45 @@ class SettingsForm extends ConfigFormBase {
     $config->save();
 
     parent::submitForm($form, $form_state);
+  }
+
+  /**
+   * Returns environment presets for quick configuration.
+   *
+   * @return array<string, array<string, mixed>>
+   */
+  private function getPresets(): array {
+    return [
+      'development' => [
+        'access.read_only_mode' => FALSE,
+        'access.config_only_mode' => FALSE,
+        'access.default_scopes' => ['read', 'write'],
+        'access.allowed_scopes' => ['read', 'write', 'admin'],
+        'access.audit_logging' => FALSE,
+        'rate_limiting.enabled' => FALSE,
+      ],
+      'staging' => [
+        'access.read_only_mode' => FALSE,
+        'access.config_only_mode' => TRUE,
+        'access.config_only_allowed_write_kinds' => ['config'],
+        'access.default_scopes' => ['read', 'write'],
+        'access.allowed_scopes' => ['read', 'write'],
+        'access.audit_logging' => TRUE,
+        'rate_limiting.enabled' => TRUE,
+        'rate_limiting.max_writes_per_minute' => 20,
+        'rate_limiting.max_writes_per_hour' => 200,
+      ],
+      'production' => [
+        'access.read_only_mode' => TRUE,
+        'access.config_only_mode' => FALSE,
+        'access.default_scopes' => ['read'],
+        'access.allowed_scopes' => ['read'],
+        'access.audit_logging' => TRUE,
+        'rate_limiting.enabled' => TRUE,
+        'rate_limiting.max_writes_per_minute' => 10,
+        'rate_limiting.max_writes_per_hour' => 100,
+      ],
+    ];
   }
 
 }

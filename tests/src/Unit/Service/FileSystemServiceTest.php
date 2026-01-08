@@ -10,16 +10,10 @@ use Drupal\Core\StreamWrapper\StreamWrapperManagerInterface;
 use Drupal\mcp_tools\Service\FileSystemService;
 use Drupal\Tests\UnitTestCase;
 
-/**
- * @coversDefaultClass \Drupal\mcp_tools\Service\FileSystemService
- * @group mcp_tools
- */
+#[\PHPUnit\Framework\Attributes\CoversClass(\Drupal\mcp_tools\Service\FileSystemService::class)]
+#[\PHPUnit\Framework\Attributes\Group('mcp_tools')]
 final class FileSystemServiceTest extends UnitTestCase {
 
-  /**
-   * @covers ::getDirectorySize
-   * @covers ::formatBytes
-   */
   public function testDirectorySizeAndByteFormatting(): void {
     $service = new class(
       $this->createMock(FileSystemInterface::class),

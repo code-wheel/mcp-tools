@@ -12,15 +12,10 @@ use Drupal\image\ImageStyleInterface;
 use Drupal\mcp_tools_image_styles\Service\ImageStyleService;
 use Drupal\Tests\UnitTestCase;
 
-/**
- * @coversDefaultClass \Drupal\mcp_tools_image_styles\Service\ImageStyleService
- * @group mcp_tools_image_styles
- */
+#[\PHPUnit\Framework\Attributes\CoversClass(\Drupal\mcp_tools_image_styles\Service\ImageStyleService::class)]
+#[\PHPUnit\Framework\Attributes\Group('mcp_tools_image_styles')]
 final class ImageStyleServiceTest extends UnitTestCase {
 
-  /**
-   * @covers ::createImageStyle
-   */
   public function testCreateImageStyleValidatesNameAndExisting(): void {
     $storage = $this->createMock(EntityStorageInterface::class);
     $storage->method('load')->willReturnMap([
@@ -42,10 +37,6 @@ final class ImageStyleServiceTest extends UnitTestCase {
     $this->assertSame('VALIDATION_ERROR', $invalid['code']);
   }
 
-  /**
-   * @covers ::deleteImageStyle
-   * @covers ::checkImageStyleUsage
-   */
   public function testDeleteImageStyleReturnsUsageWhenNotForced(): void {
     $style = $this->createMock(ImageStyleInterface::class);
     $style->method('label')->willReturn('Test Style');
@@ -88,11 +79,6 @@ final class ImageStyleServiceTest extends UnitTestCase {
     $this->assertTrue($forced['success']);
   }
 
-  /**
-   * @covers ::addImageEffect
-   * @covers ::removeImageEffect
-   * @covers ::listImageEffects
-   */
   public function testAddRemoveAndListEffects(): void {
     $style = $this->createMock(ImageStyleInterface::class);
     $style->method('addImageEffect')->willReturn('uuid-1');

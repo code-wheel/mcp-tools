@@ -23,23 +23,19 @@ class TaxonomyService {
    */
   public function getVocabularies(): array {
     $vocabStorage = $this->entityTypeManager->getStorage('taxonomy_vocabulary');
-    $termStorage = $this->entityTypeManager->getStorage('taxonomy_term');
     $vocabularies = $vocabStorage->loadMultiple();
+
+    // Get all term counts in a single aggregated query to avoid N+1.
+    $termCounts = $this->getTermCountsByVocabulary();
 
     $result = [];
     foreach ($vocabularies as $vocab) {
-      // Count terms in this vocabulary.
-      $termCount = $termStorage->getQuery()
-        ->accessCheck(TRUE)
-        ->condition('vid', $vocab->id())
-        ->count()
-        ->execute();
-
+      $vid = $vocab->id();
       $result[] = [
-        'id' => $vocab->id(),
+        'id' => $vid,
         'label' => $vocab->label(),
         'description' => $vocab->getDescription(),
-        'term_count' => (int) $termCount,
+        'term_count' => $termCounts[$vid] ?? 0,
       ];
     }
 
@@ -47,6 +43,23 @@ class TaxonomyService {
       'total_vocabularies' => count($result),
       'vocabularies' => $result,
     ];
+  }
+
+  /**
+   * Get term counts for all vocabularies in a single query.
+   *
+   * @return array<string, int>
+   *   Term counts keyed by vocabulary ID.
+   */
+  protected function getTermCountsByVocabulary(): array {
+    $connection = \Drupal::database();
+    $query = $connection->select('taxonomy_term_field_data', 't')
+      ->fields('t', ['vid'])
+      ->groupBy('t.vid');
+    $query->addExpression('COUNT(DISTINCT t.tid)', 'term_count');
+
+    $results = $query->execute()->fetchAllKeyed();
+    return array_map('intval', $results);
   }
 
   /**
@@ -83,13 +96,16 @@ class TaxonomyService {
     $tids = $query->execute();
     $terms = $termStorage->loadMultiple($tids);
 
+    // Batch load all parent relationships in a single query to avoid N+1.
+    $parentMap = $this->batchLoadParents(array_keys($tids));
+
     $result = [];
     foreach ($terms as $term) {
-      $parents = $termStorage->loadParents($term->id());
-      $parentIds = array_keys($parents);
+      $tid = $term->id();
+      $parentIds = $parentMap[$tid] ?? [];
 
       $result[] = [
-        'tid' => $term->id(),
+        'tid' => $tid,
         'name' => $term->getName(),
         'description' => $term->getDescription(),
         'weight' => $term->getWeight(),
@@ -184,6 +200,40 @@ class TaxonomyService {
       'total' => count($result),
       'terms' => $result,
     ];
+  }
+
+  /**
+   * Batch load parent relationships for multiple terms.
+   *
+   * @param array $tids
+   *   Array of term IDs.
+   *
+   * @return array<int, array<int>>
+   *   Map of term ID to array of parent term IDs.
+   */
+  protected function batchLoadParents(array $tids): array {
+    if (empty($tids)) {
+      return [];
+    }
+
+    $connection = \Drupal::database();
+    $query = $connection->select('taxonomy_term__parent', 'p')
+      ->fields('p', ['entity_id', 'parent_target_id'])
+      ->condition('p.entity_id', $tids, 'IN')
+      ->condition('p.parent_target_id', 0, '>')
+      ->orderBy('p.entity_id');
+
+    $results = $query->execute()->fetchAll();
+
+    $parentMap = [];
+    foreach ($tids as $tid) {
+      $parentMap[$tid] = [];
+    }
+    foreach ($results as $row) {
+      $parentMap[$row->entity_id][] = (int) $row->parent_target_id;
+    }
+
+    return $parentMap;
   }
 
 }

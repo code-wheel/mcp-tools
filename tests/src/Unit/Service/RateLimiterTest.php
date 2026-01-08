@@ -15,9 +15,9 @@ use Symfony\Component\HttpFoundation\RequestStack;
 /**
  * Tests for RateLimiter service.
  *
- * @coversDefaultClass \Drupal\mcp_tools\Service\RateLimiter
- * @group mcp_tools
  */
+#[\PHPUnit\Framework\Attributes\CoversClass(\Drupal\mcp_tools\Service\RateLimiter::class)]
+#[\PHPUnit\Framework\Attributes\Group('mcp_tools')]
 class RateLimiterTest extends UnitTestCase {
 
   protected ConfigFactoryInterface $configFactory;
@@ -68,9 +68,6 @@ class RateLimiterTest extends UnitTestCase {
     );
   }
 
-  /**
-   * @covers ::checkLimit
-   */
   public function testCheckLimitAllowedWhenDisabled(): void {
     $this->config->method('get')
       ->willReturnMap([
@@ -87,9 +84,6 @@ class RateLimiterTest extends UnitTestCase {
     $this->assertNull($result['retry_after']);
   }
 
-  /**
-   * @covers ::checkLimit
-   */
   public function testCheckLimitAllowedWhenUnderLimit(): void {
     $this->config->method('get')
       ->willReturnMap([
@@ -107,9 +101,6 @@ class RateLimiterTest extends UnitTestCase {
     $this->assertNull($result['error']);
   }
 
-  /**
-   * @covers ::checkLimit
-   */
   public function testCheckLimitBlockedWhenOverMinuteLimit(): void {
     $this->config->method('get')
       ->willReturnMap([
@@ -140,9 +131,6 @@ class RateLimiterTest extends UnitTestCase {
     $this->assertNotNull($result3['retry_after']);
   }
 
-  /**
-   * @covers ::checkLimit
-   */
   public function testCheckLimitBlockedWhenOverHourLimit(): void {
     $this->config->method('get')
       ->willReturnMap([
@@ -172,9 +160,6 @@ class RateLimiterTest extends UnitTestCase {
     $this->assertStringContainsString('Rate limit exceeded', $result3['error']);
   }
 
-  /**
-   * @covers ::checkLimit
-   */
   public function testDeleteOperationUsesSeparateLimit(): void {
     $this->config->method('get')
       ->willReturnMap([
@@ -202,9 +187,6 @@ class RateLimiterTest extends UnitTestCase {
     $this->assertStringContainsString('delete', $result2['error']);
   }
 
-  /**
-   * @covers ::getStatus
-   */
   public function testGetStatusWhenDisabled(): void {
     $this->config->method('get')
       ->willReturnMap([
@@ -225,9 +207,6 @@ class RateLimiterTest extends UnitTestCase {
     $this->assertArrayHasKey('client_id', $status);
   }
 
-  /**
-   * @covers ::getStatus
-   */
   public function testGetStatusShowsUsage(): void {
     $this->config->method('get')
       ->willReturnMap([
@@ -259,9 +238,6 @@ class RateLimiterTest extends UnitTestCase {
     $this->assertArrayHasKey('delete', $status['current_usage']);
   }
 
-  /**
-   * @covers ::resetLimits
-   */
   public function testResetLimitsClearsCounters(): void {
     $this->config->method('get')
       ->willReturnMap([
@@ -292,9 +268,6 @@ class RateLimiterTest extends UnitTestCase {
     $this->assertTrue($result['allowed']);
   }
 
-  /**
-   * @covers ::checkLimit
-   */
   public function testDifferentClientsHaveSeparateLimits(): void {
     $this->config->method('get')
       ->willReturnMap([
@@ -330,9 +303,6 @@ class RateLimiterTest extends UnitTestCase {
     $this->assertTrue($result2['allowed']);
   }
 
-  /**
-   * @covers ::checkReadLimit
-   */
   public function testCheckReadLimitUnknownOperationIsAllowed(): void {
     $this->requestStack->method('getCurrentRequest')->willReturn(NULL);
 
@@ -343,9 +313,6 @@ class RateLimiterTest extends UnitTestCase {
     $this->assertNull($result['error']);
   }
 
-  /**
-   * @covers ::checkReadLimit
-   */
   public function testCheckReadLimitBlocksContentSearchWhenOverLimit(): void {
     $this->config->method('get')
       ->willReturnMap([
@@ -372,9 +339,6 @@ class RateLimiterTest extends UnitTestCase {
     $this->assertNotNull($result3['retry_after']);
   }
 
-  /**
-   * @covers ::checkReadLimit
-   */
   public function testCheckReadLimitBlocksBrokenLinkScanWhenOverLimit(): void {
     $this->config->method('get')
       ->willReturnMap([
@@ -397,9 +361,6 @@ class RateLimiterTest extends UnitTestCase {
     $this->assertStringContainsString('broken_link_scan', $result2['error']);
   }
 
-  /**
-   * @covers ::getClientIdentifier
-   */
   public function testClientIdentifierIgnoresClientIdHeaderByDefault(): void {
     $this->config->method('get')
       ->willReturnMap([
@@ -426,9 +387,6 @@ class RateLimiterTest extends UnitTestCase {
     $this->assertSame($idA, $idB);
   }
 
-  /**
-   * @covers ::getClientIdentifier
-   */
   public function testClientIdentifierUsesClientIdHeaderWhenTrusted(): void {
     $this->config->method('get')
       ->willReturnMap([
@@ -455,9 +413,6 @@ class RateLimiterTest extends UnitTestCase {
     $this->assertNotSame($idA, $idB);
   }
 
-  /**
-   * @covers ::getClientIdentifier
-   */
   public function testClientIdentifierPrefersTrustedRequestAttribute(): void {
     $this->config->method('get')
       ->willReturnMap([

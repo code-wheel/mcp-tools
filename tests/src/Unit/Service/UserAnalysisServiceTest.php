@@ -13,15 +13,10 @@ use Drupal\user\PermissionHandlerInterface;
 use Drupal\user\RoleInterface;
 use Drupal\user\UserInterface;
 
-/**
- * @coversDefaultClass \Drupal\mcp_tools\Service\UserAnalysisService
- * @group mcp_tools
- */
+#[\PHPUnit\Framework\Attributes\CoversClass(\Drupal\mcp_tools\Service\UserAnalysisService::class)]
+#[\PHPUnit\Framework\Attributes\Group('mcp_tools')]
 final class UserAnalysisServiceTest extends UnitTestCase {
 
-  /**
-   * @covers ::getPermissions
-   */
   public function testGetPermissionsGroupsByProvider(): void {
     $permissionHandler = $this->createMock(PermissionHandlerInterface::class);
     $permissionHandler->method('getPermissions')->willReturn([
@@ -42,9 +37,6 @@ final class UserAnalysisServiceTest extends UnitTestCase {
     $this->assertTrue($result['by_provider']['bar'][0]['restrict_access']);
   }
 
-  /**
-   * @covers ::analyzePermission
-   */
   public function testAnalyzePermissionIncludesAdminRoles(): void {
     $admin = $this->createMock(RoleInterface::class);
     $admin->method('id')->willReturn('administrator');
@@ -76,9 +68,6 @@ final class UserAnalysisServiceTest extends UnitTestCase {
     $this->assertContains('editor', $ids);
   }
 
-  /**
-   * @covers ::getUsers
-   */
   public function testGetUsersReturnsCountsAndUserList(): void {
     $totalQuery = $this->createMock(QueryInterface::class);
     $totalQuery->method('accessCheck')->willReturnSelf();

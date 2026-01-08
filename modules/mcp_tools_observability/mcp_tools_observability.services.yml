@@ -1,0 +1,7 @@
+services:
+  mcp_tools_observability.tool_execution_log_subscriber:
+    class: Drupal\mcp_tools_observability\EventSubscriber\ToolExecutionLogSubscriber
+    arguments:
+      - '@logger.channel.mcp_tools'
+    tags:
+      - { name: event_subscriber }

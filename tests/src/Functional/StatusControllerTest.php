@@ -9,8 +9,8 @@ use Drupal\Tests\BrowserTestBase;
 /**
  * Tests the MCP Tools status controller.
  *
- * @group mcp_tools
  */
+#[\PHPUnit\Framework\Attributes\Group('mcp_tools')]
 class StatusControllerTest extends BrowserTestBase {
 
   /**
@@ -240,7 +240,7 @@ class StatusControllerTest extends BrowserTestBase {
 
     $this->assertSession()->pageTextContains('Remote HTTP Endpoint (Experimental)');
     $this->assertSession()->pageTextContains('Remote HTTP endpoint is enabled');
-    $this->assertSession()->pageTextContains('Remote endpoint is configured to run as uid 1');
+    $this->assertSession()->pageTextContains('Remote endpoint is configured to run as uid 1. Execution will be blocked unless "Use site admin (uid 1)" is enabled in remote settings.');
     $this->assertSession()->pageTextContains('Remote endpoint IP allowlist is empty');
     $this->assertSession()->pageTextContains('Remote endpoint is configured to expose all Tool API tools');
   }

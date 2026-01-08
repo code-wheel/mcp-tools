@@ -18,10 +18,8 @@ use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Psr7\Response;
 use Symfony\Component\HttpFoundation\RequestStack;
 
-/**
- * @coversDefaultClass \Drupal\mcp_tools_analysis\Service\AnalysisService
- * @group mcp_tools_analysis
- */
+#[\PHPUnit\Framework\Attributes\CoversClass(\Drupal\mcp_tools_analysis\Service\AnalysisService::class)]
+#[\PHPUnit\Framework\Attributes\Group('mcp_tools_analysis')]
 final class AnalysisServiceTest extends UnitTestCase {
 
   private function createService(array $overrides = []): AnalysisService {
@@ -35,9 +33,6 @@ final class AnalysisServiceTest extends UnitTestCase {
     );
   }
 
-  /**
-   * @covers ::findBrokenLinks
-   */
   public function testFindBrokenLinksFailsWhenAllowedHostsEmpty(): void {
     $settings = $this->createMock(ImmutableConfig::class);
     $settings->method('get')->with('allowed_hosts')->willReturn([]);
@@ -54,9 +49,6 @@ final class AnalysisServiceTest extends UnitTestCase {
     $this->assertSame('URL_FETCH_DISABLED', $result['code']);
   }
 
-  /**
-   * @covers ::findBrokenLinks
-   */
   public function testFindBrokenLinksFailsWhenBaseUrlMissing(): void {
     $settings = $this->createMock(ImmutableConfig::class);
     $settings->method('get')->with('allowed_hosts')->willReturn(['example.com']);
@@ -77,9 +69,6 @@ final class AnalysisServiceTest extends UnitTestCase {
     $this->assertSame('MISSING_BASE_URL', $result['code']);
   }
 
-  /**
-   * @covers ::findBrokenLinks
-   */
   public function testFindBrokenLinksFailsWhenHostNotAllowed(): void {
     $settings = $this->createMock(ImmutableConfig::class);
     $settings->method('get')->with('allowed_hosts')->willReturn(['allowed.example']);
@@ -97,9 +86,6 @@ final class AnalysisServiceTest extends UnitTestCase {
     $this->assertSame('example.com', $result['host']);
   }
 
-  /**
-   * @covers ::findBrokenLinks
-   */
   public function testFindBrokenLinksDetectsBrokenInternalLink(): void {
     $settings = $this->createMock(ImmutableConfig::class);
     $settings->method('get')->with('allowed_hosts')->willReturn(['example.com']);
@@ -151,9 +137,6 @@ final class AnalysisServiceTest extends UnitTestCase {
     $this->assertSame(1, $result['data']['broken_links'][0]['source_nid']);
   }
 
-  /**
-   * @covers ::contentAudit
-   */
   public function testContentAuditReturnsStaleAndDraftsFallback(): void {
     $staleNode = new FakeNode(
       1,
@@ -210,9 +193,6 @@ final class AnalysisServiceTest extends UnitTestCase {
     $this->assertSame($result['data']['orphaned_content'], $result['data']['drafts']);
   }
 
-  /**
-   * @covers ::analyzeSeo
-   */
   public function testAnalyzeSeoFlagsMissingMetaDescriptionAndAltText(): void {
     $entity = new FakeNode(1, 'Short title', [
       'body' => new FakeFieldItemList('text_long', [
@@ -242,9 +222,6 @@ final class AnalysisServiceTest extends UnitTestCase {
     $this->assertContains('missing_alt_text', $types);
   }
 
-  /**
-   * @covers ::analyzeSeo
-   */
   public function testAnalyzeSeoParsesMetatagDescriptionWhenSafe(): void {
     $metatag = serialize(['description' => str_repeat('x', 130)]);
     $entity = new FakeNode(1, str_repeat('A', 40), [
@@ -277,9 +254,6 @@ final class AnalysisServiceTest extends UnitTestCase {
     $this->assertNotContains('missing_meta_description', $types);
   }
 
-  /**
-   * @covers ::securityAudit
-   */
   public function testSecurityAuditReportsIssuesAndWarnings(): void {
     $anonymous = new class() {
       public function id(): string { return 'anonymous'; }
@@ -350,9 +324,6 @@ final class AnalysisServiceTest extends UnitTestCase {
     $this->assertGreaterThan(0, $result['data']['warning_count']);
   }
 
-  /**
-   * @covers ::findUnusedFields
-   */
   public function testFindUnusedFieldsDetectsUnusedCustomField(): void {
     $fieldConfig = new class() {
       public function getTargetEntityTypeId(): string { return 'node'; }
@@ -391,9 +362,6 @@ final class AnalysisServiceTest extends UnitTestCase {
     $this->assertSame('field_unused', $result['data']['unused_fields'][0]['field_name']);
   }
 
-  /**
-   * @covers ::analyzePerformance
-   */
   public function testAnalyzePerformanceIncludesCacheSuggestionsAndDbInfo(): void {
     $perfConfig = $this->createMock(ImmutableConfig::class);
     $perfConfig->method('get')->willReturnMap([
@@ -428,9 +396,6 @@ final class AnalysisServiceTest extends UnitTestCase {
     $this->assertNotEmpty($result['data']['suggestions']);
   }
 
-  /**
-   * @covers ::checkAccessibility
-   */
   public function testCheckAccessibilityFindsCommonIssues(): void {
     $entity = new FakeNode(1, 'A11y page', [
       'body' => new FakeFieldItemList('text_long', [
@@ -466,10 +431,6 @@ final class AnalysisServiceTest extends UnitTestCase {
     $this->assertContains('color_reference', $types);
   }
 
-  /**
-   * @covers ::findDuplicateContent
-   * @covers ::calculateSimilarity
-   */
   public function testFindDuplicateContentDetectsDuplicateTitles(): void {
     $nodeTypeStorage = $this->createMock(EntityStorageInterface::class);
     $nodeTypeStorage->method('load')->with('article')->willReturn(new \stdClass());

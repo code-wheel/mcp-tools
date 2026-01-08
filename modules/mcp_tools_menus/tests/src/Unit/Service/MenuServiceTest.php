@@ -16,9 +16,9 @@ use Drupal\Tests\UnitTestCase;
 /**
  * Tests for MenuService.
  *
- * @coversDefaultClass \Drupal\mcp_tools_menus\Service\MenuService
- * @group mcp_tools_menus
  */
+#[\PHPUnit\Framework\Attributes\CoversClass(\Drupal\mcp_tools_menus\Service\MenuService::class)]
+#[\PHPUnit\Framework\Attributes\Group('mcp_tools_menus')]
 class MenuServiceTest extends UnitTestCase {
 
   protected EntityTypeManagerInterface $entityTypeManager;
@@ -61,9 +61,6 @@ class MenuServiceTest extends UnitTestCase {
     );
   }
 
-  /**
-   * @covers ::createMenu
-   */
   public function testCreateMenuAccessDenied(): void {
     $this->accessManager->method('canWrite')->willReturn(FALSE);
     $this->accessManager->method('getWriteAccessDenied')->willReturn([
@@ -77,10 +74,7 @@ class MenuServiceTest extends UnitTestCase {
     $this->assertFalse($result['success']);
   }
 
-  /**
-   * @covers ::createMenu
-   * @dataProvider invalidMenuMachineNameProvider
-   */
+  #[\PHPUnit\Framework\Attributes\DataProvider('invalidMenuMachineNameProvider')]
   public function testCreateMenuInvalidMachineName(string $invalidName): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
 
@@ -103,9 +97,6 @@ class MenuServiceTest extends UnitTestCase {
     ];
   }
 
-  /**
-   * @covers ::createMenu
-   */
   public function testCreateMenuMachineNameTooLong(): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
 
@@ -116,9 +107,6 @@ class MenuServiceTest extends UnitTestCase {
     $this->assertStringContainsString('32 characters', $result['error']);
   }
 
-  /**
-   * @covers ::createMenu
-   */
   public function testCreateMenuAlreadyExists(): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
 
@@ -132,9 +120,6 @@ class MenuServiceTest extends UnitTestCase {
     $this->assertStringContainsString('already exists', $result['error']);
   }
 
-  /**
-   * @covers ::deleteMenu
-   */
   public function testDeleteMenuAccessDenied(): void {
     $this->accessManager->method('canWrite')->willReturn(FALSE);
     $this->accessManager->method('getWriteAccessDenied')->willReturn([
@@ -148,10 +133,7 @@ class MenuServiceTest extends UnitTestCase {
     $this->assertFalse($result['success']);
   }
 
-  /**
-   * @covers ::deleteMenu
-   * @dataProvider protectedMenuProvider
-   */
+  #[\PHPUnit\Framework\Attributes\DataProvider('protectedMenuProvider')]
   public function testDeleteMenuProtectsSystemMenus(string $protectedMenu): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
 
@@ -176,9 +158,6 @@ class MenuServiceTest extends UnitTestCase {
     ];
   }
 
-  /**
-   * @covers ::deleteMenu
-   */
   public function testDeleteMenuNotFound(): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
     $this->menuStorage->method('load')->with('nonexistent')->willReturn(NULL);
@@ -190,9 +169,6 @@ class MenuServiceTest extends UnitTestCase {
     $this->assertStringContainsString('not found', $result['error']);
   }
 
-  /**
-   * @covers ::addMenuLink
-   */
   public function testAddMenuLinkAccessDenied(): void {
     $this->accessManager->method('canWrite')->willReturn(FALSE);
     $this->accessManager->method('getWriteAccessDenied')->willReturn([
@@ -206,9 +182,6 @@ class MenuServiceTest extends UnitTestCase {
     $this->assertFalse($result['success']);
   }
 
-  /**
-   * @covers ::addMenuLink
-   */
   public function testAddMenuLinkMenuNotFound(): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
     $this->menuStorage->method('load')->with('nonexistent')->willReturn(NULL);
@@ -220,9 +193,6 @@ class MenuServiceTest extends UnitTestCase {
     $this->assertStringContainsString('not found', $result['error']);
   }
 
-  /**
-   * @covers ::updateMenuLink
-   */
   public function testUpdateMenuLinkAccessDenied(): void {
     $this->accessManager->method('canWrite')->willReturn(FALSE);
     $this->accessManager->method('getWriteAccessDenied')->willReturn([
@@ -236,9 +206,6 @@ class MenuServiceTest extends UnitTestCase {
     $this->assertFalse($result['success']);
   }
 
-  /**
-   * @covers ::updateMenuLink
-   */
   public function testUpdateMenuLinkNotFound(): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
     $this->menuLinkStorage->method('load')->with(999)->willReturn(NULL);
@@ -250,9 +217,6 @@ class MenuServiceTest extends UnitTestCase {
     $this->assertStringContainsString('not found', $result['error']);
   }
 
-  /**
-   * @covers ::deleteMenuLink
-   */
   public function testDeleteMenuLinkAccessDenied(): void {
     $this->accessManager->method('canWrite')->willReturn(FALSE);
     $this->accessManager->method('getWriteAccessDenied')->willReturn([
@@ -266,9 +230,6 @@ class MenuServiceTest extends UnitTestCase {
     $this->assertFalse($result['success']);
   }
 
-  /**
-   * @covers ::deleteMenuLink
-   */
   public function testDeleteMenuLinkNotFound(): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
     $this->menuLinkStorage->method('load')->with(999)->willReturn(NULL);

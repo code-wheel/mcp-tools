@@ -7,10 +7,8 @@ namespace Drupal\Tests\mcp_tools\Unit\Service;
 use Drupal\mcp_tools\Service\ErrorFormatter;
 use Drupal\Tests\UnitTestCase;
 
-/**
- * @coversDefaultClass \Drupal\mcp_tools\Service\ErrorFormatter
- * @group mcp_tools
- */
+#[\PHPUnit\Framework\Attributes\CoversClass(\Drupal\mcp_tools\Service\ErrorFormatter::class)]
+#[\PHPUnit\Framework\Attributes\Group('mcp_tools')]
 final class ErrorFormatterTest extends UnitTestCase {
 
   private ErrorFormatter $formatter;
@@ -20,9 +18,6 @@ final class ErrorFormatterTest extends UnitTestCase {
     $this->formatter = new ErrorFormatter();
   }
 
-  /**
-   * @covers ::notFound
-   */
   public function testNotFoundIncludesSuggestionWhenProvided(): void {
     $result = $this->formatter->notFound('user', '99', 'Try listing users first.');
 
@@ -34,9 +29,6 @@ final class ErrorFormatterTest extends UnitTestCase {
     $this->assertSame('99', $result['details']['identifier']);
   }
 
-  /**
-   * @covers ::validation
-   */
   public function testValidationDoesNotEchoSensitiveValues(): void {
     $result = $this->formatter->validation('password', 'too short', 'secret');
 
@@ -47,9 +39,6 @@ final class ErrorFormatterTest extends UnitTestCase {
     $this->assertArrayNotHasKey('value', $result['details']);
   }
 
-  /**
-   * @covers ::validation
-   */
   public function testValidationIncludesValueForNonSensitiveFields(): void {
     $result = $this->formatter->validation('title', 'required', '');
 
@@ -58,9 +47,6 @@ final class ErrorFormatterTest extends UnitTestCase {
     $this->assertSame('', $result['details']['value']);
   }
 
-  /**
-   * @covers ::success
-   */
   public function testSuccessMergesData(): void {
     $result = $this->formatter->success('OK', ['data' => ['x' => 1]]);
 
@@ -69,9 +55,6 @@ final class ErrorFormatterTest extends UnitTestCase {
     $this->assertSame(['x' => 1], $result['data']);
   }
 
-  /**
-   * @covers ::insufficientScope
-   */
   public function testInsufficientScopeIncludesScopesInDetails(): void {
     $result = $this->formatter->insufficientScope('admin', ['read', 'write']);
 

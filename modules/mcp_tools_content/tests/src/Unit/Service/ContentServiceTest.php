@@ -20,9 +20,9 @@ use Drupal\Tests\UnitTestCase;
 /**
  * Tests for ContentService.
  *
- * @coversDefaultClass \Drupal\mcp_tools_content\Service\ContentService
- * @group mcp_tools_content
  */
+#[\PHPUnit\Framework\Attributes\CoversClass(\Drupal\mcp_tools_content\Service\ContentService::class)]
+#[\PHPUnit\Framework\Attributes\Group('mcp_tools_content')]
 class ContentServiceTest extends UnitTestCase {
 
   protected EntityTypeManagerInterface $entityTypeManager;
@@ -70,9 +70,6 @@ class ContentServiceTest extends UnitTestCase {
     );
   }
 
-  /**
-   * @covers ::createContent
-   */
   public function testCreateContentAccessDenied(): void {
     $this->accessManager->method('canWrite')->willReturn(FALSE);
     $this->accessManager->method('getWriteAccessDenied')->willReturn([
@@ -88,9 +85,6 @@ class ContentServiceTest extends UnitTestCase {
     $this->assertEquals('INSUFFICIENT_SCOPE', $result['code']);
   }
 
-  /**
-   * @covers ::createContent
-   */
   public function testCreateContentInvalidContentType(): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
     $this->nodeTypeStorage->method('load')->with('invalid_type')->willReturn(NULL);
@@ -102,9 +96,6 @@ class ContentServiceTest extends UnitTestCase {
     $this->assertStringContainsString('not found', $result['error']);
   }
 
-  /**
-   * @covers ::updateContent
-   */
   public function testUpdateContentAccessDenied(): void {
     $this->accessManager->method('canWrite')->willReturn(FALSE);
     $this->accessManager->method('getWriteAccessDenied')->willReturn([
@@ -118,9 +109,6 @@ class ContentServiceTest extends UnitTestCase {
     $this->assertFalse($result['success']);
   }
 
-  /**
-   * @covers ::updateContent
-   */
   public function testUpdateContentNodeNotFound(): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
     $this->nodeStorage->method('load')->with(999)->willReturn(NULL);
@@ -132,9 +120,6 @@ class ContentServiceTest extends UnitTestCase {
     $this->assertStringContainsString('not found', $result['error']);
   }
 
-  /**
-   * @covers ::deleteContent
-   */
   public function testDeleteContentAccessDenied(): void {
     $this->accessManager->method('canWrite')->willReturn(FALSE);
     $this->accessManager->method('getWriteAccessDenied')->willReturn([
@@ -148,9 +133,6 @@ class ContentServiceTest extends UnitTestCase {
     $this->assertFalse($result['success']);
   }
 
-  /**
-   * @covers ::deleteContent
-   */
   public function testDeleteContentNodeNotFound(): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
     $this->nodeStorage->method('load')->with(999)->willReturn(NULL);
@@ -162,9 +144,6 @@ class ContentServiceTest extends UnitTestCase {
     $this->assertStringContainsString('not found', $result['error']);
   }
 
-  /**
-   * @covers ::setPublishStatus
-   */
   public function testSetPublishStatusAccessDenied(): void {
     $this->accessManager->method('canWrite')->willReturn(FALSE);
     $this->accessManager->method('getWriteAccessDenied')->willReturn([
@@ -178,9 +157,6 @@ class ContentServiceTest extends UnitTestCase {
     $this->assertFalse($result['success']);
   }
 
-  /**
-   * @covers ::setPublishStatus
-   */
   public function testSetPublishStatusNodeNotFound(): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
     $this->nodeStorage->method('load')->with(999)->willReturn(NULL);
@@ -195,9 +171,8 @@ class ContentServiceTest extends UnitTestCase {
   /**
    * Tests field value normalization.
    *
-   * @covers ::normalizeFieldValue
-   * @dataProvider normalizeFieldValueProvider
    */
+  #[\PHPUnit\Framework\Attributes\DataProvider('normalizeFieldValueProvider')]
   public function testNormalizeFieldValueBehavior(string $fieldType, mixed $input, mixed $expectedPattern): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
 

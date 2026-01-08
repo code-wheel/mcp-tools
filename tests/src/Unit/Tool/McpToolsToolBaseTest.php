@@ -14,10 +14,8 @@ use Drupal\tool\Tool\ToolDefinition;
 use Drupal\tool\Tool\ToolOperation;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
-/**
- * @coversDefaultClass \Drupal\mcp_tools\Tool\McpToolsToolBase
- * @group mcp_tools
- */
+#[\PHPUnit\Framework\Attributes\CoversClass(\Drupal\mcp_tools\Tool\McpToolsToolBase::class)]
+#[\PHPUnit\Framework\Attributes\Group('mcp_tools')]
 final class McpToolsToolBaseTest extends UnitTestCase {
 
   private ?object $previousContainer = NULL;
@@ -58,9 +56,6 @@ final class McpToolsToolBaseTest extends UnitTestCase {
     ]);
   }
 
-  /**
-   * @covers ::doExecute
-   */
   public function testDoExecuteWrapsLegacySuccessWithData(): void {
     $definition = $this->definition('mcp_tools:test_success', ToolOperation::Read);
     $currentUser = $this->createMock(AccountInterface::class);
@@ -89,9 +84,6 @@ final class McpToolsToolBaseTest extends UnitTestCase {
     $this->assertSame(['foo' => 'bar'], $result->getContextValues());
   }
 
-  /**
-   * @covers ::doExecute
-   */
   public function testDoExecuteUsesLegacyPayloadAsContextWhenNoDataKey(): void {
     $definition = $this->definition('mcp_tools:test_context', ToolOperation::Read);
     $currentUser = $this->createMock(AccountInterface::class);
@@ -120,9 +112,6 @@ final class McpToolsToolBaseTest extends UnitTestCase {
     $this->assertSame(['extra' => 'value'], $result->getContextValues());
   }
 
-  /**
-   * @covers ::doExecute
-   */
   public function testDoExecuteWrapsLegacyFailure(): void {
     $definition = $this->definition('mcp_tools:test_failure', ToolOperation::Read);
     $currentUser = $this->createMock(AccountInterface::class);
@@ -149,10 +138,6 @@ final class McpToolsToolBaseTest extends UnitTestCase {
     $this->assertSame('Nope', $result->getMessage()->getUntranslatedString());
   }
 
-  /**
-   * @covers ::checkAccess
-   * @covers ::access
-   */
   public function testAccessGatesReadToolsByPermissionAndScope(): void {
     $definition = $this->definition('mcp_tools:get_site_status', ToolOperation::Read);
 
@@ -185,9 +170,6 @@ final class McpToolsToolBaseTest extends UnitTestCase {
     $this->assertFalse($tool->access($account));
   }
 
-  /**
-   * @covers ::checkAccess
-   */
   public function testAccessGatesWriteToolsByScopeAndConfigOnlyPolicy(): void {
     $definition = $this->definition('mcp_cache:clear_all', ToolOperation::Write);
 
@@ -236,9 +218,6 @@ final class McpToolsToolBaseTest extends UnitTestCase {
     $this->assertFalse($tool->access($account));
   }
 
-  /**
-   * @covers ::checkAccess
-   */
   public function testAccessGatesTriggerToolsByAdminScope(): void {
     $definition = $this->definition('mcp_recipes:apply', ToolOperation::Trigger);
 

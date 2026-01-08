@@ -16,10 +16,8 @@ use Drupal\mcp_tools\Service\AuditLogger;
 use Drupal\mcp_tools_moderation\Service\ModerationService;
 use Drupal\Tests\UnitTestCase;
 
-/**
- * @coversDefaultClass \Drupal\mcp_tools_moderation\Service\ModerationService
- * @group mcp_tools_moderation
- */
+#[\PHPUnit\Framework\Attributes\CoversClass(\Drupal\mcp_tools_moderation\Service\ModerationService::class)]
+#[\PHPUnit\Framework\Attributes\Group('mcp_tools_moderation')]
 final class ModerationServiceTest extends UnitTestCase {
 
   private function createService(array $overrides = []): ModerationService {
@@ -34,9 +32,6 @@ final class ModerationServiceTest extends UnitTestCase {
     );
   }
 
-  /**
-   * @covers ::getWorkflows
-   */
   public function testGetWorkflowsFiltersToContentModerationType(): void {
     $moderatedWorkflow = new class() {
       public function id(): string { return 'editorial'; }
@@ -90,9 +85,6 @@ final class ModerationServiceTest extends UnitTestCase {
     $this->assertSame('editorial', $result['data']['workflows'][0]['id']);
   }
 
-  /**
-   * @covers ::getModerationState
-   */
   public function testGetModerationStateReturnsErrorWhenEntityMissing(): void {
     $storage = $this->createMock(EntityStorageInterface::class);
     $storage->method('load')->with(123)->willReturn(NULL);
@@ -105,9 +97,6 @@ final class ModerationServiceTest extends UnitTestCase {
     $this->assertFalse($result['success']);
   }
 
-  /**
-   * @covers ::getModerationState
-   */
   public function testGetModerationStateReturnsErrorWhenNotModerated(): void {
     $entity = $this->createMock(ContentEntityInterface::class);
 
@@ -130,9 +119,6 @@ final class ModerationServiceTest extends UnitTestCase {
     $this->assertStringContainsString('not under content moderation', $result['error']);
   }
 
-  /**
-   * @covers ::setModerationState
-   */
   public function testSetModerationStateRespectsWriteAccess(): void {
     $accessManager = $this->createMock(AccessManager::class);
     $accessManager->method('canWrite')->willReturn(FALSE);
@@ -144,9 +130,6 @@ final class ModerationServiceTest extends UnitTestCase {
     $this->assertSame('INSUFFICIENT_SCOPE', $result['code']);
   }
 
-  /**
-   * @covers ::setModerationState
-   */
   public function testSetModerationStateReturnsNoopWhenAlreadyInState(): void {
     $entity = $this->createMock(ContentEntityInterface::class);
     $entity->method('get')->with('moderation_state')->willReturn((object) ['value' => 'draft']);
@@ -200,9 +183,6 @@ final class ModerationServiceTest extends UnitTestCase {
     $this->assertFalse($result['data']['changed']);
   }
 
-  /**
-   * @covers ::setModerationState
-   */
   public function testSetModerationStateValidatesTargetStateExists(): void {
     $entity = $this->createMock(ContentEntityInterface::class);
     $entity->method('get')->with('moderation_state')->willReturn((object) ['value' => 'draft']);
