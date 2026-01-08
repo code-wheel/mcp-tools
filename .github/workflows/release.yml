@@ -92,6 +92,11 @@ jobs:
           cd drupal
           composer require mcp/sdk:^0.2.2 --no-interaction
 
+      - name: Install MCP HTTP Security package
+        run: |
+          cd drupal
+          composer require code-wheel/mcp-http-security:^1.0 --no-interaction
+
       - name: Copy module
         run: |
           mkdir -p drupal/web/modules/contrib/mcp_tools
