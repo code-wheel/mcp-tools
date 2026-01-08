@@ -4,6 +4,21 @@ All notable changes to the MCP Tools module will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.0.0-alpha24] - 2026-01-08
+
+### Changed
+
+- **Execution user configuration** for remote HTTP endpoint:
+  - Added "Use site admin (uid 1)" checkbox for simple development setup
+  - Added "Create MCP Executor Account" button to create dedicated service user/role
+  - Removed automatic user creation on module install (now user-initiated)
+  - Removed runtime block on uid 1 execution (now allowed via checkbox)
+- Updated documentation to reflect execution user options
+
+### Fixed
+
+- Release workflow now installs `mcp-http-security` package before tests
+
 ## [1.0.0-alpha23] - 2026-01-08
 
 ### Fixed

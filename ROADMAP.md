@@ -10,21 +10,21 @@ MCP Tools provides **curated, high-value tools** that solve real problems—not 
 
 ---
 
-## Current State (v1.0-alpha20)
+## Current State (v1.0-alpha23)
 
 ### What We Have
 
-- **214 tools** - Feature complete (30 read + 184 write/analysis)
+- **154+ tools** across 30 submodules
 - **Strong security model** - Multi-layer access control, audit logging
 - **Good CI/CD** - GitHub Actions + DrupalCI
 - **Excellent documentation** - README, Architecture docs, per-submodule READMEs
-- **Real users** - Momentum is building
+- **Two transport options** - STDIO (local) and HTTP (remote/Docker)
+- **Standalone security package** - `code-wheel/mcp-http-security` for PHP MCP ecosystem
 
 ### Tool Breakdown
 
-- **28 read-only tools** in the base module for site introspection
-- **182 write/analysis tools** across 29 submodules
-- **6 new schema discovery tools** for AI introspection
+- **23 read-only tools** in the base module for site introspection
+- **130+ write/analysis tools** across 29 submodules
 - All tools have rich descriptions for LLM understanding
 - 38 destructive operations properly annotated
 
@@ -94,17 +94,17 @@ mcp_tools/                           # Base module (28 read-only tools)
 
 ---
 
-## Testing Debt
+## Testing Status
 
-Unit tests for services that depend on contrib modules need kernel/functional tests with proper module bootstrapping.
+All 48 services now have unit or kernel tests. Contrib-dependent services use kernel tests with proper module bootstrapping.
 
 | Test | Module | Status |
 |------|--------|--------|
-| `ParagraphsServiceTest` | mcp_tools_paragraphs | Needs kernel test with paragraphs installed |
-| `RedirectServiceTest` | mcp_tools_redirect | ✅ Restored as unit test |
-| `ContentTypeServiceTest` | mcp_tools_structure | ✅ Restored as unit test (fixed DI) |
-| `FieldServiceTest` | mcp_tools_structure | ✅ Restored as unit test |
-| `WebformServiceTest` | mcp_tools_webform | ✅ Restored as unit test |
+| `ParagraphsServiceTest` | mcp_tools_paragraphs | ✅ Kernel test |
+| `RedirectServiceTest` | mcp_tools_redirect | ✅ Kernel test |
+| `ContentTypeServiceTest` | mcp_tools_structure | ✅ Unit test (fixed DI) |
+| `FieldServiceTest` | mcp_tools_structure | ✅ Unit test |
+| `WebformServiceTest` | mcp_tools_webform | ✅ Kernel test |
 
 ---
 
@@ -114,11 +114,11 @@ Unit tests for services that depend on contrib modules need kernel/functional te
 
 | Task | Description | Status |
 |------|-------------|--------|
-| Docker dev environment | Full `docker-compose.yml` for contributors | 🔲 Todo |
-| Test layering | Separate unit/kernel/integration tests | 🔲 Todo |
-| CI matrix for contrib | Test each contrib module independently | 🔲 Todo |
-| Restore deleted tests | Kernel tests for contrib-dependent services | 🔲 Todo |
-| E2E test expansion | Expand mcp_stdio_e2e.py / mcp_http_e2e.py coverage | 🔲 Todo |
+| Docker dev environment | Full `docker-compose.yml` for contributors | ✅ Done |
+| Test layering | Separate unit/kernel/integration tests | ✅ Done |
+| CI matrix for contrib | Test each contrib module independently | ✅ Done |
+| Restore deleted tests | Kernel tests for contrib-dependent services | ✅ Done |
+| E2E test expansion | STDIO + HTTP E2E tests in CI | ✅ Done |
 
 ### Short-term (P1) - COMPLETED
 
@@ -199,7 +199,7 @@ The following components have been extracted as standalone Composer packages for
 
 **Integration:** `mcp_tools_remote` now delegates to the extracted package via Drupal adapters (`DrupalStateStorage`, `DrupalClock`).
 
-**Note:** The module is feature-complete at 154 tools. Focus is on stability, testing, and adoption - resist feature creep.
+**Note:** The module is feature-complete with 154+ tools. Focus is on stability, testing, and adoption.
 
 ---
 
