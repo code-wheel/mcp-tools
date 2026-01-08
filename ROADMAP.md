@@ -96,15 +96,15 @@ mcp_tools/                           # Base module (28 read-only tools)
 
 ## Testing Debt
 
-Unit tests were removed for services that depend on contrib modules. These need kernel/functional tests with proper module bootstrapping.
+Unit tests for services that depend on contrib modules need kernel/functional tests with proper module bootstrapping.
 
-| Deleted Test | Module | Needs |
-|--------------|--------|-------|
-| `ParagraphsServiceTest` | mcp_tools_paragraphs | Kernel test with paragraphs installed |
-| `RedirectServiceTest` | mcp_tools_redirect | Kernel test with redirect installed |
-| `ContentTypeServiceTest` | mcp_tools_structure | Kernel test (uses EntityTypeManager) |
-| `FieldServiceTest` | mcp_tools_structure | Kernel test (uses FieldStorageConfig) |
-| `WebformServiceTest` | mcp_tools_webform | Kernel test with webform installed |
+| Test | Module | Status |
+|------|--------|--------|
+| `ParagraphsServiceTest` | mcp_tools_paragraphs | Needs kernel test with paragraphs installed |
+| `RedirectServiceTest` | mcp_tools_redirect | ✅ Restored as unit test |
+| `ContentTypeServiceTest` | mcp_tools_structure | ✅ Restored as unit test (fixed DI) |
+| `FieldServiceTest` | mcp_tools_structure | ✅ Restored as unit test |
+| `WebformServiceTest` | mcp_tools_webform | ✅ Restored as unit test |
 
 ---
 

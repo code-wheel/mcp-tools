@@ -7,6 +7,7 @@ services:
       - '@config.factory'
       - '@mcp_tools.access_manager'
       - '@mcp_tools.audit_logger'
+      - '@entity_field.manager'
 
   mcp_tools_structure.field:
     class: Drupal\mcp_tools_structure\Service\FieldService

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Drupal\mcp_tools_structure\Service;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\mcp_tools\Service\AccessManager;
@@ -21,7 +22,18 @@ class ContentTypeService {
     protected ConfigFactoryInterface $configFactory,
     protected AccessManager $accessManager,
     protected AuditLogger $auditLogger,
+    protected ?EntityFieldManagerInterface $entityFieldManager = NULL,
   ) {}
+
+  /**
+   * Gets the entity field manager service.
+   */
+  protected function getEntityFieldManager(): EntityFieldManagerInterface {
+    if ($this->entityFieldManager === NULL) {
+      $this->entityFieldManager = $this->getEntityFieldManager();
+    }
+    return $this->entityFieldManager;
+  }
 
   /**
    * List all content types.
@@ -36,7 +48,7 @@ class ContentTypeService {
 
       foreach ($nodeTypes as $nodeType) {
         // Count fields for this bundle.
-        $fieldDefinitions = \Drupal::service('entity_field.manager')
+        $fieldDefinitions = $this->getEntityFieldManager()
           ->getFieldDefinitions('node', $nodeType->id());
         // Filter to only configurable fields (exclude base fields).
         $customFields = array_filter($fieldDefinitions, function ($field) {
@@ -100,7 +112,7 @@ class ContentTypeService {
       }
 
       // Get field definitions.
-      $fieldDefinitions = \Drupal::service('entity_field.manager')
+      $fieldDefinitions = $this->getEntityFieldManager()
         ->getFieldDefinitions('node', $id);
 
       $fields = [];
