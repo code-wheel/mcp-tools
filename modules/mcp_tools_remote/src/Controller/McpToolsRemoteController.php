@@ -128,13 +128,13 @@ final class McpToolsRemoteController implements ContainerInjectionInterface {
     $this->accessManager->setScopes($scopes);
 
     // Execute as configured user for consistent attribution.
-    $uid = (int) ($remoteConfig->get('uid') ?? 1);
-    if ($uid === 1) {
-      return new Response('Invalid execution user.', 500);
+    $uid = (int) ($remoteConfig->get('uid') ?? 0);
+    if ($uid === 0) {
+      return new Response('Execution user not configured. Visit /admin/config/services/mcp-tools/remote to set up.', 500);
     }
     $account = $this->entityTypeManagerService->getStorage('user')->load($uid);
     if (!$account) {
-      return new Response('Invalid execution user.', 500);
+      return new Response('Configured execution user (uid ' . $uid . ') not found.', 500);
     }
 
     $this->accountSwitcher->switchTo($account);

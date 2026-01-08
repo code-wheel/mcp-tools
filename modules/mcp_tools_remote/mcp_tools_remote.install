@@ -24,6 +24,47 @@ function mcp_tools_remote_requirements(string $phase): array {
     }
   }
 
+  // Runtime check for valid execution user.
+  if ($phase === 'runtime') {
+    $config = \Drupal::config('mcp_tools_remote.settings');
+    $uid = (int) $config->get('uid');
+    $enabled = (bool) $config->get('enabled');
+
+    if ($enabled) {
+      if ($uid === 0) {
+        $requirements['mcp_tools_remote_uid'] = [
+          'title' => t('MCP Tools Remote: Execution User'),
+          'value' => t('Not configured'),
+          'description' => t('The remote HTTP endpoint requires an execution user. Visit <a href=":url">Remote Settings</a> to configure.', [
+            ':url' => '/admin/config/services/mcp-tools/remote',
+          ]),
+          'severity' => REQUIREMENT_ERROR,
+        ];
+      }
+      else {
+        $user = \Drupal::entityTypeManager()->getStorage('user')->load($uid);
+        if (!$user) {
+          $requirements['mcp_tools_remote_uid'] = [
+            'title' => t('MCP Tools Remote: Execution User'),
+            'value' => t('User not found'),
+            'description' => t('Configured user (uid @uid) does not exist. Visit <a href=":url">Remote Settings</a> to fix.', [
+              '@uid' => $uid,
+              ':url' => '/admin/config/services/mcp-tools/remote',
+            ]),
+            'severity' => REQUIREMENT_ERROR,
+          ];
+        }
+        else {
+          $requirements['mcp_tools_remote_uid'] = [
+            'title' => t('MCP Tools Remote: Execution User'),
+            'value' => t('@name (uid @uid)', ['@name' => $user->getAccountName(), '@uid' => $uid]),
+            'severity' => REQUIREMENT_OK,
+          ];
+        }
+      }
+    }
+  }
+
   return $requirements;
 }
 

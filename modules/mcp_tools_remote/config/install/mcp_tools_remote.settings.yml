@@ -1,5 +1,7 @@
 enabled: false
-uid: 1
+# Execution user ID - set during install or via admin UI.
+# 0 means not configured, 1 is blocked for security.
+uid: 0
 # Optional allowlist of client IPs/CIDRs that may access the HTTP endpoint.
 # When empty, any IP is allowed (not recommended for public networks).
 allowed_ips: []
