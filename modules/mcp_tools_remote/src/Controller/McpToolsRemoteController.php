@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools_remote\Controller;
 
+use CodeWheel\McpSecurity\Validation\IpValidator;
+use CodeWheel\McpSecurity\Validation\OriginValidator;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
@@ -22,7 +24,6 @@ use Symfony\Bridge\PsrHttpMessage\Factory\HttpFoundationFactory;
 use Symfony\Bridge\PsrHttpMessage\Factory\PsrHttpFactory;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\IpUtils;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -64,6 +65,7 @@ final class McpToolsRemoteController implements ContainerInjectionInterface {
       return new Response('Not found.', 404);
     }
 
+    // Optional IP allowlist (defense-in-depth for the remote endpoint).
     $allowedIps = $remoteConfig->get('allowed_ips') ?? [];
     if (is_array($allowedIps)) {
       $allowedIps = array_values(array_filter(array_map('trim', $allowedIps)));
@@ -72,14 +74,15 @@ final class McpToolsRemoteController implements ContainerInjectionInterface {
       $allowedIps = [];
     }
 
-    // Optional IP allowlist (defense-in-depth for the remote endpoint).
     if (!empty($allowedIps)) {
+      $ipValidator = new IpValidator($allowedIps);
       $clientIp = $request->getClientIp();
-      if (!$clientIp || !IpUtils::checkIp($clientIp, $allowedIps)) {
+      if (!$clientIp || !$ipValidator->isAllowed($clientIp)) {
         return new Response('Not found.', 404);
       }
     }
 
+    // Optional origin allowlist (DNS rebinding defense-in-depth).
     $allowedOrigins = $remoteConfig->get('allowed_origins') ?? [];
     if (is_array($allowedOrigins)) {
       $allowedOrigins = array_values(array_filter(array_map('trim', $allowedOrigins)));
@@ -88,10 +91,10 @@ final class McpToolsRemoteController implements ContainerInjectionInterface {
       $allowedOrigins = [];
     }
 
-    // Optional origin allowlist (DNS rebinding defense-in-depth).
     if (!empty($allowedOrigins)) {
-      $hostname = $this->extractHostnameForAllowlist($request);
-      if (!$hostname || !$this->hostnameMatchesAllowlist($hostname, $allowedOrigins)) {
+      $originValidator = new OriginValidator($allowedOrigins);
+      $hostname = $this->extractHostname($request);
+      if (!$hostname || !$originValidator->isAllowed($hostname)) {
         return new Response('Not found.', 404);
       }
     }
@@ -196,7 +199,7 @@ final class McpToolsRemoteController implements ContainerInjectionInterface {
    * Uses Origin, then Referer, then Host (non-browser clients generally won't
    * send Origin/Referer).
    */
-  private function extractHostnameForAllowlist(Request $request): ?string {
+  private function extractHostname(Request $request): ?string {
     $origin = (string) $request->headers->get('Origin', '');
     $referer = (string) $request->headers->get('Referer', '');
 
@@ -213,56 +216,8 @@ final class McpToolsRemoteController implements ContainerInjectionInterface {
       return $host !== '' ? $host : NULL;
     }
 
-    // Origin/Referer should be a URL, but be tolerant and accept host[:port].
-    $url = $candidate;
-    if (!preg_match('/^[a-zA-Z][a-zA-Z0-9+\\-.]*:\/\//', $url)) {
-      $url = 'http://' . $url;
-    }
-
-    $host = parse_url($url, PHP_URL_HOST);
-    if (!is_string($host) || $host === '') {
-      return NULL;
-    }
-
-    return $host;
-  }
-
-  /**
-   * Checks whether a hostname matches an allowlist.
-   *
-   * Supports exact host matches and wildcard subdomains (e.g. *.example.com).
-   *
-   * @param string $hostname
-   *   Hostname to validate.
-   * @param array<int, string> $allowedOrigins
-   *   Allowlisted host patterns.
-   */
-  private function hostnameMatchesAllowlist(string $hostname, array $allowedOrigins): bool {
-    $hostname = strtolower($hostname);
-
-    foreach ($allowedOrigins as $pattern) {
-      $pattern = strtolower(trim((string) $pattern));
-      if ($pattern === '') {
-        continue;
-      }
-
-      if ($hostname === $pattern) {
-        return TRUE;
-      }
-
-      // Wildcard subdomains: *.example.com matches foo.example.com.
-      if (str_starts_with($pattern, '*.')) {
-        $suffix = substr($pattern, 1);
-        if ($suffix !== '' && str_ends_with($hostname, $suffix)) {
-          $root = ltrim($suffix, '.');
-          if ($hostname !== $root) {
-            return TRUE;
-          }
-        }
-      }
-    }
-
-    return FALSE;
+    // Use the package's hostname extraction.
+    return OriginValidator::extractHostname($candidate);
   }
 
 }

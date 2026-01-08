@@ -1,2 +1,9 @@
 __pycache__/
 *.pyc
+
+# Local MCP config with real API keys
+mcp.json
+
+# Environment files
+.env
+.env.local
