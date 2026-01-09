@@ -77,7 +77,7 @@ final class McpChangeTrackerTest extends UnitTestCase {
 
     $this->assertTrue($result['success']);
     $this->assertCount(2, $result['data']['changes']);
-    $this->assertSame(2, $result['data']['total_changes']);
+    $this->assertSame(2, $result['data']['total']);
   }
 
   public function testGetTrackedChangesFiltersEmpty(): void {
@@ -87,7 +87,7 @@ final class McpChangeTrackerTest extends UnitTestCase {
 
     $this->assertTrue($result['success']);
     $this->assertEmpty($result['data']['changes']);
-    $this->assertSame(0, $result['data']['total_changes']);
+    $this->assertSame(0, $result['data']['total']);
   }
 
   public function testClearTrackedChanges(): void {
@@ -95,10 +95,9 @@ final class McpChangeTrackerTest extends UnitTestCase {
       ->method('delete')
       ->with('mcp_tools.config_changes');
 
-    $result = $this->tracker->clearMcpChanges();
-
-    $this->assertTrue($result['success']);
-    $this->assertSame('All tracked MCP configuration changes have been cleared.', $result['data']['message']);
+    // Method returns void, just verify no exception is thrown.
+    $this->tracker->clearMcpChanges();
+    $this->assertTrue(TRUE);
   }
 
 }

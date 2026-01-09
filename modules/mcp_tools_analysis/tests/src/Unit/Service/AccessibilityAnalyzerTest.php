@@ -49,9 +49,9 @@ final class AccessibilityAnalyzerTest extends UnitTestCase {
     $result = $this->analyzer->checkAccessibility('node', 1);
 
     $this->assertTrue($result['success']);
-    $this->assertNotEmpty($result['issues']);
+    $this->assertNotEmpty($result['data']['issues']);
 
-    $altIssue = array_filter($result['issues'], fn($i) => $i['type'] === 'missing_alt');
+    $altIssue = array_filter($result['data']['issues'], fn($i) => $i['type'] === 'missing_alt');
     $this->assertNotEmpty($altIssue);
   }
 
@@ -64,7 +64,7 @@ final class AccessibilityAnalyzerTest extends UnitTestCase {
 
     $result = $this->analyzer->checkAccessibility('node', 1);
 
-    $emptyAltIssue = array_filter($result['issues'], fn($i) => $i['type'] === 'empty_alt');
+    $emptyAltIssue = array_filter($result['data']['issues'], fn($i) => $i['type'] === 'empty_alt');
     $this->assertNotEmpty($emptyAltIssue);
   }
 
@@ -77,7 +77,7 @@ final class AccessibilityAnalyzerTest extends UnitTestCase {
 
     $result = $this->analyzer->checkAccessibility('node', 1);
 
-    $emptyAltIssue = array_filter($result['issues'], fn($i) => $i['type'] === 'empty_alt');
+    $emptyAltIssue = array_filter($result['data']['issues'], fn($i) => $i['type'] === 'empty_alt');
     $this->assertEmpty($emptyAltIssue);
   }
 
@@ -90,7 +90,7 @@ final class AccessibilityAnalyzerTest extends UnitTestCase {
 
     $result = $this->analyzer->checkAccessibility('node', 1);
 
-    $altIssues = array_filter($result['issues'], fn($i) => str_contains($i['type'], 'alt'));
+    $altIssues = array_filter($result['data']['issues'], fn($i) => str_contains($i['type'], 'alt'));
     $this->assertEmpty($altIssues);
   }
 
