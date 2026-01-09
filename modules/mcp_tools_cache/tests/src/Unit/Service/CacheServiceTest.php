@@ -89,7 +89,7 @@ final class CacheServiceTest extends UnitTestCase {
         return FALSE;
       }
 
-      public function getParameter(string $name): mixed {
+      public function getParameter(string $name): \UnitEnum|array|string|int|float|bool|null {
         return NULL;
       }
 
