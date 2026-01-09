@@ -18,7 +18,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 /**
  * Configuration form for the MCP Tools remote HTTP endpoint.
  */
-final class RemoteSettingsForm extends ConfigFormBase {
+class RemoteSettingsForm extends ConfigFormBase {
 
   public function __construct(
     private readonly ApiKeyManager $apiKeyManager,
