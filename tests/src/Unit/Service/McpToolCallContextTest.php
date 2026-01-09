@@ -40,4 +40,68 @@ final class McpToolCallContextTest extends UnitTestCase {
     $this->assertNull($context->getCorrelationId());
   }
 
+  public function testMultipleEnterLeaveCyclesGenerateNewCorrelationIds(): void {
+    $context = new McpToolCallContext();
+
+    // First cycle.
+    $context->enter();
+    $firstCorrelationId = $context->getCorrelationId();
+    $this->assertNotNull($firstCorrelationId);
+    $context->leave();
+    $this->assertNull($context->getCorrelationId());
+
+    // Second cycle should generate a new correlation ID.
+    $context->enter();
+    $secondCorrelationId = $context->getCorrelationId();
+    $this->assertNotNull($secondCorrelationId);
+    $this->assertNotSame($firstCorrelationId, $secondCorrelationId);
+    $context->leave();
+  }
+
+  public function testCorrelationIdFormatIsHex(): void {
+    $context = new McpToolCallContext();
+
+    $context->enter();
+    $correlationId = $context->getCorrelationId();
+    $this->assertNotNull($correlationId);
+    // Should be 16 hex characters (8 bytes = 16 hex chars).
+    $this->assertMatchesRegularExpression('/^[0-9a-f]{16}$/', $correlationId);
+    $context->leave();
+  }
+
+  public function testLeaveDoesNothingWhenNotActive(): void {
+    $context = new McpToolCallContext();
+
+    // Multiple leaves when not active should be safe.
+    $context->leave();
+    $context->leave();
+    $context->leave();
+
+    $this->assertFalse($context->isActive());
+    $this->assertNull($context->getCorrelationId());
+  }
+
+  public function testDeepNesting(): void {
+    $context = new McpToolCallContext();
+
+    // Deep nesting should work.
+    for ($i = 0; $i < 10; $i++) {
+      $context->enter();
+    }
+    $this->assertTrue($context->isActive());
+    $correlationId = $context->getCorrelationId();
+
+    // All leaves should maintain same correlation until last.
+    for ($i = 0; $i < 9; $i++) {
+      $context->leave();
+      $this->assertTrue($context->isActive());
+      $this->assertSame($correlationId, $context->getCorrelationId());
+    }
+
+    // Final leave should deactivate.
+    $context->leave();
+    $this->assertFalse($context->isActive());
+    $this->assertNull($context->getCorrelationId());
+  }
+
 }

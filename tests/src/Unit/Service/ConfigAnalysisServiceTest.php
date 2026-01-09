@@ -104,5 +104,119 @@ class ConfigAnalysisServiceTest extends UnitTestCase {
     $this->assertArrayHasKey('error', $result);
   }
 
+  public function testListConfigReturnsAllNames(): void {
+    $configFactory = $this->createMock(ConfigFactoryInterface::class);
+    $activeStorage = $this->createMock(StorageInterface::class);
+    $activeStorage->method('listAll')
+      ->with('')
+      ->willReturn(['system.site', 'system.performance', 'node.type.article']);
+
+    $syncStorage = $this->createMock(StorageInterface::class);
+
+    $service = new ConfigAnalysisService($configFactory, $activeStorage, $syncStorage);
+    $result = $service->listConfig();
+
+    $this->assertNull($result['prefix']);
+    $this->assertSame(3, $result['total']);
+    $this->assertCount(3, $result['names']);
+    $this->assertContains('system.site', $result['names']);
+  }
+
+  public function testListConfigFiltersWithPrefix(): void {
+    $configFactory = $this->createMock(ConfigFactoryInterface::class);
+    $activeStorage = $this->createMock(StorageInterface::class);
+    $activeStorage->method('listAll')
+      ->with('system.')
+      ->willReturn(['system.site', 'system.performance']);
+
+    $syncStorage = $this->createMock(StorageInterface::class);
+
+    $service = new ConfigAnalysisService($configFactory, $activeStorage, $syncStorage);
+    $result = $service->listConfig('system.');
+
+    $this->assertSame('system.', $result['prefix']);
+    $this->assertSame(2, $result['total']);
+    $this->assertCount(2, $result['names']);
+  }
+
+  public function testGetOverridesReturnsEmptyWhenNoOverrides(): void {
+    $configMock = $this->createMock(ImmutableConfig::class);
+    $configMock->method('hasOverrides')->willReturn(FALSE);
+
+    $configFactory = $this->createMock(ConfigFactoryInterface::class);
+    $configFactory->method('get')->willReturn($configMock);
+
+    $activeStorage = $this->createMock(StorageInterface::class);
+    $syncStorage = $this->createMock(StorageInterface::class);
+
+    $service = new ConfigAnalysisService($configFactory, $activeStorage, $syncStorage);
+    $result = $service->getOverrides();
+
+    $this->assertSame(4, $result['total_checked']);
+    $this->assertSame(0, $result['overridden_count']);
+    $this->assertEmpty($result['overridden']);
+    $this->assertArrayHasKey('note', $result);
+  }
+
+  public function testGetOverridesReturnsOverriddenConfigs(): void {
+    $siteConfig = $this->createMock(ImmutableConfig::class);
+    $siteConfig->method('hasOverrides')->willReturn(TRUE);
+
+    $otherConfig = $this->createMock(ImmutableConfig::class);
+    $otherConfig->method('hasOverrides')->willReturn(FALSE);
+
+    $configFactory = $this->createMock(ConfigFactoryInterface::class);
+    $configFactory->method('get')
+      ->willReturnCallback(function (string $name) use ($siteConfig, $otherConfig) {
+        return $name === 'system.site' ? $siteConfig : $otherConfig;
+      });
+
+    $activeStorage = $this->createMock(StorageInterface::class);
+    $syncStorage = $this->createMock(StorageInterface::class);
+
+    $service = new ConfigAnalysisService($configFactory, $activeStorage, $syncStorage);
+    $result = $service->getOverrides();
+
+    $this->assertSame(4, $result['total_checked']);
+    $this->assertSame(1, $result['overridden_count']);
+    $this->assertCount(1, $result['overridden']);
+    $this->assertSame('system.site', $result['overridden'][0]['name']);
+    $this->assertTrue($result['overridden'][0]['has_overrides']);
+  }
+
+  public function testGetConfigStatusReturnsNoChangesWhenInSync(): void {
+    $configFactory = $this->createMock(ConfigFactoryInterface::class);
+    $activeStorage = $this->createMock(StorageInterface::class);
+    $activeStorage->method('listAll')->willReturn(['system.site']);
+    $activeStorage->method('readMultiple')->willReturn(['system.site' => ['name' => 'Test']]);
+
+    $syncStorage = $this->createMock(StorageInterface::class);
+    $syncStorage->method('listAll')->willReturn(['system.site']);
+    $syncStorage->method('readMultiple')->willReturn(['system.site' => ['name' => 'Test']]);
+    $syncStorage->method('getAllCollectionNames')->willReturn([]);
+
+    $service = new ConfigAnalysisService($configFactory, $activeStorage, $syncStorage);
+    $result = $service->getConfigStatus();
+
+    $this->assertArrayHasKey('has_changes', $result);
+    $this->assertArrayHasKey('total_changes', $result);
+    $this->assertArrayHasKey('changes', $result);
+  }
+
+  public function testGetConfigStatusHandlesException(): void {
+    $configFactory = $this->createMock(ConfigFactoryInterface::class);
+    $activeStorage = $this->createMock(StorageInterface::class);
+
+    $syncStorage = $this->createMock(StorageInterface::class);
+    $syncStorage->method('listAll')->willThrowException(new \RuntimeException('Storage unavailable'));
+
+    $service = new ConfigAnalysisService($configFactory, $activeStorage, $syncStorage);
+    $result = $service->getConfigStatus();
+
+    $this->assertArrayHasKey('error', $result);
+    $this->assertStringContainsString('Unable to compare configuration', $result['error']);
+    $this->assertFalse($result['has_changes']);
+  }
+
 }
 
