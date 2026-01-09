@@ -75,7 +75,9 @@ class RoleServiceTest extends UnitTestCase {
     $this->assertFalse($result['success']);
   }
 
-  #[\PHPUnit\Framework\Attributes\DataProvider('invalidMachineNameProvider')]
+  /**
+   * @dataProvider invalidMachineNameProvider
+   */
   public function testCreateRoleInvalidMachineName(string $invalidName): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
 
@@ -109,7 +111,9 @@ class RoleServiceTest extends UnitTestCase {
     $this->assertStringContainsString('32 characters', $result['error']);
   }
 
-  #[\PHPUnit\Framework\Attributes\DataProvider('reservedRoleIdProvider')]
+  /**
+   * @dataProvider reservedRoleIdProvider
+   */
   public function testCreateRoleReservedIds(string $reservedId): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
 
@@ -192,7 +196,9 @@ class RoleServiceTest extends UnitTestCase {
     $this->assertFalse($result['success']);
   }
 
-  #[\PHPUnit\Framework\Attributes\DataProvider('coreRoleIdProvider')]
+  /**
+   * @dataProvider coreRoleIdProvider
+   */
   public function testDeleteRolePreventsDeleteOfCoreRoles(string $coreRole): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
 
@@ -267,7 +273,9 @@ class RoleServiceTest extends UnitTestCase {
     $this->assertStringContainsString('bypass node access', $result['error']);
   }
 
-  #[\PHPUnit\Framework\Attributes\DataProvider('dangerousPermissionsProvider')]
+  /**
+   * @dataProvider dangerousPermissionsProvider
+   */
   public function testGrantPermissionsBlocksAllDangerousPermissions(string $dangerousPermission): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
 

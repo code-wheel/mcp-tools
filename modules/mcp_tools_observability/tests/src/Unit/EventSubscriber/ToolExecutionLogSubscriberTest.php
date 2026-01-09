@@ -24,6 +24,12 @@ final class ToolExecutionLogSubscriberTest extends TestCase {
 
   protected function setUp(): void {
     parent::setUp();
+
+    // Skip tests if MCP SDK types aren't available.
+    if (!class_exists(CallToolResult::class)) {
+      $this->markTestSkipped('MCP SDK is not installed.');
+    }
+
     $this->logger = $this->createMock(LoggerInterface::class);
     $this->subscriber = new ToolExecutionLogSubscriber($this->logger);
   }

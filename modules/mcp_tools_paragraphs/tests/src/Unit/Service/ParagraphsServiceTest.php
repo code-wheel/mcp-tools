@@ -34,6 +34,11 @@ final class ParagraphsServiceTest extends UnitTestCase {
   protected function setUp(): void {
     parent::setUp();
 
+    // Skip tests if paragraphs module interfaces aren't available.
+    if (!interface_exists(ParagraphsTypeInterface::class)) {
+      $this->markTestSkipped('Paragraphs module is not installed.');
+    }
+
     $this->entityTypeManager = $this->createMock(EntityTypeManagerInterface::class);
     $this->entityFieldManager = $this->createMock(EntityFieldManagerInterface::class);
     $this->fieldTypeManager = $this->createMock(FieldTypePluginManagerInterface::class);

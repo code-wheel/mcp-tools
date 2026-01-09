@@ -48,7 +48,7 @@ final class ConfigComparisonServiceTest extends UnitTestCase {
   public function testDiffConfigReturnsNull(): void {
     $this->activeStorage->method('read')->with('nonexistent')->willReturn(FALSE);
 
-    $result = $this->service->diffConfig('nonexistent');
+    $result = $this->service->getConfigDiff('nonexistent');
 
     $this->assertFalse($result['success']);
     $this->assertStringContainsString('not found', $result['error']);
@@ -61,7 +61,7 @@ final class ConfigComparisonServiceTest extends UnitTestCase {
     $this->activeStorage->method('read')->with('system.site')->willReturn($activeData);
     $this->syncStorage->method('read')->with('system.site')->willReturn($syncData);
 
-    $result = $this->service->diffConfig('system.site');
+    $result = $this->service->getConfigDiff('system.site');
 
     $this->assertTrue($result['success']);
     $this->assertArrayHasKey('diff', $result['data']);
@@ -74,7 +74,7 @@ final class ConfigComparisonServiceTest extends UnitTestCase {
     $this->activeStorage->method('read')->with('new.config')->willReturn($activeData);
     $this->syncStorage->method('read')->with('new.config')->willReturn(FALSE);
 
-    $result = $this->service->diffConfig('new.config');
+    $result = $this->service->getConfigDiff('new.config');
 
     $this->assertTrue($result['success']);
     $this->assertSame('new', $result['data']['status']);

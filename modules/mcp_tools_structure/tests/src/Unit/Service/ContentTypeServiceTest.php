@@ -10,6 +10,7 @@ use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Entity\Query\QueryInterface;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AuditLogger;
 use Drupal\mcp_tools_structure\Service\ContentTypeService;
@@ -80,7 +81,10 @@ class ContentTypeServiceTest extends UnitTestCase {
     $type = $this->createMock(NodeTypeInterface::class);
     $type->method('id')->willReturn($id);
     $type->method('label')->willReturn($label);
-    $type->method('getDescription')->willReturn($description);
+    // getDescription returns TranslatableMarkup in Drupal 10+.
+    $descriptionMock = $this->createMock(TranslatableMarkup::class);
+    $descriptionMock->method('__toString')->willReturn($description);
+    $type->method('getDescription')->willReturn($descriptionMock);
     return $type;
   }
 

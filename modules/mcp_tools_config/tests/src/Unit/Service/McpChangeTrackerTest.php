@@ -73,7 +73,7 @@ final class McpChangeTrackerTest extends UnitTestCase {
     ];
     $this->state->method('get')->willReturn($changes);
 
-    $result = $this->tracker->getTrackedChanges();
+    $result = $this->tracker->getMcpChanges();
 
     $this->assertTrue($result['success']);
     $this->assertCount(2, $result['data']['changes']);
@@ -83,7 +83,7 @@ final class McpChangeTrackerTest extends UnitTestCase {
   public function testGetTrackedChangesFiltersEmpty(): void {
     $this->state->method('get')->willReturn([]);
 
-    $result = $this->tracker->getTrackedChanges();
+    $result = $this->tracker->getMcpChanges();
 
     $this->assertTrue($result['success']);
     $this->assertEmpty($result['data']['changes']);
@@ -95,7 +95,7 @@ final class McpChangeTrackerTest extends UnitTestCase {
       ->method('delete')
       ->with('mcp_tools.config_changes');
 
-    $result = $this->tracker->clearTrackedChanges();
+    $result = $this->tracker->clearMcpChanges();
 
     $this->assertTrue($result['success']);
     $this->assertSame('All tracked MCP configuration changes have been cleared.', $result['data']['message']);

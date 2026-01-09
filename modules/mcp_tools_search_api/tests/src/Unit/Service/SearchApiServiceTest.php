@@ -24,6 +24,11 @@ final class SearchApiServiceTest extends UnitTestCase {
   protected function setUp(): void {
     parent::setUp();
 
+    // Skip tests if search_api module interfaces aren't available.
+    if (!interface_exists(IndexInterface::class)) {
+      $this->markTestSkipped('Search API module is not installed.');
+    }
+
     $this->entityTypeManager = $this->createMock(EntityTypeManagerInterface::class);
     $this->indexStorage = $this->createMock(EntityStorageInterface::class);
 
