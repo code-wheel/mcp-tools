@@ -205,11 +205,11 @@ final class ToolInputValidatorTest extends UnitTestCase {
   public function testValidateReturnsValidForEmptyPropertiesSchema(): void {
     $definition = $this->createMockDefinition();
 
-    // Use empty array for properties - Opis validates this as "any object".
+    // Use empty stdClass for properties - JSON requires an object {}, not array [].
     $this->schemaConverter->method('toolDefinitionToInputSchema')
       ->willReturn([
         'type' => 'object',
-        'properties' => [],
+        'properties' => new \stdClass(),
         'required' => [],
       ]);
 
