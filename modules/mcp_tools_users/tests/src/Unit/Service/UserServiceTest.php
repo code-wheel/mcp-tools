@@ -178,6 +178,7 @@ class UserServiceTest extends UnitTestCase {
     $user = $this->createMock(UserInterface::class);
     $user->method('isActive')->willReturn(FALSE);
     $user->method('getAccountName')->willReturn('testuser');
+    $user->method('getRoles')->willReturn(['authenticated']);
 
     $this->userStorage->method('load')->with(5)->willReturn($user);
 
