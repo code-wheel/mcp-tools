@@ -19,7 +19,7 @@ services:
       - '@mcp_tools.audit_logger'
 
   mcp_tools_structure.taxonomy:
-    class: Drupal\mcp_tools_structure\Service\TaxonomyService
+    class: Drupal\mcp_tools_structure\Service\TaxonomyManagementService
     arguments:
       - '@entity_type.manager'
       - '@mcp_tools.access_manager'

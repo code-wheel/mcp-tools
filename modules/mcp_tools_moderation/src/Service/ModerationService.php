@@ -34,7 +34,7 @@ class ModerationService {
    * @return array
    *   Workflows data.
    */
-  public function getWorkflows(): array {
+  public function listWorkflows(): array {
     $workflowStorage = $this->entityTypeManager->getStorage('workflow');
     $workflows = $workflowStorage->loadMultiple();
 

@@ -12,9 +12,12 @@ use Drupal\menu_link_content\Entity\MenuLinkContent;
 use Drupal\system\Entity\Menu;
 
 /**
- * Service for menu management operations.
+ * Service for menu management operations (create, update, delete).
+ *
+ * This service handles write operations for menus and menu links.
+ * For read-only operations, see \Drupal\mcp_tools\Service\MenuService.
  */
-class MenuService {
+class MenuManagementService {
 
   /**
    * System menus that cannot be deleted.

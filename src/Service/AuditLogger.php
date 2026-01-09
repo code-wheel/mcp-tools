@@ -15,7 +15,7 @@ use Symfony\Component\HttpFoundation\RequestStack;
  *
  * Shared by all MCP write submodules.
  */
-class AuditLogger {
+class AuditLogger implements AuditLoggerInterface {
 
   protected LoggerInterface $logger;
 

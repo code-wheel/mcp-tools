@@ -22,18 +22,8 @@ class ContentTypeService {
     protected ConfigFactoryInterface $configFactory,
     protected AccessManager $accessManager,
     protected AuditLogger $auditLogger,
-    protected ?EntityFieldManagerInterface $entityFieldManager = NULL,
+    protected EntityFieldManagerInterface $entityFieldManager,
   ) {}
-
-  /**
-   * Gets the entity field manager service.
-   */
-  protected function getEntityFieldManager(): EntityFieldManagerInterface {
-    if ($this->entityFieldManager === NULL) {
-      $this->entityFieldManager = \Drupal::service('entity_field.manager');
-    }
-    return $this->entityFieldManager;
-  }
 
   /**
    * List all content types.
@@ -48,7 +38,7 @@ class ContentTypeService {
 
       foreach ($nodeTypes as $nodeType) {
         // Count fields for this bundle.
-        $fieldDefinitions = $this->getEntityFieldManager()
+        $fieldDefinitions = $this->entityFieldManager
           ->getFieldDefinitions('node', $nodeType->id());
         // Filter to only configurable fields (exclude base fields).
         $customFields = array_filter($fieldDefinitions, function ($field) {
@@ -112,7 +102,7 @@ class ContentTypeService {
       }
 
       // Get field definitions.
-      $fieldDefinitions = $this->getEntityFieldManager()
+      $fieldDefinitions = $this->entityFieldManager
         ->getFieldDefinitions('node', $id);
 
       $fields = [];

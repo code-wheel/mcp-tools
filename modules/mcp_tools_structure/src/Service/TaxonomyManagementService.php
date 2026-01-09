@@ -9,9 +9,12 @@ use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AuditLogger;
 
 /**
- * Service for managing taxonomies.
+ * Service for managing taxonomies (vocabularies and terms).
+ *
+ * This service handles write operations for taxonomy entities.
+ * For read-only operations, see \Drupal\mcp_tools\Service\TaxonomyService.
  */
-class TaxonomyService {
+class TaxonomyManagementService {
 
   public function __construct(
     protected EntityTypeManagerInterface $entityTypeManager,

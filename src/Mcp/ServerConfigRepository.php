@@ -14,6 +14,12 @@ use Symfony\Component\HttpFoundation\Request;
 
 /**
  * Loads MCP server profiles from configuration.
+ *
+ * Note: This class injects ContainerInterface to resolve dynamic permission
+ * callback references from configuration (e.g., 'mcp_tools.access_manager:checkAccess').
+ * This is intentional - the service locator pattern is necessary here because
+ * callback services are configured dynamically and can't be known at compile time.
+ * This is similar to how Drupal's plugin managers resolve tagged services.
  */
 final class ServerConfigRepository {
 

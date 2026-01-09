@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools_menus\Plugin\tool\Tool;
 
-use Drupal\mcp_tools_menus\Service\MenuService;
+use Drupal\mcp_tools_menus\Service\MenuManagementService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\Core\Plugin\Context\ContextDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
@@ -58,7 +58,7 @@ class UpdateMenuLink extends McpToolsToolBase {
   protected const MCP_CATEGORY = 'menus';
 
 
-  protected MenuService $menuService;
+  protected MenuManagementService $menuService;
 
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     $instance = parent::create($container, $configuration, $plugin_id, $plugin_definition);

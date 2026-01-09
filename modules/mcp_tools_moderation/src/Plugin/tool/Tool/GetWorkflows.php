@@ -55,7 +55,7 @@ class GetWorkflows extends McpToolsToolBase {
    * {@inheritdoc}
    */
   protected function executeLegacy(array $input): array {
-    return $this->moderationService->getWorkflows();
+    return $this->moderationService->listWorkflows();
   }
 
   

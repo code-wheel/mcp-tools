@@ -156,7 +156,7 @@ class SettingsForm extends ConfigFormBase {
       '#open' => TRUE,
     ];
 
-    $form['rate_limiting']['enabled'] = [
+    $form['rate_limiting']['rate_limiting_enabled'] = [
       '#type' => 'checkbox',
       '#title' => $this->t('Enable rate limiting'),
       '#description' => $this->t('When enabled, write operations are limited per client. <strong>Recommended for production.</strong>'),
@@ -170,7 +170,7 @@ class SettingsForm extends ConfigFormBase {
       '#default_value' => $config->get('rate_limiting.trust_client_id_header') ?? FALSE,
       '#states' => [
         'visible' => [
-          ':input[name="enabled"]' => ['checked' => TRUE],
+          ':input[name="rate_limiting_enabled"]' => ['checked' => TRUE],
         ],
       ],
     ];
@@ -184,7 +184,7 @@ class SettingsForm extends ConfigFormBase {
       '#max' => 1000,
       '#states' => [
         'visible' => [
-          ':input[name="enabled"]' => ['checked' => TRUE],
+          ':input[name="rate_limiting_enabled"]' => ['checked' => TRUE],
         ],
       ],
     ];
@@ -198,7 +198,7 @@ class SettingsForm extends ConfigFormBase {
       '#max' => 10000,
       '#states' => [
         'visible' => [
-          ':input[name="enabled"]' => ['checked' => TRUE],
+          ':input[name="rate_limiting_enabled"]' => ['checked' => TRUE],
         ],
       ],
     ];
@@ -212,7 +212,7 @@ class SettingsForm extends ConfigFormBase {
       '#max' => 1000,
       '#states' => [
         'visible' => [
-          ':input[name="enabled"]' => ['checked' => TRUE],
+          ':input[name="rate_limiting_enabled"]' => ['checked' => TRUE],
         ],
       ],
     ];
@@ -226,7 +226,7 @@ class SettingsForm extends ConfigFormBase {
       '#max' => 1000,
       '#states' => [
         'visible' => [
-          ':input[name="enabled"]' => ['checked' => TRUE],
+          ':input[name="rate_limiting_enabled"]' => ['checked' => TRUE],
         ],
       ],
     ];
@@ -468,7 +468,7 @@ class SettingsForm extends ConfigFormBase {
     $config->set('access.audit_logging', (bool) $form_state->getValue('audit_logging'));
 
     // Rate limiting settings.
-    $config->set('rate_limiting.enabled', (bool) $form_state->getValue('enabled'));
+    $config->set('rate_limiting.enabled', (bool) $form_state->getValue('rate_limiting_enabled'));
     $config->set('rate_limiting.trust_client_id_header', (bool) $form_state->getValue('trust_client_id_header'));
     $config->set('rate_limiting.max_writes_per_minute', (int) $form_state->getValue('max_writes_per_minute'));
     $config->set('rate_limiting.max_writes_per_hour', (int) $form_state->getValue('max_writes_per_hour'));

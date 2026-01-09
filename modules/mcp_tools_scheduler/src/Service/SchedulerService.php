@@ -33,21 +33,27 @@ class SchedulerService {
    *   Filter by schedule type: 'publish', 'unpublish', or 'all'.
    * @param int $limit
    *   Maximum number of items to return.
+   * @param int $offset
+   *   Number of items to skip (for pagination).
    *
    * @return array
    *   Result array with scheduled content.
    */
-  public function getScheduledContent(string $type = 'all', int $limit = 50): array {
+  public function getScheduledContent(string $type = 'all', int $limit = 50, int $offset = 0): array {
     $nodeStorage = $this->entityTypeManager->getStorage('node');
     $results = [];
 
     try {
+      // For combined queries, we need to fetch more than the limit to handle
+      // proper pagination after sorting. Fetch extra items then apply offset/limit.
+      $fetchLimit = ($type === 'all') ? ($limit + $offset) * 2 : $limit + $offset;
+
       if ($type === 'publish' || $type === 'all') {
         $query = $nodeStorage->getQuery()
           ->accessCheck(TRUE)
           ->condition('publish_on', 0, '>')
           ->sort('publish_on', 'ASC')
-          ->range(0, $limit);
+          ->range(0, $fetchLimit);
 
         $nids = $query->execute();
         if (!empty($nids)) {
@@ -71,7 +77,7 @@ class SchedulerService {
           ->accessCheck(TRUE)
           ->condition('unpublish_on', 0, '>')
           ->sort('unpublish_on', 'ASC')
-          ->range(0, $limit);
+          ->range(0, $fetchLimit);
 
         $nids = $query->execute();
         if (!empty($nids)) {
@@ -93,10 +99,11 @@ class SchedulerService {
       // Sort combined results by timestamp.
       usort($results, fn($a, $b) => $a['timestamp'] <=> $b['timestamp']);
 
-      // Apply limit after combining.
-      if (count($results) > $limit) {
-        $results = array_slice($results, 0, $limit);
-      }
+      // Calculate total before applying pagination.
+      $totalBeforePagination = count($results);
+
+      // Apply offset and limit after combining and sorting.
+      $results = array_slice($results, $offset, $limit);
 
       return [
         'success' => TRUE,
@@ -104,6 +111,11 @@ class SchedulerService {
           'items' => $results,
           'count' => count($results),
           'filter' => $type,
+          'pagination' => [
+            'limit' => $limit,
+            'offset' => $offset,
+            'has_more' => $totalBeforePagination > ($offset + $limit),
+          ],
         ],
       ];
     }

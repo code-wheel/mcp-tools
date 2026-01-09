@@ -68,11 +68,12 @@ final class CronServiceTest extends UnitTestCase {
     ]);
 
     $status = $service->getCronStatus();
-    $this->assertSame(1700000000, $status['last_run_timestamp']);
-    $this->assertSame(3600, $status['autorun_threshold']);
-    $this->assertSame('1 hours', $status['threshold_human']);
-    $this->assertSame('cronkey', $status['cron_key']);
-    $this->assertGreaterThanOrEqual(3, $status['jobs_count']);
+    $this->assertTrue($status['success']);
+    $this->assertSame(1700000000, $status['data']['last_run_timestamp']);
+    $this->assertSame(3600, $status['data']['autorun_threshold']);
+    $this->assertSame('1 hours', $status['data']['threshold_human']);
+    $this->assertSame('cronkey', $status['data']['cron_key']);
+    $this->assertGreaterThanOrEqual(3, $status['data']['jobs_count']);
   }
 
   public function testRunCronReturnsSuccessWhenCronRuns(): void {

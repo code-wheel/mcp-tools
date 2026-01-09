@@ -4,6 +4,36 @@ All notable changes to the MCP Tools module will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.0.0-alpha26] - 2026-01-09
+
+### Added
+
+- **New standalone packages** for the PHP MCP ecosystem:
+  - [code-wheel/mcp-error-codes](https://github.com/code-wheel/mcp-error-codes) v1.1 - Standardized error codes with helper methods
+  - [code-wheel/mcp-events](https://github.com/code-wheel/mcp-events) v2.1 - Tool execution events with JsonSerializable support
+- **Service interfaces**: Added `AccessManagerInterface`, `AuditLoggerInterface`, `RateLimiterInterface` for better testability
+- **MenuManagementService**: Renamed from MenuService with proper interface
+- **TaxonomyManagementService**: Renamed from TaxonomyService (in mcp_tools_structure) with proper interface
+
+### Changed
+
+- **External package dependencies**: Now uses external Composer packages instead of bundled code:
+  - `code-wheel/mcp-error-codes: ^1.1` - Error code constants
+  - `code-wheel/mcp-events: ^2.0` - Tool execution events (decoupled from mcp/sdk)
+- **Service architecture**: Core services now implement interfaces for dependency injection
+- **TemplateService**: Refactored for cleaner architecture with ComponentFactory
+- **WriteAccessTrait**: Improved dry-run handling and confirmation flow
+
+### Removed
+
+- **Bundled event classes**: Removed `src/Mcp/Event/Tool*Event.php` (now in external package)
+- **Duplicate services**: Removed duplicate TaxonomyService from mcp_tools_structure (uses core TaxonomyService)
+
+### Fixed
+
+- **McpToolsRemoteController**: Improved error handling and response formatting
+- **SchedulerService**: Fixed service injection and method signatures
+
 ## [1.0.0-alpha25] - 2026-01-08
 
 ### Added

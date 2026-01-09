@@ -99,5 +99,33 @@ final class WriteAccessTraitTest extends UnitTestCase {
     $this->assertSame(12, $denied['retry_after']);
   }
 
+  public function testCheckWriteAccessThrowsIfAccessManagerNotInjected(): void {
+    $tool = new class() {
+      use WriteAccessTrait;
+
+      public function publicCheck(): ?array {
+        return $this->checkWriteAccess();
+      }
+    };
+
+    $this->expectException(\LogicException::class);
+    $this->expectExceptionMessage('AccessManager must be injected');
+    $tool->publicCheck();
+  }
+
+  public function testCheckAdminAccessThrowsIfAccessManagerNotInjected(): void {
+    $tool = new class() {
+      use WriteAccessTrait;
+
+      public function publicCheck(): ?array {
+        return $this->checkAdminAccess();
+      }
+    };
+
+    $this->expectException(\LogicException::class);
+    $this->expectExceptionMessage('AccessManager must be injected');
+    $tool->publicCheck();
+  }
+
 }
 

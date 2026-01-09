@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 namespace Drupal\Tests\mcp_tools_config\Unit\Service;
 
-use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Config\MemoryStorage;
-use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\State\StateInterface;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AuditLogger;
+use Drupal\mcp_tools_config\Service\ConfigComparisonService;
 use Drupal\mcp_tools_config\Service\ConfigManagementService;
+use Drupal\mcp_tools_config\Service\McpChangeTracker;
+use Drupal\mcp_tools_config\Service\OperationPreviewService;
 use Drupal\Tests\UnitTestCase;
 
 #[\PHPUnit\Framework\Attributes\CoversClass(\Drupal\mcp_tools_config\Service\ConfigManagementService::class)]
@@ -47,14 +48,19 @@ final class ConfigManagementServiceTest extends UnitTestCase {
   }
 
   private function createService(): ConfigManagementService {
+    // Create the specialized services.
+    $configComparisonService = new ConfigComparisonService($this->active, $this->sync);
+    $mcpChangeTracker = new McpChangeTracker($this->state);
+    $operationPreviewService = new OperationPreviewService($this->active, $configComparisonService);
+
     return new ConfigManagementService(
-      $this->createMock(ConfigFactoryInterface::class),
       $this->active,
       $this->sync,
-      $this->state,
-      $this->createMock(FileSystemInterface::class),
       $this->accessManager,
       $this->auditLogger,
+      $configComparisonService,
+      $mcpChangeTracker,
+      $operationPreviewService,
     );
   }
 
@@ -329,6 +335,42 @@ final class ConfigManagementServiceTest extends UnitTestCase {
     ]);
     $this->assertTrue($view['success']);
     $this->assertTrue($view['data']['already_exists']);
+  }
+
+  public function testFacadeDelegatesToCorrectServices(): void {
+    $configComparisonService = $this->createMock(ConfigComparisonService::class);
+    $configComparisonService->expects($this->once())->method('getConfigChanges')
+      ->willReturn(['success' => TRUE, 'data' => []]);
+    $configComparisonService->expects($this->once())->method('getConfigDiff')
+      ->with('test.config')
+      ->willReturn(['success' => TRUE, 'data' => []]);
+
+    $mcpChangeTracker = $this->createMock(McpChangeTracker::class);
+    $mcpChangeTracker->expects($this->once())->method('getMcpChanges')
+      ->willReturn(['success' => TRUE, 'data' => []]);
+    $mcpChangeTracker->expects($this->once())->method('trackChange')
+      ->with('test.config', 'update');
+
+    $operationPreviewService = $this->createMock(OperationPreviewService::class);
+    $operationPreviewService->expects($this->once())->method('previewOperation')
+      ->with('create_role', ['id' => 'test'])
+      ->willReturn(['success' => TRUE, 'data' => []]);
+
+    $service = new ConfigManagementService(
+      $this->active,
+      $this->sync,
+      $this->accessManager,
+      $this->auditLogger,
+      $configComparisonService,
+      $mcpChangeTracker,
+      $operationPreviewService,
+    );
+
+    $service->getConfigChanges();
+    $service->getConfigDiff('test.config');
+    $service->getMcpChanges();
+    $service->trackChange('test.config', 'update');
+    $service->previewOperation('create_role', ['id' => 'test']);
   }
 
 }

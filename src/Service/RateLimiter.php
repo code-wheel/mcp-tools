@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Drupal\mcp_tools\Service;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\PrivateKey;
 use Drupal\Core\State\StateInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 
@@ -16,7 +17,7 @@ use Symfony\Component\HttpFoundation\RequestStack;
  * - Per-hour limits
  * - Per-operation type limits
  */
-class RateLimiter {
+class RateLimiter implements RateLimiterInterface {
 
   /**
    * Default rate limits.
@@ -42,6 +43,7 @@ class RateLimiter {
     protected ConfigFactoryInterface $configFactory,
     protected StateInterface $state,
     protected RequestStack $requestStack,
+    protected ?PrivateKey $privateKey = NULL,
   ) {}
 
   /**
@@ -335,12 +337,14 @@ class RateLimiter {
     $userId = function_exists('posix_geteuid') ? posix_geteuid() : 0;
 
     // Include a machine-specific secret if available (from Drupal's private key).
-    $privateKey = '';
-    try {
-      $privateKey = \Drupal::service('private_key')->get() ?? '';
-    }
-    catch (\Exception $e) {
-      // Ignore if service unavailable.
+    $privateKeyValue = '';
+    if ($this->privateKey !== NULL) {
+      try {
+        $privateKeyValue = $this->privateKey->get() ?? '';
+      }
+      catch (\Exception $e) {
+        // Ignore if service unavailable.
+      }
     }
 
     $cliIdentifier = sprintf(
@@ -348,7 +352,7 @@ class RateLimiter {
       $processId,
       $parentPid,
       $userId,
-      substr(hash('sha256', $privateKey), 0, 16)
+      substr(hash('sha256', $privateKeyValue), 0, 16)
     );
 
     return hash('sha256', $cliIdentifier);

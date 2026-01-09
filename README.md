@@ -21,7 +21,7 @@ CI runs tests against all supported Drupal versions on every push.
 
 MCP Tools provides curated, high-value tools that solve real problems—not generic CRUD. Inspired by [Sentry MCP](https://docs.sentry.io/product/sentry-mcp/).
 
-**Current:** 215 tools total (25 read-only + 190 write/analysis operations across 33 submodules)
+**Current:** 222 tools total (25 read-only + 197 write/analysis operations across 34 submodules)
 
 **Resources:** MCP Tools now exposes read-only resources (e.g., `drupal://site/status`, `drupal://site/snapshot`) for lightweight site context, including blueprint + config drift summary.
 **Prompts:** MCP Tools now exposes prompts (e.g., `mcp_tools/site-brief`) for reusable analysis instructions.
@@ -113,10 +113,10 @@ To reduce tool list size for remote clients, enable **Gateway mode** in the remo
 
 ## Observability hooks
 
-MCP Tools dispatches PSR-14 events during tool execution. Subscribe to these classes:
-- `Drupal\mcp_tools\Mcp\Event\ToolExecutionStartedEvent`
-- `Drupal\mcp_tools\Mcp\Event\ToolExecutionSucceededEvent`
-- `Drupal\mcp_tools\Mcp\Event\ToolExecutionFailedEvent`
+MCP Tools dispatches PSR-14 events during tool execution. Subscribe to these classes from `code-wheel/mcp-events`:
+- `CodeWheel\McpEvents\ToolExecutionStartedEvent`
+- `CodeWheel\McpEvents\ToolExecutionSucceededEvent`
+- `CodeWheel\McpEvents\ToolExecutionFailedEvent`
 
 Events include tool name, plugin ID, sanitized arguments, request ID, and execution duration. Failed events include a reason constant (e.g., `REASON_VALIDATION`, `REASON_ACCESS_DENIED`).
 

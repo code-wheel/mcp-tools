@@ -32,7 +32,7 @@ final class ModerationServiceTest extends UnitTestCase {
     );
   }
 
-  public function testGetWorkflowsFiltersToContentModerationType(): void {
+  public function testListWorkflowsFiltersToContentModerationType(): void {
     $moderatedWorkflow = new class() {
       public function id(): string { return 'editorial'; }
       public function label(): string { return 'Editorial'; }
@@ -78,7 +78,7 @@ final class ModerationServiceTest extends UnitTestCase {
     $entityTypeManager->method('getStorage')->with('workflow')->willReturn($workflowStorage);
 
     $service = $this->createService(['entity_type_manager' => $entityTypeManager]);
-    $result = $service->getWorkflows();
+    $result = $service->listWorkflows();
 
     $this->assertTrue($result['success']);
     $this->assertSame(1, $result['data']['total']);

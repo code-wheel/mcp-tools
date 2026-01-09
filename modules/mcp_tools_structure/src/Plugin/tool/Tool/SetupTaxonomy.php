@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools_structure\Plugin\tool\Tool;
 
-use Drupal\mcp_tools_structure\Service\TaxonomyService;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\mcp_tools_structure\Service\TaxonomyManagementService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\Core\Plugin\Context\ContextDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
@@ -84,11 +85,13 @@ class SetupTaxonomy extends McpToolsToolBase {
 
   protected const MCP_CATEGORY = 'structure';
 
-  protected TaxonomyService $taxonomyService;
+  protected TaxonomyManagementService $taxonomyService;
+  protected EntityTypeManagerInterface $entityTypeManager;
 
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     $instance = parent::create($container, $configuration, $plugin_id, $plugin_definition);
     $instance->taxonomyService = $container->get('mcp_tools_structure.taxonomy');
+    $instance->entityTypeManager = $container->get('entity_type.manager');
     return $instance;
   }
 
@@ -175,7 +178,7 @@ class SetupTaxonomy extends McpToolsToolBase {
    */
   protected function updateTermParent(int $tid, int $parentTid): void {
     try {
-      $term = \Drupal::entityTypeManager()->getStorage('taxonomy_term')->load($tid);
+      $term = $this->entityTypeManager->getStorage('taxonomy_term')->load($tid);
       if ($term) {
         $term->set('parent', $parentTid);
         $term->save();

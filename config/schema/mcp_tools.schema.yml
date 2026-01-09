@@ -88,12 +88,6 @@ mcp_tools.settings:
         max_structure_changes_per_hour:
           type: integer
           label: 'Maximum structure changes per hour'
-    enabled_categories:
-      type: sequence
-      label: 'Enabled categories'
-      sequence:
-        type: string
-        label: 'Category'
     allowed_hosts:
       type: sequence
       label: 'Allowed hosts for SSRF protection'

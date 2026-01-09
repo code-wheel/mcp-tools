@@ -1,10 +1,63 @@
 services:
-  mcp_tools_analysis.analysis:
-    class: Drupal\mcp_tools_analysis\Service\AnalysisService
+  # Specialized analyzer services
+  mcp_tools_analysis.link_analyzer:
+    class: Drupal\mcp_tools_analysis\Service\LinkAnalyzer
+    arguments:
+      - '@entity_type.manager'
+      - '@http_client'
+      - '@config.factory'
+      - '@request_stack'
+
+  mcp_tools_analysis.content_auditor:
+    class: Drupal\mcp_tools_analysis\Service\ContentAuditor
     arguments:
       - '@entity_type.manager'
       - '@database'
-      - '@http_client'
+
+  mcp_tools_analysis.seo_analyzer:
+    class: Drupal\mcp_tools_analysis\Service\SeoAnalyzer
+    arguments:
+      - '@entity_type.manager'
+      - '@module_handler'
+
+  mcp_tools_analysis.security_auditor:
+    class: Drupal\mcp_tools_analysis\Service\SecurityAuditor
+    arguments:
+      - '@entity_type.manager'
       - '@config.factory'
       - '@module_handler'
-      - '@request_stack'
+
+  mcp_tools_analysis.field_analyzer:
+    class: Drupal\mcp_tools_analysis\Service\FieldAnalyzer
+    arguments:
+      - '@entity_type.manager'
+
+  mcp_tools_analysis.performance_analyzer:
+    class: Drupal\mcp_tools_analysis\Service\PerformanceAnalyzer
+    arguments:
+      - '@database'
+      - '@config.factory'
+      - '@module_handler'
+
+  mcp_tools_analysis.accessibility_analyzer:
+    class: Drupal\mcp_tools_analysis\Service\AccessibilityAnalyzer
+    arguments:
+      - '@entity_type.manager'
+
+  mcp_tools_analysis.duplicate_detector:
+    class: Drupal\mcp_tools_analysis\Service\DuplicateDetector
+    arguments:
+      - '@entity_type.manager'
+
+  # Main facade service
+  mcp_tools_analysis.analysis:
+    class: Drupal\mcp_tools_analysis\Service\AnalysisService
+    arguments:
+      - '@mcp_tools_analysis.link_analyzer'
+      - '@mcp_tools_analysis.content_auditor'
+      - '@mcp_tools_analysis.seo_analyzer'
+      - '@mcp_tools_analysis.security_auditor'
+      - '@mcp_tools_analysis.field_analyzer'
+      - '@mcp_tools_analysis.performance_analyzer'
+      - '@mcp_tools_analysis.accessibility_analyzer'
+      - '@mcp_tools_analysis.duplicate_detector'

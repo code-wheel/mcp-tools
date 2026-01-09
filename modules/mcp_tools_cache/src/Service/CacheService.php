@@ -4,9 +4,17 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools_cache\Service;
 
+use Drupal\Core\Asset\AssetCollectionOptimizerInterface;
+use Drupal\Core\Cache\CacheBackendInterface;
+use Drupal\Core\Cache\CacheFactoryInterface;
 use Drupal\Core\Cache\CacheTagsInvalidatorInterface;
 use Drupal\Core\Database\Connection;
+use Drupal\Core\DrupalKernelInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
+use Drupal\Core\Menu\MenuLinkManagerInterface;
+use Drupal\Core\Routing\RouteBuilderInterface;
+use Drupal\Core\Theme\Registry;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Service for cache management operations.
@@ -33,6 +41,14 @@ class CacheService {
     protected CacheTagsInvalidatorInterface $cacheTagsInvalidator,
     protected ModuleHandlerInterface $moduleHandler,
     protected Connection $database,
+    protected CacheFactoryInterface $cacheFactory,
+    protected RouteBuilderInterface $routerBuilder,
+    protected Registry $themeRegistry,
+    protected AssetCollectionOptimizerInterface $cssOptimizer,
+    protected AssetCollectionOptimizerInterface $jsOptimizer,
+    protected DrupalKernelInterface $kernel,
+    protected MenuLinkManagerInterface $menuLinkManager,
+    protected ContainerInterface $container,
   ) {}
 
   /**
@@ -54,9 +70,12 @@ class CacheService {
     }
 
     return [
-      'total_bins' => count($bins),
-      'bins' => $status,
-      'cache_tags_table_size' => $this->getCacheTagsTableSize(),
+      'success' => TRUE,
+      'data' => [
+        'total_bins' => count($bins),
+        'bins' => $status,
+        'cache_tags_table_size' => $this->getCacheTagsTableSize(),
+      ],
     ];
   }
 
@@ -98,7 +117,7 @@ class CacheService {
     }
 
     try {
-      $cache = \Drupal::cache($bin);
+      $cache = $this->cacheFactory->get($bin);
       $cache->deleteAll();
 
       return [
@@ -195,22 +214,22 @@ class CacheService {
     try {
       switch ($type) {
         case 'router':
-          \Drupal::service('router.builder')->rebuild();
+          $this->routerBuilder->rebuild();
           break;
 
         case 'theme':
-          \Drupal::service('theme.registry')->reset();
-          \Drupal::service('asset.css.collection_optimizer')->deleteAll();
-          \Drupal::service('asset.js.collection_optimizer')->deleteAll();
+          $this->themeRegistry->reset();
+          $this->cssOptimizer->deleteAll();
+          $this->jsOptimizer->deleteAll();
           _drupal_flush_css_js();
           break;
 
         case 'container':
-          \Drupal::service('kernel')->rebuildContainer();
+          $this->kernel->rebuildContainer();
           break;
 
         case 'menu':
-          \Drupal::service('plugin.manager.menu.link')->rebuild();
+          $this->menuLinkManager->rebuild();
           break;
       }
 
@@ -240,8 +259,7 @@ class CacheService {
     $bins = self::CORE_BINS;
 
     // Add any additional bins from contrib modules.
-    $container = \Drupal::getContainer();
-    foreach ($container->getServiceIds() as $id) {
+    foreach ($this->container->getServiceIds() as $id) {
       if (str_starts_with($id, 'cache.') && $id !== 'cache.backend.database') {
         $bin = substr($id, 6);
         if (!in_array($bin, $bins)) {
@@ -265,7 +283,7 @@ class CacheService {
    */
   protected function getCacheBackend(string $bin): string {
     try {
-      $cache = \Drupal::cache($bin);
+      $cache = $this->cacheFactory->get($bin);
       $class = get_class($cache);
       return match (TRUE) {
         str_contains($class, 'Database') => 'database',

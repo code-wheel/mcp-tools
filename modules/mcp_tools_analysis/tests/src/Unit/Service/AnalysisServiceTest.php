@@ -12,7 +12,15 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Entity\Query\QueryInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Database\StatementInterface;
+use Drupal\mcp_tools_analysis\Service\AccessibilityAnalyzer;
 use Drupal\mcp_tools_analysis\Service\AnalysisService;
+use Drupal\mcp_tools_analysis\Service\ContentAuditor;
+use Drupal\mcp_tools_analysis\Service\DuplicateDetector;
+use Drupal\mcp_tools_analysis\Service\FieldAnalyzer;
+use Drupal\mcp_tools_analysis\Service\LinkAnalyzer;
+use Drupal\mcp_tools_analysis\Service\PerformanceAnalyzer;
+use Drupal\mcp_tools_analysis\Service\SecurityAuditor;
+use Drupal\mcp_tools_analysis\Service\SeoAnalyzer;
 use Drupal\Tests\UnitTestCase;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Psr7\Response;
@@ -23,13 +31,32 @@ use Symfony\Component\HttpFoundation\RequestStack;
 final class AnalysisServiceTest extends UnitTestCase {
 
   private function createService(array $overrides = []): AnalysisService {
+    // Create the specialized analyzers with dependencies.
+    $entityTypeManager = $overrides['entity_type_manager'] ?? $this->createMock(EntityTypeManagerInterface::class);
+    $database = $overrides['database'] ?? $this->createMock(Connection::class);
+    $httpClient = $overrides['http_client'] ?? $this->createMock(ClientInterface::class);
+    $configFactory = $overrides['config_factory'] ?? $this->createMock(ConfigFactoryInterface::class);
+    $moduleHandler = $overrides['module_handler'] ?? $this->createMock(ModuleHandlerInterface::class);
+    $requestStack = $overrides['request_stack'] ?? $this->createMock(RequestStack::class);
+
+    $linkAnalyzer = new LinkAnalyzer($entityTypeManager, $httpClient, $configFactory, $requestStack);
+    $contentAuditor = new ContentAuditor($entityTypeManager, $database);
+    $seoAnalyzer = new SeoAnalyzer($entityTypeManager, $moduleHandler);
+    $securityAuditor = new SecurityAuditor($entityTypeManager, $configFactory, $moduleHandler);
+    $fieldAnalyzer = new FieldAnalyzer($entityTypeManager);
+    $performanceAnalyzer = new PerformanceAnalyzer($database, $configFactory, $moduleHandler);
+    $accessibilityAnalyzer = new AccessibilityAnalyzer($entityTypeManager);
+    $duplicateDetector = new DuplicateDetector($entityTypeManager);
+
     return new AnalysisService(
-      $overrides['entity_type_manager'] ?? $this->createMock(EntityTypeManagerInterface::class),
-      $overrides['database'] ?? $this->createMock(Connection::class),
-      $overrides['http_client'] ?? $this->createMock(ClientInterface::class),
-      $overrides['config_factory'] ?? $this->createMock(ConfigFactoryInterface::class),
-      $overrides['module_handler'] ?? $this->createMock(ModuleHandlerInterface::class),
-      $overrides['request_stack'] ?? $this->createMock(RequestStack::class),
+      $linkAnalyzer,
+      $contentAuditor,
+      $seoAnalyzer,
+      $securityAuditor,
+      $fieldAnalyzer,
+      $performanceAnalyzer,
+      $accessibilityAnalyzer,
+      $duplicateDetector,
     );
   }
 
@@ -461,6 +488,65 @@ final class AnalysisServiceTest extends UnitTestCase {
     $result = $service->findDuplicateContent('article', 'title', 0.8);
     $this->assertTrue($result['success']);
     $this->assertSame(1, $result['data']['duplicate_count']);
+  }
+
+  public function testFacadeDelegatesToCorrectAnalyzers(): void {
+    $linkAnalyzer = $this->createMock(LinkAnalyzer::class);
+    $linkAnalyzer->expects($this->once())->method('findBrokenLinks')
+      ->with(50, 'https://test.com')
+      ->willReturn(['success' => TRUE, 'data' => []]);
+
+    $contentAuditor = $this->createMock(ContentAuditor::class);
+    $contentAuditor->expects($this->once())->method('contentAudit')
+      ->with(['stale_days' => 30])
+      ->willReturn(['success' => TRUE, 'data' => []]);
+
+    $seoAnalyzer = $this->createMock(SeoAnalyzer::class);
+    $seoAnalyzer->expects($this->once())->method('analyzeSeo')
+      ->with('node', 123)
+      ->willReturn(['success' => TRUE, 'data' => []]);
+
+    $securityAuditor = $this->createMock(SecurityAuditor::class);
+    $securityAuditor->expects($this->once())->method('securityAudit')
+      ->willReturn(['success' => TRUE, 'data' => []]);
+
+    $fieldAnalyzer = $this->createMock(FieldAnalyzer::class);
+    $fieldAnalyzer->expects($this->once())->method('findUnusedFields')
+      ->willReturn(['success' => TRUE, 'data' => []]);
+
+    $performanceAnalyzer = $this->createMock(PerformanceAnalyzer::class);
+    $performanceAnalyzer->expects($this->once())->method('analyzePerformance')
+      ->willReturn(['success' => TRUE, 'data' => []]);
+
+    $accessibilityAnalyzer = $this->createMock(AccessibilityAnalyzer::class);
+    $accessibilityAnalyzer->expects($this->once())->method('checkAccessibility')
+      ->with('node', 456)
+      ->willReturn(['success' => TRUE, 'data' => []]);
+
+    $duplicateDetector = $this->createMock(DuplicateDetector::class);
+    $duplicateDetector->expects($this->once())->method('findDuplicateContent')
+      ->with('article', 'body', 0.9)
+      ->willReturn(['success' => TRUE, 'data' => []]);
+
+    $service = new AnalysisService(
+      $linkAnalyzer,
+      $contentAuditor,
+      $seoAnalyzer,
+      $securityAuditor,
+      $fieldAnalyzer,
+      $performanceAnalyzer,
+      $accessibilityAnalyzer,
+      $duplicateDetector,
+    );
+
+    $service->findBrokenLinks(50, 'https://test.com');
+    $service->contentAudit(['stale_days' => 30]);
+    $service->analyzeSeo('node', 123);
+    $service->securityAudit();
+    $service->findUnusedFields();
+    $service->analyzePerformance();
+    $service->checkAccessibility('node', 456);
+    $service->findDuplicateContent('article', 'body', 0.9);
   }
 
 }

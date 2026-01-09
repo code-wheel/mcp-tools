@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\Tests\mcp_tools\Unit\Service;
 
+use Drupal\Core\Database\Connection;
 use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\mcp_tools\Service\TaxonomyService;
@@ -14,7 +15,10 @@ use Drupal\Tests\UnitTestCase;
 final class TaxonomyServiceTest extends UnitTestCase {
 
   public function testSearchTermsRequiresMinimumLength(): void {
-    $service = new TaxonomyService($this->createMock(EntityTypeManagerInterface::class));
+    $service = new TaxonomyService(
+      $this->createMock(EntityTypeManagerInterface::class),
+      $this->createMock(Connection::class),
+    );
     $result = $service->searchTerms('a');
     $this->assertArrayHasKey('error', $result);
   }
@@ -29,7 +33,10 @@ final class TaxonomyServiceTest extends UnitTestCase {
       ['taxonomy_vocabulary', $vocabStorage],
     ]);
 
-    $service = new TaxonomyService($entityTypeManager);
+    $service = new TaxonomyService(
+      $entityTypeManager,
+      $this->createMock(Connection::class),
+    );
     $result = $service->getTerms('tags');
 
     $this->assertArrayHasKey('error', $result);
@@ -37,7 +44,10 @@ final class TaxonomyServiceTest extends UnitTestCase {
   }
 
   public function testBuildHierarchyNestsChildrenUnderFirstParent(): void {
-    $service = new TaxonomyService($this->createMock(EntityTypeManagerInterface::class));
+    $service = new TaxonomyService(
+      $this->createMock(EntityTypeManagerInterface::class),
+      $this->createMock(Connection::class),
+    );
 
     $method = new \ReflectionMethod($service, 'buildHierarchy');
 

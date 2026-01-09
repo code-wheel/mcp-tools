@@ -16,39 +16,7 @@ use Symfony\Component\HttpFoundation\RequestStack;
  * 2. Global read-only mode: Site-wide toggle to block all writes
  * 3. Connection scopes: Per-connection access levels (read, write, admin)
  */
-class AccessManager {
-
-  /**
-   * Available scopes.
-   */
-  public const SCOPE_READ = 'read';
-  public const SCOPE_WRITE = 'write';
-  public const SCOPE_ADMIN = 'admin';
-
-  /**
-   * Write kinds (used for config-only mode).
-   */
-  public const WRITE_KIND_CONFIG = 'config';
-  public const WRITE_KIND_CONTENT = 'content';
-  public const WRITE_KIND_OPS = 'ops';
-
-  /**
-   * All available scopes.
-   */
-  public const ALL_SCOPES = [
-    self::SCOPE_READ,
-    self::SCOPE_WRITE,
-    self::SCOPE_ADMIN,
-  ];
-
-  /**
-   * All available write kinds.
-   */
-  public const ALL_WRITE_KINDS = [
-    self::WRITE_KIND_CONFIG,
-    self::WRITE_KIND_CONTENT,
-    self::WRITE_KIND_OPS,
-  ];
+class AccessManager implements AccessManagerInterface {
 
   /**
    * Current connection scope (set via request or drush option).
@@ -365,6 +333,20 @@ class AccessManager {
       'reason' => $denied['error'] ?? "Write operations are not allowed for {$entityType}.",
       'code' => $denied['code'] ?? 'ACCESS_DENIED',
       'retry_after' => $denied['retry_after'] ?? NULL,
+    ];
+  }
+
+  /**
+   * Get access denied response for read operations.
+   *
+   * @return array
+   *   Error response array.
+   */
+  public function getReadAccessDenied(): array {
+    return [
+      'success' => FALSE,
+      'error' => 'Read operations not allowed for this connection. Scope: ' . implode(',', $this->getCurrentScopes()),
+      'code' => 'INSUFFICIENT_SCOPE',
     ];
   }
 

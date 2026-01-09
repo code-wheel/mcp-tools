@@ -78,12 +78,6 @@ rate_limiting:
   # Maximum structure changes (content types, fields, roles) per hour.
   max_structure_changes_per_hour: 100
 
-# Tool categories enabled by default.
-enabled_categories:
-  - site_tools
-  - content_tools
-  - config_tools
-
 # SSRF protection - allowed hosts for URL fetching.
 allowed_hosts:
   - localhost

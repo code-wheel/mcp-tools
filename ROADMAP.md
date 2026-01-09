@@ -39,13 +39,110 @@ Issues identified via comprehensive security and UX/DX scan.
 | Tool Plugins (222) | 0% coverage | Deferred - covered by kernel smoke tests |
 | Commands (4) | 0% coverage | Deferred - tested via E2E scripts |
 
+### Second Audit Fixes (alpha26)
+
+| Priority | Issue | File | Status |
+|----------|-------|------|--------|
+| CRITICAL | Missing `getReadAccessDenied()` method called in MediaService | `AccessManager.php` | ✅ Fixed |
+| HIGH | Orphaned `enabled_categories` config (defined but unused) | `mcp_tools.settings.yml` | ✅ Removed |
+| HIGH | Documentation wrong: 215 tools → 222, 33 submodules → 34 | `README.md`, `ROADMAP.md` | ✅ Fixed |
+| MEDIUM | 5 submodules missing README.md | jsonapi, mcp_server, observability, remote, stdio | ✅ Added |
+
+### Comprehensive Audit Fixes (alpha28)
+
+| Priority | Issue | Status |
+|----------|-------|--------|
+| HIGH | WriteAccessTrait static `\Drupal::` calls | ✅ Fixed - replaced with exception if not injected |
+| HIGH | ServerConfigRepository container injection | ✅ Documented as intentional for dynamic callbacks |
+| HIGH | MCP infrastructure missing unit tests | ✅ Added 53 tests (ToolInputValidator, ToolApiGateway, ServerConfigRepository) |
+| HIGH | Service unit tests missing | ✅ Added 27 tests (EntityCloneService, SiteBlueprintService) |
+| MEDIUM | No centralized error codes | ✅ Created `ErrorCode.php` with 18 constants + helpers |
+
+**New Files Created:**
+- `src/Mcp/Error/ErrorCode.php` - Centralized error code constants
+- `tests/src/Unit/Mcp/ToolInputValidatorTest.php` - 14 test cases
+- `tests/src/Unit/Mcp/ToolApiGatewayTest.php` - 16 test cases
+- `tests/src/Unit/Mcp/ServerConfigRepositoryTest.php` - 23 test cases
+- `tests/src/Unit/Mcp/ErrorCodeTest.php` - 18 test cases
+- `tests/src/Unit/Service/SiteBlueprintServiceTest.php` - 12 test cases
+- `modules/mcp_tools_entity_clone/tests/src/Unit/Service/EntityCloneServiceTest.php` - 15 test cases
+- `modules/mcp_tools_remote/tests/src/Unit/Form/RemoteSettingsFormTest.php` - 9 test cases
+- `modules/mcp_tools_jsonapi/tests/src/Unit/Form/JsonApiSettingsFormTest.php` - 8 test cases
+
+**Additional Refactoring:**
+- `McpToolsRemoteController::handle()` - Extracted 7 helper methods: `performSecurityChecks()`, `loadServerConfig()`, `checkServerAccess()`, `resolveScopes()`, `resolveExecutionAccount()`, `executeRequest()`, `resolveServerParams()`
+- `TemplateService` - Extracted `loadTemplate()` and `templateNotFoundError()` helper methods, then extracted `ComponentFactory` service (1324→829 lines)
+- `AnalysisService` - Extracted 8 analyzer services: `LinkAnalyzer`, `ContentAuditor`, `SeoAnalyzer`, `SecurityAuditor`, `FieldAnalyzer`, `PerformanceAnalyzer`, `AccessibilityAnalyzer`, `DuplicateDetector` (1269→143 lines)
+- `ConfigManagementService` - Extracted 3 services: `ConfigComparisonService`, `McpChangeTracker`, `OperationPreviewService` (1067→280 lines)
+- `ModerationService::getWorkflows()` - Renamed to `listWorkflows()` for API consistency
+- `SchedulerService::getScheduledContent()` - Added pagination offset support and metadata
+
+**New Interfaces Created:**
+- `AccessManagerInterface` - Access control contract
+- `AuditLoggerInterface` - Audit logging contract
+- `RateLimiterInterface` - Rate limiting contract
+
+### Comprehensive Audit (alpha27+)
+
+Full codebase audit covering code quality, dependencies, security, tests, and API consistency.
+
+#### Security Status: ✅ CLEAN
+
+No critical vulnerabilities. Strong security practices with multi-layer access control, SSRF protection, proper input validation, and audit logging.
+
+#### Code Quality Issues
+
+| Priority | Issue | Files | Status |
+|----------|-------|-------|--------|
+| HIGH | Duplicate service classes causing confusion | `TaxonomyService.php` (2), `MenuService.php` (2) | Deferred - different namespaces, no collision |
+| HIGH | Static `\Drupal::` calls instead of DI | `WriteAccessTrait.php`, `RateLimiter.php`, `TaxonomyService.php` | ✅ Fixed (all three) |
+| HIGH | Service container injection (anti-pattern) | `ServerConfigRepository.php` | ✅ Documented as intentional (dynamic callback resolution) |
+| MEDIUM | Large services need refactoring (>700 lines) | `TemplateService.php` (1324→829), `AnalysisService.php` (1269→143), `ConfigManagementService.php` (1067→280) | ✅ Fixed |
+| MEDIUM | Duplicate template validation pattern (3x) | `TemplateService.php` | ✅ Fixed - extracted `loadTemplate()` + `templateNotFoundError()` |
+| MEDIUM | McpToolsRemoteController::handle() too complex (180+ lines) | `McpToolsRemoteController.php` | ✅ Fixed - extracted 7 focused helper methods |
+| LOW | Missing interface definitions for core services | AccessManager, AuditLogger, RateLimiter | ✅ Fixed - interfaces created |
+
+#### Test Coverage Gaps
+
+| Component | Status |
+|-----------|--------|
+| ParagraphsService | ✅ Test recreated |
+| EntityCloneService | ✅ Unit tests added (15 tests) |
+| SiteBlueprintService | ✅ Unit tests added (12 tests) |
+| ToolInputValidator | ✅ Unit tests added (14 tests) |
+| ToolApiGateway | ✅ Unit tests added (16 tests) |
+| ServerConfigRepository | ✅ Unit tests added (23 tests) |
+| MetatagService, PathautoService, SchedulerService, SitemapService, UltimateCronService | No unit tests (contrib-dependent) |
+| RemoteSettingsForm | ✅ Unit tests added (9 tests) |
+| JsonApiSettingsForm | ✅ Unit tests added (8 tests) |
+| McpToolsRemoteController | ✅ Unit tests added (25 tests) |
+| Drush Commands (4) | No unit tests (covered by E2E) |
+
+#### API Consistency Issues
+
+| Priority | Issue | Files | Status |
+|----------|-------|-------|--------|
+| HIGH | CacheService returns unwrapped structure (no success/data) | `CacheService.php` | ✅ Fixed |
+| HIGH | CronService returns unwrapped structure (no success/data) | `CronService.php` | ✅ Fixed |
+| MEDIUM | No centralized error code constants | Multiple services | ✅ Created `ErrorCode.php` with 18 constants |
+| MEDIUM | Method naming: `getWorkflows()` should be `listWorkflows()` | `ModerationService.php` | ✅ Fixed |
+| MEDIUM | Inconsistent pagination: some methods lack offset | `SchedulerService.php` | ✅ Fixed - added offset + pagination metadata |
+| LOW | Pagination metadata not always returned | Multiple services | Deferred |
+
+#### Dependency Issues
+
+| Priority | Issue | Status |
+|----------|-------|--------|
+| MEDIUM | Circular dependency: AccessManager ↔ RateLimiter ↔ AuditLogger | Managed via optional injection |
+| LOW | Underutilized services in main container (drush-only) | Deferred |
+
 ---
 
 ## Current State (v1.0-alpha25)
 
 ### What We Have
 
-- **215 tools** across the base module and 33 submodules
+- **222 tools** across the base module and 34 submodules
 - **Strong security model** - Multi-layer access control, audit logging
 - **Good CI/CD** - GitHub Actions + DrupalCI
 - **Excellent documentation** - README, Architecture docs, per-submodule READMEs
@@ -55,7 +152,7 @@ Issues identified via comprehensive security and UX/DX scan.
 ### Tool Breakdown
 
 - **25 read-only tools** in the base module for site introspection
-- **190 write/analysis tools** across 33 submodules
+- **197 write/analysis tools** across 34 submodules
 - All tools have rich descriptions for LLM understanding
 - 38 destructive operations properly annotated
 
@@ -63,8 +160,8 @@ See [CHANGELOG.md](CHANGELOG.md) for full tool listing by submodule.
 
 ### Module Organization
 
-**Core Drupal only (22 modules)** - depend on `drupal:*` modules:
-- cache, cron, batch, templates, users, analysis, remote, moderation, blocks, config, layout_builder, media, image_styles, migration, structure, recipes, theme, menus, views, stdio, content, observability
+**Core Drupal only (23 modules)** - depend on `drupal:*` modules:
+- cache, cron, batch, templates, users, analysis, remote, moderation, blocks, config, layout_builder, media, image_styles, migration, structure, recipes, theme, menus, views, stdio, content, observability, jsonapi
 
 **Contrib dependencies (11 modules):**
 
@@ -101,7 +198,7 @@ mcp_tools/                           # Base module (25 read-only tools)
 │       ├── RateLimiter.php          # Rate limiting for writes
 │       ├── AuditLogger.php          # Shared audit logging
 │       └── [services]
-└── modules/                         # 33 optional submodules
+└── modules/                         # 34 optional submodules
     ├── mcp_tools_content/           # Content CRUD
     ├── mcp_tools_structure/         # Content types, fields, roles, taxonomies
     ├── mcp_tools_users/             # User management

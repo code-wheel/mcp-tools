@@ -39,15 +39,18 @@ class CronService {
     $cronJobs = $this->getCronJobs();
 
     return [
-      'last_run' => $lastRun ? date('Y-m-d H:i:s', $lastRun) : 'Never',
-      'last_run_timestamp' => $lastRun,
-      'seconds_since_last_run' => $lastRun ? time() - $lastRun : NULL,
-      'autorun_threshold' => $threshold,
-      'threshold_human' => $this->formatDuration($threshold),
-      'is_overdue' => $lastRun && (time() - $lastRun) > $threshold,
-      'cron_key' => $this->state->get('system.cron_key', ''),
-      'jobs_count' => count($cronJobs),
-      'jobs' => $cronJobs,
+      'success' => TRUE,
+      'data' => [
+        'last_run' => $lastRun ? date('Y-m-d H:i:s', $lastRun) : 'Never',
+        'last_run_timestamp' => $lastRun,
+        'seconds_since_last_run' => $lastRun ? time() - $lastRun : NULL,
+        'autorun_threshold' => $threshold,
+        'threshold_human' => $this->formatDuration($threshold),
+        'is_overdue' => $lastRun && (time() - $lastRun) > $threshold,
+        'cron_key' => $this->state->get('system.cron_key', ''),
+        'jobs_count' => count($cronJobs),
+        'jobs' => $cronJobs,
+      ],
     ];
   }
 

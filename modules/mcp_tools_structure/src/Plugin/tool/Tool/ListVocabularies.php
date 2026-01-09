@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools_structure\Plugin\tool\Tool;
 
-use Drupal\mcp_tools_structure\Service\TaxonomyService;
+use Drupal\mcp_tools_structure\Service\TaxonomyManagementService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\Core\Plugin\Context\ContextDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
@@ -38,7 +38,7 @@ class ListVocabularies extends McpToolsToolBase {
 
   protected const MCP_CATEGORY = 'structure';
 
-  protected TaxonomyService $taxonomyService;
+  protected TaxonomyManagementService $taxonomyService;
 
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     $instance = parent::create($container, $configuration, $plugin_id, $plugin_definition);

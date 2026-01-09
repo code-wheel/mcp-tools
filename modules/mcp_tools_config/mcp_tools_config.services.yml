@@ -1,14 +1,33 @@
 services:
+  # Specialized configuration services
+  mcp_tools_config.config_comparison:
+    class: Drupal\mcp_tools_config\Service\ConfigComparisonService
+    arguments:
+      - '@config.storage'
+      - '@config.storage.sync'
+
+  mcp_tools_config.mcp_change_tracker:
+    class: Drupal\mcp_tools_config\Service\McpChangeTracker
+    arguments:
+      - '@state'
+
+  mcp_tools_config.operation_preview:
+    class: Drupal\mcp_tools_config\Service\OperationPreviewService
+    arguments:
+      - '@config.storage'
+      - '@mcp_tools_config.config_comparison'
+
+  # Main facade service
   mcp_tools_config.config_management:
     class: Drupal\mcp_tools_config\Service\ConfigManagementService
     arguments:
-      - '@config.factory'
       - '@config.storage'
       - '@config.storage.sync'
-      - '@state'
-      - '@file_system'
       - '@mcp_tools.access_manager'
       - '@mcp_tools.audit_logger'
+      - '@mcp_tools_config.config_comparison'
+      - '@mcp_tools_config.mcp_change_tracker'
+      - '@mcp_tools_config.operation_preview'
 
   mcp_tools_config.config_change_subscriber:
     class: Drupal\mcp_tools_config\EventSubscriber\McpConfigChangeSubscriber

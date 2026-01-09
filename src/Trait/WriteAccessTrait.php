@@ -24,11 +24,12 @@ trait WriteAccessTrait {
    *
    * @return array|null
    *   NULL if allowed, error array if denied.
+   *
+   * @throws \LogicException
+   *   If AccessManager was not injected via setAccessManager() or DI.
    */
   protected function checkWriteAccess(): ?array {
-    if (!isset($this->accessManager)) {
-      $this->accessManager = \Drupal::service('mcp_tools.access_manager');
-    }
+    $this->ensureAccessManagerInjected();
 
     if (!$this->accessManager->canWrite()) {
       return $this->accessManager->getWriteAccessDenied();
@@ -42,11 +43,12 @@ trait WriteAccessTrait {
    *
    * @return array|null
    *   NULL if allowed, error array if denied.
+   *
+   * @throws \LogicException
+   *   If AccessManager was not injected via setAccessManager() or DI.
    */
   protected function checkAdminAccess(): ?array {
-    if (!isset($this->accessManager)) {
-      $this->accessManager = \Drupal::service('mcp_tools.access_manager');
-    }
+    $this->ensureAccessManagerInjected();
 
     $access = $this->accessManager->checkWriteAccess('admin', 'admin');
     if (!$access['allowed']) {
@@ -59,6 +61,21 @@ trait WriteAccessTrait {
     }
 
     return NULL;
+  }
+
+  /**
+   * Ensure AccessManager has been injected.
+   *
+   * @throws \LogicException
+   *   If AccessManager was not injected.
+   */
+  protected function ensureAccessManagerInjected(): void {
+    if (!isset($this->accessManager)) {
+      throw new \LogicException(
+        'AccessManager must be injected via setAccessManager() or container DI. ' .
+        'In Tool plugins, add: $instance->accessManager = $container->get(\'mcp_tools.access_manager\'); in create().'
+      );
+    }
   }
 
   /**

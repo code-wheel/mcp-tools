@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools_observability\EventSubscriber;
 
-use Drupal\mcp_tools\Mcp\Event\ToolExecutionFailedEvent;
-use Drupal\mcp_tools\Mcp\Event\ToolExecutionStartedEvent;
-use Drupal\mcp_tools\Mcp\Event\ToolExecutionSucceededEvent;
+use CodeWheel\McpEvents\ToolExecutionFailedEvent;
+use CodeWheel\McpEvents\ToolExecutionStartedEvent;
+use CodeWheel\McpEvents\ToolExecutionSucceededEvent;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 

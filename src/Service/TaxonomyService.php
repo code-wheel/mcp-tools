@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools\Service;
 
+use Drupal\Core\Database\Connection;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 
 /**
@@ -13,6 +14,7 @@ class TaxonomyService {
 
   public function __construct(
     protected EntityTypeManagerInterface $entityTypeManager,
+    protected Connection $database,
   ) {}
 
   /**
@@ -52,7 +54,7 @@ class TaxonomyService {
    *   Term counts keyed by vocabulary ID.
    */
   protected function getTermCountsByVocabulary(): array {
-    $connection = \Drupal::database();
+    $connection = $this->database;
     $query = $connection->select('taxonomy_term_field_data', 't')
       ->fields('t', ['vid'])
       ->groupBy('t.vid');
@@ -216,7 +218,7 @@ class TaxonomyService {
       return [];
     }
 
-    $connection = \Drupal::database();
+    $connection = $this->database;
     $query = $connection->select('taxonomy_term__parent', 'p')
       ->fields('p', ['entity_id', 'parent_target_id'])
       ->condition('p.entity_id', $tids, 'IN')

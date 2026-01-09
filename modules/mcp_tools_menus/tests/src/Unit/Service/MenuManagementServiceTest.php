@@ -9,17 +9,16 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Menu\MenuLinkManagerInterface;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AuditLogger;
-use Drupal\mcp_tools_menus\Service\MenuService;
+use Drupal\mcp_tools_menus\Service\MenuManagementService;
 use Drupal\system\MenuInterface;
 use Drupal\Tests\UnitTestCase;
 
 /**
- * Tests for MenuService.
- *
+ * Tests for MenuManagementService.
  */
-#[\PHPUnit\Framework\Attributes\CoversClass(\Drupal\mcp_tools_menus\Service\MenuService::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\Drupal\mcp_tools_menus\Service\MenuManagementService::class)]
 #[\PHPUnit\Framework\Attributes\Group('mcp_tools_menus')]
-class MenuServiceTest extends UnitTestCase {
+class MenuManagementServiceTest extends UnitTestCase {
 
   protected EntityTypeManagerInterface $entityTypeManager;
   protected MenuLinkManagerInterface $menuLinkManager;
@@ -50,10 +49,10 @@ class MenuServiceTest extends UnitTestCase {
   }
 
   /**
-   * Creates a MenuService instance.
+   * Creates a MenuManagementService instance.
    */
-  protected function createMenuService(): MenuService {
-    return new MenuService(
+  protected function createMenuManagementService(): MenuManagementService {
+    return new MenuManagementService(
       $this->entityTypeManager,
       $this->menuLinkManager,
       $this->accessManager,
@@ -68,7 +67,7 @@ class MenuServiceTest extends UnitTestCase {
       'error' => 'Write access denied',
     ]);
 
-    $service = $this->createMenuService();
+    $service = $this->createMenuManagementService();
     $result = $service->createMenu('custom_menu', 'Custom Menu');
 
     $this->assertFalse($result['success']);
@@ -78,7 +77,7 @@ class MenuServiceTest extends UnitTestCase {
   public function testCreateMenuInvalidMachineName(string $invalidName): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
 
-    $service = $this->createMenuService();
+    $service = $this->createMenuManagementService();
     $result = $service->createMenu($invalidName, 'Invalid Menu');
 
     $this->assertFalse($result['success']);
@@ -100,7 +99,7 @@ class MenuServiceTest extends UnitTestCase {
   public function testCreateMenuMachineNameTooLong(): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
 
-    $service = $this->createMenuService();
+    $service = $this->createMenuManagementService();
     $result = $service->createMenu(str_repeat('a', 33), 'Long Menu');
 
     $this->assertFalse($result['success']);
@@ -113,7 +112,7 @@ class MenuServiceTest extends UnitTestCase {
     $existingMenu = $this->createMock(MenuInterface::class);
     $this->menuStorage->method('load')->with('existing_menu')->willReturn($existingMenu);
 
-    $service = $this->createMenuService();
+    $service = $this->createMenuManagementService();
     $result = $service->createMenu('existing_menu', 'Existing Menu');
 
     $this->assertFalse($result['success']);
@@ -127,7 +126,7 @@ class MenuServiceTest extends UnitTestCase {
       'error' => 'Write access denied',
     ]);
 
-    $service = $this->createMenuService();
+    $service = $this->createMenuManagementService();
     $result = $service->deleteMenu('custom_menu');
 
     $this->assertFalse($result['success']);
@@ -137,7 +136,7 @@ class MenuServiceTest extends UnitTestCase {
   public function testDeleteMenuProtectsSystemMenus(string $protectedMenu): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
 
-    $service = $this->createMenuService();
+    $service = $this->createMenuManagementService();
     $result = $service->deleteMenu($protectedMenu);
 
     $this->assertFalse($result['success']);
@@ -162,7 +161,7 @@ class MenuServiceTest extends UnitTestCase {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
     $this->menuStorage->method('load')->with('nonexistent')->willReturn(NULL);
 
-    $service = $this->createMenuService();
+    $service = $this->createMenuManagementService();
     $result = $service->deleteMenu('nonexistent');
 
     $this->assertFalse($result['success']);
@@ -176,7 +175,7 @@ class MenuServiceTest extends UnitTestCase {
       'error' => 'Write access denied',
     ]);
 
-    $service = $this->createMenuService();
+    $service = $this->createMenuManagementService();
     $result = $service->addMenuLink('main', 'Test Link', '/node/1');
 
     $this->assertFalse($result['success']);
@@ -186,7 +185,7 @@ class MenuServiceTest extends UnitTestCase {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
     $this->menuStorage->method('load')->with('nonexistent')->willReturn(NULL);
 
-    $service = $this->createMenuService();
+    $service = $this->createMenuManagementService();
     $result = $service->addMenuLink('nonexistent', 'Test Link', '/node/1');
 
     $this->assertFalse($result['success']);
@@ -200,7 +199,7 @@ class MenuServiceTest extends UnitTestCase {
       'error' => 'Write access denied',
     ]);
 
-    $service = $this->createMenuService();
+    $service = $this->createMenuManagementService();
     $result = $service->updateMenuLink(1, ['title' => 'New Title']);
 
     $this->assertFalse($result['success']);
@@ -210,7 +209,7 @@ class MenuServiceTest extends UnitTestCase {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
     $this->menuLinkStorage->method('load')->with(999)->willReturn(NULL);
 
-    $service = $this->createMenuService();
+    $service = $this->createMenuManagementService();
     $result = $service->updateMenuLink(999, ['title' => 'New Title']);
 
     $this->assertFalse($result['success']);
@@ -224,7 +223,7 @@ class MenuServiceTest extends UnitTestCase {
       'error' => 'Write access denied',
     ]);
 
-    $service = $this->createMenuService();
+    $service = $this->createMenuManagementService();
     $result = $service->deleteMenuLink(1);
 
     $this->assertFalse($result['success']);
@@ -234,7 +233,7 @@ class MenuServiceTest extends UnitTestCase {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
     $this->menuLinkStorage->method('load')->with(999)->willReturn(NULL);
 
-    $service = $this->createMenuService();
+    $service = $this->createMenuManagementService();
     $result = $service->deleteMenuLink(999);
 
     $this->assertFalse($result['success']);

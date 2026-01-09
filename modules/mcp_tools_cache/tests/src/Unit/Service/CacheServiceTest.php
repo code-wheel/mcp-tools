@@ -28,39 +28,45 @@ if (!function_exists(__NAMESPACE__ . '\_drupal_flush_css_js')) {
 
 namespace Drupal\Tests\mcp_tools_cache\Unit\Service;
 
+use Drupal\Core\Asset\AssetCollectionOptimizerInterface;
+use Drupal\Core\Cache\CacheBackendInterface;
+use Drupal\Core\Cache\CacheFactoryInterface;
 use Drupal\Core\Cache\CacheTagsInvalidatorInterface;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Database\Schema;
+use Drupal\Core\DrupalKernelInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
+use Drupal\Core\Menu\MenuLinkManagerInterface;
+use Drupal\Core\Routing\RouteBuilderInterface;
+use Drupal\Core\Theme\Registry;
 use Drupal\mcp_tools_cache\Service\CacheService;
 use Drupal\Tests\UnitTestCase;
-use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 #[\PHPUnit\Framework\Attributes\CoversClass(\Drupal\mcp_tools_cache\Service\CacheService::class)]
 #[\PHPUnit\Framework\Attributes\Group('mcp_tools_cache')]
 final class CacheServiceTest extends UnitTestCase {
 
-  private function withDrupalContainer(ContainerBuilder $container, callable $callback): void {
-    $previous = NULL;
-    try {
-      $previous = \Drupal::getContainer();
-    }
-    catch (\Throwable) {
-      $previous = NULL;
-    }
+  private CacheFactoryInterface $cacheFactory;
+  private RouteBuilderInterface $routerBuilder;
+  private Registry $themeRegistry;
+  private AssetCollectionOptimizerInterface $cssOptimizer;
+  private AssetCollectionOptimizerInterface $jsOptimizer;
+  private DrupalKernelInterface $kernel;
+  private MenuLinkManagerInterface $menuLinkManager;
+  private ContainerInterface $container;
 
-    \Drupal::setContainer($container);
-    try {
-      $callback();
-    }
-    finally {
-      if ($previous) {
-        \Drupal::setContainer($previous);
-      }
-      elseif (method_exists(\Drupal::class, 'unsetContainer')) {
-        \Drupal::unsetContainer();
-      }
-    }
+  protected function setUp(): void {
+    parent::setUp();
+
+    $this->cacheFactory = $this->createMock(CacheFactoryInterface::class);
+    $this->routerBuilder = $this->createMock(RouteBuilderInterface::class);
+    $this->themeRegistry = $this->createMock(Registry::class);
+    $this->cssOptimizer = $this->createMock(AssetCollectionOptimizerInterface::class);
+    $this->jsOptimizer = $this->createMock(AssetCollectionOptimizerInterface::class);
+    $this->kernel = $this->createMock(DrupalKernelInterface::class);
+    $this->menuLinkManager = $this->createMock(MenuLinkManagerInterface::class);
+    $this->container = $this->createMock(ContainerInterface::class);
   }
 
   private function createService(Connection $database): CacheService {
@@ -68,6 +74,14 @@ final class CacheServiceTest extends UnitTestCase {
       $this->createMock(CacheTagsInvalidatorInterface::class),
       $this->createMock(ModuleHandlerInterface::class),
       $database,
+      $this->cacheFactory,
+      $this->routerBuilder,
+      $this->themeRegistry,
+      $this->cssOptimizer,
+      $this->jsOptimizer,
+      $this->kernel,
+      $this->menuLinkManager,
+      $this->container,
     );
   }
 
@@ -89,23 +103,26 @@ final class CacheServiceTest extends UnitTestCase {
     $database = $this->createMock(Connection::class);
     $database->method('schema')->willReturn($schema);
 
+    // Configure container to return core bin service IDs.
+    $this->container->method('getServiceIds')->willReturn([
+      'cache.default',
+      'cache.backend.database',
+    ]);
+
+    // Configure cache factory to return a mock cache backend.
+    $cacheBackend = $this->createMock(CacheBackendInterface::class);
+    $cacheBackend->expects($this->once())->method('deleteAll');
+    $this->cacheFactory->method('get')->with('default')->willReturn($cacheBackend);
+
     $service = $this->createService($database);
 
-    $container = new ContainerBuilder();
-    $container->set('cache.default', new class() {
-      public bool $deleted = FALSE;
-      public function deleteAll(): void { $this->deleted = TRUE; }
-    });
+    $unknown = $service->clearCacheBin('not_a_bin');
+    $this->assertFalse($unknown['success']);
+    $this->assertSame('NOT_FOUND', $unknown['code']);
 
-    $this->withDrupalContainer($container, function () use ($service): void {
-      $unknown = $service->clearCacheBin('not_a_bin');
-      $this->assertFalse($unknown['success']);
-      $this->assertSame('NOT_FOUND', $unknown['code']);
-
-      $ok = $service->clearCacheBin('default');
-      $this->assertTrue($ok['success']);
-      $this->assertSame('default', $ok['bin']);
-    });
+    $ok = $service->clearCacheBin('default');
+    $this->assertTrue($ok['success']);
+    $this->assertSame('default', $ok['bin']);
   }
 
   public function testGetCacheStatusIncludesCustomBinsAndSizes(): void {
@@ -130,18 +147,23 @@ final class CacheServiceTest extends UnitTestCase {
       };
     });
 
+    // Configure container to return service IDs including custom cache bin.
+    $this->container->method('getServiceIds')->willReturn([
+      'cache.default',
+      'cache.custom',
+      'cache.backend.database',
+    ]);
+
+    // Configure cache factory.
+    $cacheBackend = $this->createMock(CacheBackendInterface::class);
+    $this->cacheFactory->method('get')->willReturn($cacheBackend);
+
     $service = $this->createService($database);
 
-    $container = new ContainerBuilder();
-    $container->set('cache.backend.database', new class() {});
-    $container->set('cache.default', new class() {});
-    $container->set('cache.custom', new class() {});
-
-    $this->withDrupalContainer($container, function () use ($service): void {
-      $status = $service->getCacheStatus();
-      $this->assertGreaterThanOrEqual(10, $status['total_bins']);
-      $this->assertSame(7, $status['cache_tags_table_size']);
-    });
+    $status = $service->getCacheStatus();
+    $this->assertTrue($status['success']);
+    $this->assertGreaterThanOrEqual(10, $status['data']['total_bins']);
+    $this->assertSame(7, $status['data']['cache_tags_table_size']);
   }
 
   public function testRebuildValidatesTypeAndInvokesServices(): void {
@@ -153,31 +175,60 @@ final class CacheServiceTest extends UnitTestCase {
     $database = $this->createMock(Connection::class);
     $database->method('schema')->willReturn($schema);
 
+    // Expect router builder to be called.
+    $this->routerBuilder->expects($this->once())->method('rebuild');
+
+    // Expect theme rebuild services to be called.
+    $this->themeRegistry->expects($this->once())->method('reset');
+    $this->cssOptimizer->expects($this->once())->method('deleteAll');
+    $this->jsOptimizer->expects($this->once())->method('deleteAll');
+
     $service = $this->createService($database);
 
-    $container = new ContainerBuilder();
-    $routerBuilder = new class() { public bool $called = FALSE; public function rebuild(): void { $this->called = TRUE; } };
-    $container->set('router.builder', $routerBuilder);
-    $container->set('theme.registry', new class() { public function reset(): void {} });
-    $container->set('asset.css.collection_optimizer', new class() { public function deleteAll(): void {} });
-    $container->set('asset.js.collection_optimizer', new class() { public function deleteAll(): void {} });
-    $container->set('kernel', new class() { public function rebuildContainer(): void {} });
-    $container->set('plugin.manager.menu.link', new class() { public function rebuild(): void {} });
-    $container->set('cache.default', new class() {});
+    $invalid = $service->rebuild('nope');
+    $this->assertFalse($invalid['success']);
+    $this->assertSame('VALIDATION_ERROR', $invalid['code']);
 
-    $this->withDrupalContainer($container, function () use ($service, $routerBuilder): void {
-      $invalid = $service->rebuild('nope');
-      $this->assertFalse($invalid['success']);
-      $this->assertSame('VALIDATION_ERROR', $invalid['code']);
+    $result = $service->rebuild('router');
+    $this->assertTrue($result['success']);
 
-      $result = $service->rebuild('router');
-      $this->assertTrue($result['success']);
-      $this->assertTrue($routerBuilder->called);
+    $theme = $service->rebuild('theme');
+    $this->assertTrue($theme['success']);
+    $this->assertTrue((bool) ($GLOBALS['mcp_tools_cache_test_css_js_flushed'] ?? FALSE));
+  }
 
-      $theme = $service->rebuild('theme');
-      $this->assertTrue($theme['success']);
-      $this->assertTrue((bool) ($GLOBALS['mcp_tools_cache_test_css_js_flushed'] ?? FALSE));
-    });
+  public function testInvalidateTagsRequiresAtLeastOneTag(): void {
+    $database = $this->createMock(Connection::class);
+    $service = $this->createService($database);
+
+    $result = $service->invalidateTags([]);
+    $this->assertFalse($result['success']);
+    $this->assertSame('VALIDATION_ERROR', $result['code']);
+  }
+
+  public function testClearEntityCacheInvalidatesCorrectTags(): void {
+    $cacheTagsInvalidator = $this->createMock(CacheTagsInvalidatorInterface::class);
+    $cacheTagsInvalidator->expects($this->once())
+      ->method('invalidateTags')
+      ->with(['node:123', 'node_list']);
+
+    $service = new CacheService(
+      $cacheTagsInvalidator,
+      $this->createMock(ModuleHandlerInterface::class),
+      $this->createMock(Connection::class),
+      $this->cacheFactory,
+      $this->routerBuilder,
+      $this->themeRegistry,
+      $this->cssOptimizer,
+      $this->jsOptimizer,
+      $this->kernel,
+      $this->menuLinkManager,
+      $this->container,
+    );
+
+    $result = $service->clearEntityCache('node', 123);
+    $this->assertTrue($result['success']);
+    $this->assertSame(['node:123', 'node_list'], $result['invalidated_tags']);
   }
 
 }

@@ -1,6 +1,6 @@
 services:
   mcp_tools_menus.menu:
-    class: Drupal\mcp_tools_menus\Service\MenuService
+    class: Drupal\mcp_tools_menus\Service\MenuManagementService
     arguments:
       - '@entity_type.manager'
       - '@plugin.manager.menu.link'

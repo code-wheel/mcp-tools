@@ -19,6 +19,8 @@
     "drupal/core": "^10.3 || ^11",
     "drupal/tool": "^1.0@alpha",
     "mcp/sdk": "^0.2.2",
-    "code-wheel/mcp-http-security": "^1.0"
+    "code-wheel/mcp-http-security": "^1.0",
+    "code-wheel/mcp-error-codes": "^1.1",
+    "code-wheel/mcp-events": "^2.0"
   }
 }

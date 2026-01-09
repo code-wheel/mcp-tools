@@ -77,46 +77,17 @@ final class McpToolsRemoteController implements ContainerInjectionInterface {
       return new Response('Not found.', 404);
     }
 
-    // Optional IP allowlist (defense-in-depth for the remote endpoint).
-    $allowedIps = $remoteConfig->get('allowed_ips') ?? [];
-    if (is_array($allowedIps)) {
-      $allowedIps = array_values(array_filter(array_map('trim', $allowedIps)));
-    }
-    else {
-      $allowedIps = [];
-    }
-
-    if (!empty($allowedIps)) {
-      $ipValidator = new IpValidator($allowedIps);
-      $clientIp = $request->getClientIp();
-      if (!$clientIp || !$ipValidator->isAllowed($clientIp)) {
-        return new Response('Not found.', 404);
-      }
-    }
-
-    // Optional origin allowlist (DNS rebinding defense-in-depth).
-    $allowedOrigins = $remoteConfig->get('allowed_origins') ?? [];
-    if (is_array($allowedOrigins)) {
-      $allowedOrigins = array_values(array_filter(array_map('trim', $allowedOrigins)));
-    }
-    else {
-      $allowedOrigins = [];
-    }
-
-    $originCheck = $this->validateOrigin($request, $allowedOrigins);
-    if ($originCheck) {
-      return $originCheck;
+    // Security validations (IP, Origin, Accept header).
+    $securityCheck = $this->performSecurityChecks($request, $remoteConfig);
+    if ($securityCheck) {
+      return $securityCheck;
     }
 
     if (!class_exists(\Mcp\Server::class)) {
       return new Response('Missing dependency: mcp/sdk', 500);
     }
 
-    $acceptCheck = $this->validateAcceptHeader($request);
-    if ($acceptCheck) {
-      return $acceptCheck;
-    }
-
+    // API key authentication.
     $apiKey = $this->extractApiKey($request);
     $key = $apiKey ? $this->apiKeyManager->validate($apiKey) : NULL;
     if (!$key) {
@@ -125,30 +96,115 @@ final class McpToolsRemoteController implements ContainerInjectionInterface {
       return $response;
     }
 
-    $serverId = trim((string) ($remoteConfig->get('server_id') ?? ''));
-    $serverConfig = $serverId !== '' ? $this->serverConfigRepository->getServer($serverId) : NULL;
-    if ($serverId !== '' && !$serverConfig) {
-      return new Response('Configured MCP server profile not found: ' . $serverId, 500);
+    // Server profile validation.
+    $serverConfig = $this->loadServerConfig($remoteConfig);
+    if ($serverConfig instanceof Response) {
+      return $serverConfig;
     }
 
     if ($serverConfig) {
-      $access = $this->serverConfigRepository->checkAccess($serverConfig, $request);
-      if (!$access['allowed']) {
-        return new Response($access['message'] ?? 'Access denied.', 403);
-      }
-
-      if (!$this->serverConfigRepository->allowsTransport($serverConfig, 'http')) {
-        return new Response('Server profile does not allow HTTP transport.', 403);
+      $accessCheck = $this->checkServerAccess($serverConfig, $request);
+      if ($accessCheck) {
+        return $accessCheck;
       }
     }
 
-    // Provide a trusted rate-limit client identifier derived from the API key.
-    // This avoids relying on client-supplied headers for per-key throttling.
+    // Set rate-limit client ID from API key.
     if (!empty($key['key_id']) && is_string($key['key_id'])) {
       $request->attributes->set('mcp_tools.client_id', 'remote_key:' . $key['key_id']);
     }
 
-    // Resolve scopes from key, intersected with MCP Tools allowed scopes.
+    // Resolve and set scopes.
+    $scopeResult = $this->resolveScopes($key, $serverConfig);
+    if ($scopeResult instanceof Response) {
+      return $scopeResult;
+    }
+    $this->accessManager->setScopes($scopeResult);
+
+    // Resolve execution user.
+    $accountResult = $this->resolveExecutionAccount($remoteConfig);
+    if ($accountResult instanceof Response) {
+      return $accountResult;
+    }
+
+    // Execute request as configured user.
+    $this->accountSwitcher->switchTo($accountResult);
+    try {
+      return $this->executeRequest($request, $remoteConfig, $serverConfig);
+    }
+    finally {
+      $this->accountSwitcher->switchBack();
+    }
+  }
+
+  /**
+   * Performs IP, Origin, and Accept header security checks.
+   */
+  private function performSecurityChecks(Request $request, $remoteConfig): ?Response {
+    // IP allowlist check.
+    $allowedIps = $this->normalizeConfigList($remoteConfig->get('allowed_ips'));
+    if (!empty($allowedIps)) {
+      $ipValidator = new IpValidator($allowedIps);
+      $clientIp = $request->getClientIp();
+      if (!$clientIp || !$ipValidator->isAllowed($clientIp)) {
+        return new Response('Not found.', 404);
+      }
+    }
+
+    // Origin allowlist check.
+    $allowedOrigins = $this->normalizeConfigList($remoteConfig->get('allowed_origins'));
+    $originCheck = $this->validateOrigin($request, $allowedOrigins);
+    if ($originCheck) {
+      return $originCheck;
+    }
+
+    // Accept header check.
+    return $this->validateAcceptHeader($request);
+  }
+
+  /**
+   * Loads the server config if specified.
+   *
+   * @return array|Response|null
+   *   Server config array, error Response, or NULL if no profile configured.
+   */
+  private function loadServerConfig($remoteConfig): array|Response|null {
+    $serverId = trim((string) ($remoteConfig->get('server_id') ?? ''));
+    if ($serverId === '') {
+      return NULL;
+    }
+
+    $serverConfig = $this->serverConfigRepository->getServer($serverId);
+    if (!$serverConfig) {
+      return new Response('Configured MCP server profile not found: ' . $serverId, 500);
+    }
+
+    return $serverConfig;
+  }
+
+  /**
+   * Checks server profile access and transport permissions.
+   */
+  private function checkServerAccess(array $serverConfig, Request $request): ?Response {
+    $access = $this->serverConfigRepository->checkAccess($serverConfig, $request);
+    if (!$access['allowed']) {
+      return new Response($access['message'] ?? 'Access denied.', 403);
+    }
+
+    if (!$this->serverConfigRepository->allowsTransport($serverConfig, 'http')) {
+      return new Response('Server profile does not allow HTTP transport.', 403);
+    }
+
+    return NULL;
+  }
+
+  /**
+   * Resolves effective scopes from key and server config.
+   *
+   * @return array|Response
+   *   Array of scopes or error Response.
+   */
+  private function resolveScopes(array $key, ?array $serverConfig): array|Response {
     $allowedScopes = $this->configFactory->get('mcp_tools.settings')->get('access.allowed_scopes') ?? ['read'];
     $scopes = array_values(array_intersect($key['scopes'] ?? ['read'], $allowedScopes));
     if (empty($scopes)) {
@@ -162,95 +218,124 @@ final class McpToolsRemoteController implements ContainerInjectionInterface {
       }
     }
 
-    // Force scopes for this request (do not trust client-provided scope headers).
-    $this->accessManager->setScopes($scopes);
+    return $scopes;
+  }
 
-    // Execute as configured user for consistent attribution.
+  /**
+   * Resolves and validates the execution user account.
+   *
+   * @return \Drupal\user\UserInterface|Response
+   *   User account or error Response.
+   */
+  private function resolveExecutionAccount($remoteConfig): mixed {
     $uid = (int) ($remoteConfig->get('uid') ?? 0);
     if ($uid === 0) {
       return new Response('Execution user not configured. Visit /admin/config/services/mcp-tools/remote to set up.', 500);
     }
+
     $allowUid1 = (bool) $remoteConfig->get('allow_uid1');
     if ($uid === 1 && !$allowUid1) {
       return new Response('Execution user uid 1 is not allowed. Enable "Use site admin (uid 1)" in remote settings to override.', 500);
     }
+
     $account = $this->entityTypeManagerService->getStorage('user')->load($uid);
     if (!$account) {
       return new Response('Configured execution user (uid ' . $uid . ') not found.', 500);
     }
 
-    $this->accountSwitcher->switchTo($account);
-    try {
-      $schemaConverter = new ToolApiSchemaConverter();
-      $serverFactory = new McpToolsServerFactory(
-        $this->toolManager,
-        $schemaConverter,
-        $this->logger,
-        $this->eventDispatcher,
-        $this->resourceRegistry,
-        $this->promptRegistry,
-        $this->toolErrorHandler,
-      );
+    return $account;
+  }
 
-      $serverName = $serverConfig
-        ? (string) ($serverConfig['name'] ?? 'Drupal MCP Tools')
-        : (string) ($remoteConfig->get('server_name') ?? 'Drupal MCP Tools');
-      $serverVersion = $serverConfig
-        ? (string) ($serverConfig['version'] ?? '1.0.0')
-        : (string) ($remoteConfig->get('server_version') ?? '1.0.0');
-      $paginationLimit = $serverConfig
-        ? (int) ($serverConfig['pagination_limit'] ?? 50)
-        : (int) ($remoteConfig->get('pagination_limit') ?? 50);
-      $includeAllTools = $serverConfig
-        ? (bool) ($serverConfig['include_all_tools'] ?? FALSE)
-        : (bool) ($remoteConfig->get('include_all_tools') ?? FALSE);
-      $gatewayMode = $serverConfig
-        ? (bool) ($serverConfig['gateway_mode'] ?? FALSE)
-        : (bool) ($remoteConfig->get('gateway_mode') ?? FALSE);
-      $enableResources = $serverConfig
-        ? (bool) ($serverConfig['enable_resources'] ?? TRUE)
-        : TRUE;
-      $enablePrompts = $serverConfig
-        ? (bool) ($serverConfig['enable_prompts'] ?? TRUE)
-        : TRUE;
+  /**
+   * Executes the MCP request via the transport.
+   */
+  private function executeRequest(Request $request, $remoteConfig, ?array $serverConfig): Response {
+    $schemaConverter = new ToolApiSchemaConverter();
+    $serverFactory = new McpToolsServerFactory(
+      $this->toolManager,
+      $schemaConverter,
+      $this->logger,
+      $this->eventDispatcher,
+      $this->resourceRegistry,
+      $this->promptRegistry,
+      $this->toolErrorHandler,
+    );
 
-      $server = $serverFactory->create(
-        $serverName,
-        $serverVersion,
-        $paginationLimit,
-        $includeAllTools,
-        new FileSessionStore(
-          rtrim(sys_get_temp_dir(), \DIRECTORY_SEPARATOR) . \DIRECTORY_SEPARATOR . 'mcp_tools_remote_sessions_' . substr(hash('sha256', \Drupal::root()), 0, 12),
-          3600,
-        ),
+    $serverParams = $this->resolveServerParams($remoteConfig, $serverConfig);
+
+    $server = $serverFactory->create(
+      $serverParams['name'],
+      $serverParams['version'],
+      $serverParams['pagination_limit'],
+      $serverParams['include_all_tools'],
+      new FileSessionStore(
+        rtrim(sys_get_temp_dir(), \DIRECTORY_SEPARATOR) . \DIRECTORY_SEPARATOR . 'mcp_tools_remote_sessions_' . substr(hash('sha256', \Drupal::root()), 0, 12),
         3600,
-        $gatewayMode,
-        $enableResources,
-        $enablePrompts,
-      );
+      ),
+      3600,
+      $serverParams['gateway_mode'],
+      $serverParams['enable_resources'],
+      $serverParams['enable_prompts'],
+    );
 
-      $httpFactory = new HttpFactory();
-      $psrHttpFactory = new PsrHttpFactory($httpFactory, $httpFactory, $httpFactory, $httpFactory);
-      $psrRequest = $psrHttpFactory->createRequest($request);
+    $httpFactory = new HttpFactory();
+    $psrHttpFactory = new PsrHttpFactory($httpFactory, $httpFactory, $httpFactory, $httpFactory);
+    $psrRequest = $psrHttpFactory->createRequest($request);
 
-      $transport = new StreamableHttpTransport(
-        $psrRequest,
-        $httpFactory,
-        $httpFactory,
-        logger: $this->logger,
-      );
+    $transport = new StreamableHttpTransport(
+      $psrRequest,
+      $httpFactory,
+      $httpFactory,
+      logger: $this->logger,
+    );
 
-      $psrResponse = $server->run($transport);
+    $psrResponse = $server->run($transport);
 
-      $streamed = !$psrResponse->getBody()->isSeekable();
-      $foundationFactory = new HttpFoundationFactory();
-      $response = $foundationFactory->createResponse($psrResponse, $streamed);
-      $response->headers->set('Cache-Control', 'no-store');
-      return $response;
+    $streamed = !$psrResponse->getBody()->isSeekable();
+    $foundationFactory = new HttpFoundationFactory();
+    $response = $foundationFactory->createResponse($psrResponse, $streamed);
+    $response->headers->set('Cache-Control', 'no-store');
+
+    return $response;
+  }
+
+  /**
+   * Resolves server parameters from config and server profile.
+   */
+  private function resolveServerParams($remoteConfig, ?array $serverConfig): array {
+    return [
+      'name' => $serverConfig
+        ? (string) ($serverConfig['name'] ?? 'Drupal MCP Tools')
+        : (string) ($remoteConfig->get('server_name') ?? 'Drupal MCP Tools'),
+      'version' => $serverConfig
+        ? (string) ($serverConfig['version'] ?? '1.0.0')
+        : (string) ($remoteConfig->get('server_version') ?? '1.0.0'),
+      'pagination_limit' => $serverConfig
+        ? (int) ($serverConfig['pagination_limit'] ?? 50)
+        : (int) ($remoteConfig->get('pagination_limit') ?? 50),
+      'include_all_tools' => $serverConfig
+        ? (bool) ($serverConfig['include_all_tools'] ?? FALSE)
+        : (bool) ($remoteConfig->get('include_all_tools') ?? FALSE),
+      'gateway_mode' => $serverConfig
+        ? (bool) ($serverConfig['gateway_mode'] ?? FALSE)
+        : (bool) ($remoteConfig->get('gateway_mode') ?? FALSE),
+      'enable_resources' => $serverConfig
+        ? (bool) ($serverConfig['enable_resources'] ?? TRUE)
+        : TRUE,
+      'enable_prompts' => $serverConfig
+        ? (bool) ($serverConfig['enable_prompts'] ?? TRUE)
+        : TRUE,
+    ];
+  }
+
+  /**
+   * Normalizes a config value to a list of trimmed strings.
+   */
+  private function normalizeConfigList(mixed $value): array {
+    if (!is_array($value)) {
+      return [];
     }
-    finally {
-      $this->accountSwitcher->switchBack();
-    }
+    return array_values(array_filter(array_map('trim', $value)));
   }
 
   private function extractApiKey(Request $request): ?string {

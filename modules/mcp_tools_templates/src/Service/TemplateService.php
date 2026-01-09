@@ -257,6 +257,7 @@ class TemplateService {
     protected ConfigFactoryInterface $configFactory,
     protected AccessManager $accessManager,
     protected AuditLogger $auditLogger,
+    protected ComponentFactory $componentFactory,
   ) {}
 
   /**
@@ -297,16 +298,10 @@ class TemplateService {
    *   Result array with template details.
    */
   public function getTemplate(string $id): array {
-    if (!isset(self::TEMPLATES[$id])) {
-      return [
-        'success' => FALSE,
-        'error' => sprintf('Template "%s" not found.', $id),
-        'code' => 'TEMPLATE_NOT_FOUND',
-        'available_templates' => array_keys(self::TEMPLATES),
-      ];
+    $template = $this->loadTemplate($id);
+    if ($template === NULL) {
+      return $this->templateNotFoundError($id, TRUE);
     }
-
-    $template = self::TEMPLATES[$id];
 
     return [
       'success' => TRUE,
@@ -331,15 +326,10 @@ class TemplateService {
    *   Result array with preview of changes.
    */
   public function previewTemplate(string $id): array {
-    if (!isset(self::TEMPLATES[$id])) {
-      return [
-        'success' => FALSE,
-        'error' => sprintf('Template "%s" not found.', $id),
-        'code' => 'TEMPLATE_NOT_FOUND',
-      ];
+    $template = $this->loadTemplate($id);
+    if ($template === NULL) {
+      return $this->templateNotFoundError($id);
     }
-
-    $template = self::TEMPLATES[$id];
     $preview = [
       'template_id' => $id,
       'template_label' => $template['label'],
@@ -535,15 +525,10 @@ class TemplateService {
       ];
     }
 
-    if (!isset(self::TEMPLATES[$id])) {
-      return [
-        'success' => FALSE,
-        'error' => sprintf('Template "%s" not found.', $id),
-        'code' => 'TEMPLATE_NOT_FOUND',
-      ];
+    $template = $this->loadTemplate($id);
+    if ($template === NULL) {
+      return $this->templateNotFoundError($id);
     }
-
-    $template = self::TEMPLATES[$id];
     $components = $template['components'];
     $skipExisting = $options['skip_existing'] ?? TRUE;
     $componentFilter = $options['components'] ?? NULL;
@@ -554,7 +539,7 @@ class TemplateService {
 
     // Create vocabularies first (needed for reference fields).
     if (!empty($components['vocabularies']) && ($componentFilter === NULL || in_array('vocabularies', $componentFilter))) {
-      $result = $this->createVocabularies($components['vocabularies'], $skipExisting);
+      $result = $this->componentFactory->createVocabularies($components['vocabularies'], $skipExisting);
       $created = array_merge($created, $result['created']);
       $skipped = array_merge($skipped, $result['skipped']);
       $errors = array_merge($errors, $result['errors']);
@@ -562,7 +547,7 @@ class TemplateService {
 
     // Create roles.
     if (!empty($components['roles']) && ($componentFilter === NULL || in_array('roles', $componentFilter))) {
-      $result = $this->createRoles($components['roles'], $skipExisting);
+      $result = $this->componentFactory->createRoles($components['roles'], $skipExisting);
       $created = array_merge($created, $result['created']);
       $skipped = array_merge($skipped, $result['skipped']);
       $errors = array_merge($errors, $result['errors']);
@@ -570,7 +555,7 @@ class TemplateService {
 
     // Create content types.
     if (!empty($components['content_types']) && ($componentFilter === NULL || in_array('content_types', $componentFilter))) {
-      $result = $this->createContentTypes($components['content_types'], $skipExisting);
+      $result = $this->componentFactory->createContentTypes($components['content_types'], $skipExisting);
       $created = array_merge($created, $result['created']);
       $skipped = array_merge($skipped, $result['skipped']);
       $errors = array_merge($errors, $result['errors']);
@@ -578,7 +563,7 @@ class TemplateService {
 
     // Create media types.
     if (!empty($components['media_types']) && ($componentFilter === NULL || in_array('media_types', $componentFilter))) {
-      $result = $this->createMediaTypes($components['media_types'], $skipExisting);
+      $result = $this->componentFactory->createMediaTypes($components['media_types'], $skipExisting);
       $created = array_merge($created, $result['created']);
       $skipped = array_merge($skipped, $result['skipped']);
       $errors = array_merge($errors, $result['errors']);
@@ -586,7 +571,7 @@ class TemplateService {
 
     // Create webforms.
     if (!empty($components['webforms']) && ($componentFilter === NULL || in_array('webforms', $componentFilter))) {
-      $result = $this->createWebforms($components['webforms'], $skipExisting);
+      $result = $this->componentFactory->createWebforms($components['webforms'], $skipExisting);
       $created = array_merge($created, $result['created']);
       $skipped = array_merge($skipped, $result['skipped']);
       $errors = array_merge($errors, $result['errors']);
@@ -594,7 +579,7 @@ class TemplateService {
 
     // Create views.
     if (!empty($components['views']) && ($componentFilter === NULL || in_array('views', $componentFilter))) {
-      $result = $this->createViews($components['views'], $skipExisting);
+      $result = $this->componentFactory->createViews($components['views'], $skipExisting);
       $created = array_merge($created, $result['created']);
       $skipped = array_merge($skipped, $result['skipped']);
       $errors = array_merge($errors, $result['errors']);
@@ -806,519 +791,39 @@ class TemplateService {
   }
 
   /**
-   * Create vocabularies from template definition.
+   * Loads a template by ID.
    *
-   * @param array $vocabularies
-   *   Vocabulary definitions.
-   * @param bool $skipExisting
-   *   Whether to skip existing vocabularies.
+   * @param string $id
+   *   The template ID.
+   *
+   * @return array|null
+   *   The template definition, or NULL if not found.
+   */
+  protected function loadTemplate(string $id): ?array {
+    return self::TEMPLATES[$id] ?? NULL;
+  }
+
+  /**
+   * Returns a template-not-found error response.
+   *
+   * @param string $id
+   *   The template ID that was not found.
+   * @param bool $includeAvailable
+   *   Whether to include the list of available templates.
    *
    * @return array
-   *   Result with created, skipped, and errors.
+   *   Error response array.
    */
-  protected function createVocabularies(array $vocabularies, bool $skipExisting): array {
-    $created = [];
-    $skipped = [];
-    $errors = [];
-
-    $storage = $this->entityTypeManager->getStorage('taxonomy_vocabulary');
-
-    foreach ($vocabularies as $vocabId => $config) {
-      try {
-        $existing = $storage->load($vocabId);
-        if ($existing) {
-          if ($skipExisting) {
-            $skipped[] = ['type' => 'vocabulary', 'id' => $vocabId, 'label' => $config['label']];
-            continue;
-          }
-        }
-
-        $vocab = $storage->create([
-          'vid' => $vocabId,
-          'name' => $config['label'],
-          'description' => $config['description'] ?? '',
-        ]);
-        $vocab->save();
-
-        $created[] = ['type' => 'vocabulary', 'id' => $vocabId, 'label' => $config['label']];
-      }
-      catch (\Exception $e) {
-        $errors[] = ['type' => 'vocabulary', 'id' => $vocabId, 'error' => $e->getMessage()];
-      }
+  protected function templateNotFoundError(string $id, bool $includeAvailable = FALSE): array {
+    $error = [
+      'success' => FALSE,
+      'error' => sprintf('Template "%s" not found.', $id),
+      'code' => 'TEMPLATE_NOT_FOUND',
+    ];
+    if ($includeAvailable) {
+      $error['available_templates'] = array_keys(self::TEMPLATES);
     }
-
-    return ['created' => $created, 'skipped' => $skipped, 'errors' => $errors];
-  }
-
-  /**
-   * Create roles from template definition.
-   *
-   * @param array $roles
-   *   Role definitions.
-   * @param bool $skipExisting
-   *   Whether to skip existing roles.
-   *
-   * @return array
-   *   Result with created, skipped, and errors.
-   */
-  protected function createRoles(array $roles, bool $skipExisting): array {
-    $created = [];
-    $skipped = [];
-    $errors = [];
-
-    $storage = $this->entityTypeManager->getStorage('user_role');
-
-    foreach ($roles as $roleId => $config) {
-      try {
-        $existing = $storage->load($roleId);
-        if ($existing) {
-          if ($skipExisting) {
-            $skipped[] = ['type' => 'role', 'id' => $roleId, 'label' => $config['label']];
-            continue;
-          }
-        }
-
-        $role = $storage->create([
-          'id' => $roleId,
-          'label' => $config['label'],
-        ]);
-        $role->save();
-
-        // Grant permissions.
-        if (!empty($config['permissions'])) {
-          foreach ($config['permissions'] as $permission) {
-            $role->grantPermission($permission);
-          }
-          $role->save();
-        }
-
-        $created[] = ['type' => 'role', 'id' => $roleId, 'label' => $config['label']];
-      }
-      catch (\Exception $e) {
-        $errors[] = ['type' => 'role', 'id' => $roleId, 'error' => $e->getMessage()];
-      }
-    }
-
-    return ['created' => $created, 'skipped' => $skipped, 'errors' => $errors];
-  }
-
-  /**
-   * Create content types from template definition.
-   *
-   * @param array $contentTypes
-   *   Content type definitions.
-   * @param bool $skipExisting
-   *   Whether to skip existing content types.
-   *
-   * @return array
-   *   Result with created, skipped, and errors.
-   */
-  protected function createContentTypes(array $contentTypes, bool $skipExisting): array {
-    $created = [];
-    $skipped = [];
-    $errors = [];
-
-    $nodeTypeStorage = $this->entityTypeManager->getStorage('node_type');
-
-    foreach ($contentTypes as $typeId => $config) {
-      try {
-        $existing = $nodeTypeStorage->load($typeId);
-        if ($existing) {
-          if ($skipExisting) {
-            $skipped[] = ['type' => 'content_type', 'id' => $typeId, 'label' => $config['label']];
-            continue;
-          }
-        }
-
-        // Create content type.
-        $nodeType = $nodeTypeStorage->create([
-          'type' => $typeId,
-          'name' => $config['label'],
-          'description' => $config['description'] ?? '',
-        ]);
-        $nodeType->save();
-
-        // Create fields.
-        if (!empty($config['fields'])) {
-          $this->createFields('node', $typeId, $config['fields']);
-        }
-
-        $created[] = ['type' => 'content_type', 'id' => $typeId, 'label' => $config['label']];
-      }
-      catch (\Exception $e) {
-        $errors[] = ['type' => 'content_type', 'id' => $typeId, 'error' => $e->getMessage()];
-      }
-    }
-
-    return ['created' => $created, 'skipped' => $skipped, 'errors' => $errors];
-  }
-
-  /**
-   * Create fields for an entity bundle.
-   *
-   * @param string $entityType
-   *   The entity type.
-   * @param string $bundle
-   *   The bundle.
-   * @param array $fields
-   *   Field definitions.
-   */
-  protected function createFields(string $entityType, string $bundle, array $fields): void {
-    $fieldStorageStorage = $this->entityTypeManager->getStorage('field_storage_config');
-    $fieldConfigStorage = $this->entityTypeManager->getStorage('field_config');
-
-    foreach ($fields as $fieldName => $fieldConfig) {
-      // Check if storage exists.
-      $storageId = $entityType . '.' . $fieldName;
-      $storage = $fieldStorageStorage->load($storageId);
-
-      if (!$storage) {
-        // Create field storage.
-        $storageConfig = [
-          'field_name' => $fieldName,
-          'entity_type' => $entityType,
-          'type' => $fieldConfig['type'],
-          'cardinality' => $fieldConfig['cardinality'] ?? 1,
-        ];
-
-        // Handle entity reference target type.
-        if ($fieldConfig['type'] === 'entity_reference' && !empty($fieldConfig['target'])) {
-          $targetParts = explode(':', $fieldConfig['target']);
-          $storageConfig['settings'] = [
-            'target_type' => $targetParts[0] === 'taxonomy_term' ? 'taxonomy_term' : ($targetParts[0] === 'node' ? 'node' : $targetParts[0]),
-          ];
-        }
-
-        // Handle list fields.
-        if ($fieldConfig['type'] === 'list_string' && !empty($fieldConfig['allowed_values'])) {
-          $allowedValues = [];
-          foreach ($fieldConfig['allowed_values'] as $value) {
-            $allowedValues[$value] = $value;
-          }
-          $storageConfig['settings'] = ['allowed_values' => $allowedValues];
-        }
-
-        $storage = $fieldStorageStorage->create($storageConfig);
-        $storage->save();
-      }
-
-      // Create field config for this bundle.
-      $fieldId = $entityType . '.' . $bundle . '.' . $fieldName;
-      $existingField = $fieldConfigStorage->load($fieldId);
-
-      if (!$existingField) {
-        $configData = [
-          'field_name' => $fieldName,
-          'entity_type' => $entityType,
-          'bundle' => $bundle,
-          'label' => $fieldConfig['label'],
-        ];
-
-        // Handle entity reference handler settings.
-        if ($fieldConfig['type'] === 'entity_reference' && !empty($fieldConfig['target'])) {
-          $targetParts = explode(':', $fieldConfig['target']);
-          $targetType = $targetParts[0];
-          $targetBundle = $targetParts[1] ?? NULL;
-
-          if ($targetType === 'taxonomy_term' && $targetBundle) {
-            $configData['settings'] = [
-              'handler' => 'default:taxonomy_term',
-              'handler_settings' => [
-                'target_bundles' => [$targetBundle => $targetBundle],
-              ],
-            ];
-          }
-          elseif ($targetType === 'node' && $targetBundle) {
-            $configData['settings'] = [
-              'handler' => 'default:node',
-              'handler_settings' => [
-                'target_bundles' => [$targetBundle => $targetBundle],
-              ],
-            ];
-          }
-        }
-
-        $field = $fieldConfigStorage->create($configData);
-        $field->save();
-
-        // Configure form and view display.
-        $this->configureFieldDisplay($entityType, $bundle, $fieldName, $fieldConfig);
-      }
-    }
-  }
-
-  /**
-   * Configure field display for form and view modes.
-   *
-   * @param string $entityType
-   *   The entity type.
-   * @param string $bundle
-   *   The bundle.
-   * @param string $fieldName
-   *   The field name.
-   * @param array $fieldConfig
-   *   The field configuration.
-   */
-  protected function configureFieldDisplay(string $entityType, string $bundle, string $fieldName, array $fieldConfig): void {
-    try {
-      // Configure form display.
-      $formDisplayStorage = $this->entityTypeManager->getStorage('entity_form_display');
-      $formDisplayId = $entityType . '.' . $bundle . '.default';
-      $formDisplay = $formDisplayStorage->load($formDisplayId);
-
-      if (!$formDisplay) {
-        $formDisplay = $formDisplayStorage->create([
-          'targetEntityType' => $entityType,
-          'bundle' => $bundle,
-          'mode' => 'default',
-          'status' => TRUE,
-        ]);
-      }
-
-      $formDisplay->setComponent($fieldName, [
-        'weight' => 10,
-      ]);
-      $formDisplay->save();
-
-      // Configure view display.
-      $viewDisplayStorage = $this->entityTypeManager->getStorage('entity_view_display');
-      $viewDisplayId = $entityType . '.' . $bundle . '.default';
-      $viewDisplay = $viewDisplayStorage->load($viewDisplayId);
-
-      if (!$viewDisplay) {
-        $viewDisplay = $viewDisplayStorage->create([
-          'targetEntityType' => $entityType,
-          'bundle' => $bundle,
-          'mode' => 'default',
-          'status' => TRUE,
-        ]);
-      }
-
-      $viewDisplay->setComponent($fieldName, [
-        'weight' => 10,
-        'label' => 'above',
-      ]);
-      $viewDisplay->save();
-    }
-    catch (\Exception $e) {
-      // Display configuration is non-critical.
-      \Drupal::logger('mcp_tools_templates')->warning(
-        'Failed to configure display for field @field: @error',
-        ['@field' => $fieldName, '@error' => $e->getMessage()]
-      );
-    }
-  }
-
-  /**
-   * Create media types from template definition.
-   *
-   * @param array $mediaTypes
-   *   Media type definitions.
-   * @param bool $skipExisting
-   *   Whether to skip existing media types.
-   *
-   * @return array
-   *   Result with created, skipped, and errors.
-   */
-  protected function createMediaTypes(array $mediaTypes, bool $skipExisting): array {
-    $created = [];
-    $skipped = [];
-    $errors = [];
-
-    try {
-      $storage = $this->entityTypeManager->getStorage('media_type');
-    }
-    catch (\Exception $e) {
-      $errors[] = ['type' => 'media_type', 'id' => '*', 'error' => 'Media module not installed.'];
-      return ['created' => $created, 'skipped' => $skipped, 'errors' => $errors];
-    }
-
-    foreach ($mediaTypes as $typeId => $config) {
-      try {
-        $existing = $storage->load($typeId);
-        if ($existing) {
-          if ($skipExisting) {
-            $skipped[] = ['type' => 'media_type', 'id' => $typeId, 'label' => $config['label']];
-            continue;
-          }
-        }
-
-        $mediaType = $storage->create([
-          'id' => $typeId,
-          'label' => $config['label'],
-          'description' => $config['description'] ?? '',
-          'source' => $config['source'] ?? 'image',
-        ]);
-        $mediaType->save();
-
-        $created[] = ['type' => 'media_type', 'id' => $typeId, 'label' => $config['label']];
-      }
-      catch (\Exception $e) {
-        $errors[] = ['type' => 'media_type', 'id' => $typeId, 'error' => $e->getMessage()];
-      }
-    }
-
-    return ['created' => $created, 'skipped' => $skipped, 'errors' => $errors];
-  }
-
-  /**
-   * Create webforms from template definition.
-   *
-   * @param array $webforms
-   *   Webform definitions.
-   * @param bool $skipExisting
-   *   Whether to skip existing webforms.
-   *
-   * @return array
-   *   Result with created, skipped, and errors.
-   */
-  protected function createWebforms(array $webforms, bool $skipExisting): array {
-    $created = [];
-    $skipped = [];
-    $errors = [];
-
-    try {
-      $storage = $this->entityTypeManager->getStorage('webform');
-    }
-    catch (\Exception $e) {
-      $errors[] = ['type' => 'webform', 'id' => '*', 'error' => 'Webform module not installed.'];
-      return ['created' => $created, 'skipped' => $skipped, 'errors' => $errors];
-    }
-
-    foreach ($webforms as $webformId => $config) {
-      try {
-        $existing = $storage->load($webformId);
-        if ($existing) {
-          if ($skipExisting) {
-            $skipped[] = ['type' => 'webform', 'id' => $webformId, 'label' => $config['label']];
-            continue;
-          }
-        }
-
-        // Build elements YAML.
-        $elements = [];
-        foreach ($config['elements'] ?? [] as $elementId => $elementConfig) {
-          $elements[$elementId] = [
-            '#type' => $elementConfig['type'],
-            '#title' => $elementConfig['title'],
-          ];
-          if (!empty($elementConfig['required'])) {
-            $elements[$elementId]['#required'] = TRUE;
-          }
-        }
-
-        $webform = $storage->create([
-          'id' => $webformId,
-          'title' => $config['label'],
-          'description' => $config['description'] ?? '',
-          'elements' => \Symfony\Component\Yaml\Yaml::dump($elements),
-          'status' => 'open',
-        ]);
-        $webform->save();
-
-        $created[] = ['type' => 'webform', 'id' => $webformId, 'label' => $config['label']];
-      }
-      catch (\Exception $e) {
-        $errors[] = ['type' => 'webform', 'id' => $webformId, 'error' => $e->getMessage()];
-      }
-    }
-
-    return ['created' => $created, 'skipped' => $skipped, 'errors' => $errors];
-  }
-
-  /**
-   * Create views from template definition.
-   *
-   * @param array $views
-   *   View definitions.
-   * @param bool $skipExisting
-   *   Whether to skip existing views.
-   *
-   * @return array
-   *   Result with created, skipped, and errors.
-   */
-  protected function createViews(array $views, bool $skipExisting): array {
-    $created = [];
-    $skipped = [];
-    $errors = [];
-
-    $storage = $this->entityTypeManager->getStorage('view');
-
-    foreach ($views as $viewId => $config) {
-      try {
-        $existing = $storage->load($viewId);
-        if ($existing) {
-          if ($skipExisting) {
-            $skipped[] = ['type' => 'view', 'id' => $viewId, 'label' => $config['label']];
-            continue;
-          }
-        }
-
-        // Build view configuration.
-        $viewConfig = [
-          'id' => $viewId,
-          'label' => $config['label'],
-          'description' => $config['description'] ?? '',
-          'base_table' => $config['base_table'] ?? 'node_field_data',
-          'display' => [
-            'default' => [
-              'display_plugin' => 'default',
-              'id' => 'default',
-              'display_title' => 'Default',
-              'position' => 0,
-              'display_options' => [
-                'title' => $config['label'],
-                'pager' => [
-                  'type' => 'some',
-                  'options' => [
-                    'items_per_page' => $config['pager'] ?? 10,
-                  ],
-                ],
-                'style' => [
-                  'type' => $config['style'] ?? 'default',
-                ],
-                'row' => [
-                  'type' => 'fields',
-                ],
-              ],
-            ],
-          ],
-        ];
-
-        // Add page display if configured.
-        if (!empty($config['display']['page'])) {
-          $viewConfig['display']['page_1'] = [
-            'display_plugin' => 'page',
-            'id' => 'page_1',
-            'display_title' => 'Page',
-            'position' => 1,
-            'display_options' => [
-              'path' => ltrim($config['display']['page'], '/'),
-            ],
-          ];
-        }
-
-        // Add block display if configured.
-        if (!empty($config['display']['block'])) {
-          $viewConfig['display']['block_1'] = [
-            'display_plugin' => 'block',
-            'id' => 'block_1',
-            'display_title' => 'Block',
-            'position' => 2,
-          ];
-        }
-
-        $view = $storage->create($viewConfig);
-        $view->save();
-
-        $created[] = ['type' => 'view', 'id' => $viewId, 'label' => $config['label']];
-      }
-      catch (\Exception $e) {
-        $errors[] = ['type' => 'view', 'id' => $viewId, 'error' => $e->getMessage()];
-      }
-    }
-
-    return ['created' => $created, 'skipped' => $skipped, 'errors' => $errors];
+    return $error;
   }
 
 }
