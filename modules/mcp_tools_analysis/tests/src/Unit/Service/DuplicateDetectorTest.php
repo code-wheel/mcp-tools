@@ -127,7 +127,7 @@ final class DuplicateDetectorTest extends UnitTestCase {
     $result = $this->detector->findDuplicateContent('article');
 
     $this->assertTrue($result['success']);
-    $this->assertSame(0, $result['data']['total_compared']);
+    $this->assertSame(0, $result['data']['items_analyzed']);
   }
 
   /**

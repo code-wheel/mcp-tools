@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\Tests\mcp_tools_analysis\Unit\Service;
 
+use Drupal\Core\Database\Connection;
 use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Entity\Query\QueryInterface;
@@ -19,15 +20,17 @@ use Drupal\Tests\UnitTestCase;
 final class ContentAuditorTest extends UnitTestCase {
 
   private EntityTypeManagerInterface $entityTypeManager;
+  private Connection $database;
   private ContentAuditor $auditor;
 
   protected function setUp(): void {
     parent::setUp();
     $this->entityTypeManager = $this->createMock(EntityTypeManagerInterface::class);
-    $this->auditor = new ContentAuditor($this->entityTypeManager);
+    $this->database = $this->createMock(Connection::class);
+    $this->auditor = new ContentAuditor($this->entityTypeManager, $this->database);
   }
 
-  public function testAuditContentReturnsStructuredResult(): void {
+  public function testContentAuditReturnsStructuredResult(): void {
     $query = $this->createMock(QueryInterface::class);
     $query->method('condition')->willReturnSelf();
     $query->method('accessCheck')->willReturnSelf();
@@ -39,24 +42,23 @@ final class ContentAuditorTest extends UnitTestCase {
     $storage->method('loadMultiple')->willReturn([]);
 
     $this->entityTypeManager->method('getStorage')->with('node')->willReturn($storage);
+    $this->entityTypeManager->method('hasDefinition')->willReturn(FALSE);
 
-    $result = $this->auditor->auditContent();
+    $result = $this->auditor->contentAudit();
 
     $this->assertTrue($result['success']);
-    $this->assertArrayHasKey('total_nodes', $result['data']);
-    $this->assertArrayHasKey('issues', $result['data']);
-    $this->assertArrayHasKey('summary', $result['data']);
+    $this->assertArrayHasKey('stale_content', $result['data']);
+    $this->assertArrayHasKey('orphaned_content', $result['data']);
+    $this->assertArrayHasKey('drafts', $result['data']);
   }
 
-  public function testAuditContentFindsUnpublishedContent(): void {
+  public function testContentAuditFindsOrphanedContent(): void {
     $unpublishedNode = $this->createMock(NodeInterface::class);
     $unpublishedNode->method('id')->willReturn(1);
     $unpublishedNode->method('getTitle')->willReturn('Draft Article');
-    $unpublishedNode->method('isPublished')->willReturn(FALSE);
-    $unpublishedNode->method('getType')->willReturn('article');
+    $unpublishedNode->method('bundle')->willReturn('article');
     $unpublishedNode->method('getCreatedTime')->willReturn(time() - 86400 * 30);
     $unpublishedNode->method('getChangedTime')->willReturn(time() - 86400 * 30);
-    $unpublishedNode->method('getFields')->willReturn([]);
 
     $query = $this->createMock(QueryInterface::class);
     $query->method('condition')->willReturnSelf();
@@ -69,14 +71,15 @@ final class ContentAuditorTest extends UnitTestCase {
     $storage->method('loadMultiple')->willReturn([1 => $unpublishedNode]);
 
     $this->entityTypeManager->method('getStorage')->with('node')->willReturn($storage);
+    $this->entityTypeManager->method('hasDefinition')->willReturn(FALSE);
 
-    $result = $this->auditor->auditContent();
+    $result = $this->auditor->contentAudit();
 
     $this->assertTrue($result['success']);
-    $this->assertSame(1, $result['data']['summary']['unpublished']);
+    $this->assertSame(1, $result['data']['orphaned_count']);
   }
 
-  public function testAuditContentByType(): void {
+  public function testContentAuditByType(): void {
     $query = $this->createMock(QueryInterface::class);
     $query->method('condition')->willReturnSelf();
     $query->method('accessCheck')->willReturnSelf();
@@ -88,8 +91,9 @@ final class ContentAuditorTest extends UnitTestCase {
     $storage->method('loadMultiple')->willReturn([]);
 
     $this->entityTypeManager->method('getStorage')->with('node')->willReturn($storage);
+    $this->entityTypeManager->method('hasDefinition')->willReturn(FALSE);
 
-    $result = $this->auditor->auditContent('article');
+    $result = $this->auditor->contentAudit(['content_types' => ['article']]);
 
     $this->assertTrue($result['success']);
   }

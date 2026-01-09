@@ -6,7 +6,6 @@ namespace Drupal\Tests\mcp_tools_entity_clone\Unit\Service;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Config\ImmutableConfig;
-use Drupal\Core\Entity\ContentEntityInterface;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
@@ -57,7 +56,8 @@ final class EntityCloneServiceTest extends UnitTestCase {
     string $label,
     bool $hasStatus = TRUE,
     bool $fieldable = TRUE,
-  ): ContentEntityInterface&FieldableEntityInterface {
+  ): FieldableEntityInterface {
+    // Create a mock that implements both interfaces.
     $entity = $this->createMock(FieldableEntityInterface::class);
 
     $entityType = $this->createMock(EntityTypeInterface::class);

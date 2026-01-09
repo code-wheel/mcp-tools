@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Drupal\Tests\mcp_tools_analysis\Unit\Service;
 
-use Drupal\Core\Entity\EntityFieldManagerInterface;
-use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
+use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
-use Drupal\Core\Field\FieldDefinitionInterface;
+use Drupal\Core\Entity\Query\QueryInterface;
+use Drupal\field\FieldConfigInterface;
 use Drupal\mcp_tools_analysis\Service\FieldAnalyzer;
 use Drupal\Tests\UnitTestCase;
 
@@ -19,87 +19,121 @@ use Drupal\Tests\UnitTestCase;
 final class FieldAnalyzerTest extends UnitTestCase {
 
   private EntityTypeManagerInterface $entityTypeManager;
-  private EntityFieldManagerInterface $entityFieldManager;
-  private EntityTypeBundleInfoInterface $bundleInfo;
   private FieldAnalyzer $analyzer;
 
   protected function setUp(): void {
     parent::setUp();
     $this->entityTypeManager = $this->createMock(EntityTypeManagerInterface::class);
-    $this->entityFieldManager = $this->createMock(EntityFieldManagerInterface::class);
-    $this->bundleInfo = $this->createMock(EntityTypeBundleInfoInterface::class);
-
-    $this->analyzer = new FieldAnalyzer(
-      $this->entityTypeManager,
-      $this->entityFieldManager,
-      $this->bundleInfo,
-    );
-  }
-
-  public function testAnalyzeFieldUsageReturnsStructuredResult(): void {
-    $this->bundleInfo->method('getBundleInfo')->willReturn([]);
-
-    $result = $this->analyzer->analyzeFieldUsage('node');
-
-    $this->assertTrue($result['success']);
-    $this->assertArrayHasKey('entity_type', $result['data']);
-    $this->assertArrayHasKey('bundles', $result['data']);
-    $this->assertSame('node', $result['data']['entity_type']);
-  }
-
-  public function testAnalyzeFieldUsageWithBundles(): void {
-    $this->bundleInfo->method('getBundleInfo')->with('node')->willReturn([
-      'article' => ['label' => 'Article'],
-      'page' => ['label' => 'Basic Page'],
-    ]);
-
-    $bodyField = $this->createMock(FieldDefinitionInterface::class);
-    $bodyField->method('getName')->willReturn('body');
-    $bodyField->method('getLabel')->willReturn('Body');
-    $bodyField->method('getType')->willReturn('text_with_summary');
-    $bodyField->method('isRequired')->willReturn(FALSE);
-    $bodyField->method('getFieldStorageDefinition')->willReturn(
-      new class {
-        public function getCardinality(): int {
-          return 1;
-        }
-      }
-    );
-
-    $this->entityFieldManager->method('getFieldDefinitions')
-      ->willReturn(['body' => $bodyField]);
-
-    $result = $this->analyzer->analyzeFieldUsage('node');
-
-    $this->assertTrue($result['success']);
-    $this->assertCount(2, $result['data']['bundles']);
-  }
-
-  public function testAnalyzeFieldUsageFiltersByBundle(): void {
-    $this->bundleInfo->method('getBundleInfo')->with('node')->willReturn([
-      'article' => ['label' => 'Article'],
-      'page' => ['label' => 'Basic Page'],
-    ]);
-
-    $this->entityFieldManager->method('getFieldDefinitions')
-      ->with('node', 'article')
-      ->willReturn([]);
-
-    $result = $this->analyzer->analyzeFieldUsage('node', 'article');
-
-    $this->assertTrue($result['success']);
-    $this->assertCount(1, $result['data']['bundles']);
-    $this->assertArrayHasKey('article', $result['data']['bundles']);
+    $this->analyzer = new FieldAnalyzer($this->entityTypeManager);
   }
 
   public function testFindUnusedFieldsReturnsStructuredResult(): void {
-    $this->bundleInfo->method('getBundleInfo')->willReturn([]);
+    $fieldConfigStorage = $this->createMock(EntityStorageInterface::class);
+    $fieldConfigStorage->method('loadMultiple')->willReturn([]);
 
-    $result = $this->analyzer->findUnusedFields('node');
+    $this->entityTypeManager->method('getStorage')
+      ->with('field_config')
+      ->willReturn($fieldConfigStorage);
+
+    $result = $this->analyzer->findUnusedFields();
 
     $this->assertTrue($result['success']);
-    $this->assertArrayHasKey('entity_type', $result['data']);
     $this->assertArrayHasKey('unused_fields', $result['data']);
+    $this->assertArrayHasKey('unused_count', $result['data']);
+    $this->assertSame(0, $result['data']['unused_count']);
+  }
+
+  public function testFindUnusedFieldsIgnoresBaseFields(): void {
+    // Create a field config that doesn't start with 'field_'.
+    $baseField = $this->createMock(FieldConfigInterface::class);
+    $baseField->method('getTargetEntityTypeId')->willReturn('node');
+    $baseField->method('getTargetBundle')->willReturn('article');
+    $baseField->method('getName')->willReturn('title');
+    $baseField->method('getType')->willReturn('string');
+    $baseField->method('getLabel')->willReturn('Title');
+
+    $fieldConfigStorage = $this->createMock(EntityStorageInterface::class);
+    $fieldConfigStorage->method('loadMultiple')->willReturn(['title' => $baseField]);
+
+    $this->entityTypeManager->method('getStorage')
+      ->with('field_config')
+      ->willReturn($fieldConfigStorage);
+
+    $result = $this->analyzer->findUnusedFields();
+
+    $this->assertTrue($result['success']);
+    // Base fields are skipped, so unused_count should be 0.
+    $this->assertSame(0, $result['data']['unused_count']);
+  }
+
+  public function testFindUnusedFieldsDetectsUnusedField(): void {
+    // Create a field config that starts with 'field_'.
+    $customField = $this->createMock(FieldConfigInterface::class);
+    $customField->method('getTargetEntityTypeId')->willReturn('node');
+    $customField->method('getTargetBundle')->willReturn('article');
+    $customField->method('getName')->willReturn('field_unused');
+    $customField->method('getType')->willReturn('string');
+    $customField->method('getLabel')->willReturn('Unused Field');
+
+    $fieldConfigStorage = $this->createMock(EntityStorageInterface::class);
+    $fieldConfigStorage->method('loadMultiple')->willReturn(['field_unused' => $customField]);
+
+    // Mock the node query that returns 0 results (unused).
+    $nodeQuery = $this->createMock(QueryInterface::class);
+    $nodeQuery->method('condition')->willReturnSelf();
+    $nodeQuery->method('accessCheck')->willReturnSelf();
+    $nodeQuery->method('range')->willReturnSelf();
+    $nodeQuery->method('count')->willReturnSelf();
+    $nodeQuery->method('execute')->willReturn(0);
+
+    $nodeStorage = $this->createMock(EntityStorageInterface::class);
+    $nodeStorage->method('getQuery')->willReturn($nodeQuery);
+
+    $this->entityTypeManager->method('getStorage')->willReturnMap([
+      ['field_config', $fieldConfigStorage],
+      ['node', $nodeStorage],
+    ]);
+
+    $result = $this->analyzer->findUnusedFields();
+
+    $this->assertTrue($result['success']);
+    $this->assertSame(1, $result['data']['unused_count']);
+    $this->assertNotEmpty($result['data']['unused_fields']);
+    $this->assertSame('field_unused', $result['data']['unused_fields'][0]['field_name']);
+  }
+
+  public function testFindUnusedFieldsSkipsUsedField(): void {
+    // Create a field config that starts with 'field_'.
+    $customField = $this->createMock(FieldConfigInterface::class);
+    $customField->method('getTargetEntityTypeId')->willReturn('node');
+    $customField->method('getTargetBundle')->willReturn('article');
+    $customField->method('getName')->willReturn('field_used');
+    $customField->method('getType')->willReturn('string');
+    $customField->method('getLabel')->willReturn('Used Field');
+
+    $fieldConfigStorage = $this->createMock(EntityStorageInterface::class);
+    $fieldConfigStorage->method('loadMultiple')->willReturn(['field_used' => $customField]);
+
+    // Mock the node query that returns results (field is used).
+    $nodeQuery = $this->createMock(QueryInterface::class);
+    $nodeQuery->method('condition')->willReturnSelf();
+    $nodeQuery->method('accessCheck')->willReturnSelf();
+    $nodeQuery->method('range')->willReturnSelf();
+    $nodeQuery->method('count')->willReturnSelf();
+    $nodeQuery->method('execute')->willReturn(5);
+
+    $nodeStorage = $this->createMock(EntityStorageInterface::class);
+    $nodeStorage->method('getQuery')->willReturn($nodeQuery);
+
+    $this->entityTypeManager->method('getStorage')->willReturnMap([
+      ['field_config', $fieldConfigStorage],
+      ['node', $nodeStorage],
+    ]);
+
+    $result = $this->analyzer->findUnusedFields();
+
+    $this->assertTrue($result['success']);
+    $this->assertSame(0, $result['data']['unused_count']);
   }
 
 }

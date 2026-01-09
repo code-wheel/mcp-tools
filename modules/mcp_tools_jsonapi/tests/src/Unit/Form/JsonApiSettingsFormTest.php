@@ -59,25 +59,10 @@ final class JsonApiSettingsFormTest extends UnitTestCase {
   }
 
   private function createForm(): JsonApiSettingsForm {
-    $form = new class(
+    $form = new JsonApiSettingsForm(
       $this->entityTypeManager,
       $this->resourceTypeRepository,
-    ) extends JsonApiSettingsForm {
-      public function __construct(
-        EntityTypeManagerInterface $entityTypeManager,
-        ResourceTypeRepositoryInterface $resourceTypeRepository,
-      ) {
-        $this->entityTypeManager = $entityTypeManager;
-        $this->resourceTypeRepository = $resourceTypeRepository;
-      }
-
-      private EntityTypeManagerInterface $entityTypeManager;
-      private ResourceTypeRepositoryInterface $resourceTypeRepository;
-
-      public function setConfigFactory(ConfigFactoryInterface $configFactory): void {
-        $this->configFactory = $configFactory;
-      }
-    };
+    );
     $form->setConfigFactory($this->configFactory);
     return $form;
   }
@@ -132,25 +117,10 @@ final class JsonApiSettingsFormTest extends UnitTestCase {
       ['media', TRUE, $mediaEntityType],
     ]);
 
-    $form = new class(
+    $form = new JsonApiSettingsForm(
       $entityTypeManager,
       $resourceTypeRepository,
-    ) extends JsonApiSettingsForm {
-      public function __construct(
-        EntityTypeManagerInterface $entityTypeManager,
-        ResourceTypeRepositoryInterface $resourceTypeRepository,
-      ) {
-        $this->entityTypeManager = $entityTypeManager;
-        $this->resourceTypeRepository = $resourceTypeRepository;
-      }
-
-      private EntityTypeManagerInterface $entityTypeManager;
-      private ResourceTypeRepositoryInterface $resourceTypeRepository;
-
-      public function setConfigFactory(ConfigFactoryInterface $configFactory): void {
-        $this->configFactory = $configFactory;
-      }
-    };
+    );
     $form->setConfigFactory($this->configFactory);
 
     $formState = $this->createMock(FormStateInterface::class);
@@ -289,32 +259,17 @@ final class JsonApiSettingsFormTest extends UnitTestCase {
       ['node', TRUE, $nodeEntityType],
     ]);
 
-    $form = new class(
+    $form = new JsonApiSettingsForm(
       $entityTypeManager,
       $resourceTypeRepository,
-    ) extends JsonApiSettingsForm {
-      public function __construct(
-        EntityTypeManagerInterface $entityTypeManager,
-        ResourceTypeRepositoryInterface $resourceTypeRepository,
-      ) {
-        $this->entityTypeManager = $entityTypeManager;
-        $this->resourceTypeRepository = $resourceTypeRepository;
-      }
-
-      private EntityTypeManagerInterface $entityTypeManager;
-      private ResourceTypeRepositoryInterface $resourceTypeRepository;
-
-      public function setConfigFactory(ConfigFactoryInterface $configFactory): void {
-        $this->configFactory = $configFactory;
-      }
-
-      public function getEntityTypeOptionsPublic(): array {
-        return $this->getEntityTypeOptions();
-      }
-    };
+    );
     $form->setConfigFactory($this->configFactory);
 
-    $options = $form->getEntityTypeOptionsPublic();
+    // Use reflection to call protected method.
+    $reflection = new \ReflectionClass($form);
+    $method = $reflection->getMethod('getEntityTypeOptions');
+    $method->setAccessible(TRUE);
+    $options = $method->invoke($form);
 
     $this->assertArrayHasKey('node', $options);
     $this->assertArrayNotHasKey('internal_entity', $options);
@@ -343,32 +298,17 @@ final class JsonApiSettingsFormTest extends UnitTestCase {
     $entityTypeManager = $this->createMock(EntityTypeManagerInterface::class);
     $entityTypeManager->method('getDefinition')->with('node', TRUE)->willReturn($nodeEntityType);
 
-    $form = new class(
+    $form = new JsonApiSettingsForm(
       $entityTypeManager,
       $resourceTypeRepository,
-    ) extends JsonApiSettingsForm {
-      public function __construct(
-        EntityTypeManagerInterface $entityTypeManager,
-        ResourceTypeRepositoryInterface $resourceTypeRepository,
-      ) {
-        $this->entityTypeManager = $entityTypeManager;
-        $this->resourceTypeRepository = $resourceTypeRepository;
-      }
-
-      private EntityTypeManagerInterface $entityTypeManager;
-      private ResourceTypeRepositoryInterface $resourceTypeRepository;
-
-      public function setConfigFactory(ConfigFactoryInterface $configFactory): void {
-        $this->configFactory = $configFactory;
-      }
-
-      public function getEntityTypeOptionsPublic(): array {
-        return $this->getEntityTypeOptions();
-      }
-    };
+    );
     $form->setConfigFactory($this->configFactory);
 
-    $options = $form->getEntityTypeOptionsPublic();
+    // Use reflection to call protected method.
+    $reflection = new \ReflectionClass($form);
+    $method = $reflection->getMethod('getEntityTypeOptions');
+    $method->setAccessible(TRUE);
+    $options = $method->invoke($form);
 
     // Should only have one entry for 'node'.
     $this->assertCount(1, $options);
@@ -388,33 +328,19 @@ final class JsonApiSettingsFormTest extends UnitTestCase {
       ->with('missing_entity', TRUE)
       ->willThrowException(new \Exception('Entity type not found'));
 
-    $form = new class(
+    $form = new JsonApiSettingsForm(
       $entityTypeManager,
       $resourceTypeRepository,
-    ) extends JsonApiSettingsForm {
-      public function __construct(
-        EntityTypeManagerInterface $entityTypeManager,
-        ResourceTypeRepositoryInterface $resourceTypeRepository,
-      ) {
-        $this->entityTypeManager = $entityTypeManager;
-        $this->resourceTypeRepository = $resourceTypeRepository;
-      }
-
-      private EntityTypeManagerInterface $entityTypeManager;
-      private ResourceTypeRepositoryInterface $resourceTypeRepository;
-
-      public function setConfigFactory(ConfigFactoryInterface $configFactory): void {
-        $this->configFactory = $configFactory;
-      }
-
-      public function getEntityTypeOptionsPublic(): array {
-        return $this->getEntityTypeOptions();
-      }
-    };
+    );
     $form->setConfigFactory($this->configFactory);
 
+    // Use reflection to call protected method.
+    $reflection = new \ReflectionClass($form);
+    $method = $reflection->getMethod('getEntityTypeOptions');
+    $method->setAccessible(TRUE);
+    $options = $method->invoke($form);
+
     // Should not throw, should return empty options.
-    $options = $form->getEntityTypeOptionsPublic();
     $this->assertSame([], $options);
   }
 

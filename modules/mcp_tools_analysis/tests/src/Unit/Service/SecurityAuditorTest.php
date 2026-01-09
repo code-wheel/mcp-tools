@@ -6,9 +6,10 @@ namespace Drupal\Tests\mcp_tools_analysis\Unit\Service;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Config\ImmutableConfig;
+use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Entity\Query\QueryInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
-use Drupal\Core\Session\AccountInterface;
 use Drupal\mcp_tools_analysis\Service\SecurityAuditor;
 use Drupal\Tests\UnitTestCase;
 use Drupal\user\RoleInterface;
@@ -38,23 +39,24 @@ final class SecurityAuditorTest extends UnitTestCase {
     );
   }
 
-  public function testAuditSecurityReturnsStructuredResult(): void {
-    // Mock system.site config.
-    $siteConfig = $this->createMock(ImmutableConfig::class);
-    $siteConfig->method('get')->willReturn('Test Site');
-    $this->configFactory->method('get')->willReturn($siteConfig);
+  public function testSecurityAuditReturnsStructuredResult(): void {
+    // Mock user.settings config.
+    $userConfig = $this->createMock(ImmutableConfig::class);
+    $userConfig->method('get')->willReturn('admin_only');
+    $this->configFactory->method('get')->willReturn($userConfig);
 
     // Mock role storage.
-    $roleStorage = $this->createMock(\Drupal\Core\Entity\EntityStorageInterface::class);
+    $roleStorage = $this->createMock(EntityStorageInterface::class);
+    $roleStorage->method('load')->willReturn(NULL);
     $roleStorage->method('loadMultiple')->willReturn([]);
 
     // Mock user storage.
-    $userQuery = $this->createMock(\Drupal\Core\Entity\Query\QueryInterface::class);
+    $userQuery = $this->createMock(QueryInterface::class);
     $userQuery->method('condition')->willReturnSelf();
     $userQuery->method('accessCheck')->willReturnSelf();
     $userQuery->method('execute')->willReturn([]);
 
-    $userStorage = $this->createMock(\Drupal\Core\Entity\EntityStorageInterface::class);
+    $userStorage = $this->createMock(EntityStorageInterface::class);
     $userStorage->method('getQuery')->willReturn($userQuery);
     $userStorage->method('loadMultiple')->willReturn([]);
 
@@ -65,34 +67,40 @@ final class SecurityAuditorTest extends UnitTestCase {
 
     $this->moduleHandler->method('moduleExists')->willReturn(FALSE);
 
-    $result = $this->auditor->auditSecurity();
+    $result = $this->auditor->securityAudit();
 
     $this->assertTrue($result['success']);
-    $this->assertArrayHasKey('findings', $result['data']);
-    $this->assertArrayHasKey('summary', $result['data']);
+    $this->assertArrayHasKey('critical_issues', $result['data']);
+    $this->assertArrayHasKey('warnings', $result['data']);
+    $this->assertArrayHasKey('critical_count', $result['data']);
+    $this->assertArrayHasKey('warning_count', $result['data']);
   }
 
-  public function testAuditSecurityDetectsRiskyPermissions(): void {
-    $siteConfig = $this->createMock(ImmutableConfig::class);
-    $siteConfig->method('get')->willReturn('Test Site');
-    $this->configFactory->method('get')->willReturn($siteConfig);
+  public function testSecurityAuditDetectsSensitiveAuthenticatedPermissions(): void {
+    // Mock user.settings config.
+    $userConfig = $this->createMock(ImmutableConfig::class);
+    $userConfig->method('get')->willReturn('admin_only');
+    $this->configFactory->method('get')->willReturn($userConfig);
 
-    // Create role with risky permission.
-    $role = $this->createMock(RoleInterface::class);
-    $role->method('id')->willReturn('authenticated');
-    $role->method('label')->willReturn('Authenticated user');
-    $role->method('getPermissions')->willReturn(['administer site configuration']);
-    $role->method('isAdmin')->willReturn(FALSE);
+    // Create authenticated role with sensitive permission.
+    $authenticatedRole = $this->createMock(RoleInterface::class);
+    $authenticatedRole->method('id')->willReturn('authenticated');
+    $authenticatedRole->method('label')->willReturn('Authenticated user');
+    $authenticatedRole->method('getPermissions')->willReturn(['administer site configuration']);
 
-    $roleStorage = $this->createMock(\Drupal\Core\Entity\EntityStorageInterface::class);
-    $roleStorage->method('loadMultiple')->willReturn(['authenticated' => $role]);
+    $roleStorage = $this->createMock(EntityStorageInterface::class);
+    $roleStorage->method('load')->willReturnMap([
+      ['anonymous', NULL],
+      ['authenticated', $authenticatedRole],
+    ]);
+    $roleStorage->method('loadMultiple')->willReturn(['authenticated' => $authenticatedRole]);
 
-    $userQuery = $this->createMock(\Drupal\Core\Entity\Query\QueryInterface::class);
+    $userQuery = $this->createMock(QueryInterface::class);
     $userQuery->method('condition')->willReturnSelf();
     $userQuery->method('accessCheck')->willReturnSelf();
     $userQuery->method('execute')->willReturn([]);
 
-    $userStorage = $this->createMock(\Drupal\Core\Entity\EntityStorageInterface::class);
+    $userStorage = $this->createMock(EntityStorageInterface::class);
     $userStorage->method('getQuery')->willReturn($userQuery);
     $userStorage->method('loadMultiple')->willReturn([]);
 
@@ -103,12 +111,11 @@ final class SecurityAuditorTest extends UnitTestCase {
 
     $this->moduleHandler->method('moduleExists')->willReturn(FALSE);
 
-    $result = $this->auditor->auditSecurity();
+    $result = $this->auditor->securityAudit();
 
     $this->assertTrue($result['success']);
-    // Should have findings about risky permissions.
-    $highFindings = array_filter($result['data']['findings'], fn($f) => $f['severity'] === 'high');
-    $this->assertNotEmpty($highFindings);
+    // Should have warnings about sensitive permissions for authenticated role.
+    $this->assertGreaterThan(0, $result['data']['warning_count']);
   }
 
 }

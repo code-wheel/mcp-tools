@@ -76,34 +76,12 @@ final class RemoteSettingsFormTest extends UnitTestCase {
   }
 
   private function createForm(): RemoteSettingsForm {
-    $form = new class(
+    $form = new RemoteSettingsForm(
       $this->apiKeyManager,
       $this->entityTypeManager,
       $this->permissionHandler,
       $this->passwordGenerator,
-    ) extends RemoteSettingsForm {
-      public function __construct(
-        ApiKeyManager $apiKeyManager,
-        EntityTypeManagerInterface $entityTypeManager,
-        PermissionHandlerInterface $permissionHandler,
-        PasswordGeneratorInterface $passwordGenerator,
-      ) {
-        // Bypass parent constructor, we'll set config factory directly.
-        $this->apiKeyManager = $apiKeyManager;
-        $this->entityTypeManager = $entityTypeManager;
-        $this->permissionHandler = $permissionHandler;
-        $this->passwordGenerator = $passwordGenerator;
-      }
-
-      private ApiKeyManager $apiKeyManager;
-      private EntityTypeManagerInterface $entityTypeManager;
-      private PermissionHandlerInterface $permissionHandler;
-      private PasswordGeneratorInterface $passwordGenerator;
-
-      public function setConfigFactory(ConfigFactoryInterface $configFactory): void {
-        $this->configFactory = $configFactory;
-      }
-    };
+    );
     $form->setConfigFactory($this->configFactory);
     return $form;
   }
@@ -215,33 +193,12 @@ final class RemoteSettingsFormTest extends UnitTestCase {
     $configFactory->method('getEditable')->with('mcp_tools_remote.settings')->willReturn($config);
     $configFactory->method('get')->with('mcp_tools_remote.settings')->willReturn($config);
 
-    $form = new class(
+    $form = new RemoteSettingsForm(
       $this->apiKeyManager,
       $this->entityTypeManager,
       $this->permissionHandler,
       $this->passwordGenerator,
-    ) extends RemoteSettingsForm {
-      public function __construct(
-        ApiKeyManager $apiKeyManager,
-        EntityTypeManagerInterface $entityTypeManager,
-        PermissionHandlerInterface $permissionHandler,
-        PasswordGeneratorInterface $passwordGenerator,
-      ) {
-        $this->apiKeyManager = $apiKeyManager;
-        $this->entityTypeManager = $entityTypeManager;
-        $this->permissionHandler = $permissionHandler;
-        $this->passwordGenerator = $passwordGenerator;
-      }
-
-      private ApiKeyManager $apiKeyManager;
-      private EntityTypeManagerInterface $entityTypeManager;
-      private PermissionHandlerInterface $permissionHandler;
-      private PasswordGeneratorInterface $passwordGenerator;
-
-      public function setConfigFactory(ConfigFactoryInterface $configFactory): void {
-        $this->configFactory = $configFactory;
-      }
-    };
+    );
     $form->setConfigFactory($configFactory);
 
     $formState = $this->createMock(FormStateInterface::class);
@@ -287,33 +244,12 @@ final class RemoteSettingsFormTest extends UnitTestCase {
     $configFactory->method('getEditable')->with('mcp_tools_remote.settings')->willReturn($config);
     $configFactory->method('get')->with('mcp_tools_remote.settings')->willReturn($config);
 
-    $form = new class(
+    $form = new RemoteSettingsForm(
       $this->apiKeyManager,
       $this->entityTypeManager,
       $this->permissionHandler,
       $this->passwordGenerator,
-    ) extends RemoteSettingsForm {
-      public function __construct(
-        ApiKeyManager $apiKeyManager,
-        EntityTypeManagerInterface $entityTypeManager,
-        PermissionHandlerInterface $permissionHandler,
-        PasswordGeneratorInterface $passwordGenerator,
-      ) {
-        $this->apiKeyManager = $apiKeyManager;
-        $this->entityTypeManager = $entityTypeManager;
-        $this->permissionHandler = $permissionHandler;
-        $this->passwordGenerator = $passwordGenerator;
-      }
-
-      private ApiKeyManager $apiKeyManager;
-      private EntityTypeManagerInterface $entityTypeManager;
-      private PermissionHandlerInterface $permissionHandler;
-      private PasswordGeneratorInterface $passwordGenerator;
-
-      public function setConfigFactory(ConfigFactoryInterface $configFactory): void {
-        $this->configFactory = $configFactory;
-      }
-    };
+    );
     $form->setConfigFactory($configFactory);
 
     $formState = $this->createMock(FormStateInterface::class);
@@ -374,33 +310,12 @@ final class RemoteSettingsFormTest extends UnitTestCase {
       ],
     ]);
 
-    $form = new class(
+    $form = new RemoteSettingsForm(
       $apiKeyManager,
       $entityTypeManager,
       $this->permissionHandler,
       $this->passwordGenerator,
-    ) extends RemoteSettingsForm {
-      public function __construct(
-        ApiKeyManager $apiKeyManager,
-        EntityTypeManagerInterface $entityTypeManager,
-        PermissionHandlerInterface $permissionHandler,
-        PasswordGeneratorInterface $passwordGenerator,
-      ) {
-        $this->apiKeyManager = $apiKeyManager;
-        $this->entityTypeManager = $entityTypeManager;
-        $this->permissionHandler = $permissionHandler;
-        $this->passwordGenerator = $passwordGenerator;
-      }
-
-      private ApiKeyManager $apiKeyManager;
-      private EntityTypeManagerInterface $entityTypeManager;
-      private PermissionHandlerInterface $permissionHandler;
-      private PasswordGeneratorInterface $passwordGenerator;
-
-      public function setConfigFactory(ConfigFactoryInterface $configFactory): void {
-        $this->configFactory = $configFactory;
-      }
-    };
+    );
     $form->setConfigFactory($configFactory);
 
     $formState = $this->createMock(FormStateInterface::class);

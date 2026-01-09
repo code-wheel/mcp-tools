@@ -111,7 +111,6 @@ final class AccessibilityAnalyzerTest extends UnitTestCase {
    */
   private function createMockEntity(string $bodyContent): ContentEntityInterface {
     $entity = $this->createMock(ContentEntityInterface::class);
-    $entity->method('getTitle')->willReturn('Test Title');
     $entity->method('label')->willReturn('Test Title');
 
     // Create a mock field with text content.

@@ -116,7 +116,7 @@ final class LinkAnalyzerTest extends UnitTestCase {
     $result = $this->analyzer->findBrokenLinks();
 
     $this->assertTrue($result['success']);
-    $this->assertSame(0, $result['data']['checked_count']);
+    $this->assertSame(0, $result['data']['total_checked']);
   }
 
 }

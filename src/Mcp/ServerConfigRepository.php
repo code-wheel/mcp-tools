@@ -245,6 +245,11 @@ class ServerConfigRepository {
       return NULL;
     }
 
+    // Handle closures and callable objects directly.
+    if ($callback instanceof \Closure || (is_object($callback) && is_callable($callback))) {
+      return $callback;
+    }
+
     if (is_array($callback)) {
       if (count($callback) === 2 && is_string($callback[0]) && $this->container->has($callback[0])) {
         return [$this->container->get($callback[0]), $callback[1]];
