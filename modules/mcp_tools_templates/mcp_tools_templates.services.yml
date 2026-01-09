@@ -1,4 +1,8 @@
 services:
+  logger.channel.mcp_tools_templates:
+    parent: logger.channel_base
+    arguments: ['mcp_tools_templates']
+
   mcp_tools_templates.component_factory:
     class: Drupal\mcp_tools_templates\Service\ComponentFactory
     arguments:

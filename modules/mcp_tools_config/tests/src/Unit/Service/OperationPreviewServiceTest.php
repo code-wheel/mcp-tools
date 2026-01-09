@@ -90,6 +90,8 @@ final class OperationPreviewServiceTest extends UnitTestCase {
     $this->activeStorage->method('read')
       ->with('system.site')
       ->willReturn(['name' => 'Test Site']);
+    $this->activeStorage->method('listAll')
+      ->willReturn([]);
 
     $result = $this->service->previewOperation('delete_config', [
       'config_name' => 'system.site',

@@ -212,18 +212,25 @@ final class RemoteSettingsFormTest extends UnitTestCase {
     $form->setConfigFactory($configFactory);
 
     $formState = $this->createMock(FormStateInterface::class);
-    $formState->method('getValue')->willReturnMap([
-      ['enabled', TRUE],
-      [['execution_user_wrapper', 'use_uid1'], FALSE],
-      [['execution_user_wrapper', 'execution_user'], 123],
-      ['allowed_ips', "127.0.0.1\n10.0.0.0/8"],
-      ['allowed_origins', "localhost\nexample.com"],
-      ['server_name', 'Test Server'],
-      ['server_version', '2.0.0'],
-      ['pagination_limit', 100],
-      ['include_all_tools', TRUE],
-      ['gateway_mode', TRUE],
-    ]);
+    $formState->method('getValue')->willReturnCallback(function ($key) {
+      if ($key === ['execution_user_wrapper', 'use_uid1']) {
+        return FALSE;
+      }
+      if ($key === ['execution_user_wrapper', 'execution_user']) {
+        return 123;
+      }
+      return match ($key) {
+        'enabled' => TRUE,
+        'allowed_ips' => "127.0.0.1\n10.0.0.0/8",
+        'allowed_origins' => "localhost\nexample.com",
+        'server_name' => 'Test Server',
+        'server_version' => '2.0.0',
+        'pagination_limit' => 100,
+        'include_all_tools' => TRUE,
+        'gateway_mode' => TRUE,
+        default => NULL,
+      };
+    });
 
     $formArray = [];
     $form->submitForm($formArray, $formState);
@@ -263,18 +270,25 @@ final class RemoteSettingsFormTest extends UnitTestCase {
     $form->setConfigFactory($configFactory);
 
     $formState = $this->createMock(FormStateInterface::class);
-    $formState->method('getValue')->willReturnMap([
-      ['enabled', TRUE],
-      [['execution_user_wrapper', 'use_uid1'], TRUE],
-      [['execution_user_wrapper', 'execution_user'], 0],
-      ['allowed_ips', ''],
-      ['allowed_origins', ''],
-      ['server_name', 'Test'],
-      ['server_version', '1.0.0'],
-      ['pagination_limit', 50],
-      ['include_all_tools', FALSE],
-      ['gateway_mode', FALSE],
-    ]);
+    $formState->method('getValue')->willReturnCallback(function ($key) {
+      if ($key === ['execution_user_wrapper', 'use_uid1']) {
+        return TRUE;
+      }
+      if ($key === ['execution_user_wrapper', 'execution_user']) {
+        return 0;
+      }
+      return match ($key) {
+        'enabled' => TRUE,
+        'allowed_ips' => '',
+        'allowed_origins' => '',
+        'server_name' => 'Test',
+        'server_version' => '1.0.0',
+        'pagination_limit' => 50,
+        'include_all_tools' => FALSE,
+        'gateway_mode' => FALSE,
+        default => NULL,
+      };
+    });
 
     $formArray = [];
     $form->submitForm($formArray, $formState);

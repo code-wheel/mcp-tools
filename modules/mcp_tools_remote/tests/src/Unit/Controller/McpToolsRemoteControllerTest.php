@@ -55,6 +55,7 @@ final class McpToolsRemoteControllerTest extends UnitTestCase {
     $this->apiKeyManager = $this->createMock(ApiKeyManager::class);
     $this->accessManager = $this->createMock(AccessManager::class);
     $this->toolManager = $this->createMock(PluginManagerInterface::class);
+    $this->toolManager->method('getDefinitions')->willReturn([]);
     $this->resourceRegistry = $this->createMock(ResourceRegistry::class);
     $this->promptRegistry = $this->createMock(PromptRegistry::class);
     $this->serverConfigRepository = $this->createMock(ServerConfigRepository::class);

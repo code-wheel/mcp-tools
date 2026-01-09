@@ -182,13 +182,16 @@ final class JsonApiSettingsFormTest extends UnitTestCase {
     $form->setConfigFactory($configFactory);
 
     $formState = $this->createMock(FormStateInterface::class);
-    $formState->method('getValue')->willReturnMap([
-      ['allowed_entity_types', ['node' => 'node', 'media' => 0, 'taxonomy_term' => 'taxonomy_term']],
-      ['blocked_entity_types', ['user' => 'user', 'file' => 0]],
-      ['allow_write_operations', TRUE],
-      ['max_items_per_page', 100],
-      ['include_relationships', TRUE],
-    ]);
+    $formState->method('getValue')->willReturnCallback(function ($key) {
+      return match ($key) {
+        'allowed_entity_types' => ['node' => 'node', 'media' => 0, 'taxonomy_term' => 'taxonomy_term'],
+        'blocked_entity_types' => ['user' => 'user', 'file' => 0],
+        'allow_write_operations' => TRUE,
+        'max_items_per_page' => 100,
+        'include_relationships' => TRUE,
+        default => NULL,
+      };
+    });
 
     $formArray = [];
     $form->submitForm($formArray, $formState);
@@ -222,13 +225,16 @@ final class JsonApiSettingsFormTest extends UnitTestCase {
     $form->setConfigFactory($configFactory);
 
     $formState = $this->createMock(FormStateInterface::class);
-    $formState->method('getValue')->willReturnMap([
-      ['allowed_entity_types', NULL],
-      ['blocked_entity_types', []],
-      ['allow_write_operations', FALSE],
-      ['max_items_per_page', 50],
-      ['include_relationships', FALSE],
-    ]);
+    $formState->method('getValue')->willReturnCallback(function ($key) {
+      return match ($key) {
+        'allowed_entity_types' => NULL,
+        'blocked_entity_types' => [],
+        'allow_write_operations' => FALSE,
+        'max_items_per_page' => 50,
+        'include_relationships' => FALSE,
+        default => NULL,
+      };
+    });
 
     $formArray = [];
     $form->submitForm($formArray, $formState);
