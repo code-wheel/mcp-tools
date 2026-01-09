@@ -64,12 +64,13 @@ final class McpToolsRemoteControllerTest extends UnitTestCase {
     $this->eventDispatcher = $this->createMock(EventDispatcherInterface::class);
     $this->logger = $this->createMock(LoggerInterface::class);
 
-    // Set up container with logger factory for Drupal::logger() calls.
+    // Set up container with services and parameters for Drupal:: static calls.
     $loggerFactory = $this->createMock(LoggerChannelFactoryInterface::class);
     $loggerFactory->method('get')->willReturn($this->logger);
     $container = new ContainerBuilder();
     $container->set('logger.factory', $loggerFactory);
     $container->set('string_translation', $this->getStringTranslationStub());
+    $container->setParameter('app.root', '/tmp');
     \Drupal::setContainer($container);
   }
 
