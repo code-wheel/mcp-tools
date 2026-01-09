@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\Tests\mcp_tools_templates\Unit\Service;
 
+use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Entity\Display\EntityFormDisplayInterface;
@@ -148,9 +149,8 @@ final class ComponentFactoryTest extends UnitTestCase {
   }
 
   public function testCreateContentTypesCreatesNew(): void {
-    $nodeType = $this->getMockBuilder('\\Drupal\\node\\Entity\\NodeType')
-      ->disableOriginalConstructor()
-      ->getMock();
+    // Use EntityInterface instead of NodeType to avoid constant dependency.
+    $nodeType = $this->createMock(EntityInterface::class);
 
     $nodeTypeStorage = $this->createMock(EntityStorageInterface::class);
     $nodeTypeStorage->method('load')->willReturn(NULL);
@@ -174,9 +174,8 @@ final class ComponentFactoryTest extends UnitTestCase {
   }
 
   public function testCreateContentTypesSkipsExisting(): void {
-    $existing = $this->getMockBuilder('\\Drupal\\node\\Entity\\NodeType')
-      ->disableOriginalConstructor()
-      ->getMock();
+    // Use EntityInterface instead of NodeType to avoid constant dependency.
+    $existing = $this->createMock(EntityInterface::class);
 
     $nodeTypeStorage = $this->createMock(EntityStorageInterface::class);
     $nodeTypeStorage->method('load')->willReturn($existing);

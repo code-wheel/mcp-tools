@@ -12,6 +12,7 @@ use Drupal\mcp_tools\Service\AuditLogger;
 use Drupal\mcp_tools_structure\Service\TaxonomyManagementService;
 use Drupal\taxonomy\VocabularyInterface;
 use Drupal\taxonomy\TermInterface;
+use Drupal\taxonomy\TermStorageInterface;
 use Drupal\Tests\UnitTestCase;
 
 /**
@@ -131,7 +132,7 @@ final class TaxonomyManagementServiceTest extends UnitTestCase {
     $termQuery->method('count')->willReturnSelf();
     $termQuery->method('execute')->willReturnOnConsecutiveCalls([1], 1);
 
-    $termStorage = $this->createMock(EntityStorageInterface::class);
+    $termStorage = $this->createMock(TermStorageInterface::class);
     $termStorage->method('getQuery')->willReturn($termQuery);
     $termStorage->method('loadMultiple')->willReturn([1 => $term]);
     $termStorage->method('loadParents')->willReturn([]);

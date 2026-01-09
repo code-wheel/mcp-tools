@@ -67,7 +67,9 @@ class ViewsServiceTest extends UnitTestCase {
     $this->assertStringContainsString('denied', $result['error']);
   }
 
-  #[\PHPUnit\Framework\Attributes\DataProvider('invalidMachineNameProvider')]
+  /**
+   * @dataProvider invalidMachineNameProvider
+   */
   public function testCreateViewInvalidMachineName(string $invalidName): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
 
@@ -104,7 +106,9 @@ class ViewsServiceTest extends UnitTestCase {
     $this->assertStringContainsString('already exists', $result['error']);
   }
 
-  #[\PHPUnit\Framework\Attributes\DataProvider('invalidBaseTableProvider')]
+  /**
+   * @dataProvider invalidBaseTableProvider
+   */
   public function testCreateViewInvalidBaseTable(string $invalidTable): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
     $this->viewStorage->method('load')->willReturn(NULL);
@@ -151,7 +155,9 @@ class ViewsServiceTest extends UnitTestCase {
     $this->assertStringContainsString('not found', $result['error']);
   }
 
-  #[\PHPUnit\Framework\Attributes\DataProvider('coreViewsProvider')]
+  /**
+   * @dataProvider coreViewsProvider
+   */
   public function testDeleteViewProtectsCoreViews(string $coreViewId): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
 
