@@ -66,10 +66,39 @@ final class CacheServiceTest extends UnitTestCase {
     $this->jsOptimizer = $this->createMock(AssetCollectionOptimizerInterface::class);
     $this->kernel = $this->createMock(DrupalKernelInterface::class);
     $this->menuLinkManager = $this->createMock(MenuLinkManagerInterface::class);
-    // Use getMockBuilder to add getServiceIds method which isn't on interface.
-    $this->container = $this->getMockBuilder(ContainerInterface::class)
-      ->addMethods(['getServiceIds'])
-      ->getMock();
+    // Create a mock that implements ContainerInterface with getServiceIds.
+    // Since getServiceIds is not on ContainerInterface, we use an anonymous class.
+    $this->container = new class implements ContainerInterface {
+      public array $serviceIds = [];
+
+      public function getServiceIds(): array {
+        return $this->serviceIds;
+      }
+
+      public function set(string $id, ?object $service): void {}
+
+      public function get(string $id, int $invalidBehavior = self::EXCEPTION_ON_INVALID_REFERENCE): ?object {
+        return NULL;
+      }
+
+      public function has(string $id): bool {
+        return FALSE;
+      }
+
+      public function initialized(string $id): bool {
+        return FALSE;
+      }
+
+      public function getParameter(string $name): mixed {
+        return NULL;
+      }
+
+      public function hasParameter(string $name): bool {
+        return FALSE;
+      }
+
+      public function setParameter(string $name, mixed $value): void {}
+    };
   }
 
   private function createService(Connection $database): CacheService {
@@ -107,10 +136,10 @@ final class CacheServiceTest extends UnitTestCase {
     $database->method('schema')->willReturn($schema);
 
     // Configure container to return core bin service IDs.
-    $this->container->method('getServiceIds')->willReturn([
+    $this->container->serviceIds = [
       'cache.default',
       'cache.backend.database',
-    ]);
+    ];
 
     // Configure cache factory to return a mock cache backend.
     $cacheBackend = $this->createMock(CacheBackendInterface::class);
@@ -151,11 +180,11 @@ final class CacheServiceTest extends UnitTestCase {
     });
 
     // Configure container to return service IDs including custom cache bin.
-    $this->container->method('getServiceIds')->willReturn([
+    $this->container->serviceIds = [
       'cache.default',
       'cache.custom',
       'cache.backend.database',
-    ]);
+    ];
 
     // Configure cache factory.
     $cacheBackend = $this->createMock(CacheBackendInterface::class);
