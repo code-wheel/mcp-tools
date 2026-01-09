@@ -4,27 +4,33 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools\Service;
 
+use CodeWheel\McpErrorCodes\ErrorCode;
+
 /**
  * Service for formatting consistent, user-friendly error messages.
  *
  * Provides standardized error responses for common MCP Tools scenarios.
+ *
+ * @deprecated Constants are deprecated, use CodeWheel\McpErrorCodes\ErrorCode instead.
  */
 class ErrorFormatter {
 
   /**
    * Error codes for common scenarios.
+   *
+   * @deprecated Use CodeWheel\McpErrorCodes\ErrorCode constants instead.
    */
-  public const ERROR_NOT_FOUND = 'NOT_FOUND';
-  public const ERROR_ALREADY_EXISTS = 'ALREADY_EXISTS';
-  public const ERROR_VALIDATION = 'VALIDATION_ERROR';
-  public const ERROR_PERMISSION = 'PERMISSION_DENIED';
-  public const ERROR_PROTECTED = 'PROTECTED_ENTITY';
-  public const ERROR_IN_USE = 'ENTITY_IN_USE';
-  public const ERROR_DEPENDENCY = 'MISSING_DEPENDENCY';
-  public const ERROR_RATE_LIMIT = 'RATE_LIMIT_EXCEEDED';
-  public const ERROR_READ_ONLY = 'READ_ONLY_MODE';
-  public const ERROR_SCOPE = 'INSUFFICIENT_SCOPE';
-  public const ERROR_INTERNAL = 'INTERNAL_ERROR';
+  public const ERROR_NOT_FOUND = ErrorCode::NOT_FOUND;
+  public const ERROR_ALREADY_EXISTS = ErrorCode::ALREADY_EXISTS;
+  public const ERROR_VALIDATION = ErrorCode::VALIDATION_ERROR;
+  public const ERROR_PERMISSION = ErrorCode::ACCESS_DENIED;
+  public const ERROR_PROTECTED = ErrorCode::ENTITY_PROTECTED;
+  public const ERROR_IN_USE = ErrorCode::ENTITY_IN_USE;
+  public const ERROR_DEPENDENCY = ErrorCode::MISSING_DEPENDENCY;
+  public const ERROR_RATE_LIMIT = ErrorCode::RATE_LIMIT_EXCEEDED;
+  public const ERROR_READ_ONLY = ErrorCode::READ_ONLY_MODE;
+  public const ERROR_SCOPE = ErrorCode::INSUFFICIENT_SCOPE;
+  public const ERROR_INTERNAL = ErrorCode::INTERNAL_ERROR;
 
   /**
    * Create a "not found" error response.

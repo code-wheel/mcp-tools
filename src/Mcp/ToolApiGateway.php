@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools\Mcp;
 
+use CodeWheel\McpToolGateway\ToolInfo;
 use Drupal\Component\Plugin\PluginManagerInterface;
-use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Mcp\Error\ToolErrorHandlerInterface;
-use Drupal\tool\Tool\ToolDefinition;
 use Mcp\Schema\Content\TextContent;
 use Mcp\Schema\JsonRpc\Error;
 use Mcp\Schema\JsonRpc\Response;
@@ -28,6 +27,7 @@ class ToolApiGateway {
   public const EXECUTE_TOOL = 'mcp_tools/execute-tool';
 
   private ToolApiCallToolHandler $toolExecutor;
+  private DrupalToolProvider $toolProvider;
 
   public function __construct(
     private readonly PluginManagerInterface $toolManager,
@@ -38,6 +38,14 @@ class ToolApiGateway {
     private readonly ?ToolErrorHandlerInterface $errorHandler = NULL,
     private readonly ?EventDispatcherInterface $eventDispatcher = NULL,
   ) {
+    $this->toolProvider = new DrupalToolProvider(
+      $this->toolManager,
+      $this->schemaConverter,
+      $this->logger,
+      $this->includeAllTools,
+      $this->allowedProviderPrefix,
+    );
+
     $validator = new ToolInputValidator($this->schemaConverter, $this->logger);
     $this->toolExecutor = new ToolApiCallToolHandler(
       $this->toolManager,
@@ -48,6 +56,15 @@ class ToolApiGateway {
       $this->errorHandler,
       $this->eventDispatcher,
     );
+  }
+
+  /**
+   * Returns the underlying tool provider.
+   *
+   * Useful for external integrations that need direct access to tool discovery.
+   */
+  public function getToolProvider(): DrupalToolProvider {
+    return $this->toolProvider;
   }
 
   /**
@@ -130,43 +147,20 @@ class ToolApiGateway {
    * Lists available Tool API tools with lightweight metadata.
    */
   public function discoverTools(?string $query = NULL): CallToolResult {
-    $definitions = $this->toolManager->getDefinitions();
+    $allTools = $this->toolProvider->getTools();
     $tools = [];
     $query = $query !== NULL ? trim($query) : NULL;
 
-    foreach ($definitions as $pluginId => $definition) {
-      if (!$definition instanceof ToolDefinition) {
-        continue;
-      }
-      if (!$this->isToolAllowed($definition)) {
-        continue;
-      }
-
-      $name = McpToolsServerFactory::pluginIdToMcpName((string) $pluginId);
-      $label = $this->normalizeValue($definition->getLabel());
-      $description = $this->normalizeValue($definition->getDescription());
-
+    /** @var ToolInfo $toolInfo */
+    foreach ($allTools as $toolInfo) {
       if ($query !== NULL && $query !== '') {
-        $haystack = strtolower($name . ' ' . $label . ' ' . $description);
+        $haystack = strtolower($toolInfo->name . ' ' . $toolInfo->label . ' ' . $toolInfo->description);
         if (!str_contains($haystack, strtolower($query))) {
           continue;
         }
       }
 
-      $annotations = $this->schemaConverter->toolDefinitionToAnnotations($definition, (string) $pluginId);
-      $hints = array_filter([
-        'read_only' => $annotations['readOnlyHint'] ?? NULL,
-        'destructive' => $annotations['destructiveHint'] ?? NULL,
-        'idempotent' => $annotations['idempotentHint'] ?? NULL,
-      ], static fn($value): bool => $value !== NULL);
-
-      $tools[] = [
-        'name' => $name,
-        'label' => $label,
-        'description' => $description,
-        'provider' => (string) ($definition->getProvider() ?? ''),
-        'hints' => $hints,
-      ];
+      $tools[] = $toolInfo->toDiscoverySummary();
     }
 
     $structured = [
@@ -187,24 +181,15 @@ class ToolApiGateway {
    * Returns schema and hints for a single tool.
    */
   public function getToolInfo(string $tool_name): CallToolResult {
-    $resolved = $this->resolveToolDefinition($tool_name);
-    if (!$resolved) {
+    $toolInfo = $this->toolProvider->getTool($tool_name);
+    if ($toolInfo === NULL) {
       return $this->errorResult('Unknown tool: ' . $tool_name);
     }
 
-    [$definition, $pluginId] = $resolved;
-    $annotations = $this->schemaConverter->toolDefinitionToAnnotations($definition, (string) $pluginId);
-    $inputSchema = $this->schemaConverter->toolDefinitionToInputSchema($definition, (string) $pluginId);
-
     $structured = [
       'success' => TRUE,
-      'name' => McpToolsServerFactory::pluginIdToMcpName((string) $pluginId),
-      'plugin_id' => (string) $pluginId,
-      'label' => $this->normalizeValue($definition->getLabel()),
-      'description' => $this->normalizeValue($definition->getDescription()),
-      'provider' => (string) ($definition->getProvider() ?? ''),
-      'input_schema' => $inputSchema,
-      'annotations' => $annotations,
+      ...$toolInfo->toDetailedInfo(),
+      'plugin_id' => $toolInfo->metadata['plugin_id'] ?? '',
     ];
 
     $content = [new TextContent(json_encode($structured, JSON_PRETTY_PRINT))];
@@ -236,82 +221,6 @@ class ToolApiGateway {
     }
 
     return $this->errorResult('Unexpected tool response.', ['tool' => $tool_name]);
-  }
-
-  /**
-   * Resolves a ToolDefinition from an MCP tool name or plugin ID.
-   *
-   * @return array{0: \Drupal\tool\Tool\ToolDefinition, 1: string}|null
-   */
-  private function resolveToolDefinition(string $toolName): ?array {
-    $definitions = $this->toolManager->getDefinitions();
-
-    $pluginId = $toolName;
-    if (!isset($definitions[$pluginId])) {
-      $pluginId = $this->mcpNameToPluginId($toolName);
-    }
-
-    $definition = $definitions[$pluginId] ?? NULL;
-    if (!$definition instanceof ToolDefinition) {
-      return NULL;
-    }
-    if (!$this->isToolAllowed($definition)) {
-      return NULL;
-    }
-
-    return [$definition, (string) $pluginId];
-  }
-
-  /**
-   * Determine whether a tool definition should be exposed.
-   */
-  private function isToolAllowed(ToolDefinition $definition): bool {
-    if ($this->includeAllTools) {
-      return TRUE;
-    }
-
-    $provider = $definition->getProvider() ?? '';
-    if (!is_string($provider) || !str_starts_with($provider, $this->allowedProviderPrefix)) {
-      return FALSE;
-    }
-
-    return TRUE;
-  }
-
-  /**
-   * Converts MCP tool names back to Tool API plugin IDs.
-   */
-  private function mcpNameToPluginId(string $toolName): string {
-    return str_replace('___', ':', $toolName);
-  }
-
-  /**
-   * Normalizes values to scalars/arrays suitable for structuredContent.
-   */
-  private function normalizeValue(mixed $value): mixed {
-    if ($value instanceof TranslatableMarkup) {
-      return (string) $value;
-    }
-
-    if (is_array($value)) {
-      $normalized = [];
-      foreach ($value as $key => $item) {
-        $normalized[$key] = $this->normalizeValue($item);
-      }
-      return $normalized;
-    }
-
-    if (is_object($value)) {
-      if ($value instanceof \JsonSerializable) {
-        return $value->jsonSerialize();
-      }
-      if (method_exists($value, '__toString')) {
-        return (string) $value;
-      }
-      return get_class($value);
-    }
-
-    return $value;
   }
 
   /**

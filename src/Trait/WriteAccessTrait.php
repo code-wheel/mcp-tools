@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools\Trait;
 
+use CodeWheel\McpErrorCodes\ErrorCode;
 use Drupal\mcp_tools\Service\AccessManager;
 
 /**
@@ -55,7 +56,7 @@ trait WriteAccessTrait {
       return [
         'success' => FALSE,
         'error' => $access['reason'],
-        'code' => $access['code'] ?? 'ACCESS_DENIED',
+        'code' => $access['code'] ?? ErrorCode::ACCESS_DENIED,
         'retry_after' => $access['retry_after'] ?? NULL,
       ];
     }

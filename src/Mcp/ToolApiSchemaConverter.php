@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools\Mcp;
 
+use CodeWheel\McpSchemaBuilder\TypeMapper;
 use Drupal\tool\Tool\ToolDefinition;
 use Drupal\tool\Tool\ToolOperation;
 use Drupal\tool\TypedData\InputDefinitionInterface;
@@ -26,6 +27,18 @@ class ToolApiSchemaConverter {
    * @var array<string, array<string, mixed>>
    */
   private array $annotationCache = [];
+
+  /**
+   * Type mapper for converting data types to JSON Schema types.
+   */
+  private TypeMapper $typeMapper;
+
+  /**
+   * Constructs a new ToolApiSchemaConverter.
+   */
+  public function __construct() {
+    $this->typeMapper = new TypeMapper();
+  }
 
   /**
    * Builds an MCP inputSchema JSON Schema from a Tool API ToolDefinition.
@@ -129,35 +142,22 @@ class ToolApiSchemaConverter {
   private function inputDefinitionToSchema(InputDefinitionInterface $definition): array {
     $dataType = $definition->getDataType();
 
-    // Map Drupal typed data types to JSON Schema types.
-    $typeMap = [
-      'string' => 'string',
-      'integer' => 'integer',
-      'float' => 'number',
-      'boolean' => 'boolean',
-      'email' => 'string',
-      'uri' => 'string',
-      'datetime_iso8601' => 'string',
-      'timestamp' => 'integer',
-      'list' => 'array',
-      'map' => 'object',
-    ];
+    // Use TypeMapper to convert the data type to JSON Schema type.
+    $jsonType = $this->typeMapper->mapType($dataType);
+    $format = $this->typeMapper->getFormat($dataType);
 
-    $schema = [];
+    $schema = ['type' => $jsonType];
 
-    // Handle entity types as strings: callers should pass IDs/handles.
+    // Add format hint if available (e.g., email, uri, date-time).
+    if ($format !== NULL) {
+      $schema['format'] = $format;
+    }
+
+    // Handle entity types with a helpful description.
     if (str_starts_with($dataType, 'entity:') ||
       str_starts_with($dataType, 'entity_reference:') ||
       $dataType === 'entity') {
-      $schema['type'] = 'string';
       $schema['description'] = 'Entity objects should be passed using an ID or a handle token returned by a previous tool call.';
-    }
-    elseif (isset($typeMap[$dataType])) {
-      $schema['type'] = $typeMap[$dataType];
-    }
-    else {
-      // Default to string for unknown types.
-      $schema['type'] = 'string';
     }
 
     // Add description if available.

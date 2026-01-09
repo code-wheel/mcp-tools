@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools\Service;
 
+use CodeWheel\McpErrorCodes\ErrorCode;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\PrivateKey;
 use Drupal\Core\State\StateInterface;
@@ -161,7 +162,7 @@ class RateLimiter implements RateLimiterInterface {
         'allowed' => FALSE,
         'error' => "Rate limit exceeded: Maximum $limit $operation operations per $window. Try again in $retryAfter seconds.",
         'retry_after' => $retryAfter,
-        'code' => 'RATE_LIMIT_EXCEEDED',
+        'code' => ErrorCode::RATE_LIMIT_EXCEEDED,
       ];
     }
 
@@ -213,7 +214,7 @@ class RateLimiter implements RateLimiterInterface {
         'allowed' => FALSE,
         'error' => "Rate limit exceeded: Maximum $limit $operationType operations per $window. Try again in $retryAfter seconds.",
         'retry_after' => $retryAfter,
-        'code' => 'RATE_LIMIT_EXCEEDED',
+        'code' => ErrorCode::RATE_LIMIT_EXCEEDED,
       ];
     }
 

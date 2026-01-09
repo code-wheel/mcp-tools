@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools\Service;
 
+use CodeWheel\McpErrorCodes\ErrorCode;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -294,7 +295,7 @@ class AccessManager implements AccessManagerInterface {
         return [
           'allowed' => FALSE,
           'reason' => $error['error'] ?? 'Rate limit exceeded.',
-          'code' => $error['code'] ?? 'RATE_LIMIT_EXCEEDED',
+          'code' => $error['code'] ?? ErrorCode::RATE_LIMIT_EXCEEDED,
           'retry_after' => $error['retry_after'] ?? NULL,
         ];
       }
@@ -303,7 +304,7 @@ class AccessManager implements AccessManagerInterface {
         return [
           'allowed' => FALSE,
           'reason' => 'Admin operations are disabled. Site is in read-only mode.',
-          'code' => 'READ_ONLY_MODE',
+          'code' => ErrorCode::READ_ONLY_MODE,
           'retry_after' => NULL,
         ];
       }
@@ -311,7 +312,7 @@ class AccessManager implements AccessManagerInterface {
       return [
         'allowed' => FALSE,
         'reason' => "Admin operations not allowed for this connection. Scope: " . implode(',', $this->getCurrentScopes()),
-        'code' => 'INSUFFICIENT_SCOPE',
+        'code' => ErrorCode::INSUFFICIENT_SCOPE,
         'retry_after' => NULL,
       ];
     }
@@ -331,7 +332,7 @@ class AccessManager implements AccessManagerInterface {
     return [
       'allowed' => FALSE,
       'reason' => $denied['error'] ?? "Write operations are not allowed for {$entityType}.",
-      'code' => $denied['code'] ?? 'ACCESS_DENIED',
+      'code' => $denied['code'] ?? ErrorCode::ACCESS_DENIED,
       'retry_after' => $denied['retry_after'] ?? NULL,
     ];
   }
@@ -346,7 +347,7 @@ class AccessManager implements AccessManagerInterface {
     return [
       'success' => FALSE,
       'error' => 'Read operations not allowed for this connection. Scope: ' . implode(',', $this->getCurrentScopes()),
-      'code' => 'INSUFFICIENT_SCOPE',
+      'code' => ErrorCode::INSUFFICIENT_SCOPE,
     ];
   }
 
@@ -366,7 +367,7 @@ class AccessManager implements AccessManagerInterface {
       return [
         'success' => FALSE,
         'error' => $error['error'],
-        'code' => $error['code'] ?? 'RATE_LIMIT_EXCEEDED',
+        'code' => $error['code'] ?? ErrorCode::RATE_LIMIT_EXCEEDED,
         'retry_after' => $error['retry_after'] ?? NULL,
       ];
     }
@@ -375,14 +376,14 @@ class AccessManager implements AccessManagerInterface {
       return [
         'success' => FALSE,
         'error' => 'Write operations are disabled. Site is in read-only mode.',
-        'code' => 'READ_ONLY_MODE',
+        'code' => ErrorCode::READ_ONLY_MODE,
       ];
     }
 
     return [
       'success' => FALSE,
       'error' => 'Write operations not allowed for this connection. Scope: ' . implode(',', $this->getCurrentScopes()),
-      'code' => 'INSUFFICIENT_SCOPE',
+      'code' => ErrorCode::INSUFFICIENT_SCOPE,
     ];
   }
 

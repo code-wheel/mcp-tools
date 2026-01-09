@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools\Mcp\Error;
 
+use CodeWheel\McpErrorCodes\ErrorCode;
 use Mcp\Schema\Content\TextContent;
 use Mcp\Schema\Result\CallToolResult;
 use Psr\Log\LoggerInterface;
@@ -25,7 +26,7 @@ class DefaultToolErrorHandler implements ToolErrorHandlerInterface {
     $structured = [
       'success' => FALSE,
       'error' => $message,
-      'error_code' => 'VALIDATION_FAILED',
+      'error_code' => ErrorCode::VALIDATION_ERROR,
       'tool' => $toolName,
       'validation_errors' => $errors,
       'remediation' => 'Review required fields and input types for this tool, then retry.',
@@ -43,7 +44,7 @@ class DefaultToolErrorHandler implements ToolErrorHandlerInterface {
     $structured = [
       'success' => FALSE,
       'error' => 'Access denied.',
-      'error_code' => 'ACCESS_DENIED',
+      'error_code' => ErrorCode::ACCESS_DENIED,
       'tool' => $toolName,
       'remediation' => 'Ensure the MCP scopes and Drupal permissions allow this operation.',
     ];
@@ -64,7 +65,7 @@ class DefaultToolErrorHandler implements ToolErrorHandlerInterface {
     $structured = [
       'success' => FALSE,
       'error' => $message,
-      'error_code' => 'INSTANTIATION_FAILED',
+      'error_code' => ErrorCode::INSTANTIATION_FAILED,
       'tool' => $toolName,
       'remediation' => 'Verify the tool plugin is installed and its dependencies are available.',
     ];
@@ -80,7 +81,7 @@ class DefaultToolErrorHandler implements ToolErrorHandlerInterface {
     $structured = [
       'success' => FALSE,
       'error' => $message,
-      'error_code' => 'INVALID_TOOL',
+      'error_code' => ErrorCode::INVALID_TOOL,
       'tool' => $toolName,
       'remediation' => 'Confirm the tool implementation matches the Tool API contract.',
     ];
@@ -102,7 +103,7 @@ class DefaultToolErrorHandler implements ToolErrorHandlerInterface {
     $structured = [
       'success' => FALSE,
       'error' => $message,
-      'error_code' => 'EXECUTION_FAILED',
+      'error_code' => ErrorCode::EXECUTION_FAILED,
       'tool' => $toolName,
       'remediation' => 'Inspect logs and retry with smaller inputs or after correcting site state.',
     ];
