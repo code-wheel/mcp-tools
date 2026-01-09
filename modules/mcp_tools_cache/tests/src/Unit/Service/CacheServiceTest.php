@@ -66,7 +66,10 @@ final class CacheServiceTest extends UnitTestCase {
     $this->jsOptimizer = $this->createMock(AssetCollectionOptimizerInterface::class);
     $this->kernel = $this->createMock(DrupalKernelInterface::class);
     $this->menuLinkManager = $this->createMock(MenuLinkManagerInterface::class);
-    $this->container = $this->createMock(ContainerInterface::class);
+    // Use getMockBuilder to add getServiceIds method which isn't on interface.
+    $this->container = $this->getMockBuilder(ContainerInterface::class)
+      ->addMethods(['getServiceIds'])
+      ->getMock();
   }
 
   private function createService(Connection $database): CacheService {

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Drupal\Tests\mcp_tools\Unit\Mcp;
 
 use Drupal\Component\Plugin\PluginManagerInterface;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Mcp\Error\ToolErrorHandlerInterface;
 use Drupal\mcp_tools\Mcp\McpToolsServerFactory;
 use Drupal\mcp_tools\Mcp\Prompt\PromptRegistry;
@@ -100,13 +101,17 @@ final class McpToolsServerFactoryTest extends TestCase {
   }
 
   public function testCreateFiltersToolsByProvider(): void {
+    $mcpToolDescription = $this->createMock(TranslatableMarkup::class);
+    $mcpToolDescription->method('__toString')->willReturn('An MCP tool');
     $mcpToolDefinition = $this->createMock(ToolDefinition::class);
     $mcpToolDefinition->method('getProvider')->willReturn('mcp_tools');
-    $mcpToolDefinition->method('getDescription')->willReturn('An MCP tool');
+    $mcpToolDefinition->method('getDescription')->willReturn($mcpToolDescription);
 
+    $otherToolDescription = $this->createMock(TranslatableMarkup::class);
+    $otherToolDescription->method('__toString')->willReturn('Another tool');
     $otherToolDefinition = $this->createMock(ToolDefinition::class);
     $otherToolDefinition->method('getProvider')->willReturn('other_module');
-    $otherToolDefinition->method('getDescription')->willReturn('Another tool');
+    $otherToolDefinition->method('getDescription')->willReturn($otherToolDescription);
 
     $this->toolManager->method('getDefinitions')->willReturn([
       'mcp_tools:test_tool' => $mcpToolDefinition,
