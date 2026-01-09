@@ -21,7 +21,7 @@ use Drupal\mcp_tools_remote\Storage\DrupalStateStorage;
  *
  * Keys are stored hashed in State (not exported to config).
  */
-final class ApiKeyManager {
+class ApiKeyManager {
 
   /**
    * The underlying API key manager from the extracted package.

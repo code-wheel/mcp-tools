@@ -12,7 +12,7 @@ use Drupal\Core\Extension\ModuleHandlerInterface;
 /**
  * Builds a lightweight site blueprint summary for MCP context snapshots.
  */
-final class SiteBlueprintService {
+class SiteBlueprintService {
 
   private const MAX_FIELDS_PER_TYPE = 20;
 

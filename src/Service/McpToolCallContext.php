@@ -10,7 +10,7 @@ namespace Drupal\mcp_tools\Service;
  * This is used to scope side effects (like config-change tracking) to MCP
  * invocations only, without affecting normal Drupal admin actions.
  */
-final class McpToolCallContext {
+class McpToolCallContext {
 
   private int $depth = 0;
 

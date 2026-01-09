@@ -13,7 +13,7 @@ use Drupal\tool\TypedData\MapInputDefinition;
 /**
  * Converts Tool API definitions into MCP-compatible JSON Schemas and hints.
  */
-final class ToolApiSchemaConverter {
+class ToolApiSchemaConverter {
 
   /**
    * In-memory caches keyed by caller-provided IDs.
