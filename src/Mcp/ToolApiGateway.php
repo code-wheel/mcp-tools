@@ -102,7 +102,7 @@ final class ToolApiGateway {
         ], ['tool_name']),
       ],
       [
-        'handler' => function (string $tool_name, ?array $arguments = NULL, RequestContext $context): CallToolResult {
+        'handler' => function (string $tool_name, RequestContext $context, ?array $arguments = NULL): CallToolResult {
           return $this->executeTool($tool_name, $arguments, $context);
         },
         'name' => self::EXECUTE_TOOL,

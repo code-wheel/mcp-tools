@@ -31,21 +31,21 @@ final class CoreResourceProvider implements ResourceProviderInterface {
         'name' => 'Site Status',
         'description' => 'Basic site health summary, versions, cron, and module counts.',
         'mimeType' => 'application/json',
-        'handler' => [$this, 'getSiteStatus'],
+        'handler' => fn() => $this->getSiteStatus(),
       ],
       [
         'uri' => 'drupal://site/snapshot',
         'name' => 'Site Snapshot',
         'description' => 'Concise site overview for MCP context windows.',
         'mimeType' => 'application/json',
-        'handler' => [$this, 'getSiteSnapshot'],
+        'handler' => fn() => $this->getSiteSnapshot(),
       ],
       [
         'uri' => 'drupal://system/requirements',
         'name' => 'System Requirements',
         'description' => 'Runtime requirements report from all installed modules.',
         'mimeType' => 'application/json',
-        'handler' => [$this, 'getSystemRequirements'],
+        'handler' => fn() => $this->getSystemRequirements(),
       ],
     ];
   }

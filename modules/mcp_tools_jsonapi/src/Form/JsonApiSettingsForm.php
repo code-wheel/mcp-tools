@@ -13,7 +13,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 /**
  * Configuration form for MCP Tools JSON:API settings.
  */
-final class JsonApiSettingsForm extends ConfigFormBase {
+class JsonApiSettingsForm extends ConfigFormBase {
 
   public function __construct(
     private readonly EntityTypeManagerInterface $entityTypeManager,

@@ -28,7 +28,7 @@ final class CorePromptProvider implements PromptProviderInterface {
       [
         'name' => 'mcp_tools/site-brief',
         'description' => 'Summarize site health and notable risks for a Drupal site.',
-        'handler' => [$this, 'siteBriefPrompt'],
+        'handler' => fn(?string $focus = NULL, bool $include_requirements = FALSE) => $this->siteBriefPrompt($focus, $include_requirements),
       ],
     ];
   }
