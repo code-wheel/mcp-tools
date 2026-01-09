@@ -7,7 +7,7 @@ namespace Drupal\mcp_tools\Mcp\Resource;
 /**
  * Collects MCP resource definitions from tagged providers.
  */
-final class ResourceRegistry {
+class ResourceRegistry {
 
   /**
    * @var \Drupal\mcp_tools\Mcp\Resource\ResourceProviderInterface[]
