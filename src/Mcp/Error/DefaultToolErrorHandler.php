@@ -11,7 +11,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Default MCP tool error handler.
  */
-final class DefaultToolErrorHandler implements ToolErrorHandlerInterface {
+class DefaultToolErrorHandler implements ToolErrorHandlerInterface {
 
   public function __construct(
     private readonly LoggerInterface $logger,

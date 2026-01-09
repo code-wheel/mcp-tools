@@ -21,7 +21,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Gateway tools that expose discover/info/execute for Tool API plugins.
  */
-final class ToolApiGateway {
+class ToolApiGateway {
 
   public const DISCOVER_TOOL = 'mcp_tools/discover-tools';
   public const GET_INFO_TOOL = 'mcp_tools/get-tool-info';

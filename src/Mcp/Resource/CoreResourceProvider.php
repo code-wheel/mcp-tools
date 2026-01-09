@@ -12,7 +12,7 @@ use Drupal\mcp_tools\Service\SystemStatusService;
 /**
  * Core MCP resource provider for site context.
  */
-final class CoreResourceProvider implements ResourceProviderInterface {
+class CoreResourceProvider implements ResourceProviderInterface {
 
   public function __construct(
     private readonly SiteHealthService $siteHealthService,

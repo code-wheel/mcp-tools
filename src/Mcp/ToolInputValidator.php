@@ -13,7 +13,7 @@ use Psr\Log\NullLogger;
 /**
  * Validates tool arguments against Tool API-derived JSON schema.
  */
-final class ToolInputValidator {
+class ToolInputValidator {
 
   private Validator $validator;
 

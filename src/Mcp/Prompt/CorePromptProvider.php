@@ -13,7 +13,7 @@ use Mcp\Schema\Enum\Role;
 /**
  * Core MCP prompt provider for site context.
  */
-final class CorePromptProvider implements PromptProviderInterface {
+class CorePromptProvider implements PromptProviderInterface {
 
   public function __construct(
     private readonly SiteHealthService $siteHealthService,

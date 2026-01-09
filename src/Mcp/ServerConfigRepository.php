@@ -21,7 +21,7 @@ use Symfony\Component\HttpFoundation\Request;
  * callback services are configured dynamically and can't be known at compile time.
  * This is similar to how Drupal's plugin managers resolve tagged services.
  */
-final class ServerConfigRepository {
+class ServerConfigRepository {
 
   private const DEFAULT_SERVER_ID = 'default';
 

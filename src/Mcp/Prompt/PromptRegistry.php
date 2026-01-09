@@ -7,7 +7,7 @@ namespace Drupal\mcp_tools\Mcp\Prompt;
 /**
  * Collects MCP prompt definitions from tagged providers.
  */
-final class PromptRegistry {
+class PromptRegistry {
 
   /**
    * @var \Drupal\mcp_tools\Mcp\Prompt\PromptProviderInterface[]

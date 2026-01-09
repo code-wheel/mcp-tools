@@ -20,7 +20,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Builds an MCP Server instance that exposes Drupal Tool API tools.
  */
-final class McpToolsServerFactory {
+class McpToolsServerFactory {
 
   public function __construct(
     private readonly PluginManagerInterface $toolManager,

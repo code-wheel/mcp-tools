@@ -35,7 +35,7 @@ use Psr\Log\LoggerInterface;
  *
  * @implements \Mcp\Server\Handler\Request\RequestHandlerInterface<\Mcp\Schema\Result\CallToolResult>
  */
-final class ToolApiCallToolHandler implements RequestHandlerInterface {
+class ToolApiCallToolHandler implements RequestHandlerInterface {
 
   public function __construct(
     private readonly PluginManagerInterface $toolManager,
