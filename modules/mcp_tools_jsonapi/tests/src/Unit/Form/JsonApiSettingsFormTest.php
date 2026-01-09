@@ -10,6 +10,7 @@ use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\jsonapi\ResourceType\ResourceType;
 use Drupal\jsonapi\ResourceType\ResourceTypeRepositoryInterface;
 use Drupal\mcp_tools_jsonapi\Form\JsonApiSettingsForm;
@@ -52,9 +53,11 @@ final class JsonApiSettingsFormTest extends UnitTestCase {
     $this->configFactory->method('getEditable')->with('mcp_tools_jsonapi.settings')->willReturn($this->config);
     $this->configFactory->method('get')->with('mcp_tools_jsonapi.settings')->willReturn($this->config);
 
-    // Set up container for string translation.
+    // Set up container for string translation and messenger.
     $container = new ContainerBuilder();
     $container->set('string_translation', $this->getStringTranslationStub());
+    $messenger = $this->createMock(MessengerInterface::class);
+    $container->set('messenger', $messenger);
     \Drupal::setContainer($container);
   }
 

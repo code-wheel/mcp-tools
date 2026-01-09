@@ -7,8 +7,10 @@ namespace Drupal\Tests\mcp_tools_remote\Unit\Controller;
 use Drupal\Core\Config\Config;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Config\ImmutableConfig;
+use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Session\AccountSwitcherInterface;
 use Drupal\Component\Plugin\PluginManagerInterface;
 use Drupal\mcp_tools\Mcp\Error\ToolErrorHandlerInterface;
@@ -61,6 +63,14 @@ final class McpToolsRemoteControllerTest extends UnitTestCase {
     $this->accountSwitcher = $this->createMock(AccountSwitcherInterface::class);
     $this->eventDispatcher = $this->createMock(EventDispatcherInterface::class);
     $this->logger = $this->createMock(LoggerInterface::class);
+
+    // Set up container with logger factory for Drupal::logger() calls.
+    $loggerFactory = $this->createMock(LoggerChannelFactoryInterface::class);
+    $loggerFactory->method('get')->willReturn($this->logger);
+    $container = new ContainerBuilder();
+    $container->set('logger.factory', $loggerFactory);
+    $container->set('string_translation', $this->getStringTranslationStub());
+    \Drupal::setContainer($container);
   }
 
   private function createController(?ConfigFactoryInterface $configFactory = NULL): McpToolsRemoteController {
