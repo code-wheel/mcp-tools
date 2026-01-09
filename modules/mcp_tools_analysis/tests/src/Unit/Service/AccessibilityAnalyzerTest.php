@@ -120,9 +120,25 @@ final class AccessibilityAnalyzerTest extends UnitTestCase {
     $fieldItem = new \stdClass();
     $fieldItem->value = $bodyContent;
 
-    $fieldList = $this->createMock(FieldItemListInterface::class);
-    $fieldList->method('getFieldDefinition')->willReturn($fieldDef);
-    $fieldList->method('getIterator')->willReturn(new \ArrayIterator([$fieldItem]));
+    // Create an anonymous class that implements FieldItemListInterface and
+    // IteratorAggregate to allow iteration over field items.
+    $fieldList = new class($fieldDef, [$fieldItem]) implements \IteratorAggregate {
+      private $fieldDef;
+      private $items;
+
+      public function __construct($fieldDef, $items) {
+        $this->fieldDef = $fieldDef;
+        $this->items = $items;
+      }
+
+      public function getFieldDefinition() {
+        return $this->fieldDef;
+      }
+
+      public function getIterator(): \Traversable {
+        return new \ArrayIterator($this->items);
+      }
+    };
 
     $entity->method('getFields')->willReturn(['body' => $fieldList]);
 

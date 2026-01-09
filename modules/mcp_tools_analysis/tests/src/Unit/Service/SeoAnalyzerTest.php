@@ -104,7 +104,6 @@ final class SeoAnalyzerTest extends UnitTestCase {
    */
   private function createMockEntity(string $title, string $body): ContentEntityInterface {
     $entity = $this->createMock(ContentEntityInterface::class);
-    $entity->method('getTitle')->willReturn($title);
     $entity->method('label')->willReturn($title);
     $entity->method('hasField')->willReturn(FALSE);
 
@@ -115,9 +114,25 @@ final class SeoAnalyzerTest extends UnitTestCase {
     $fieldItem = new \stdClass();
     $fieldItem->value = $body;
 
-    $fieldList = $this->createMock(FieldItemListInterface::class);
-    $fieldList->method('getFieldDefinition')->willReturn($fieldDef);
-    $fieldList->method('getIterator')->willReturn(new \ArrayIterator([$fieldItem]));
+    // Create an anonymous class that implements IteratorAggregate to allow
+    // iteration over field items (PHPUnit cannot mock getIterator).
+    $fieldList = new class($fieldDef, [$fieldItem]) implements \IteratorAggregate {
+      private $fieldDef;
+      private $items;
+
+      public function __construct($fieldDef, $items) {
+        $this->fieldDef = $fieldDef;
+        $this->items = $items;
+      }
+
+      public function getFieldDefinition() {
+        return $this->fieldDef;
+      }
+
+      public function getIterator(): \Traversable {
+        return new \ArrayIterator($this->items);
+      }
+    };
 
     $entity->method('getFields')->willReturn(['body' => $fieldList]);
 

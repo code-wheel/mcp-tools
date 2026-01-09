@@ -126,15 +126,21 @@ final class FileSystemServiceTest extends UnitTestCase {
   }
 
   public function testGetFilesSummaryReturnsStructuredResult(): void {
-    $query = $this->createMock(QueryInterface::class);
-    $query->method('accessCheck')->willReturnSelf();
-    $query->method('count')->willReturnSelf();
-    $query->method('sort')->willReturnSelf();
-    $query->method('range')->willReturnSelf();
-    $query->method('execute')->willReturn(0);
+    // Count query returns int.
+    $countQuery = $this->createMock(QueryInterface::class);
+    $countQuery->method('accessCheck')->willReturnSelf();
+    $countQuery->method('count')->willReturnSelf();
+    $countQuery->method('execute')->willReturn(0);
+
+    // IDs query returns array.
+    $idsQuery = $this->createMock(QueryInterface::class);
+    $idsQuery->method('accessCheck')->willReturnSelf();
+    $idsQuery->method('sort')->willReturnSelf();
+    $idsQuery->method('range')->willReturnSelf();
+    $idsQuery->method('execute')->willReturn([]);
 
     $storage = $this->createMock(EntityStorageInterface::class);
-    $storage->method('getQuery')->willReturn($query);
+    $storage->method('getQuery')->willReturnOnConsecutiveCalls($countQuery, $idsQuery);
     $storage->method('loadMultiple')->willReturn([]);
 
     $this->entityTypeManager->method('getStorage')
