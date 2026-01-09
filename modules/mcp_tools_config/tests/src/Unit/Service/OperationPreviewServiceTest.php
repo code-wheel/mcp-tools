@@ -45,6 +45,11 @@ final class OperationPreviewServiceTest extends UnitTestCase {
         'has_changes' => TRUE,
         'total_changes' => 5,
         'summary' => ['new_in_active' => 2, 'modified' => 3],
+        'changes' => [
+          'create' => ['new.config'],
+          'update' => ['system.site', 'system.theme'],
+          'delete' => ['old.config'],
+        ],
       ],
     ]);
 
@@ -56,11 +61,15 @@ final class OperationPreviewServiceTest extends UnitTestCase {
   }
 
   public function testPreviewImportConfig(): void {
-    $this->configComparisonService->method('getConfigChanges')->willReturn([
+    $this->configComparisonService->method('previewImportConfig')->willReturn([
       'success' => TRUE,
       'data' => [
-        'has_changes' => FALSE,
-        'total_changes' => 0,
+        'action' => 'Import configuration from sync directory to active',
+        'will_create' => 0,
+        'will_update' => 0,
+        'will_delete' => 0,
+        'affected_configs' => [],
+        'description' => 'No changes to import.',
       ],
     ]);
 

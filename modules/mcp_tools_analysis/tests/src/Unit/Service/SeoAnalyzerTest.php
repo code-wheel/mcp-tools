@@ -52,9 +52,9 @@ final class SeoAnalyzerTest extends UnitTestCase {
     $result = $this->analyzer->analyzeSeo('node', 1);
 
     $this->assertTrue($result['success']);
-    $this->assertLessThan(100, $result['score']);
+    $this->assertLessThan(100, $result['data']['seo_score']);
 
-    $titleIssue = array_filter($result['issues'], fn($i) => $i['type'] === 'title_short');
+    $titleIssue = array_filter($result['data']['issues'], fn($i) => $i['type'] === 'title_short');
     $this->assertNotEmpty($titleIssue);
   }
 
@@ -68,7 +68,7 @@ final class SeoAnalyzerTest extends UnitTestCase {
 
     $result = $this->analyzer->analyzeSeo('node', 1);
 
-    $titleIssue = array_filter($result['issues'], fn($i) => $i['type'] === 'title_long');
+    $titleIssue = array_filter($result['data']['issues'], fn($i) => $i['type'] === 'title_long');
     $this->assertNotEmpty($titleIssue);
   }
 
@@ -82,7 +82,7 @@ final class SeoAnalyzerTest extends UnitTestCase {
 
     $result = $this->analyzer->analyzeSeo('node', 1);
 
-    $titleIssues = array_filter($result['issues'], fn($i) => str_starts_with($i['type'], 'title_'));
+    $titleIssues = array_filter($result['data']['issues'], fn($i) => str_starts_with($i['type'], 'title_'));
     $this->assertEmpty($titleIssues);
   }
 
