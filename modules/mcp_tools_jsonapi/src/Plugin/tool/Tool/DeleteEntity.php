@@ -20,7 +20,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
   id: 'mcp_jsonapi_delete_entity',
   label: new TranslatableMarkup('JSON:API Delete Entity'),
   description: new TranslatableMarkup('Delete an entity by UUID. This action is permanent and cannot be undone.'),
-  operation: ToolOperation::Delete,
+  operation: ToolOperation::Write,
   input_definitions: [
     'entity_type' => new InputDefinition(
       data_type: 'string',
