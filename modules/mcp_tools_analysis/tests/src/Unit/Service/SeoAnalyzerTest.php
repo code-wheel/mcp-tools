@@ -96,7 +96,7 @@ final class SeoAnalyzerTest extends UnitTestCase {
     $result = $this->analyzer->analyzeSeo('node', 1);
 
     $this->assertTrue($result['success']);
-    $this->assertArrayHasKey('score', $result);
+    $this->assertArrayHasKey('seo_score', $result['data']);
   }
 
   /**

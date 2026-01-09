@@ -355,14 +355,17 @@ final class EntityCloneServiceTest extends UnitTestCase {
   public function testSupportedEntityTypes(): void {
     $expected = ['node', 'media', 'paragraph', 'taxonomy_term', 'block_content', 'menu_link_content'];
 
+    // Create a storage that returns NULL for all loads (entity not found).
+    $storage = $this->createMock(EntityStorageInterface::class);
+    $storage->method('load')->willReturn(NULL);
+
+    // Configure entityTypeManager to return the same storage for any entity type.
+    $this->entityTypeManager->method('getStorage')->willReturn($storage);
+
     $service = $this->createService();
 
     // Test each supported type doesn't return "not supported" error.
     foreach ($expected as $type) {
-      $storage = $this->createMock(EntityStorageInterface::class);
-      $storage->method('load')->willReturn(NULL);
-      $this->entityTypeManager->method('getStorage')->with($type)->willReturn($storage);
-
       $result = $service->cloneEntity($type, 1);
       // Should fail with "not found", not "not supported".
       $this->assertStringContainsString('not found', $result['error'] ?? '');

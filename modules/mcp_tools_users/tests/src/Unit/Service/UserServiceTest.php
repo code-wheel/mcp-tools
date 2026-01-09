@@ -90,7 +90,7 @@ class UserServiceTest extends UnitTestCase {
     $result = $service->createUser('existinguser', 'new@example.com');
 
     $this->assertFalse($result['success']);
-    $this->assertStringContainsString('already exists', $result['error']);
+    $this->assertStringContainsString('may already exist', $result['error']);
   }
 
   public function testCreateUserDuplicateEmail(): void {
@@ -112,7 +112,7 @@ class UserServiceTest extends UnitTestCase {
     $result = $service->createUser('newuser', 'existing@example.com');
 
     $this->assertFalse($result['success']);
-    $this->assertStringContainsString('already in use', $result['error']);
+    $this->assertStringContainsString('may already be in use', $result['error']);
   }
 
   public function testUpdateUserProtectsUid1(): void {

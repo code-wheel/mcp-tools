@@ -390,7 +390,8 @@ final class ParagraphsServiceTest extends UnitTestCase {
   }
 
   public function testGetFieldsForBundleFiltersBaseFields(): void {
-    $service = $this->createService();
+    // Create fresh entityFieldManager mock for this specific test.
+    $entityFieldManager = $this->createMock(EntityFieldManagerInterface::class);
 
     $fieldStorage = $this->createMock(FieldStorageDefinitionInterface::class);
     $fieldStorage->method('getCardinality')->willReturn(1);
@@ -404,13 +405,21 @@ final class ParagraphsServiceTest extends UnitTestCase {
 
     $baseField = $this->createMock(FieldDefinitionInterface::class);
 
-    $this->entityFieldManager->method('getFieldDefinitions')
+    $entityFieldManager->method('getFieldDefinitions')
       ->with('paragraph', 'text')
       ->willReturn([
         'id' => $baseField,
         'uuid' => $baseField,
         'field_title' => $customField,
       ]);
+
+    $service = new ParagraphsService(
+      $this->entityTypeManager,
+      $entityFieldManager,
+      $this->fieldTypeManager,
+      $this->accessManager,
+      $this->auditLogger,
+    );
 
     $method = new \ReflectionMethod($service, 'getFieldsForBundle');
     $result = $method->invoke($service, 'text');

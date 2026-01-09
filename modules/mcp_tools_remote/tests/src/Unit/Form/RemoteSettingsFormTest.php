@@ -107,11 +107,18 @@ final class RemoteSettingsFormTest extends UnitTestCase {
     $form = $this->createForm();
 
     $formState = $this->createMock(FormStateInterface::class);
-    $formState->method('getValue')->willReturnMap([
-      [['execution_user_wrapper', 'use_uid1'], FALSE],
-      [['execution_user_wrapper', 'execution_user'], 0],
-      ['enabled', TRUE],
-    ]);
+    $formState->method('getValue')->willReturnCallback(function ($key) {
+      if ($key === 'enabled') {
+        return TRUE;
+      }
+      if ($key === ['execution_user_wrapper', 'use_uid1']) {
+        return FALSE;
+      }
+      if ($key === ['execution_user_wrapper', 'execution_user']) {
+        return 0;
+      }
+      return NULL;
+    });
 
     $formState->expects($this->once())
       ->method('setErrorByName')

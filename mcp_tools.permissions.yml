@@ -178,6 +178,11 @@ mcp_tools use webform:
   description: 'Access Webform tools via MCP.'
   restrict access: true
 
+mcp_tools use jsonapi:
+  title: 'Use MCP JSON:API tools (category: jsonapi)'
+  description: 'Access JSON:API CRUD operations via MCP.'
+  restrict access: true
+
 mcp_tools use discovery:
   title: 'Use MCP tool discovery'
   description: 'List available MCP tools and categories via MCP.'

@@ -60,7 +60,7 @@ final class ToolOperationDeclarationTest extends UnitTestCase {
       'List',
     ];
 
-    $writeLikeOperations = ['Write', 'Trigger'];
+    $writeLikeOperations = ['Write', 'Trigger', 'Delete'];
 
     foreach ($toolFiles as $path) {
       $contents = file_get_contents($path);

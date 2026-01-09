@@ -133,7 +133,7 @@ final class OperationPreviewServiceTest extends UnitTestCase {
 
   public function testPreviewCreateContentType(): void {
     $result = $this->service->previewOperation('create_content_type', [
-      'type' => 'blog',
+      'machine_name' => 'blog',
       'name' => 'Blog Post',
     ]);
 
@@ -143,7 +143,7 @@ final class OperationPreviewServiceTest extends UnitTestCase {
 
   public function testPreviewDeleteContentType(): void {
     $result = $this->service->previewOperation('delete_content_type', [
-      'type' => 'blog',
+      'machine_name' => 'blog',
     ]);
 
     $this->assertTrue($result['success']);
