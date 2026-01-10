@@ -122,10 +122,10 @@ jobs:
           cd drupal
           composer require code-wheel/mcp-http-security:^1.0 --no-interaction
 
-      - name: Install MCP Error Codes and Events packages
+      - name: Install MCP PHP Ecosystem packages
         run: |
           cd drupal
-          composer require code-wheel/mcp-error-codes:^1.0 code-wheel/mcp-events:^1.0 --no-interaction
+          composer require code-wheel/mcp-error-codes:^1.2 code-wheel/mcp-events:^2.0 code-wheel/mcp-schema-builder:^1.1 code-wheel/mcp-tool-gateway:^1.1 --no-interaction
 
       - name: Copy MCP Tools module
         run: |
@@ -280,10 +280,10 @@ jobs:
           cd drupal
           composer require code-wheel/mcp-http-security:^1.0 --no-interaction
 
-      - name: Install MCP Error Codes and Events packages
+      - name: Install MCP PHP Ecosystem packages
         run: |
           cd drupal
-          composer require code-wheel/mcp-error-codes:^1.0 code-wheel/mcp-events:^1.0 --no-interaction
+          composer require code-wheel/mcp-error-codes:^1.2 code-wheel/mcp-events:^2.0 code-wheel/mcp-schema-builder:^1.1 code-wheel/mcp-tool-gateway:^1.1 --no-interaction
 
       - name: Copy MCP Tools module
         run: |
@@ -440,7 +440,7 @@ jobs:
           composer require drupal/tool:1.0.0-alpha9 --no-interaction
           composer require mcp/sdk:^0.2.2 --no-interaction
           composer require code-wheel/mcp-http-security:^1.0 --no-interaction
-          composer require code-wheel/mcp-error-codes:^1.0 code-wheel/mcp-events:^1.0 --no-interaction
+          composer require code-wheel/mcp-error-codes:^1.2 code-wheel/mcp-events:^2.0 code-wheel/mcp-schema-builder:^1.1 code-wheel/mcp-tool-gateway:^1.1 --no-interaction
 
       - name: Copy module
         run: |
