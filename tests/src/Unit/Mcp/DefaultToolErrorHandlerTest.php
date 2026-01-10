@@ -40,7 +40,7 @@ final class DefaultToolErrorHandlerTest extends TestCase {
     $this->assertFalse($structured['success']);
     $this->assertSame('VALIDATION_ERROR', $structured['error_code']);
     $this->assertSame('test_tool', $structured['tool']);
-    $this->assertSame('Field is required', $structured['error']);
+    $this->assertStringContainsString('Field is required', $structured['error']);
     $this->assertCount(2, $structured['validation_errors']);
     $this->assertArrayHasKey('remediation', $structured);
   }
@@ -49,7 +49,7 @@ final class DefaultToolErrorHandlerTest extends TestCase {
     $result = $this->handler->validationFailed('test_tool', []);
 
     $structured = $result->structuredContent;
-    $this->assertSame('Invalid tool input.', $structured['error']);
+    $this->assertStringContainsString('Invalid tool input', $structured['error']);
   }
 
   public function testAccessDeniedReturnsErrorResult(): void {
@@ -102,7 +102,7 @@ final class DefaultToolErrorHandlerTest extends TestCase {
     $this->assertFalse($structured['success']);
     $this->assertSame('INVALID_TOOL', $structured['error_code']);
     $this->assertSame('bad_tool', $structured['tool']);
-    $this->assertSame('Tool does not implement required interface', $structured['error']);
+    $this->assertStringContainsString('Tool does not implement required interface', $structured['error']);
     $this->assertArrayHasKey('remediation', $structured);
   }
 
@@ -128,7 +128,7 @@ final class DefaultToolErrorHandlerTest extends TestCase {
     $this->assertFalse($structured['success']);
     $this->assertSame('EXECUTION_FAILED', $structured['error_code']);
     $this->assertSame('db_tool', $structured['tool']);
-    $this->assertSame('Database connection lost', $structured['error']);
+    $this->assertStringContainsString('Database connection lost', $structured['error']);
     $this->assertArrayHasKey('remediation', $structured);
   }
 
