@@ -162,10 +162,8 @@ jobs:
 
           ./vendor/bin/phpunit --testsuite unit,kernel,functional --colors=always
 
-      - name: MCP transport E2E
-        run: |
-          python3 scripts/mcp_stdio_e2e.py --drupal-root drupal
-          python3 scripts/mcp_http_e2e.py --drupal-root drupal --base-url http://localhost:8888
+      # NOTE: E2E tests using scripts/ are only available in the dev repo
+      # and are excluded from the public release package
 
   release:
     name: Create GitHub Release
