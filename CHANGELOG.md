@@ -4,6 +4,30 @@ All notable changes to the MCP Tools module will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.0.0-beta1] - 2026-01-09
+
+### Added
+
+- **DrupalToolProvider**: New adapter implementing `ToolProviderInterface` from mcp-tool-gateway for standardized tool discovery and execution patterns
+- **Full MCP PHP ecosystem integration**: Now leverages 5 standalone Composer packages:
+  - `code-wheel/mcp-error-codes: ^1.2` - ErrorCode constants + McpError fluent builder
+  - `code-wheel/mcp-schema-builder: ^1.1` - TypeMapper, SchemaValidator, McpSchema presets
+  - `code-wheel/mcp-tool-gateway: ^1.1` - ToolProviderInterface, middleware pipeline
+  - `code-wheel/mcp-http-security: ^1.0` - API key validation, IP allowlist, scopes
+  - `code-wheel/mcp-events: ^2.0` - Tool execution events
+
+### Changed
+
+- **DefaultToolErrorHandler**: Refactored to use `McpError` fluent builder for cleaner, more maintainable error responses
+- **ErrorCode standardization**: All 24+ service files now use `ErrorCode::*` constants instead of hardcoded strings
+- **ToolApiGateway**: Now uses DrupalToolProvider internally for consistent tool discovery
+
+### Developer Experience
+
+- **222 tools** across 34 submodules (up from 154)
+- **741 unit tests** passing on Drupal 11 + PHP 8.4
+- **Full CI pipeline** with Drupal 10.3 and 11.0 matrix testing
+
 ## [1.0.0-alpha26] - 2026-01-09
 
 ### Added
