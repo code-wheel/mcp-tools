@@ -38,7 +38,7 @@ final class DefaultToolErrorHandlerTest extends TestCase {
 
     $structured = $result->structuredContent;
     $this->assertFalse($structured['success']);
-    $this->assertSame('VALIDATION_FAILED', $structured['error_code']);
+    $this->assertSame('VALIDATION_ERROR', $structured['error_code']);
     $this->assertSame('test_tool', $structured['tool']);
     $this->assertSame('Field is required', $structured['error']);
     $this->assertCount(2, $structured['validation_errors']);
