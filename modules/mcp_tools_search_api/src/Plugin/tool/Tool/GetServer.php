@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools_search_api\Plugin\tool\Tool;
 
+use CodeWheel\McpErrorCodes\ErrorCode;
 use Drupal\mcp_tools_search_api\Service\SearchApiService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\Core\Plugin\Context\ContextDefinition;
@@ -62,7 +63,7 @@ class GetServer extends McpToolsToolBase {
       return [
         'success' => FALSE,
         'error' => 'id is required.',
-        'code' => 'VALIDATION_ERROR',
+        'code' => ErrorCode::VALIDATION_ERROR,
       ];
     }
 

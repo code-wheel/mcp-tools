@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools_image_styles\Service;
 
+use CodeWheel\McpErrorCodes\ErrorCode;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\image\ImageEffectManager;
 use Drupal\image\ImageStyleInterface;
@@ -110,7 +111,7 @@ class ImageStyleService {
       return [
         'success' => FALSE,
         'error' => "Image style '$id' already exists.",
-        'code' => 'ALREADY_EXISTS',
+        'code' => ErrorCode::ALREADY_EXISTS,
       ];
     }
 
@@ -119,7 +120,7 @@ class ImageStyleService {
       return [
         'success' => FALSE,
         'error' => "Invalid machine name '$id'. Use only lowercase letters, numbers, and underscores.",
-        'code' => 'VALIDATION_ERROR',
+        'code' => ErrorCode::VALIDATION_ERROR,
       ];
     }
 
@@ -156,7 +157,7 @@ class ImageStyleService {
       return [
         'success' => FALSE,
         'error' => "Image style '$styleId' not found.",
-        'code' => 'NOT_FOUND',
+        'code' => ErrorCode::NOT_FOUND,
       ];
     }
 
@@ -202,7 +203,7 @@ class ImageStyleService {
       return [
         'success' => FALSE,
         'error' => "Image style '$styleId' not found.",
-        'code' => 'NOT_FOUND',
+        'code' => ErrorCode::NOT_FOUND,
       ];
     }
 
@@ -212,7 +213,7 @@ class ImageStyleService {
       return [
         'success' => FALSE,
         'error' => "Unknown image effect '$effectId'. Use list_image_effects to see available effects.",
-        'code' => 'VALIDATION_ERROR',
+        'code' => ErrorCode::VALIDATION_ERROR,
         'available_effects' => array_keys($definitions),
       ];
     }
@@ -254,7 +255,7 @@ class ImageStyleService {
       return [
         'success' => FALSE,
         'error' => "Image style '$styleId' not found.",
-        'code' => 'NOT_FOUND',
+        'code' => ErrorCode::NOT_FOUND,
       ];
     }
 
@@ -264,7 +265,7 @@ class ImageStyleService {
       return [
         'success' => FALSE,
         'error' => "Effect '$effectUuid' not found in image style '$styleId'.",
-        'code' => 'NOT_FOUND',
+        'code' => ErrorCode::NOT_FOUND,
       ];
     }
 

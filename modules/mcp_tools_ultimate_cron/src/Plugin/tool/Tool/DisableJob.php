@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools_ultimate_cron\Plugin\tool\Tool;
 
+use CodeWheel\McpErrorCodes\ErrorCode;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AuditLogger;
 use Drupal\mcp_tools_ultimate_cron\Service\UltimateCronService;
@@ -122,7 +123,7 @@ class DisableJob extends McpToolsToolBase {
       return [
         'success' => FALSE,
         'error' => 'Job ID is required.',
-        'code' => 'VALIDATION_ERROR',
+        'code' => ErrorCode::VALIDATION_ERROR,
       ];
     }
 

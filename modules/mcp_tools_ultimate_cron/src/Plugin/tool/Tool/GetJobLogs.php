@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools_ultimate_cron\Plugin\tool\Tool;
 
+use CodeWheel\McpErrorCodes\ErrorCode;
 use Drupal\mcp_tools_ultimate_cron\Service\UltimateCronService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\Core\Plugin\Context\ContextDefinition;
@@ -96,7 +97,7 @@ class GetJobLogs extends McpToolsToolBase {
       return [
         'success' => FALSE,
         'error' => 'Job ID is required.',
-        'code' => 'VALIDATION_ERROR',
+        'code' => ErrorCode::VALIDATION_ERROR,
       ];
     }
 
@@ -104,7 +105,7 @@ class GetJobLogs extends McpToolsToolBase {
       return [
         'success' => FALSE,
         'error' => 'Limit must be between 1 and 500.',
-        'code' => 'VALIDATION_ERROR',
+        'code' => ErrorCode::VALIDATION_ERROR,
       ];
     }
 

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools_image_styles\Plugin\tool\Tool;
 
+use CodeWheel\McpErrorCodes\ErrorCode;
 use Drupal\mcp_tools_image_styles\Service\ImageStyleService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\Core\Plugin\Context\ContextDefinition;
@@ -80,7 +81,7 @@ class GetImageStyle extends McpToolsToolBase {
       return [
         'success' => FALSE,
         'error' => "Image style '$styleId' not found.",
-        'code' => 'NOT_FOUND',
+        'code' => ErrorCode::NOT_FOUND,
       ];
     }
 

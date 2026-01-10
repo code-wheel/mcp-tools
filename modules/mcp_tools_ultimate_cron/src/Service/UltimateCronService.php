@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools_ultimate_cron\Service;
 
+use CodeWheel\McpErrorCodes\ErrorCode;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
@@ -69,7 +70,7 @@ class UltimateCronService {
       return [
         'success' => FALSE,
         'error' => 'Failed to list Ultimate Cron jobs: ' . $e->getMessage(),
-        'code' => 'INTERNAL_ERROR',
+        'code' => ErrorCode::INTERNAL_ERROR,
       ];
     }
   }
@@ -91,7 +92,7 @@ class UltimateCronService {
         return [
           'success' => FALSE,
           'error' => "Ultimate Cron job '$id' not found.",
-          'code' => 'NOT_FOUND',
+          'code' => ErrorCode::NOT_FOUND,
         ];
       }
 
@@ -105,7 +106,7 @@ class UltimateCronService {
       return [
         'success' => FALSE,
         'error' => 'Failed to get job details: ' . $e->getMessage(),
-        'code' => 'INTERNAL_ERROR',
+        'code' => ErrorCode::INTERNAL_ERROR,
       ];
     }
   }
@@ -127,7 +128,7 @@ class UltimateCronService {
         return [
           'success' => FALSE,
           'error' => "Ultimate Cron job '$id' not found.",
-          'code' => 'NOT_FOUND',
+          'code' => ErrorCode::NOT_FOUND,
         ];
       }
 
@@ -194,7 +195,7 @@ class UltimateCronService {
         return [
           'success' => FALSE,
           'error' => "Ultimate Cron job '$id' not found.",
-          'code' => 'NOT_FOUND',
+          'code' => ErrorCode::NOT_FOUND,
         ];
       }
 
@@ -230,7 +231,7 @@ class UltimateCronService {
       return [
         'success' => FALSE,
         'error' => "Failed to enable job '$id': " . $e->getMessage(),
-        'code' => 'INTERNAL_ERROR',
+        'code' => ErrorCode::INTERNAL_ERROR,
       ];
     }
   }
@@ -252,7 +253,7 @@ class UltimateCronService {
         return [
           'success' => FALSE,
           'error' => "Ultimate Cron job '$id' not found.",
-          'code' => 'NOT_FOUND',
+          'code' => ErrorCode::NOT_FOUND,
         ];
       }
 
@@ -288,7 +289,7 @@ class UltimateCronService {
       return [
         'success' => FALSE,
         'error' => "Failed to disable job '$id': " . $e->getMessage(),
-        'code' => 'INTERNAL_ERROR',
+        'code' => ErrorCode::INTERNAL_ERROR,
       ];
     }
   }
@@ -312,7 +313,7 @@ class UltimateCronService {
         return [
           'success' => FALSE,
           'error' => "Ultimate Cron job '$id' not found.",
-          'code' => 'NOT_FOUND',
+          'code' => ErrorCode::NOT_FOUND,
         ];
       }
 
@@ -358,7 +359,7 @@ class UltimateCronService {
       return [
         'success' => FALSE,
         'error' => "Failed to get logs for job '$id': " . $e->getMessage(),
-        'code' => 'INTERNAL_ERROR',
+        'code' => ErrorCode::INTERNAL_ERROR,
       ];
     }
   }

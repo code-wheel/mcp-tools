@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools_templates\Service;
 
+use CodeWheel\McpErrorCodes\ErrorCode;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\mcp_tools\Service\AccessManager;
@@ -818,7 +819,7 @@ class TemplateService {
     $error = [
       'success' => FALSE,
       'error' => sprintf('Template "%s" not found.', $id),
-      'code' => 'TEMPLATE_NOT_FOUND',
+      'code' => ErrorCode::TEMPLATE_NOT_FOUND,
     ];
     if ($includeAvailable) {
       $error['available_templates'] = array_keys(self::TEMPLATES);

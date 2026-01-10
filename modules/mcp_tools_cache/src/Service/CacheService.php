@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools_cache\Service;
 
+use CodeWheel\McpErrorCodes\ErrorCode;
 use Drupal\Core\Asset\AssetCollectionOptimizerInterface;
 use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Core\Cache\CacheFactoryInterface;
@@ -111,7 +112,7 @@ class CacheService {
       return [
         'success' => FALSE,
         'error' => "Unknown cache bin '$bin'.",
-        'code' => 'NOT_FOUND',
+        'code' => ErrorCode::NOT_FOUND,
         'available_bins' => $bins,
       ];
     }
@@ -131,7 +132,7 @@ class CacheService {
       return [
         'success' => FALSE,
         'error' => "Failed to clear cache bin '$bin': " . $e->getMessage(),
-        'code' => 'INTERNAL_ERROR',
+        'code' => ErrorCode::INTERNAL_ERROR,
       ];
     }
   }
@@ -150,7 +151,7 @@ class CacheService {
       return [
         'success' => FALSE,
         'error' => 'At least one cache tag is required.',
-        'code' => 'VALIDATION_ERROR',
+        'code' => ErrorCode::VALIDATION_ERROR,
       ];
     }
 
@@ -206,7 +207,7 @@ class CacheService {
       return [
         'success' => FALSE,
         'error' => "Unknown rebuild type '$type'.",
-        'code' => 'VALIDATION_ERROR',
+        'code' => ErrorCode::VALIDATION_ERROR,
         'valid_types' => $validTypes,
       ];
     }
@@ -244,7 +245,7 @@ class CacheService {
       return [
         'success' => FALSE,
         'error' => "Failed to rebuild $type: " . $e->getMessage(),
-        'code' => 'INTERNAL_ERROR',
+        'code' => ErrorCode::INTERNAL_ERROR,
       ];
     }
   }

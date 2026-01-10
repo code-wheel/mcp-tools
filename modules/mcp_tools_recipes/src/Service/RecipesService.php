@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools_recipes\Service;
 
+use CodeWheel\McpErrorCodes\ErrorCode;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Extension\ModuleExtensionList;
 use Drupal\Core\File\FileSystemInterface;
@@ -297,7 +298,7 @@ class RecipesService {
       return [
         'success' => FALSE,
         'error' => sprintf('Failed to validate recipe "%s": %s', $recipeName, $e->getMessage()),
-        'code' => 'VALIDATION_ERROR',
+        'code' => ErrorCode::VALIDATION_ERROR,
       ];
     }
   }

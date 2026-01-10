@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools_search_api\Service;
 
+use CodeWheel\McpErrorCodes\ErrorCode;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\search_api\IndexInterface;
 use Drupal\search_api\ServerInterface;
@@ -61,7 +62,7 @@ class SearchApiService {
       return [
         'success' => FALSE,
         'error' => "Index '$id' not found.",
-        'code' => 'NOT_FOUND',
+        'code' => ErrorCode::NOT_FOUND,
       ];
     }
 
@@ -122,7 +123,7 @@ class SearchApiService {
       return [
         'success' => FALSE,
         'error' => "Index '$id' not found.",
-        'code' => 'NOT_FOUND',
+        'code' => ErrorCode::NOT_FOUND,
       ];
     }
 
@@ -161,7 +162,7 @@ class SearchApiService {
       return [
         'success' => FALSE,
         'error' => "Index '$id' not found.",
-        'code' => 'NOT_FOUND',
+        'code' => ErrorCode::NOT_FOUND,
       ];
     }
 
@@ -196,7 +197,7 @@ class SearchApiService {
       return [
         'success' => FALSE,
         'error' => "Failed to reindex: " . $e->getMessage(),
-        'code' => 'INTERNAL_ERROR',
+        'code' => ErrorCode::INTERNAL_ERROR,
       ];
     }
   }
@@ -218,7 +219,7 @@ class SearchApiService {
       return [
         'success' => FALSE,
         'error' => "Index '$id' not found.",
-        'code' => 'NOT_FOUND',
+        'code' => ErrorCode::NOT_FOUND,
       ];
     }
 
@@ -256,7 +257,7 @@ class SearchApiService {
       return [
         'success' => FALSE,
         'error' => "Failed to index items: " . $e->getMessage(),
-        'code' => 'INTERNAL_ERROR',
+        'code' => ErrorCode::INTERNAL_ERROR,
       ];
     }
   }
@@ -276,7 +277,7 @@ class SearchApiService {
       return [
         'success' => FALSE,
         'error' => "Index '$id' not found.",
-        'code' => 'NOT_FOUND',
+        'code' => ErrorCode::NOT_FOUND,
       ];
     }
 
@@ -311,7 +312,7 @@ class SearchApiService {
       return [
         'success' => FALSE,
         'error' => "Failed to clear index: " . $e->getMessage(),
-        'code' => 'INTERNAL_ERROR',
+        'code' => ErrorCode::INTERNAL_ERROR,
       ];
     }
   }
@@ -361,7 +362,7 @@ class SearchApiService {
       return [
         'success' => FALSE,
         'error' => "Server '$id' not found.",
-        'code' => 'NOT_FOUND',
+        'code' => ErrorCode::NOT_FOUND,
       ];
     }
 
@@ -430,7 +431,7 @@ class SearchApiService {
       return [
         'success' => FALSE,
         'error' => "Index '$indexId' not found.",
-        'code' => 'NOT_FOUND',
+        'code' => ErrorCode::NOT_FOUND,
       ];
     }
 
