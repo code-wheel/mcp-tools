@@ -92,10 +92,10 @@ jobs:
           cd drupal
           composer require mcp/sdk:^0.2.2 --no-interaction
 
-      - name: Install MCP HTTP Security package
+      - name: Install MCP PHP Ecosystem packages
         run: |
           cd drupal
-          composer require code-wheel/mcp-http-security:^1.0 --no-interaction
+          composer require code-wheel/mcp-http-security:^1.0 code-wheel/mcp-error-codes:^1.2 code-wheel/mcp-events:^2.0 code-wheel/mcp-schema-builder:^1.1 code-wheel/mcp-tool-gateway:^1.1 --no-interaction
 
       - name: Copy module
         run: |
