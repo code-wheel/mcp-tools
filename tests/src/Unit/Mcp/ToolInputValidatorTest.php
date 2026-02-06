@@ -202,6 +202,63 @@ final class ToolInputValidatorTest extends UnitTestCase {
     $this->assertNotEmpty($result['errors']);
   }
 
+  public function testValidateAcceptsComplexObjectsInUnconstrainedArray(): void {
+    $definition = $this->createMockDefinition();
+
+    // Simulates the schema produced for batch tools where data_type: 'list'
+    // is used without a ListInputDefinition. The items schema must be {}
+    // (unconstrained) so complex objects are accepted.
+    $this->schemaConverter->method('toolDefinitionToInputSchema')
+      ->willReturn([
+        'type' => 'object',
+        'properties' => [
+          'items' => [
+            'type' => 'array',
+            'items' => new \stdClass(),
+          ],
+        ],
+        'required' => ['items'],
+      ]);
+
+    $validator = $this->createValidator();
+    $result = $validator->validate($definition, [
+      'items' => [
+        ['title' => 'Page one', 'fields' => ['body' => 'Content']],
+        ['title' => 'Page two', 'status' => TRUE],
+      ],
+    ]);
+
+    $this->assertTrue($result['valid']);
+    $this->assertEmpty($result['errors']);
+  }
+
+  public function testValidateRejectsComplexObjectsInStringConstrainedArray(): void {
+    $definition = $this->createMockDefinition();
+
+    // When items is constrained to strings, complex objects must be rejected.
+    $this->schemaConverter->method('toolDefinitionToInputSchema')
+      ->willReturn([
+        'type' => 'object',
+        'properties' => [
+          'items' => [
+            'type' => 'array',
+            'items' => ['type' => 'string'],
+          ],
+        ],
+        'required' => ['items'],
+      ]);
+
+    $validator = $this->createValidator();
+    $result = $validator->validate($definition, [
+      'items' => [
+        ['title' => 'Page one', 'fields' => ['body' => 'Content']],
+      ],
+    ]);
+
+    $this->assertFalse($result['valid']);
+    $this->assertNotEmpty($result['errors']);
+  }
+
   public function testValidateReturnsValidForEmptyPropertiesSchema(): void {
     $definition = $this->createMockDefinition();
 
