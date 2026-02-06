@@ -227,7 +227,7 @@ final class ToolApiCallToolHandlerTest extends UnitTestCase {
     $this->assertInstanceOf(Response::class, $result);
     $this->assertInstanceOf(CallToolResult::class, $result->result);
     $this->assertTrue($result->result->isError);
-    $this->assertStringContainsString('Access denied', $result->result->structuredContent['error'] ?? '');
+    $this->assertSame('Access denied.', $result->result->structuredContent['error'] ?? NULL);
   }
 
   public function testInvalidArgumentsReturnErrorResult(): void {

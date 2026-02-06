@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools_search_api\Plugin\tool\Tool;
 
-use CodeWheel\McpErrorCodes\ErrorCode;
 use Drupal\mcp_tools_search_api\Service\SearchApiService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\Core\Plugin\Context\ContextDefinition;
@@ -68,7 +67,7 @@ class GetIndexStatus extends McpToolsToolBase {
       return [
         'success' => FALSE,
         'error' => 'id is required.',
-        'code' => ErrorCode::VALIDATION_ERROR,
+        'code' => 'VALIDATION_ERROR',
       ];
     }
 

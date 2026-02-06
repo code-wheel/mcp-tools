@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools_search_api\Plugin\tool\Tool;
 
-use CodeWheel\McpErrorCodes\ErrorCode;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AuditLogger;
 use Drupal\mcp_tools_search_api\Service\SearchApiService;
@@ -100,7 +99,7 @@ class IndexItems extends McpToolsToolBase {
       return [
         'success' => FALSE,
         'error' => 'id is required.',
-        'code' => ErrorCode::VALIDATION_ERROR,
+        'code' => 'VALIDATION_ERROR',
       ];
     }
 

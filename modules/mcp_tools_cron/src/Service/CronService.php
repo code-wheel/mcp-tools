@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools_cron\Service;
 
-use CodeWheel\McpErrorCodes\ErrorCode;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\CronInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
@@ -84,7 +83,7 @@ class CronService {
         return [
           'success' => FALSE,
           'error' => 'Cron returned false. It may have been running already or encountered an error.',
-          'code' => ErrorCode::CRON_FAILED,
+          'code' => 'CRON_FAILED',
           'duration_seconds' => $duration,
         ];
       }
@@ -93,7 +92,7 @@ class CronService {
       return [
         'success' => FALSE,
         'error' => 'Cron failed: ' . $e->getMessage(),
-        'code' => ErrorCode::INTERNAL_ERROR,
+        'code' => 'INTERNAL_ERROR',
       ];
     }
   }
@@ -116,7 +115,7 @@ class CronService {
       return [
         'success' => FALSE,
         'error' => "Unknown queue '$queueName'.",
-        'code' => ErrorCode::NOT_FOUND,
+        'code' => 'NOT_FOUND',
         'available_queues' => array_keys($definitions),
       ];
     }
@@ -175,7 +174,7 @@ class CronService {
         return [
           'success' => FALSE,
           'error' => 'Threshold must be a positive number or 0.',
-          'code' => ErrorCode::VALIDATION_ERROR,
+          'code' => 'VALIDATION_ERROR',
         ];
       }
       $oldThreshold = $config->get('threshold.autorun');
@@ -190,7 +189,7 @@ class CronService {
       return [
         'success' => FALSE,
         'error' => 'No settings provided to update.',
-        'code' => ErrorCode::VALIDATION_ERROR,
+        'code' => 'VALIDATION_ERROR',
       ];
     }
 

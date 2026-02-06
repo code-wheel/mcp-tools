@@ -20,9 +20,9 @@
     "drupal/tool": "^1.0@alpha",
     "mcp/sdk": "^0.2.2",
     "code-wheel/mcp-http-security": "^1.0",
-    "code-wheel/mcp-error-codes": "^1.2",
+    "code-wheel/mcp-error-codes": "^1.1",
     "code-wheel/mcp-events": "^2.0",
-    "code-wheel/mcp-schema-builder": "^1.1",
-    "code-wheel/mcp-tool-gateway": "^1.1"
+    "code-wheel/mcp-schema-builder": "^1.0",
+    "code-wheel/mcp-tool-gateway": "^1.0"
   }
 }
