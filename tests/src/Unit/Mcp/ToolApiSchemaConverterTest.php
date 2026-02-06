@@ -140,7 +140,7 @@ final class ToolApiSchemaConverterTest extends UnitTestCase {
     $this->assertStringContainsString('Entity objects should be passed', $properties['ref']['description']);
 
     $this->assertSame('array', $properties['tags']['type']);
-    $this->assertSame('string', $properties['tags']['items']['type']);
+    $this->assertInstanceOf(\stdClass::class, $properties['tags']['items']);
 
     $this->assertSame('object', $properties['meta']['type']);
   }
@@ -163,6 +163,40 @@ final class ToolApiSchemaConverterTest extends UnitTestCase {
     $this->assertSame('object', $schema['type']);
     $this->assertInstanceOf(\stdClass::class, $schema['properties']);
     $this->assertSame('{}', json_encode($schema['properties']));
+  }
+
+  public function testListWithoutItemDefinitionProducesUnconstrainedItemsSchema(): void {
+    $converter = new ToolApiSchemaConverter();
+
+    $items = $this->mockInputDefinition(
+      dataType: 'list',
+      required: TRUE,
+      description: 'Array of content items',
+      constraints: [],
+    );
+
+    $definition = new ToolDefinition([
+      'id' => 'mcp_tools:batch_test',
+      'provider' => 'mcp_tools',
+      'label' => $this->markup('Batch Test'),
+      'description' => $this->markup('Test batch tool'),
+      'operation' => ToolOperation::Write,
+      'destructive' => FALSE,
+      'input_definitions' => [
+        'items' => $items,
+      ],
+    ]);
+
+    $schema = $converter->toolDefinitionToInputSchema($definition);
+    $properties = $schema['properties'];
+
+    // items must be typed as array.
+    $this->assertSame('array', $properties['items']['type']);
+
+    // Without a ListInputDefinition, items schema must be unconstrained ({})
+    // so complex objects like {"title": "...", "fields": {...}} are accepted.
+    $this->assertInstanceOf(\stdClass::class, $properties['items']['items']);
+    $this->assertSame('{}', json_encode($properties['items']['items']));
   }
 
   private function mockInputDefinition(

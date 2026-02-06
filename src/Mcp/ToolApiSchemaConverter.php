@@ -170,7 +170,7 @@ class ToolApiSchemaConverter {
     // Provide best-effort list and map schemas when possible.
     if ($definition instanceof ListInputDefinition || $dataType === 'list' || $definition->isMultiple()) {
       $schema['type'] = 'array';
-      $schema['items'] = ['type' => 'string'];
+      $schema['items'] = new \stdClass();
       if ($definition instanceof ListInputDefinition) {
         $itemDefinition = $definition->getDataDefinition()->getItemDefinition();
         if ($itemDefinition instanceof InputDefinitionInterface) {
