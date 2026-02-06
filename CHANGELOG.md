@@ -4,6 +4,19 @@ All notable changes to the MCP Tools module will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.0.0-beta2] - 2026-02-06
+
+### Changed
+
+- Bump dependencies: `mcp-error-codes ^1.2`, `mcp-schema-builder ^1.1`, `mcp-tool-gateway ^1.1`
+- Refactor DefaultToolErrorHandler to use McpError fluent builder
+- Migrate all module services from hardcoded error strings to `ErrorCode::*` constants
+- Fix list schema rejecting complex objects in batch tools
+
+### Removed
+
+- Remove dev-only `DRUPAL_ORG_DESCRIPTION.html` from public release
+
 ## [1.0.0-beta1] - 2026-01-09
 
 ### Added
