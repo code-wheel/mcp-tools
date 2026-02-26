@@ -26,16 +26,20 @@ AI:  Creates the content type, taxonomies, fields, role, and permissions</code>
 <p>Enable the STDIO module:</p>
 <code>drush en mcp_tools_stdio -y</code>
 
+<p><strong>Generate config automatically:</strong></p>
+<code>drush mcp-tools:client-config > .mcp.json</code>
+<p>Detects DDEV/Lando environments and outputs ready-to-use config. Use <code>--scope=read</code> for read-only.</p>
+
 <p><strong>Claude Code (run from your Drupal directory):</strong></p>
 <code>cd /path/to/drupal
-claude mcp add --scope project drupal -- drush mcp-tools:stdio --uri=https://your-site.ddev.site</code>
+claude mcp add --scope project drupal -- drush mcp-tools:serve --quiet --uid=1 --scope=read,write</code>
 
 <p><strong>Or add <code>.mcp.json</code> to your Drupal project root:</strong></p>
 <code>{
   "mcpServers": {
     "drupal": {
       "command": "drush",
-      "args": ["mcp-tools:stdio", "--uri=https://your-site.ddev.site"]
+      "args": ["mcp-tools:serve", "--quiet", "--uid=1", "--scope=read,write"]
     }
   }
 }</code>
@@ -74,7 +78,7 @@ claude mcp add --scope project drupal -- drush mcp-tools:stdio --uri=https://you
 <p>Manage keys at <code>/admin/config/services/mcp-tools/remote</code> or via <code>drush mcp-tools:remote-key-list</code>.</p>
 
 <h3>What's Included</h3>
-<p><strong>215 tools</strong> across 30 optional submodules (154 core-only, 61 with contrib):</p>
+<p><strong>222 tools</strong> across 34 optional submodules:</p>
 <ul>
 <li><strong>Site Building:</strong> Content types, fields, taxonomies, roles, permissions, menus</li>
 <li><strong>Content:</strong> Create/edit/publish nodes, media, bulk operations</li>

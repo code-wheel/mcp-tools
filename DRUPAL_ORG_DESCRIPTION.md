@@ -1,7 +1,7 @@
 # Drupal.org Project Description
 
 **Summary (200 chars):**
-MCP Tools provides 215 MCP tools for building Drupal via AI, safe-by-default with read-only scopes and optional write/admin for local development.
+MCP Tools provides 222 MCP tools for building Drupal via AI, safe-by-default with read-only scopes and optional write/admin for local development.
 
 ---
 
@@ -17,7 +17,7 @@ AI:  Creates content type, taxonomy vocabularies, fields, role, and permissions
 
 ### Features
 
-**215 tools across 30 submodules** covering every aspect of Drupal site building:
+**222 tools across 34 submodules** covering every aspect of Drupal site building:
 
 **Site Building (Core)**
 - Create and manage content types with 18+ field types
@@ -83,7 +83,11 @@ AI:  Creates content type, taxonomy vocabularies, fields, role, and permissions
    ```
    Optionally enable `mcp_tools_config` to preview/export via tools (e.g. `mcp_config_changes`, `mcp_config_preview`, `mcp_config_export`).
 
-5. **Connect your MCP client** (Claude Desktop, Claude Code, or any MCP-compatible assistant)
+5. **Connect your MCP client** (Claude Code, Cursor, Windsurf, or any MCP-compatible assistant):
+   ```
+   drush mcp-tools:client-config > .mcp.json
+   ```
+   Auto-detects DDEV/Lando environments. Use `--scope=read` for read-only.
 
 6. **Start building!** Ask your AI assistant to create content types, add fields, build views, etc.
 
@@ -196,4 +200,4 @@ This module is developed and maintained by [Code Wheel](https://github.com/code-
 | mcp_tools_templates | 5 | Site templates |
 | mcp_tools_migration | 7 | Content import/export |
 
-**Total: 205 tools**
+**Total: 222 tools**
