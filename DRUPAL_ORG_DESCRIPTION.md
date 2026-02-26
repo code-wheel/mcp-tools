@@ -129,7 +129,7 @@ Enable only what you need. These bundles are common starting points:
 | pathauto | URL alias pattern tools (6 tools) |
 | redirect | Redirect management tools (7 tools) |
 | simple_sitemap | XML sitemap tools (7 tools) |
-| search_api | Search index tools (8 tools) |
+| search_api | Search index tools (9 tools) |
 | scheduler | Scheduled publishing tools (5 tools) |
 | ultimate_cron | Advanced cron tools (6 tools) |
 | entity_clone | Entity cloning tools (4 tools) |
@@ -153,7 +153,7 @@ This module is developed and maintained by [Code Wheel](https://github.com/code-
 
 **Getting Started:**
 - [MCP Protocol Overview](https://modelcontextprotocol.io/)
-- [Claude Desktop MCP Setup](https://claude.ai/docs/mcp)
+- [Claude Desktop MCP Setup](https://docs.anthropic.com/en/docs/build-with-claude/mcp)
 
 **Version Compatibility:**
 
@@ -168,10 +168,10 @@ This module is developed and maintained by [Code Wheel](https://github.com/code-
 
 | Submodule | Tools | Description |
 |-----------|-------|-------------|
-| mcp_tools (base) | 22 | Read-only site status, health, content listing |
+| mcp_tools (base) | 25 | Read-only site status, health, content listing |
 | mcp_tools_mcp_server | 0 | Optional bridge for drupal/mcp_server |
 | mcp_tools_content | 4 | Content CRUD operations |
-| mcp_tools_structure | 12 | Content types, fields, taxonomy, roles |
+| mcp_tools_structure | 20 | Content types, fields, taxonomy, roles |
 | mcp_tools_users | 5 | User account management |
 | mcp_tools_menus | 5 | Menu and link management |
 | mcp_tools_views | 6 | Views creation and management |
@@ -193,11 +193,12 @@ This module is developed and maintained by [Code Wheel](https://github.com/code-
 | mcp_tools_pathauto | 6 | URL alias patterns |
 | mcp_tools_redirect | 7 | URL redirects |
 | mcp_tools_sitemap | 7 | XML sitemap |
-| mcp_tools_search_api | 8 | Search API indexes |
+| mcp_tools_search_api | 9 | Search API indexes |
 | mcp_tools_entity_clone | 4 | Entity cloning |
 | mcp_tools_analysis | 8 | Site analysis and audits |
 | mcp_tools_batch | 6 | Bulk operations |
 | mcp_tools_templates | 5 | Site templates |
 | mcp_tools_migration | 7 | Content import/export |
+| mcp_tools_jsonapi | 6 | Generic entity CRUD via JSON:API |
 
 **Total: 222 tools**

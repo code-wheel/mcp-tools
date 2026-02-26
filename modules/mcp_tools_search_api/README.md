@@ -2,13 +2,14 @@
 
 Manage Search API indexes and servers via MCP.
 
-## Tools (8)
+## Tools (9)
 
 | Tool | Description |
 |------|-------------|
 | `mcp_search_api_list_indexes` | List all search indexes with status |
 | `mcp_search_api_get_index` | Get index details (fields, datasources, status) |
 | `mcp_search_api_status` | Get indexing status (total, indexed, remaining) |
+| `mcp_search_api_search` | Search content using a Search API index |
 | `mcp_search_api_reindex` | Mark all items for reindexing |
 | `mcp_search_api_index` | Index a batch of items |
 | `mcp_search_api_clear` | Clear all indexed data from an index |

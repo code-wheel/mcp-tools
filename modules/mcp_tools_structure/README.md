@@ -2,7 +2,7 @@
 
 Site structure management: content types, fields, taxonomy, and roles.
 
-## Tools (12)
+## Tools (20)
 
 ### Content Types
 
@@ -10,6 +10,8 @@ Site structure management: content types, fields, taxonomy, and roles.
 |------|-------------|
 | `mcp_structure_create_content_type` | Create new content types with body field |
 | `mcp_structure_delete_content_type` | Remove custom content types |
+| `mcp_structure_get_content_type` | Get details of a content type |
+| `mcp_structure_list_content_types` | List all content types |
 
 ### Fields
 
@@ -24,6 +26,9 @@ Site structure management: content types, fields, taxonomy, and roles.
 | Tool | Description |
 |------|-------------|
 | `mcp_structure_create_vocabulary` | Create taxonomy vocabularies |
+| `mcp_structure_get_vocabulary` | Get details of a vocabulary |
+| `mcp_structure_list_vocabularies` | List all vocabularies |
+| `mcp_structure_setup_taxonomy` | Set up a complete taxonomy structure |
 | `mcp_structure_create_term` | Create individual taxonomy terms |
 | `mcp_structure_create_terms` | Bulk create taxonomy terms |
 
@@ -33,8 +38,16 @@ Site structure management: content types, fields, taxonomy, and roles.
 |------|-------------|
 | `mcp_structure_create_role` | Create user roles |
 | `mcp_structure_delete_role` | Remove custom roles |
+| `mcp_structure_get_role_permissions` | Get permissions for a role |
+| `mcp_structure_list_roles` | List all roles |
 | `mcp_structure_grant_permissions` | Grant permissions to roles |
 | `mcp_structure_revoke_permissions` | Revoke permissions from roles |
+
+### Compound Operations
+
+| Tool | Description |
+|------|-------------|
+| `mcp_structure_scaffold_content_type` | Scaffold a complete content type with fields |
 
 ## Supported Field Types (18)
 

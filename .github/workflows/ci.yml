@@ -65,7 +65,7 @@ jobs:
         include:
           - drupal-version: '10.3'
             php-version: '8.3'
-          - drupal-version: '11.0'
+          - drupal-version: '11.1'
             php-version: '8.4'
 
     services:
@@ -460,7 +460,7 @@ jobs:
           ./vendor/bin/phpunit --testsuite unit,kernel,functional --coverage-clover=coverage.xml --colors=always
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           files: drupal/coverage.xml
           flags: unittests
@@ -537,7 +537,7 @@ jobs:
           # Enable all submodules (skip those with unmet dependencies)
           for module in mcp_tools_analysis mcp_tools_batch mcp_tools_blocks mcp_tools_cache mcp_tools_config \
                         mcp_tools_content mcp_tools_cron mcp_tools_entity_clone mcp_tools_image_styles \
-                        mcp_tools_layout_builder mcp_tools_media mcp_tools_menus mcp_tools_metatag \
+                        mcp_tools_jsonapi mcp_tools_layout_builder mcp_tools_media mcp_tools_menus mcp_tools_metatag \
                         mcp_tools_migration mcp_tools_moderation mcp_tools_paragraphs mcp_tools_pathauto \
                         mcp_tools_recipes mcp_tools_redirect mcp_tools_scheduler mcp_tools_search_api \
                         mcp_tools_sitemap mcp_tools_structure mcp_tools_templates mcp_tools_theme \

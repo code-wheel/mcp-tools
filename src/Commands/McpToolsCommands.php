@@ -13,6 +13,7 @@ use Drupal\mcp_tools\Mcp\Prompt\PromptRegistry;
 use Drupal\mcp_tools\Mcp\Resource\ResourceRegistry;
 use Drupal\mcp_tools\Mcp\ServerConfigRepository;
 use Drupal\mcp_tools\Service\AccessManager;
+use Drupal\mcp_tools\Service\ClientConfigGenerator;
 use Drupal\mcp_tools\Service\RateLimiter;
 use Drush\Attributes as CLI;
 use Drush\Commands\DrushCommands;
@@ -687,68 +688,8 @@ class McpToolsCommands extends DrushCommands {
     $isDdev = (bool) getenv('IS_DDEV_PROJECT');
     $isLando = (bool) getenv('LANDO');
 
-    if ($isDdev) {
-      // Inside DDEV: the project root is one level above the Drupal root
-      // (web/ docroot), or if Drupal IS the project root, use that.
-      $projectRoot = dirname($drupalRoot);
-      if (basename($drupalRoot) === $drupalRoot) {
-        $projectRoot = $drupalRoot;
-      }
-      $config = [
-        'mcpServers' => [
-          'drupal' => [
-            'command' => 'ddev',
-            'args' => [
-              'drush',
-              'mcp-tools:serve',
-              '--quiet',
-              "--uid={$uid}",
-              "--scope={$scope}",
-            ],
-            'cwd' => $projectRoot,
-          ],
-        ],
-      ];
-    }
-    elseif ($isLando) {
-      $projectRoot = dirname($drupalRoot);
-      if (basename($drupalRoot) === $drupalRoot) {
-        $projectRoot = $drupalRoot;
-      }
-      $config = [
-        'mcpServers' => [
-          'drupal' => [
-            'command' => 'lando',
-            'args' => [
-              'drush',
-              'mcp-tools:serve',
-              '--quiet',
-              "--uid={$uid}",
-              "--scope={$scope}",
-            ],
-            'cwd' => $projectRoot,
-          ],
-        ],
-      ];
-    }
-    else {
-      // Bare metal / native.
-      $drushPath = $drupalRoot . '/vendor/bin/drush';
-      $config = [
-        'mcpServers' => [
-          'drupal' => [
-            'command' => $drushPath,
-            'args' => [
-              'mcp-tools:serve',
-              '--quiet',
-              "--uid={$uid}",
-              "--scope={$scope}",
-            ],
-            'cwd' => $drupalRoot,
-          ],
-        ],
-      ];
-    }
+    $generator = new ClientConfigGenerator();
+    $config = $generator->buildConfig($drupalRoot, $isDdev, $isLando, $scope, $uid);
 
     // JSON to stdout (pipeable to file).
     $this->output()->write(json_encode($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
