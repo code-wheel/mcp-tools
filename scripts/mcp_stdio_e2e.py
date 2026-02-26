@@ -161,11 +161,24 @@ def _initialize_and_list_tools(proc: subprocess.Popen[str], sel: selectors.BaseS
 
     _send(proc, {"jsonrpc": "2.0", "method": "notifications/initialized"})
 
+    all_tools: list[dict] = []
+    cursor = None
     list_id = request_id + 1
-    _send(proc, {"jsonrpc": "2.0", "id": list_id, "method": "tools/list"})
-    tools_list = _read_stdout_json_for_id(proc, sel, list_id, 15)
-    tools = (tools_list.get("result") or {}).get("tools") or []
-    return {tool.get("name") for tool in tools if isinstance(tool, dict)}
+    while True:
+        params: dict = {}
+        if cursor is not None:
+            params["cursor"] = cursor
+        _send(proc, {"jsonrpc": "2.0", "id": list_id, "method": "tools/list", "params": params})
+        tools_list = _read_stdout_json_for_id(proc, sel, list_id, 15)
+        result = tools_list.get("result") or {}
+        page = result.get("tools") or []
+        all_tools.extend(t for t in page if isinstance(t, dict))
+        cursor = result.get("nextCursor")
+        if not cursor:
+            break
+        list_id += 1
+
+    return {tool.get("name") for tool in all_tools}
 
 
 def main() -> int:

@@ -213,6 +213,39 @@ def _assert_jsonrpc_result(body: str, expected_id: int) -> dict:
     return decoded
 
 
+def _list_all_tools_http(
+    url: str,
+    api_key: str | None,
+    session_id: str | None,
+    start_id: int = 2,
+) -> tuple[set[str], int]:
+    """Paginate through tools/list and return all tool names and last used id."""
+    all_tools: list[dict] = []
+    cursor = None
+    req_id = start_id
+    while True:
+        params: dict = {}
+        if cursor is not None:
+            params["cursor"] = cursor
+        status, _, body = _post_jsonrpc(
+            url,
+            {"jsonrpc": "2.0", "id": req_id, "method": "tools/list", "params": params},
+            api_key=api_key,
+            session_id=session_id,
+        )
+        if status != 200:
+            raise SystemExit(f"tools/list expected 200, got {status}: {body}")
+        resp = _assert_jsonrpc_result(body, req_id)
+        result = resp.get("result") or {}
+        page = result.get("tools") or []
+        all_tools.extend(t for t in page if isinstance(t, dict))
+        cursor = result.get("nextCursor")
+        if not cursor:
+            break
+        req_id += 1
+    return {tool.get("name") for tool in all_tools}, req_id
+
+
 def _run_sequence(base_url: str, api_key: str, expect_write_allowed: bool) -> None:
     url = base_url.rstrip("/") + "/_mcp_tools"
 
@@ -248,18 +281,7 @@ def _run_sequence(base_url: str, api_key: str, expect_write_allowed: bool) -> No
     if status not in (200, 202):
         raise SystemExit(f"notifications/initialized expected 200/202, got {status}")
 
-    status, _, body = _post_jsonrpc(
-        url,
-        {"jsonrpc": "2.0", "id": 2, "method": "tools/list"},
-        api_key=api_key,
-        session_id=session_id,
-    )
-    if status != 200:
-        raise SystemExit(f"tools/list expected 200, got {status}: {body}")
-
-    tools_resp = _assert_jsonrpc_result(body, 2)
-    tools = (tools_resp.get("result") or {}).get("tools") or []
-    tool_names = {tool.get("name") for tool in tools if isinstance(tool, dict)}
+    tool_names, _ = _list_all_tools_http(url, api_key, session_id, start_id=2)
 
     if "mcp_tools_get_site_status" not in tool_names:
         raise SystemExit("Expected tool mcp_tools_get_site_status to be registered over HTTP.")
@@ -359,18 +381,7 @@ def _run_config_only_sequence(base_url: str, api_key: str) -> None:
     if status not in (200, 202):
         raise SystemExit(f"notifications/initialized expected 200/202, got {status}")
 
-    status, _, body = _post_jsonrpc(
-        url,
-        {"jsonrpc": "2.0", "id": 102, "method": "tools/list"},
-        api_key=api_key,
-        session_id=session_id,
-    )
-    if status != 200:
-        raise SystemExit(f"tools/list expected 200, got {status}: {body}")
-
-    tools_resp = _assert_jsonrpc_result(body, 102)
-    tools = (tools_resp.get("result") or {}).get("tools") or []
-    tool_names = {tool.get("name") for tool in tools if isinstance(tool, dict)}
+    tool_names, _ = _list_all_tools_http(url, api_key, session_id, start_id=102)
 
     if "mcp_structure_create_content_type" not in tool_names:
         raise SystemExit("Expected tool mcp_structure_create_content_type to be registered for config-only checks.")
