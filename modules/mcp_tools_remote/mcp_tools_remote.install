@@ -2,17 +2,12 @@
 
 /**
  * @file
- * {@inheritdoc}
+ * Install and requirements for MCP Tools Remote Server.
  */
-
-use Mcp\Server;
 
 declare(strict_types=1);
 
-/**
- * @file
- * Install and requirements for MCP Tools Remote Server.
- */
+use Mcp\Server;
 
 /**
  * Implements hook_requirements().
