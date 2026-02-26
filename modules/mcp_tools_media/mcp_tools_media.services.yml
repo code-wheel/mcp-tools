@@ -6,3 +6,4 @@ services:
       - '@file_system'
       - '@mcp_tools.access_manager'
       - '@mcp_tools.audit_logger'
+      - '@datetime.time'
