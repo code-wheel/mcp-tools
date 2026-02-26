@@ -25,6 +25,9 @@
 /behat.yml               export-ignore
 /behat.yml.dist          export-ignore
 
+# Project instructions (dev-only)
+/CLAUDE.md               export-ignore
+
 # Documentation (keep README and CHANGELOG, exclude dev docs)
 /CONTRIBUTING.md         export-ignore
 /ROADMAP.md              export-ignore

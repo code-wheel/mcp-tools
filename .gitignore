@@ -7,3 +7,6 @@ mcp.json
 # Environment files
 .env
 .env.local
+
+# PromptWheel
+.promptwheel/
