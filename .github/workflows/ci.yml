@@ -54,7 +54,6 @@ jobs:
       - name: Run PHPCS
         run: |
           phpcs --standard=Drupal,DrupalPractice . --extensions=php,module,install,inc --ignore=*/tests/*,*/vendor/*,*/node_modules/*,*/tmp/*,*/.ddev/*
-        continue-on-error: true
 
   phpunit:
     name: PHPUnit (Drupal ${{ matrix.drupal-version }})
