@@ -155,7 +155,7 @@ class SchedulerService {
       return ['success' => FALSE, 'error' => "Content type '{$node->bundle()}' is not configured for scheduling. Enable scheduling for this content type in the Scheduler settings."];
     }
 
-    $currentTime = $this->time->getRequestTime();
+    $currentTime = $this->time->getCurrentTime();
     if ($timestamp <= $currentTime) {
       return ['success' => FALSE, 'error' => 'Scheduled time must be in the future.'];
     }
@@ -218,7 +218,7 @@ class SchedulerService {
       return ['success' => FALSE, 'error' => "Content type '{$node->bundle()}' is not configured for scheduling. Enable scheduling for this content type in the Scheduler settings."];
     }
 
-    $currentTime = $this->time->getRequestTime();
+    $currentTime = $this->time->getCurrentTime();
     if ($timestamp <= $currentTime) {
       return ['success' => FALSE, 'error' => 'Scheduled time must be in the future.'];
     }
