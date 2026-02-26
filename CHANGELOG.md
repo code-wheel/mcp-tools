@@ -4,6 +4,13 @@ All notable changes to the MCP Tools module will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.0.0-beta4] - 2026-02-25
+
+### Fixed
+
+- **ApiKeyManagerTest failures on Drupal 11**: The beta3 frozen REQUEST_TIME fix changed `DrupalClock::now()` to use `getCurrentTime()`, but the test only mocked `getRequestTime()`, causing 4 failures on Drupal 11
+- **CI dependency resolution**: Consolidated `composer require` steps with `-W` flag to resolve transitive conflicts between `mcp/sdk` and Drupal core packages
+
 ## [1.0.0-beta3] - 2026-02-25
 
 ### Fixed
