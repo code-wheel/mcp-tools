@@ -8,6 +8,7 @@ use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\media\MediaTypeInterface;
+use Drupal\Component\Datetime\TimeInterface;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AuditLogger;
 use Drupal\mcp_tools_media\Service\MediaService;
@@ -60,7 +61,8 @@ class MediaServiceTest extends UnitTestCase {
       $this->entityTypeManager,
       $this->fileSystem,
       $this->accessManager,
-      $this->auditLogger
+      $this->auditLogger,
+      $this->createMock(TimeInterface::class),
     );
   }
 
