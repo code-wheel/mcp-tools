@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools_media\Service;
 
+use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\file\Entity\File;
@@ -53,6 +54,7 @@ class MediaService {
     protected FileSystemInterface $fileSystem,
     protected AccessManager $accessManager,
     protected AuditLogger $auditLogger,
+    protected TimeInterface $time,
   ) {}
 
   /**
@@ -232,10 +234,15 @@ class MediaService {
       $uri = $this->fileSystem->saveData($decodedData, $destination, FileSystemInterface::EXISTS_RENAME);
 
       // Create file entity.
+      // Use getCurrentTime() to avoid frozen REQUEST_TIME in server mode.
+      $now = $this->time->getCurrentTime();
+
       $file = File::create([
         'uri' => $uri,
         'filename' => $safeFilename,
         'status' => 1,
+        'created' => $now,
+        'changed' => $now,
       ]);
       $file->save();
 
@@ -289,6 +296,10 @@ class MediaService {
         'name' => $name,
         $sourceFieldName => $sourceFieldValue,
       ]);
+      // Use getCurrentTime() to avoid frozen REQUEST_TIME in server mode.
+      $now = $this->time->getCurrentTime();
+      $media->setCreatedTime($now);
+      $media->setChangedTime($now);
       $media->save();
 
       $this->auditLogger->logSuccess('create_media', 'media', (string) $media->id(), [

@@ -24,6 +24,7 @@ services:
       - '@entity_type.manager'
       - '@mcp_tools.access_manager'
       - '@mcp_tools.audit_logger'
+      - '@datetime.time'
 
   mcp_tools_structure.role:
     class: Drupal\mcp_tools_structure\Service\RoleService
