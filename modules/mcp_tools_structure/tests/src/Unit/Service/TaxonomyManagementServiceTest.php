@@ -7,6 +7,7 @@ namespace Drupal\Tests\mcp_tools_structure\Unit\Service;
 use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Entity\Query\QueryInterface;
+use Drupal\Component\Datetime\TimeInterface;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AuditLogger;
 use Drupal\mcp_tools_structure\Service\TaxonomyManagementService;
@@ -33,10 +34,14 @@ final class TaxonomyManagementServiceTest extends UnitTestCase {
     $this->accessManager = $this->createMock(AccessManager::class);
     $this->auditLogger = $this->createMock(AuditLogger::class);
 
+    $time = $this->createMock(TimeInterface::class);
+    $time->method('getCurrentTime')->willReturn(time());
+
     $this->service = new TaxonomyManagementService(
       $this->entityTypeManager,
       $this->accessManager,
       $this->auditLogger,
+      $time,
     );
   }
 
