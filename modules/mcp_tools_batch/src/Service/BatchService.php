@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools_batch\Service;
 
+use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
@@ -28,6 +29,7 @@ class BatchService {
     protected ModuleHandlerInterface $moduleHandler,
     protected AccessManager $accessManager,
     protected AuditLogger $auditLogger,
+    protected TimeInterface $time,
   ) {}
 
   /**
@@ -101,6 +103,10 @@ class BatchService {
         }
 
         $node = $this->entityTypeManager->getStorage('node')->create($nodeData);
+        // Use getCurrentTime() to avoid frozen REQUEST_TIME in server mode.
+        $now = $this->time->getCurrentTime();
+        $node->setCreatedTime($now);
+        $node->setChangedTime($now);
         $node->save();
 
         $created[] = [

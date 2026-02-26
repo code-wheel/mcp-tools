@@ -7,3 +7,4 @@ services:
       - '@current_user'
       - '@mcp_tools.access_manager'
       - '@mcp_tools.audit_logger'
+      - '@datetime.time'
