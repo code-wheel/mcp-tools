@@ -327,7 +327,8 @@ class ModerationService {
         $entity->setNewRevision(TRUE);
         $message = $revisionMessage ?: "Moderation state changed from '$previousState' to '$state' via MCP Tools";
         $entity->setRevisionLogMessage($message);
-        $entity->setRevisionCreationTime($this->time->getRequestTime());
+        // Use getCurrentTime() to avoid frozen REQUEST_TIME in server mode.
+        $entity->setRevisionCreationTime($this->time->getCurrentTime());
         $entity->setRevisionUserId($this->currentUser->id());
       }
 

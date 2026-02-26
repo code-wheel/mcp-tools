@@ -290,7 +290,9 @@ class TaxonomyManagementService {
       }
 
       // Use getCurrentTime() to avoid frozen REQUEST_TIME in server mode.
-      $termData['changed'] = $this->time->getCurrentTime();
+      $now = $this->time->getCurrentTime();
+      $termData['changed'] = $now;
+      $termData['created'] = $now;
       $term = $this->entityTypeManager->getStorage('taxonomy_term')->create($termData);
       $term->save();
 
