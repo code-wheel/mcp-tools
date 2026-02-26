@@ -112,20 +112,10 @@ jobs:
           cd drupal
           composer require drupal/tool:1.0.0-alpha9 --no-interaction
 
-      - name: Install MCP SDK dependency
+      - name: Install MCP dependencies
         run: |
           cd drupal
-          composer require mcp/sdk:^0.2.2 --no-interaction
-
-      - name: Install MCP HTTP Security package
-        run: |
-          cd drupal
-          composer require code-wheel/mcp-http-security:^1.0 --no-interaction
-
-      - name: Install MCP packages
-        run: |
-          cd drupal
-          composer require code-wheel/mcp-error-codes:^1.2 code-wheel/mcp-events:^2.0 code-wheel/mcp-schema-builder:^1.1 code-wheel/mcp-tool-gateway:^1.1 --no-interaction
+          composer require mcp/sdk:^0.2.2 code-wheel/mcp-http-security:^1.0 code-wheel/mcp-error-codes:^1.2 code-wheel/mcp-events:^2.0 code-wheel/mcp-schema-builder:^1.1 code-wheel/mcp-tool-gateway:^1.1 -W --no-interaction
 
       - name: Copy MCP Tools module
         run: |
@@ -254,7 +244,7 @@ jobs:
           composer create-project drupal/recommended-project:^10.3 drupal --no-interaction
           cd drupal
           composer require --dev drupal/core-dev:^10.3 phpspec/prophecy-phpunit:^2 drush/drush --with-all-dependencies --no-interaction
-          composer require drupal/tool:1.0.0-alpha9 mcp/sdk:^0.2.2 code-wheel/mcp-http-security:^1.0 code-wheel/mcp-error-codes:^1.2 code-wheel/mcp-events:^2.0 code-wheel/mcp-schema-builder:^1.1 code-wheel/mcp-tool-gateway:^1.1 --no-interaction
+          composer require drupal/tool:1.0.0-alpha9 mcp/sdk:^0.2.2 code-wheel/mcp-http-security:^1.0 code-wheel/mcp-error-codes:^1.2 code-wheel/mcp-events:^2.0 code-wheel/mcp-schema-builder:^1.1 code-wheel/mcp-tool-gateway:^1.1 -W --no-interaction
 
       - name: Copy MCP Tools module
         run: |
@@ -356,20 +346,10 @@ jobs:
           cd drupal
           composer require drupal/tool:1.0.0-alpha9 --no-interaction
 
-      - name: Install MCP SDK dependency
+      - name: Install MCP dependencies
         run: |
           cd drupal
-          composer require mcp/sdk:^0.2.2 --no-interaction
-
-      - name: Install MCP HTTP Security package
-        run: |
-          cd drupal
-          composer require code-wheel/mcp-http-security:^1.0 --no-interaction
-
-      - name: Install MCP packages
-        run: |
-          cd drupal
-          composer require code-wheel/mcp-error-codes:^1.2 code-wheel/mcp-events:^2.0 code-wheel/mcp-schema-builder:^1.1 code-wheel/mcp-tool-gateway:^1.1 --no-interaction
+          composer require mcp/sdk:^0.2.2 code-wheel/mcp-http-security:^1.0 code-wheel/mcp-error-codes:^1.2 code-wheel/mcp-events:^2.0 code-wheel/mcp-schema-builder:^1.1 code-wheel/mcp-tool-gateway:^1.1 -W --no-interaction
 
       - name: Copy MCP Tools module
         run: |
@@ -523,10 +503,7 @@ jobs:
           composer create-project drupal/recommended-project:^10.3 drupal --no-interaction
           cd drupal
           composer require drush/drush --no-interaction
-          composer require drupal/tool:1.0.0-alpha9 --no-interaction
-          composer require mcp/sdk:^0.2.2 --no-interaction
-          composer require code-wheel/mcp-http-security:^1.0 --no-interaction
-          composer require code-wheel/mcp-error-codes:^1.2 code-wheel/mcp-events:^2.0 code-wheel/mcp-schema-builder:^1.1 code-wheel/mcp-tool-gateway:^1.1 --no-interaction
+          composer require drupal/tool:1.0.0-alpha9 mcp/sdk:^0.2.2 code-wheel/mcp-http-security:^1.0 code-wheel/mcp-error-codes:^1.2 code-wheel/mcp-events:^2.0 code-wheel/mcp-schema-builder:^1.1 code-wheel/mcp-tool-gateway:^1.1 -W --no-interaction
 
       - name: Copy module
         run: |
