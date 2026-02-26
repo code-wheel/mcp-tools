@@ -48,8 +48,6 @@ jobs:
         run: |
           composer global config allow-plugins.dealerdirect/phpcodesniffer-composer-installer true
           composer global require drupal/coder
-          export PATH="$HOME/.composer/vendor/bin:$PATH"
-          phpcs --config-set installed_paths ~/.composer/vendor/drupal/coder/coder_sniffer
 
       - name: Run PHPCS
         run: |
