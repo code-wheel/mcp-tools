@@ -22,6 +22,12 @@ use Drupal\Tests\UnitTestCase;
 #[\PHPUnit\Framework\Attributes\Group('mcp_tools_media')]
 class MediaServiceTest extends UnitTestCase {
 
+  protected function mockTime(): TimeInterface {
+    $time = $this->createMock(TimeInterface::class);
+    $time->method('getCurrentTime')->willReturn(time());
+    return $time;
+  }
+
   protected EntityTypeManagerInterface $entityTypeManager;
   protected FileSystemInterface $fileSystem;
   protected AccessManager $accessManager;
@@ -62,7 +68,7 @@ class MediaServiceTest extends UnitTestCase {
       $this->fileSystem,
       $this->accessManager,
       $this->auditLogger,
-      $this->createMock(TimeInterface::class),
+      $this->mockTime(),
     );
   }
 

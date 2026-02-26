@@ -26,6 +26,12 @@ use Drupal\Tests\UnitTestCase;
 #[\PHPUnit\Framework\Attributes\Group('mcp_tools_content')]
 class ContentServiceTest extends UnitTestCase {
 
+  protected function mockTime(): TimeInterface {
+    $time = $this->createMock(TimeInterface::class);
+    $time->method('getCurrentTime')->willReturn(time());
+    return $time;
+  }
+
   protected EntityTypeManagerInterface $entityTypeManager;
   protected EntityFieldManagerInterface $entityFieldManager;
   protected AccountProxyInterface $currentUser;
@@ -68,7 +74,7 @@ class ContentServiceTest extends UnitTestCase {
       $this->currentUser,
       $this->accessManager,
       $this->auditLogger,
-      $this->createMock(TimeInterface::class),
+      $this->mockTime(),
     );
   }
 
