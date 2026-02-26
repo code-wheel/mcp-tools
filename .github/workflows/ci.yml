@@ -210,8 +210,94 @@ jobs:
           SIMPLETEST_BASE_URL: http://localhost:8888
           SIMPLETEST_DB: mysql://root:root@127.0.0.1/drupal
 
-  # NOTE: E2E tests (mcp-e2e job) run in the dev repo only.
-  # They require scripts/ which are not included in the public release.
+  mcp-e2e:
+    name: MCP E2E (STDIO + HTTP)
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: drupal
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, pdo_mysql, gd, dom, xml
+          tools: composer
+          coverage: none
+
+      - name: Install Drupal
+        run: |
+          composer create-project drupal/recommended-project:^10.3 drupal --no-interaction
+          cd drupal
+          composer require --dev drupal/core-dev:^10.3 phpspec/prophecy-phpunit:^2 drush/drush --with-all-dependencies --no-interaction
+          composer require drupal/tool:1.0.0-alpha9 mcp/sdk:^0.2.2 code-wheel/mcp-http-security:^1.0 code-wheel/mcp-error-codes:^1.2 code-wheel/mcp-events:^2.0 code-wheel/mcp-schema-builder:^1.1 code-wheel/mcp-tool-gateway:^1.1 -W --no-interaction
+
+      - name: Copy MCP Tools module
+        run: |
+          mkdir -p drupal/web/modules/contrib/mcp_tools
+          rsync -av \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='.ddev' \
+            --exclude='docs' \
+            --exclude='scripts' \
+            --exclude='drupal' \
+            --exclude='vendor' \
+            --exclude='.phpunit.cache' \
+            ./ drupal/web/modules/contrib/mcp_tools/
+
+      - name: Install Drupal site
+        run: |
+          cd drupal
+          ./vendor/bin/drush site:install minimal \
+            --db-url=mysql://root:root@127.0.0.1/drupal \
+            --site-name="MCP Tools Test" \
+            --account-name=admin \
+            --account-pass=admin \
+            -y
+
+      - name: Enable modules
+        run: |
+          cd drupal
+          ./vendor/bin/drush en tool dblog update -y
+          ./vendor/bin/drush en mcp_tools -y
+          ./vendor/bin/drush en mcp_tools_stdio mcp_tools_remote mcp_tools_cache -y
+          ./vendor/bin/drush cr
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install MCP JS SDK (no-lock)
+        run: |
+          npm install --no-save --no-package-lock @modelcontextprotocol/sdk zod
+
+      - name: JS SDK STDIO compatibility
+        run: |
+          node scripts/mcp_js_sdk_compat.mjs --drupal-root drupal
+
+      - name: STDIO transport E2E
+        run: |
+          python3 scripts/mcp_stdio_e2e.py --drupal-root drupal
+
+      - name: HTTP transport E2E
+        run: |
+          python3 scripts/mcp_http_e2e.py --drupal-root drupal --base-url http://localhost:8888
 
   code-coverage:
     name: Code Coverage

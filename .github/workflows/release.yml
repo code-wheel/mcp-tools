@@ -85,7 +85,7 @@ jobs:
       - name: Install MCP dependencies
         run: |
           cd drupal
-          composer require drupal/tool:1.0.0-alpha9 mcp/sdk:^0.2.2 code-wheel/mcp-http-security:^1.0 code-wheel/mcp-error-codes:^1.2 code-wheel/mcp-events:^2.0 code-wheel/mcp-schema-builder:^1.1 code-wheel/mcp-tool-gateway:^1.1 -W --no-interaction
+          composer require drupal/tool:1.0.0-alpha9 mcp/sdk:^0.2.2 code-wheel/mcp-http-security:^1.0 -W --no-interaction
 
       - name: Copy module
         run: |
@@ -152,8 +152,10 @@ jobs:
 
           ./vendor/bin/phpunit --testsuite unit,kernel,functional --colors=always
 
-      # NOTE: E2E tests using scripts/ are only available in the dev repo
-      # and are excluded from the public release package
+      - name: MCP transport E2E
+        run: |
+          python3 scripts/mcp_stdio_e2e.py --drupal-root drupal
+          python3 scripts/mcp_http_e2e.py --drupal-root drupal --base-url http://localhost:8888
 
   release:
     name: Create GitHub Release

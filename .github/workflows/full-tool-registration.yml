@@ -1,6 +1,6 @@
 # =============================================================================
 # Full Tool Registration Workflow
-# Installs optional contrib dependencies and verifies all 205 tools register.
+# Installs optional contrib dependencies and verifies all 222 tools register.
 # Intended for scheduled/manual runs (not every PR) to keep CI fast and stable.
 # =============================================================================
 
@@ -13,7 +13,7 @@ on:
 
 jobs:
   all-tools-register:
-    name: Verify All 205 Tools Register
+    name: Verify All 222 Tools Register
     runs-on: ubuntu-latest
     services:
       mysql:
@@ -108,11 +108,11 @@ jobs:
           MCP_TOOL_COUNT=$(./vendor/bin/drush eval '$defs = \Drupal::service("plugin.manager.tool")->getDefinitions(); $defs = array_filter($defs, static fn($def): bool => str_starts_with($def->getProvider(), "mcp_tools")); echo count($defs);')
           echo "Registered MCP Tools tools: $MCP_TOOL_COUNT"
 
-          if [ "$MCP_TOOL_COUNT" -ne 205 ]; then
-            echo "ERROR: Expected 205 MCP Tools tools, found $MCP_TOOL_COUNT"
+          if [ "$MCP_TOOL_COUNT" -ne 222 ]; then
+            echo "ERROR: Expected 222 MCP Tools tools, found $MCP_TOOL_COUNT"
             exit 1
           fi
-          echo "✓ All tools registered (205)"
+          echo "✓ All tools registered (222)"
 
       - name: Verify all tool schemas convert
         run: |
