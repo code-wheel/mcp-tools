@@ -19,7 +19,7 @@ use Drupal\tool\TypedData\InputDefinition;
 #[Tool(
   id: 'mcp_menus_update_menu_link',
   label: new TranslatableMarkup('Update Menu Link'),
-  description: new TranslatableMarkup('Update an existing menu link\'s title, URL, weight, or other properties.'),
+  description: new TranslatableMarkup("Update an existing menu link's title, URL, weight, or other properties."),
   operation: ToolOperation::Write,
   input_definitions: [
     'link_id' => new InputDefinition(
@@ -58,14 +58,25 @@ class UpdateMenuLink extends McpToolsToolBase {
   protected const MCP_CATEGORY = 'menus';
 
 
+  /**
+   * The menu service.
+   *
+   * @var \Drupal\mcp_tools_menus\Service\MenuManagementService
+   */
   protected MenuManagementService $menuService;
 
+  /**
+   * {@inheritdoc}
+   */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     $instance = parent::create($container, $configuration, $plugin_id, $plugin_definition);
     $instance->menuService = $container->get('mcp_tools_menus.menu');
     return $instance;
   }
 
+  /**
+   * {@inheritdoc}
+   */
   protected function executeLegacy(array $input): array {
     $linkId = $input['link_id'] ?? 0;
 
@@ -81,6 +92,5 @@ class UpdateMenuLink extends McpToolsToolBase {
 
     return $this->menuService->updateMenuLink((int) $linkId, $updates);
   }
-
 
 }

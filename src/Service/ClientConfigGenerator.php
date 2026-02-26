@@ -96,6 +96,7 @@ class ClientConfigGenerator {
    * Build the args array for DDEV/Lando wrappers.
    *
    * @return string[]
+   *   The result.
    */
   private function buildArgs(string $scope, string $uid): array {
     return [

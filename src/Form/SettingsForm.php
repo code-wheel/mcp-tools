@@ -65,11 +65,11 @@ class SettingsForm extends ConfigFormBase {
     $form['mode_description'] = [
       '#type' => 'markup',
       '#markup' => '<div class="description">' .
-        '<strong>' . $this->t('Mode presets:') . '</strong><br>' .
-        '<em>' . $this->t('Development:') . '</em> ' . $this->t('Read + Write scopes, no rate limiting, no audit logging. Best for local development.') . '<br>' .
-        '<em>' . $this->t('Staging:') . '</em> ' . $this->t('Config-only mode (no content writes), rate limiting enabled, audit logging enabled.') . '<br>' .
-        '<em>' . $this->t('Production:') . '</em> ' . $this->t('Read-only mode, strict rate limits, audit logging enabled. Safest for production.') .
-        '</div>',
+      '<strong>' . $this->t('Mode presets:') . '</strong><br>' .
+      '<em>' . $this->t('Development:') . '</em> ' . $this->t('Read + Write scopes, no rate limiting, no audit logging. Best for local development.') . '<br>' .
+      '<em>' . $this->t('Staging:') . '</em> ' . $this->t('Config-only mode (no content writes), rate limiting enabled, audit logging enabled.') . '<br>' .
+      '<em>' . $this->t('Production:') . '</em> ' . $this->t('Read-only mode, strict rate limits, audit logging enabled. Safest for production.') .
+      '</div>',
       '#weight' => -199,
     ];
   }
@@ -199,16 +199,34 @@ class SettingsForm extends ConfigFormBase {
     ];
 
     $rateLimitFields = [
-      'max_writes_per_minute' => ['Maximum writes per minute', 'Maximum write operations allowed per minute per client.', 30, 1, 1000],
-      'max_writes_per_hour' => ['Maximum writes per hour', 'Maximum write operations allowed per hour per client.', 500, 1, 10000],
-      'max_deletes_per_hour' => ['Maximum deletes per hour', 'Maximum delete operations allowed per hour per client. Delete operations are more dangerous.', 50, 1, 1000],
-      'max_structure_changes_per_hour' => ['Maximum structure changes per hour', 'Maximum structural changes (content types, fields, roles) per hour. These affect site architecture.', 100, 1, 1000],
+      'max_writes_per_minute' => [
+        'Maximum writes per minute',
+        'Maximum write operations allowed per minute per client.',
+        30, 1, 1000,
+      ],
+      'max_writes_per_hour' => [
+        'Maximum writes per hour',
+        'Maximum write operations allowed per hour per client.',
+        500, 1, 10000,
+      ],
+      'max_deletes_per_hour' => [
+        'Maximum deletes per hour',
+        'Maximum delete operations allowed per hour per client. Delete operations are more dangerous.',
+        50, 1, 1000,
+      ],
+      'max_structure_changes_per_hour' => [
+        'Maximum structure changes per hour',
+        'Maximum structural changes (content types, fields, roles) per hour. These affect site architecture.',
+        100, 1, 1000,
+      ],
     ];
 
     foreach ($rateLimitFields as $key => [$title, $desc, $default, $min, $max]) {
       $form['rate_limiting'][$key] = [
         '#type' => 'number',
+        // phpcs:ignore Drupal.Semantics.FunctionT.NotLiteralString
         '#title' => $this->t($title),
+        // phpcs:ignore Drupal.Semantics.FunctionT.NotLiteralString
         '#description' => $this->t($desc),
         '#default_value' => $config->get('rate_limiting.' . $key) ?? $default,
         '#min' => $min,
@@ -387,18 +405,18 @@ class SettingsForm extends ConfigFormBase {
     $form['production_warning'] = [
       '#type' => 'markup',
       '#markup' => '<div class="messages messages--warning">' .
-        '<h3>' . $this->t('Production Environment Warning') . '</h3>' .
-        '<p>' . $this->t('MCP Tools is designed primarily for <strong>local development and prototyping</strong>. If you must use it in production:') . '</p>' .
-        '<ul>' .
-        '<li>' . $this->t('Enable read-only mode') . '</li>' .
-        '<li>' . $this->t('Or enable config-only mode') . '</li>' .
-        '<li>' . $this->t('Enable rate limiting') . '</li>' .
-        '<li>' . $this->t('Enable audit logging') . '</li>' .
-        '<li>' . $this->t('Restrict default scopes to "read" only') . '</li>' .
-        '<li>' . $this->t('Use IP allowlisting at the web server level') . '</li>' .
-        '<li>' . $this->t('Monitor audit logs regularly') . '</li>' .
-        '</ul>' .
-        '</div>',
+      '<h3>' . $this->t('Production Environment Warning') . '</h3>' .
+      '<p>' . $this->t('MCP Tools is designed primarily for <strong>local development and prototyping</strong>. If you must use it in production:') . '</p>' .
+      '<ul>' .
+      '<li>' . $this->t('Enable read-only mode') . '</li>' .
+      '<li>' . $this->t('Or enable config-only mode') . '</li>' .
+      '<li>' . $this->t('Enable rate limiting') . '</li>' .
+      '<li>' . $this->t('Enable audit logging') . '</li>' .
+      '<li>' . $this->t('Restrict default scopes to "read" only') . '</li>' .
+      '<li>' . $this->t('Use IP allowlisting at the web server level') . '</li>' .
+      '<li>' . $this->t('Monitor audit logs regularly') . '</li>' .
+      '</ul>' .
+      '</div>',
       '#weight' => -100,
     ];
   }
@@ -406,7 +424,10 @@ class SettingsForm extends ConfigFormBase {
   /**
    * {@inheritdoc}
    */
-  public function submitForm(array &$form, FormStateInterface $form_state): void {
+  public function submitForm(
+    array &$form,
+    FormStateInterface $form_state,
+  ): void {
     $config = $this->config('mcp_tools.settings');
 
     // Handle mode changes - apply preset values.
@@ -416,14 +437,16 @@ class SettingsForm extends ConfigFormBase {
 
     // If switching to a preset mode (not custom), apply preset values.
     $presets = $this->getPresets();
-    if ($mode !== 'custom' && $mode !== $previousMode && isset($presets[$mode])) {
+    if ($mode !== 'custom' && $mode !== $previousMode
+      && isset($presets[$mode])) {
       foreach ($presets[$mode] as $key => $value) {
         $config->set($key, $value);
       }
       $this->messenger()->addStatus($this->t('Applied @mode mode preset settings.', ['@mode' => $mode]));
     }
 
-    // Always save individual settings (user can customize after applying preset).
+    // Always save individual settings
+    // (user can customize after applying preset).
     // If they changed individual settings, switch mode to 'custom'.
     $config->set('access.read_only_mode', (bool) $form_state->getValue('read_only_mode'));
     $config->set('access.config_only_mode', (bool) $form_state->getValue('config_only_mode'));
@@ -493,7 +516,8 @@ class SettingsForm extends ConfigFormBase {
   /**
    * Returns environment presets for quick configuration.
    *
-   * @return array<string, array<string, mixed>>
+   * @return array<string,
+   *   array<string, mixed>>
    */
   private function getPresets(): array {
     return [

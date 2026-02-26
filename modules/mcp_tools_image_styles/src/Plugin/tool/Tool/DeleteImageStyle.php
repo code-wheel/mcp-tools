@@ -57,8 +57,23 @@ class DeleteImageStyle extends McpToolsToolBase {
   protected const MCP_CATEGORY = 'image_styles';
 
 
+  /**
+   * The image style service.
+   *
+   * @var \Drupal\mcp_tools_image_styles\Service\ImageStyleService
+   */
   protected ImageStyleService $imageStyleService;
+  /**
+   * The access manager.
+   *
+   * @var \Drupal\mcp_tools\Service\AccessManager
+   */
   protected AccessManager $accessManager;
+  /**
+   * The audit logger.
+   *
+   * @var \Drupal\mcp_tools\Service\AuditLogger
+   */
   protected AuditLogger $auditLogger;
 
   /**
@@ -106,9 +121,5 @@ class DeleteImageStyle extends McpToolsToolBase {
 
     return $result;
   }
-
-  
-
-  
 
 }

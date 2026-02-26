@@ -50,8 +50,23 @@ class InvalidateTags extends McpToolsToolBase {
   protected const MCP_CATEGORY = 'cache';
 
 
+  /**
+   * The cache service.
+   *
+   * @var \Drupal\mcp_tools_cache\Service\CacheService
+   */
   protected CacheService $cacheService;
+  /**
+   * The access manager.
+   *
+   * @var \Drupal\mcp_tools\Service\AccessManager
+   */
   protected AccessManager $accessManager;
+  /**
+   * The audit logger.
+   *
+   * @var \Drupal\mcp_tools\Service\AuditLogger
+   */
   protected AuditLogger $auditLogger;
 
   /**
@@ -97,9 +112,5 @@ class InvalidateTags extends McpToolsToolBase {
 
     return $result;
   }
-
-  
-
-  
 
 }

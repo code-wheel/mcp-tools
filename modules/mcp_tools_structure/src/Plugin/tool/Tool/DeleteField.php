@@ -61,14 +61,25 @@ class DeleteField extends McpToolsToolBase {
   protected const MCP_CATEGORY = 'structure';
 
 
+  /**
+   * The field service.
+   *
+   * @var \Drupal\mcp_tools_structure\Service\FieldService
+   */
   protected FieldService $fieldService;
 
+  /**
+   * {@inheritdoc}
+   */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     $instance = parent::create($container, $configuration, $plugin_id, $plugin_definition);
     $instance->fieldService = $container->get('mcp_tools_structure.field');
     return $instance;
   }
 
+  /**
+   * {@inheritdoc}
+   */
   protected function executeLegacy(array $input): array {
     $entityType = $input['entity_type'] ?? 'node';
     $bundle = $input['bundle'] ?? '';
@@ -80,6 +91,5 @@ class DeleteField extends McpToolsToolBase {
 
     return $this->fieldService->deleteField($entityType, $bundle, $fieldName);
   }
-
 
 }

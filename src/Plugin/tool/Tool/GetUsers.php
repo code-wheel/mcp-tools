@@ -64,6 +64,11 @@ class GetUsers extends McpToolsToolBase {
   protected const MCP_CATEGORY = 'users';
 
 
+  /**
+   * The user analysis.
+   *
+   * @var \Drupal\mcp_tools\Service\UserAnalysisService
+   */
   protected UserAnalysisService $userAnalysis;
 
   /**
@@ -87,9 +92,5 @@ class GetUsers extends McpToolsToolBase {
       'data' => $this->userAnalysis->getUsers($limit, $role),
     ];
   }
-
-  
-
-  
 
 }

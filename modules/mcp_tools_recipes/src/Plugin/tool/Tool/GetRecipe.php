@@ -112,8 +112,4 @@ class GetRecipe extends McpToolsToolBase {
     return $this->recipesService->getRecipe($recipeName);
   }
 
-  
-
-  
-
 }

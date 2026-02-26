@@ -31,25 +31,38 @@ class MenuManagementService {
    * data exfiltration via data: URIs, and other protocol-based attacks.
    */
   protected const ALLOWED_URI_SCHEMES = [
-    'internal',  // Drupal internal paths
-    'entity',    // Entity references (entity:node/1)
-    'http',      // External HTTP links
-    'https',     // External HTTPS links
-    'base',      // Base path references
-    'route',     // Drupal route references
+  // Drupal internal paths.
+    'internal',
+  // Entity references (entity:node/1)
+    'entity',
+  // External HTTP links.
+    'http',
+  // External HTTPS links.
+    'https',
+  // Base path references.
+    'base',
+  // Drupal route references.
+    'route',
   ];
 
   /**
    * Blocked URI patterns (security).
    */
   protected const BLOCKED_URI_PATTERNS = [
-    '/^javascript:/i',  // XSS vector
-    '/^data:/i',        // Data URI (potential XSS)
-    '/^vbscript:/i',    // VBScript (IE XSS)
-    '/^file:/i',        // Local file access
-    '/^ftp:/i',         // FTP (usually not needed)
-    '/^mailto:/i',      // Email links (use dedicated field types)
-    '/^tel:/i',         // Phone links (use dedicated field types)
+  // XSS vector.
+    '/^javascript:/i',
+  // Data URI (potential XSS)
+    '/^data:/i',
+  // VBScript (IE XSS)
+    '/^vbscript:/i',
+  // Local file access.
+    '/^file:/i',
+  // FTP (usually not needed)
+    '/^ftp:/i',
+  // Email links (use dedicated field types)
+    '/^mailto:/i',
+  // Phone links (use dedicated field types)
+    '/^tel:/i',
   ];
 
   public function __construct(
@@ -421,9 +434,11 @@ class MenuManagementService {
     $decodedUri = rawurldecode($uri);
     $normalizedUri = preg_replace('/\s+/', '', strtolower($decodedUri));
 
-    // Check against blocked patterns (most dangerous) on both original and decoded.
+    // Check against blocked patterns on both original and decoded.
     foreach (self::BLOCKED_URI_PATTERNS as $pattern) {
-      if (preg_match($pattern, $uri) || preg_match($pattern, $decodedUri) || preg_match($pattern, $normalizedUri)) {
+      if (preg_match($pattern, $uri)
+      || preg_match($pattern, $decodedUri)
+      || preg_match($pattern, $normalizedUri)) {
         return ['valid' => FALSE, 'uri' => NULL, 'reason' => 'URI scheme is not allowed for security reasons'];
       }
     }

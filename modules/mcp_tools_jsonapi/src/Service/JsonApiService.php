@@ -47,7 +47,6 @@ class JsonApiService {
     $resourceTypes = $this->resourceTypeRepository->all();
     $config = $this->configFactory->get('mcp_tools_jsonapi.settings');
     $allowedTypes = $config->get('allowed_entity_types') ?? [];
-    $blockedTypes = $config->get('blocked_entity_types') ?? [];
 
     $types = [];
     foreach ($resourceTypes as $resourceType) {
@@ -548,7 +547,10 @@ class JsonApiService {
 
     foreach ($entity->getFields() as $fieldName => $field) {
       // Skip base fields we already included.
-      if (in_array($fieldName, ['uuid', 'id', 'type', 'bundle', 'status', 'created', 'changed', 'langcode', 'default_langcode'])) {
+      if (in_array($fieldName, [
+        'uuid', 'id', 'type', 'bundle', 'status',
+        'created', 'changed', 'langcode', 'default_langcode',
+      ])) {
         continue;
       }
 

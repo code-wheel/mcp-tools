@@ -79,6 +79,11 @@ class GetSubmissions extends McpToolsToolBase {
   protected const MCP_CATEGORY = 'webform';
 
 
+  /**
+   * The webform service.
+   *
+   * @var \Drupal\mcp_tools_webform\Service\WebformService
+   */
   protected WebformService $webformService;
 
   /**
@@ -109,9 +114,5 @@ class GetSubmissions extends McpToolsToolBase {
 
     return $this->webformService->getSubmissions($webformId, $limit, $offset);
   }
-
-  
-
-  
 
 }

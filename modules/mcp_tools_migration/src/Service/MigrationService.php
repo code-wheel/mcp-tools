@@ -52,7 +52,8 @@ class MigrationService {
     'changed',
     'revision_timestamp',
     // Access control fields.
-    'status',  // Publish status should be explicit, not imported blindly.
+  // Publish status should be explicit, not imported blindly.
+    'status',
     // Moderation fields.
     'moderation_state',
     'content_translation_source',
@@ -65,8 +66,10 @@ class MigrationService {
    * Field patterns that are blocked from import (regex).
    */
   protected const PROTECTED_FIELD_PATTERNS = [
-    '/^revision_/',  // All revision fields
-    '/^content_translation_/',  // All translation fields
+  // All revision fields.
+    '/^revision_/',
+  // All translation fields.
+    '/^content_translation_/',
   ];
 
   public function __construct(
@@ -86,7 +89,8 @@ class MigrationService {
    * @param string $csvData
    *   CSV data as a string (first row should be headers).
    * @param array $fieldMapping
-   *   Mapping of CSV columns to Drupal fields (e.g., ['csv_column' => 'field_name']).
+   *   Mapping of CSV columns to Drupal fields
+   *   (e.g., ['csv_column' => 'field_name']).
    *
    * @return array
    *   Result array with success status and import details.
@@ -97,7 +101,9 @@ class MigrationService {
     }
 
     // Parse CSV data.
-    $lines = str_getcsv($csvData, "\n", '"', '\\');
+    $lines = str_getcsv(
+      $csvData, "\n", '"', '\\'
+    );
     if (count($lines) < 2) {
       return ['success' => FALSE, 'error' => 'CSV must contain a header row and at least one data row.'];
     }

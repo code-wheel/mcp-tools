@@ -11,14 +11,22 @@ use CodeWheel\McpErrorCodes\ErrorCode;
  *
  * Provides standardized error responses for common MCP Tools scenarios.
  *
- * @deprecated Constants are deprecated, use CodeWheel\McpErrorCodes\ErrorCode instead.
+ * @deprecated in mcp_tools:1.0.0 and is removed from mcp_tools:2.0.0.
+ *   Use CodeWheel\McpErrorCodes\ErrorCode instead.
+ *
+ * phpcs:ignore Drupal.Commenting.Deprecated.DeprecatedWrongSeeUrlFormat
+ * @see https://packagist.org/packages/code-wheel/mcp-error-codes
  */
 class ErrorFormatter {
 
   /**
    * Error codes for common scenarios.
    *
-   * @deprecated Use CodeWheel\McpErrorCodes\ErrorCode constants instead.
+   * @deprecated in mcp_tools:1.0.0 and is removed from mcp_tools:2.0.0.
+   *   Use CodeWheel\McpErrorCodes\ErrorCode constants instead.
+   *
+   * phpcs:ignore Drupal.Commenting.Deprecated.DeprecatedWrongSeeUrlFormat
+   * @see https://packagist.org/packages/code-wheel/mcp-error-codes
    */
   public const ERROR_NOT_FOUND = ErrorCode::NOT_FOUND;
   public const ERROR_ALREADY_EXISTS = ErrorCode::ALREADY_EXISTS;

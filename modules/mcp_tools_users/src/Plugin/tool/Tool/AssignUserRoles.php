@@ -19,7 +19,7 @@ use Drupal\tool\TypedData\InputDefinition;
 #[Tool(
   id: 'mcp_assign_user_roles',
   label: new TranslatableMarkup('Assign User Roles'),
-  description: new TranslatableMarkup('Assign roles to a user. The \'administrator\' role is blocked.'),
+  description: new TranslatableMarkup("Assign roles to a user. The 'administrator' role is blocked."),
   operation: ToolOperation::Write,
   input_definitions: [
     'uid' => new InputDefinition(
@@ -68,14 +68,25 @@ class AssignUserRoles extends McpToolsToolBase {
   protected const MCP_CATEGORY = 'users';
 
 
+  /**
+   * The user service.
+   *
+   * @var \Drupal\mcp_tools_users\Service\UserService
+   */
   protected UserService $userService;
 
+  /**
+   * {@inheritdoc}
+   */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     $instance = parent::create($container, $configuration, $plugin_id, $plugin_definition);
     $instance->userService = $container->get('mcp_tools_users.user');
     return $instance;
   }
 
+  /**
+   * {@inheritdoc}
+   */
   protected function executeLegacy(array $input): array {
     $uid = $input['uid'] ?? 0;
     $roles = $input['roles'] ?? [];
@@ -89,6 +100,5 @@ class AssignUserRoles extends McpToolsToolBase {
 
     return $this->userService->assignRoles((int) $uid, $roles);
   }
-
 
 }

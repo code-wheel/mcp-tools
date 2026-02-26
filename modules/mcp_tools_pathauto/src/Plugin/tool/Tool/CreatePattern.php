@@ -91,6 +91,11 @@ class CreatePattern extends McpToolsToolBase {
   protected const MCP_CATEGORY = 'pathauto';
 
 
+  /**
+   * The pathauto service.
+   *
+   * @var \Drupal\mcp_tools_pathauto\Service\PathautoService
+   */
   protected PathautoService $pathautoService;
 
   /**
@@ -130,14 +135,13 @@ class CreatePattern extends McpToolsToolBase {
 
     // Validate machine name format.
     if (!preg_match('/^[a-z0-9_]+$/', $id)) {
-      return ['success' => FALSE, 'error' => 'Pattern ID must contain only lowercase letters, numbers, and underscores.'];
+      return [
+        'success' => FALSE,
+        'error' => 'Pattern ID must contain only lowercase letters, numbers, and underscores.',
+      ];
     }
 
     return $this->pathautoService->createPattern($id, $label, $pattern, $entityType, $bundle);
   }
-
-  
-
-  
 
 }

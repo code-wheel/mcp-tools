@@ -37,9 +37,12 @@ class WebhookNotifier {
     '127.0.0.1',
     '0.0.0.0',
     '::1',
-    '169.254.169.254',  // AWS/GCP metadata service
-    'metadata.google.internal',  // GCP metadata
-    '100.100.100.200',  // Alibaba Cloud metadata
+  // AWS/GCP metadata service.
+    '169.254.169.254',
+  // GCP metadata.
+    'metadata.google.internal',
+  // Alibaba Cloud metadata.
+    '100.100.100.200',
   ];
 
   /**
@@ -49,9 +52,12 @@ class WebhookNotifier {
     '10.0.0.0/8',
     '172.16.0.0/12',
     '192.168.0.0/16',
-    '169.254.0.0/16',  // Link-local
-    'fc00::/7',  // IPv6 private
-    'fe80::/10',  // IPv6 link-local
+  // Link-local.
+    '169.254.0.0/16',
+  // IPv6 private.
+    'fc00::/7',
+  // IPv6 link-local.
+    'fe80::/10',
   ];
 
   /**
@@ -90,7 +96,7 @@ class WebhookNotifier {
     string $entityType,
     string|int $entityId,
     string $label,
-    array $details = []
+    array $details = [],
   ): bool {
     $config = $this->configFactory->get('mcp_tools.settings');
 
@@ -157,7 +163,7 @@ class WebhookNotifier {
     string $entityType,
     string|int $entityId,
     string $label,
-    array $details
+    array $details,
   ): array {
     return [
       'timestamp' => date('c'),

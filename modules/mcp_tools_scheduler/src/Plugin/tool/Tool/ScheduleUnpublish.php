@@ -25,7 +25,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'entity_type' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Entity Type'),
-      description: new TranslatableMarkup('The entity type (currently only \'node\' is supported)'),
+      description: new TranslatableMarkup("The entity type (currently only 'node' is supported)"),
       required: FALSE,
       default_value: 'node',
     ),
@@ -75,6 +75,11 @@ class ScheduleUnpublish extends McpToolsToolBase {
   protected const MCP_CATEGORY = 'scheduler';
 
 
+  /**
+   * The scheduler service.
+   *
+   * @var \Drupal\mcp_tools_scheduler\Service\SchedulerService
+   */
   protected SchedulerService $schedulerService;
 
   /**
@@ -106,16 +111,15 @@ class ScheduleUnpublish extends McpToolsToolBase {
     if (!is_numeric($timestamp)) {
       $parsedTime = strtotime($timestamp);
       if ($parsedTime === FALSE) {
-        return ['success' => FALSE, 'error' => "Invalid timestamp format. Provide a Unix timestamp or parseable date string."];
+        return [
+          'success' => FALSE,
+          'error' => "Invalid timestamp format. Provide a Unix timestamp or parseable date string.",
+        ];
       }
       $timestamp = $parsedTime;
     }
 
     return $this->schedulerService->scheduleUnpublish($entityType, (int) $entityId, (int) $timestamp);
   }
-
-  
-
-  
 
 }

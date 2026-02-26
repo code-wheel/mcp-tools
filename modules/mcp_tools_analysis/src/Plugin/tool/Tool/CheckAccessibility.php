@@ -115,8 +115,4 @@ class CheckAccessibility extends McpToolsToolBase {
     return $this->analysisService->checkAccessibility($entityType, $entityId);
   }
 
-  
-
-  
-
 }

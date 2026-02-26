@@ -53,6 +53,11 @@ class DeleteRedirect extends McpToolsToolBase {
   protected const MCP_CATEGORY = 'redirect';
 
 
+  /**
+   * The redirect service.
+   *
+   * @var \Drupal\mcp_tools_redirect\Service\RedirectService
+   */
   protected RedirectService $redirectService;
 
   /**
@@ -76,9 +81,5 @@ class DeleteRedirect extends McpToolsToolBase {
 
     return $this->redirectService->deleteRedirect((int) $id);
   }
-
-  
-
-  
 
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools_mcp_server\Commands;
 
+use Drupal\mcp_server\Entity\McpToolConfig;
 use Drupal\Component\Plugin\PluginManagerInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\tool\Tool\ToolDefinition;
@@ -27,7 +28,7 @@ final class McpToolsMcpServerCommands extends DrushCommands {
   }
 
   /**
-   * Sync MCP Tools Tool API plugins into mcp_server tool configuration entities.
+   * Sync MCP Tools Tool API plugins into mcp_server tool configs.
    */
   #[CLI\Command(name: 'mcp-tools:mcp-server-sync', aliases: ['mcp-tools:mcp-server:sync'])]
   #[CLI\Usage(name: 'drush mcp-tools:mcp-server-sync', description: 'Create/update MCP Server tool configs for MCP Tools')]
@@ -36,19 +37,21 @@ final class McpToolsMcpServerCommands extends DrushCommands {
   #[CLI\Option(name: 'auth-mode', description: 'Authentication mode for newly created configs: required|optional|disabled (default: required)')]
   #[CLI\Option(name: 'update-existing', description: 'Update tool_id and label for existing configs (does not change scopes)')]
   #[CLI\Option(name: 'dry-run', description: 'Show what would change without writing config')]
-  public function sync(array $options = [
-    'enable' => FALSE,
-    'enable-read' => FALSE,
-    'auth-mode' => 'required',
-    'update-existing' => FALSE,
-    'dry-run' => FALSE,
-  ]): void {
+  public function sync(
+    array $options = [
+      'enable' => FALSE,
+      'enable-read' => FALSE,
+      'auth-mode' => 'required',
+      'update-existing' => FALSE,
+      'dry-run' => FALSE,
+    ],
+  ): void {
     if (!$this->mcpServerToolManager->hasDefinition(self::MCP_SERVER_TOOL_PLUGIN_ID)) {
       $this->io()->error('mcp_server tool plugin "tool_api" not found; cannot sync.');
       return;
     }
 
-    if (!class_exists(\Drupal\mcp_server\Entity\McpToolConfig::class)) {
+    if (!class_exists(McpToolConfig::class)) {
       $this->io()->error('Missing dependency: drupal/mcp_server.');
       return;
     }
@@ -165,4 +168,3 @@ final class McpToolsMcpServerCommands extends DrushCommands {
   }
 
 }
-

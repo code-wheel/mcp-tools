@@ -194,7 +194,7 @@ class FieldService {
     string $fieldName,
     string $fieldType,
     string $label,
-    array $options = []
+    array $options = [],
   ): array {
     if (!$this->accessManager->canWrite()) {
       return $this->accessManager->getWriteAccessDenied();
@@ -426,7 +426,7 @@ class FieldService {
     string $bundle,
     string $fieldName,
     string $widget,
-    array $settings = []
+    array $settings = [],
   ): void {
     $formDisplay = $this->entityTypeManager
       ->getStorage('entity_form_display')
@@ -457,7 +457,7 @@ class FieldService {
     string $bundle,
     string $fieldName,
     string $formatter,
-    array $settings = []
+    array $settings = [],
   ): void {
     $viewDisplay = $this->entityTypeManager
       ->getStorage('entity_view_display')

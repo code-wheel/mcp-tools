@@ -11,7 +11,6 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
 use Drupal\tool\Tool\ToolOperation;
-use Drupal\tool\TypedData\InputDefinition;
 
 /**
  * Tool plugin implementation.
@@ -45,6 +44,11 @@ class GetCronStatus extends McpToolsToolBase {
   protected const MCP_CATEGORY = 'cron';
 
 
+  /**
+   * The cron service.
+   *
+   * @var \Drupal\mcp_tools_cron\Service\CronService
+   */
   protected CronService $cronService;
 
   /**
@@ -65,9 +69,5 @@ class GetCronStatus extends McpToolsToolBase {
       'data' => $this->cronService->getCronStatus(),
     ];
   }
-
-  
-
-  
 
 }

@@ -137,8 +137,4 @@ class EnableJob extends McpToolsToolBase {
     return $result;
   }
 
-  
-
-  
-
 }

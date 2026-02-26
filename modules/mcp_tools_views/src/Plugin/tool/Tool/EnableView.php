@@ -52,14 +52,25 @@ class EnableView extends McpToolsToolBase {
   protected const MCP_CATEGORY = 'views';
 
 
+  /**
+   * The views service.
+   *
+   * @var \Drupal\mcp_tools_views\Service\ViewsService
+   */
   protected ViewsService $viewsService;
 
+  /**
+   * {@inheritdoc}
+   */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     $instance = parent::create($container, $configuration, $plugin_id, $plugin_definition);
     $instance->viewsService = $container->get('mcp_tools_views.views');
     return $instance;
   }
 
+  /**
+   * {@inheritdoc}
+   */
   protected function executeLegacy(array $input): array {
     $id = $input['id'] ?? '';
 
@@ -69,6 +80,5 @@ class EnableView extends McpToolsToolBase {
 
     return $this->viewsService->setViewStatus($id, TRUE);
   }
-
 
 }

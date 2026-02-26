@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Drupal\mcp_tools_remote\Form;
 
 use Drupal\Core\Entity\EntityTypeManagerInterface;
-use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Password\PasswordGeneratorInterface;
@@ -62,8 +61,8 @@ class RemoteSettingsForm extends ConfigFormBase {
     $form['warning'] = [
       '#type' => 'markup',
       '#markup' => '<div class="messages messages--warning"><p>' .
-        $this->t('This module is experimental and should only be used on trusted internal networks. Prefer the STDIO transport (`mcp_tools_stdio`) for local development. Remote execution as uid 1 is blocked unless explicitly enabled below.') .
-        '</p></div>',
+      $this->t('This module is experimental and should only be used on trusted internal networks. Prefer the STDIO transport (`mcp_tools_stdio`) for local development. Remote execution as uid 1 is blocked unless explicitly enabled below.') .
+      '</p></div>',
     ];
 
     $form['enabled'] = [
@@ -215,11 +214,11 @@ class RemoteSettingsForm extends ConfigFormBase {
     $form['keys']['help'] = [
       '#type' => 'markup',
       '#markup' => '<p>' . $this->t('Manage keys via Drush:') . '</p><pre><code>' .
-        "drush mcp-tools:remote-setup\n" .
-        "drush mcp-tools:remote-key-create --label=\"My Key\" --scopes=read --ttl=86400\n" .
-        "drush mcp-tools:remote-key-list\n" .
-        "drush mcp-tools:remote-key-revoke KEY_ID\n" .
-        '</code></pre>',
+      "drush mcp-tools:remote-setup\n" .
+      "drush mcp-tools:remote-key-create --label=\"My Key\" --scopes=read --ttl=86400\n" .
+      "drush mcp-tools:remote-key-list\n" .
+      "drush mcp-tools:remote-key-revoke KEY_ID\n" .
+      '</code></pre>',
     ];
 
     $keys = $this->apiKeyManager->listKeys();
@@ -301,6 +300,7 @@ class RemoteSettingsForm extends ConfigFormBase {
    */
   public function createExecutorAccount(array &$form, FormStateInterface $form_state): void {
     // Create the mcp_executor role if it doesn't exist.
+    // phpcs:ignore DrupalPractice.Objects.GlobalClass.GlobalClass
     if (!Role::load('mcp_executor')) {
       $role = Role::create([
         'id' => 'mcp_executor',
@@ -332,8 +332,11 @@ class RemoteSettingsForm extends ConfigFormBase {
         if (!str_starts_with($permission, 'mcp_tools use ')) {
           continue;
         }
-        // Extract category from permission (e.g., "mcp_tools use content" -> "content").
-        $category = substr($permission, strlen('mcp_tools use '));
+        // Extract category from permission
+        // (e.g., "mcp_tools use content" -> "content").
+        $category = substr(
+          $permission, strlen('mcp_tools use ')
+        );
         if (in_array($category, $safeCategories, TRUE)) {
           $role->grantPermission($permission);
           $grantedCount++;

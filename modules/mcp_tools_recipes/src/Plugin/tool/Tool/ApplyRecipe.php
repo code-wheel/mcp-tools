@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools_recipes\Plugin\tool\Tool;
 
-use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Trait\WriteAccessTrait;
 use Drupal\mcp_tools_recipes\Service\RecipesService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -92,9 +91,5 @@ class ApplyRecipe extends McpToolsToolBase {
 
     return $this->recipesService->applyRecipe($recipeName);
   }
-
-  
-
-  
 
 }

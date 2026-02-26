@@ -111,8 +111,4 @@ class GetJobLogs extends McpToolsToolBase {
     return $this->ultimateCronService->getJobLogs($id, $limit);
   }
 
-  
-
-  
-
 }

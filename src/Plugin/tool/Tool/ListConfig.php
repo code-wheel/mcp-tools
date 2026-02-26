@@ -52,6 +52,11 @@ class ListConfig extends McpToolsToolBase {
   protected const MCP_CATEGORY = 'config';
 
 
+  /**
+   * The config analysis.
+   *
+   * @var \Drupal\mcp_tools\Service\ConfigAnalysisService
+   */
   protected ConfigAnalysisService $configAnalysis;
 
   /**
@@ -74,9 +79,5 @@ class ListConfig extends McpToolsToolBase {
       'data' => $this->configAnalysis->listConfig($prefix),
     ];
   }
-
-  
-
-  
 
 }

@@ -87,6 +87,11 @@ class UpdateWebform extends McpToolsToolBase {
   protected const MCP_CATEGORY = 'webform';
 
 
+  /**
+   * The webform service.
+   *
+   * @var \Drupal\mcp_tools_webform\Service\WebformService
+   */
   protected WebformService $webformService;
 
   /**
@@ -132,9 +137,5 @@ class UpdateWebform extends McpToolsToolBase {
 
     return $this->webformService->updateWebform($id, $updates);
   }
-
-  
-
-  
 
 }

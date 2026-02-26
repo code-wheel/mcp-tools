@@ -91,6 +91,11 @@ class SetModerationState extends McpToolsToolBase {
   protected const MCP_CATEGORY = 'moderation';
 
 
+  /**
+   * The moderation service.
+   *
+   * @var \Drupal\mcp_tools_moderation\Service\ModerationService
+   */
   protected ModerationService $moderationService;
 
   /**
@@ -122,9 +127,5 @@ class SetModerationState extends McpToolsToolBase {
 
     return $this->moderationService->setModerationState($entityType, (int) $entityId, $state, $revisionMessage);
   }
-
-  
-
-  
 
 }

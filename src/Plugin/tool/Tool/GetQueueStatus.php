@@ -11,7 +11,6 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
 use Drupal\tool\Tool\ToolOperation;
-use Drupal\tool\TypedData\InputDefinition;
 
 /**
  * Tool plugin implementation.
@@ -50,6 +49,11 @@ class GetQueueStatus extends McpToolsToolBase {
   protected const MCP_CATEGORY = 'site_health';
 
 
+  /**
+   * The queue service.
+   *
+   * @var \Drupal\mcp_tools\Service\QueueService
+   */
   protected QueueService $queueService;
 
   /**
@@ -70,9 +74,5 @@ class GetQueueStatus extends McpToolsToolBase {
       'data' => $this->queueService->getQueueStatus(),
     ];
   }
-
-  
-
-  
 
 }

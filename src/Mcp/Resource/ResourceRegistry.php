@@ -10,6 +10,8 @@ namespace Drupal\mcp_tools\Mcp\Resource;
 class ResourceRegistry {
 
   /**
+   * {@inheritdoc}
+   *
    * @var \Drupal\mcp_tools\Mcp\Resource\ResourceProviderInterface[]
    */
   private array $providers = [];
@@ -22,6 +24,8 @@ class ResourceRegistry {
   private array $cache = [];
 
   /**
+   * Constructs a new instance.
+   *
    * @param iterable<\Drupal\mcp_tools\Mcp\Resource\ResourceProviderInterface> $providers
    *   Tagged resource providers.
    */

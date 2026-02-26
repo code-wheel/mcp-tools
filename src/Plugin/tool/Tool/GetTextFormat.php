@@ -66,14 +66,25 @@ class GetTextFormat extends McpToolsToolBase {
 
   protected const MCP_CATEGORY = 'discovery';
 
+  /**
+   * The entity type manager.
+   *
+   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
+   */
   protected EntityTypeManagerInterface $entityTypeManager;
 
+  /**
+   * {@inheritdoc}
+   */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     $instance = parent::create($container, $configuration, $plugin_id, $plugin_definition);
     $instance->entityTypeManager = $container->get('entity_type.manager');
     return $instance;
   }
 
+  /**
+   * {@inheritdoc}
+   */
   protected function executeLegacy(array $input): array {
     $id = $input['id'] ?? '';
 
@@ -83,7 +94,10 @@ class GetTextFormat extends McpToolsToolBase {
 
     $format = $this->entityTypeManager->getStorage('filter_format')->load($id);
     if (!$format) {
-      return ['success' => FALSE, 'error' => "Text format '$id' not found. Use mcp_list_text_formats to see available formats."];
+      return [
+        'success' => FALSE,
+        'error' => "Text format '$id' not found. Use mcp_list_text_formats to see available formats.",
+      ];
     }
 
     $filters = [];

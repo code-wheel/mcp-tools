@@ -16,7 +16,7 @@ use Symfony\Component\HttpFoundation\RequestStack;
  * Provides configurable rate limiting to prevent abuse:
  * - Per-minute limits
  * - Per-hour limits
- * - Per-operation type limits
+ * - Per-operation type limits.
  */
 class RateLimiter implements RateLimiterInterface {
 
@@ -65,7 +65,8 @@ class RateLimiter implements RateLimiterInterface {
     }
 
     $operationType = strtolower(trim($operationType));
-    // Treat "admin" operations as "structure" changes (most restrictive bucket).
+    // Treat "admin" operations as "structure" changes
+    // (most restrictive bucket).
     if ($operationType === 'admin') {
       $operationType = 'structure';
     }
@@ -115,7 +116,8 @@ class RateLimiter implements RateLimiterInterface {
    *   Read operation key (e.g., 'broken_link_scan', 'content_search').
    *
    * @return array
-   *   ['allowed' => bool, 'error' => string|null, 'retry_after' => int|null, 'code' => string|null]
+   *   Array with keys: allowed (bool), error (string|null),
+   *   retry_after (int|null), code (string|null).
    */
   public function checkReadLimit(string $operation): array {
     $operation = strtolower(trim($operation));
@@ -337,7 +339,8 @@ class RateLimiter implements RateLimiterInterface {
     $parentPid = function_exists('posix_getppid') ? posix_getppid() : 0;
     $userId = function_exists('posix_geteuid') ? posix_geteuid() : 0;
 
-    // Include a machine-specific secret if available (from Drupal's private key).
+    // Include a machine-specific secret if available
+    // (from Drupal's private key).
     $privateKeyValue = '';
     if ($this->privateKey !== NULL) {
       try {

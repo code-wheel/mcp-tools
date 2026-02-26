@@ -94,15 +94,22 @@ final class McpToolsRemoteCommands extends DrushCommands {
   }
 
   /**
-   * Creates or updates a dedicated execution user + role for the remote endpoint.
+   * Sets up a dedicated execution user and role.
    */
   #[CLI\Command(name: 'mcp-tools:remote-setup', aliases: ['mcp-tools-remote:setup'])]
-  #[CLI\Usage(name: 'drush mcp-tools:remote-setup', description: 'Create a dedicated remote execution user and configure mcp_tools_remote.settings.uid')]
+  #[CLI\Usage(name: 'drush mcp-tools:remote-setup', description: 'Create a dedicated remote execution user and configure settings')]
   #[CLI\Option(name: 'username', description: 'Username for the execution user (default: mcp_tools_remote)')]
   #[CLI\Option(name: 'role', description: 'Role machine name to create/assign (default: mcp_tools_remote_executor)')]
   #[CLI\Option(name: 'categories', description: 'Comma-separated MCP Tools categories to grant (default: site_health,content,config,structure,views,blocks,menus,users,media)')]
   #[CLI\Option(name: 'allow-uid1', description: 'Allow using uid 1 as the execution user (not recommended)')]
-  public function setupRemote(array $options = ['username' => 'mcp_tools_remote', 'role' => 'mcp_tools_remote_executor', 'categories' => 'site_health,content,config,structure,views,blocks,menus,users,media', 'allow-uid1' => FALSE]): void {
+  public function setupRemote(
+    array $options = [
+      'username' => 'mcp_tools_remote',
+      'role' => 'mcp_tools_remote_executor',
+      'categories' => 'site_health,content,config,structure,views,blocks,menus,users,media',
+      'allow-uid1' => FALSE,
+    ],
+  ): void {
     $username = trim((string) ($options['username'] ?? 'mcp_tools_remote'));
     if ($username === '') {
       $username = 'mcp_tools_remote';

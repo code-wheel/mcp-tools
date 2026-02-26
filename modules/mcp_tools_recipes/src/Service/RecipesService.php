@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools_recipes\Service;
 
+use Drupal\Core\Recipe\RecipeRunner;
+use Drupal\Core\Recipe\Recipe;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Extension\ModuleExtensionList;
 use Drupal\Core\File\FileSystemInterface;
@@ -358,8 +360,8 @@ class RecipesService {
 
     try {
       // Load and apply the recipe using Drupal's RecipeRunner.
-      $recipe = \Drupal\Core\Recipe\Recipe::createFromDirectory($recipePath);
-      \Drupal\Core\Recipe\RecipeRunner::processRecipe($recipe);
+      $recipe = Recipe::createFromDirectory($recipePath);
+      RecipeRunner::processRecipe($recipe);
 
       // Track applied recipe.
       $this->trackAppliedRecipe($recipeName, $recipePath);

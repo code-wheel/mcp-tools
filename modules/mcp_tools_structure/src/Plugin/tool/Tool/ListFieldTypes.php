@@ -11,7 +11,6 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
 use Drupal\tool\Tool\ToolOperation;
-use Drupal\tool\TypedData\InputDefinition;
 
 /**
  * Tool plugin implementation.
@@ -40,20 +39,30 @@ class ListFieldTypes extends McpToolsToolBase {
   protected const MCP_CATEGORY = 'structure';
 
 
+  /**
+   * The field service.
+   *
+   * @var \Drupal\mcp_tools_structure\Service\FieldService
+   */
   protected FieldService $fieldService;
 
+  /**
+   * {@inheritdoc}
+   */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     $instance = parent::create($container, $configuration, $plugin_id, $plugin_definition);
     $instance->fieldService = $container->get('mcp_tools_structure.field');
     return $instance;
   }
 
+  /**
+   * {@inheritdoc}
+   */
   protected function executeLegacy(array $input): array {
     return [
       'success' => TRUE,
       'data' => $this->fieldService->getFieldTypes(),
     ];
   }
-
 
 }

@@ -112,7 +112,8 @@ class WatchdogAnalyzer {
     // Get counts by type and severity for errors/warnings/criticals.
     $query = $this->database->select('watchdog', 'w')
       ->fields('w', ['type', 'severity'])
-      ->condition('severity', 4, '<=') // warning and above
+    // Warning and above.
+      ->condition('severity', 4, '<=')
       ->condition('timestamp', $since, '>=');
 
     $query->addExpression('COUNT(*)', 'count');

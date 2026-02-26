@@ -11,7 +11,6 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
 use Drupal\tool\Tool\ToolOperation;
-use Drupal\tool\TypedData\InputDefinition;
 
 /**
  * Tool plugin implementation.
@@ -50,6 +49,11 @@ class GetConfigChanges extends McpToolsToolBase {
   protected const MCP_CATEGORY = 'config';
 
 
+  /**
+   * The config management.
+   *
+   * @var \Drupal\mcp_tools_config\Service\ConfigManagementService
+   */
   protected ConfigManagementService $configManagement;
 
   /**
@@ -67,9 +71,5 @@ class GetConfigChanges extends McpToolsToolBase {
   protected function executeLegacy(array $input): array {
     return $this->configManagement->getConfigChanges();
   }
-
-  
-
-  
 
 }

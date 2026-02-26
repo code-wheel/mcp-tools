@@ -76,6 +76,11 @@ class UpdateRedirect extends McpToolsToolBase {
   protected const MCP_CATEGORY = 'redirect';
 
 
+  /**
+   * The redirect service.
+   *
+   * @var \Drupal\mcp_tools_redirect\Service\RedirectService
+   */
   protected RedirectService $redirectService;
 
   /**
@@ -113,14 +118,14 @@ class UpdateRedirect extends McpToolsToolBase {
     }
 
     if (empty($values)) {
-      return ['success' => FALSE, 'error' => 'At least one field to update is required (source, destination, status_code, or language).'];
+      return [
+        'success' => FALSE,
+        'error' => 'At least one field to update is required'
+        . ' (source, destination, status_code, or language).',
+      ];
     }
 
     return $this->redirectService->updateRedirect((int) $id, $values);
   }
-
-  
-
-  
 
 }

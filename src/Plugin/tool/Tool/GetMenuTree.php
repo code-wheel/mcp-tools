@@ -59,6 +59,11 @@ class GetMenuTree extends McpToolsToolBase {
   protected const MCP_CATEGORY = 'structure';
 
 
+  /**
+   * The menu service.
+   *
+   * @var \Drupal\mcp_tools\Service\MenuService
+   */
   protected MenuService $menuService;
 
   /**
@@ -98,9 +103,5 @@ class GetMenuTree extends McpToolsToolBase {
       'data' => $data,
     ];
   }
-
-  
-
-  
 
 }

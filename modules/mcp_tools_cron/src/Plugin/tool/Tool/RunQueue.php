@@ -61,8 +61,23 @@ class RunQueue extends McpToolsToolBase {
   protected const MCP_CATEGORY = 'cron';
 
 
+  /**
+   * The cron service.
+   *
+   * @var \Drupal\mcp_tools_cron\Service\CronService
+   */
   protected CronService $cronService;
+  /**
+   * The access manager.
+   *
+   * @var \Drupal\mcp_tools\Service\AccessManager
+   */
   protected AccessManager $accessManager;
+  /**
+   * The audit logger.
+   *
+   * @var \Drupal\mcp_tools\Service\AuditLogger
+   */
   protected AuditLogger $auditLogger;
 
   /**
@@ -110,9 +125,5 @@ class RunQueue extends McpToolsToolBase {
 
     return $result;
   }
-
-  
-
-  
 
 }

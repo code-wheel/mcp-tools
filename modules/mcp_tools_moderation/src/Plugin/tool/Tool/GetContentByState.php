@@ -80,6 +80,11 @@ class GetContentByState extends McpToolsToolBase {
   protected const MCP_CATEGORY = 'moderation';
 
 
+  /**
+   * The moderation service.
+   *
+   * @var \Drupal\mcp_tools_moderation\Service\ModerationService
+   */
   protected ModerationService $moderationService;
 
   /**
@@ -109,9 +114,5 @@ class GetContentByState extends McpToolsToolBase {
 
     return $this->moderationService->getContentByState($workflowId, $state, (int) $limit);
   }
-
-  
-
-  
 
 }

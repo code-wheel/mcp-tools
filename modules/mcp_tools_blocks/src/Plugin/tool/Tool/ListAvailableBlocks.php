@@ -11,7 +11,6 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
 use Drupal\tool\Tool\ToolOperation;
-use Drupal\tool\TypedData\InputDefinition;
 
 /**
  * Tool plugin implementation.
@@ -40,17 +39,27 @@ class ListAvailableBlocks extends McpToolsToolBase {
   protected const MCP_CATEGORY = 'blocks';
 
 
+  /**
+   * The block service.
+   *
+   * @var \Drupal\mcp_tools_blocks\Service\BlockService
+   */
   protected BlockService $blockService;
 
+  /**
+   * {@inheritdoc}
+   */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     $instance = parent::create($container, $configuration, $plugin_id, $plugin_definition);
     $instance->blockService = $container->get('mcp_tools_blocks.block');
     return $instance;
   }
 
+  /**
+   * {@inheritdoc}
+   */
   protected function executeLegacy(array $input): array {
     return $this->blockService->listAvailableBlocks();
   }
-
 
 }

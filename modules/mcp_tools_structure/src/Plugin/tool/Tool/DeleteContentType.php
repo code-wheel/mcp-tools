@@ -55,14 +55,25 @@ class DeleteContentType extends McpToolsToolBase {
   protected const MCP_CATEGORY = 'structure';
 
 
+  /**
+   * The content type service.
+   *
+   * @var \Drupal\mcp_tools_structure\Service\ContentTypeService
+   */
   protected ContentTypeService $contentTypeService;
 
+  /**
+   * {@inheritdoc}
+   */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     $instance = parent::create($container, $configuration, $plugin_id, $plugin_definition);
     $instance->contentTypeService = $container->get('mcp_tools_structure.content_type');
     return $instance;
   }
 
+  /**
+   * {@inheritdoc}
+   */
   protected function executeLegacy(array $input): array {
     $id = $input['id'] ?? '';
     if (empty($id)) {
@@ -71,6 +82,5 @@ class DeleteContentType extends McpToolsToolBase {
 
     return $this->contentTypeService->deleteContentType($id, $input['force'] ?? FALSE);
   }
-
 
 }

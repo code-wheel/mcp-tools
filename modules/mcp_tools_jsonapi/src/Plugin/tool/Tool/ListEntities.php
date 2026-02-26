@@ -85,6 +85,11 @@ class ListEntities extends McpToolsToolBase {
 
   protected const MCP_CATEGORY = 'jsonapi';
 
+  /**
+   * The json api service.
+   *
+   * @var \Drupal\mcp_tools_jsonapi\Service\JsonApiService
+   */
   protected JsonApiService $jsonApiService;
 
   /**

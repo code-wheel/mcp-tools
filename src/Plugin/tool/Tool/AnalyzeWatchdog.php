@@ -82,7 +82,8 @@ class AnalyzeWatchdog extends McpToolsToolBase {
   protected function executeLegacy(array $input): array {
     $mode = $input['mode'] ?? 'summary';
     $limit = min($input['limit'] ?? 20, 100);
-    $hours = min($input['hours'] ?? 24, 168); // Max 1 week.
+    // Max 1 week.
+    $hours = min($input['hours'] ?? 24, 168);
 
     $data = match ($mode) {
       'errors' => $this->watchdogAnalyzer->getRecentErrors($limit),
@@ -97,9 +98,5 @@ class AnalyzeWatchdog extends McpToolsToolBase {
       'data' => $data,
     ];
   }
-
-  
-
-  
 
 }

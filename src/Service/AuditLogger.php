@@ -17,6 +17,11 @@ use Symfony\Component\HttpFoundation\RequestStack;
  */
 class AuditLogger implements AuditLoggerInterface {
 
+  /**
+   * The logger.
+   *
+   * @var \Psr\Log\LoggerInterface
+   */
   protected LoggerInterface $logger;
 
   public function __construct(

@@ -11,7 +11,6 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
 use Drupal\tool\Tool\ToolOperation;
-use Drupal\tool\TypedData\InputDefinition;
 
 /**
  * Tool plugin implementation.
@@ -45,6 +44,11 @@ class GetConfigStatus extends McpToolsToolBase {
   protected const MCP_CATEGORY = 'config';
 
 
+  /**
+   * The config analysis.
+   *
+   * @var \Drupal\mcp_tools\Service\ConfigAnalysisService
+   */
   protected ConfigAnalysisService $configAnalysis;
 
   /**
@@ -65,9 +69,5 @@ class GetConfigStatus extends McpToolsToolBase {
       'data' => $this->configAnalysis->getConfigStatus(),
     ];
   }
-
-  
-
-  
 
 }

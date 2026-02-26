@@ -67,6 +67,11 @@ class GetRedirect extends McpToolsToolBase {
   protected const MCP_CATEGORY = 'redirect';
 
 
+  /**
+   * The redirect service.
+   *
+   * @var \Drupal\mcp_tools_redirect\Service\RedirectService
+   */
   protected RedirectService $redirectService;
 
   /**
@@ -90,9 +95,5 @@ class GetRedirect extends McpToolsToolBase {
 
     return $this->redirectService->getRedirect((int) $id);
   }
-
-  
-
-  
 
 }

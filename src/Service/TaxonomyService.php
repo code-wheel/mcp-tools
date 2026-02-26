@@ -145,7 +145,7 @@ class TaxonomyService {
     }
 
     $tree = [];
-    foreach ($indexed as $tid => &$term) {
+    foreach ($indexed as &$term) {
       if (empty($term['parent_ids'])) {
         $tree[] = &$term;
       }

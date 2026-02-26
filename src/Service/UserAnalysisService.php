@@ -128,7 +128,8 @@ class UserAnalysisService {
         'name' => $user->getAccountName(),
         'email' => $user->getEmail(),
         'status' => $user->isActive() ? 'active' : 'blocked',
-        'roles' => $user->getRoles(TRUE), // Exclude 'authenticated'.
+      // Exclude 'authenticated'.
+        'roles' => $user->getRoles(TRUE),
         'created' => date('Y-m-d H:i:s', $user->getCreatedTime()),
         'last_access' => $user->getLastAccessedTime()
           ? date('Y-m-d H:i:s', $user->getLastAccessedTime())

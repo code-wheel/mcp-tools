@@ -63,6 +63,11 @@ class GetEntitySettings extends McpToolsToolBase {
   protected const MCP_CATEGORY = 'sitemap';
 
 
+  /**
+   * The sitemap service.
+   *
+   * @var \Drupal\mcp_tools_sitemap\Service\SitemapService
+   */
   protected SitemapService $sitemapService;
 
   /**
@@ -87,9 +92,5 @@ class GetEntitySettings extends McpToolsToolBase {
 
     return $this->sitemapService->getEntitySettings($entityType, $bundle);
   }
-
-  
-
-  
 
 }

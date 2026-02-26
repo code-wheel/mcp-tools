@@ -52,6 +52,11 @@ class GetImageStyle extends McpToolsToolBase {
   protected const MCP_CATEGORY = 'image_styles';
 
 
+  /**
+   * The image style service.
+   *
+   * @var \Drupal\mcp_tools_image_styles\Service\ImageStyleService
+   */
   protected ImageStyleService $imageStyleService;
 
   /**
@@ -89,9 +94,5 @@ class GetImageStyle extends McpToolsToolBase {
       'data' => $style,
     ];
   }
-
-  
-
-  
 
 }

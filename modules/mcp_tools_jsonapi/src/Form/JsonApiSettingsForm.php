@@ -82,6 +82,7 @@ class JsonApiSettingsForm extends ConfigFormBase {
 
     $form['access_control']['always_blocked_note'] = [
       '#type' => 'markup',
+      // phpcs:ignore Drupal.Semantics.FunctionT.ConcatString
       '#markup' => '<p class="description"><strong>' . $this->t('Always blocked (hardcoded):') . '</strong> user, shortcut, shortcut_set</p>',
     ];
 

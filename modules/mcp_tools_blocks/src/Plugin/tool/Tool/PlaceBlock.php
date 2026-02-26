@@ -110,14 +110,25 @@ class PlaceBlock extends McpToolsToolBase {
   protected const MCP_CATEGORY = 'blocks';
 
 
+  /**
+   * The block service.
+   *
+   * @var \Drupal\mcp_tools_blocks\Service\BlockService
+   */
   protected BlockService $blockService;
 
+  /**
+   * {@inheritdoc}
+   */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     $instance = parent::create($container, $configuration, $plugin_id, $plugin_definition);
     $instance->blockService = $container->get('mcp_tools_blocks.block');
     return $instance;
   }
 
+  /**
+   * {@inheritdoc}
+   */
   protected function executeLegacy(array $input): array {
     $pluginId = $input['plugin_id'] ?? '';
     $region = $input['region'] ?? '';
@@ -158,6 +169,5 @@ class PlaceBlock extends McpToolsToolBase {
 
     return $this->blockService->placeBlock($pluginId, $region, $options);
   }
-
 
 }

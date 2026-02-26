@@ -58,6 +58,11 @@ class GetFiles extends McpToolsToolBase {
   protected const MCP_CATEGORY = 'content';
 
 
+  /**
+   * The file system.
+   *
+   * @var \Drupal\mcp_tools\Service\FileSystemService
+   */
   protected FileSystemService $fileSystem;
 
   /**
@@ -80,9 +85,5 @@ class GetFiles extends McpToolsToolBase {
       'data' => $this->fileSystem->getFilesSummary($limit),
     ];
   }
-
-  
-
-  
 
 }

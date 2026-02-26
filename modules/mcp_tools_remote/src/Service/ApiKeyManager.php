@@ -105,7 +105,8 @@ class ApiKeyManager {
   /**
    * Converts an ApiKey object to array format for backward compatibility.
    *
-   * @return array<string, mixed>
+   * @return array<string,
+   *   mixed>
    */
   private function apiKeyToArray(ApiKey $apiKey): array {
     return [

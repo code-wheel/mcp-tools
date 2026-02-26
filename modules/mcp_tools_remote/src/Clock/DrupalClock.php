@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools_remote\Clock;
 
-use DateTimeImmutable;
 use Drupal\Component\Datetime\TimeInterface;
 use Psr\Clock\ClockInterface;
 
@@ -20,9 +19,9 @@ final class DrupalClock implements ClockInterface {
   /**
    * {@inheritdoc}
    */
-  public function now(): DateTimeImmutable {
+  public function now(): \DateTimeImmutable {
     // Use getCurrentTime() to avoid frozen REQUEST_TIME in server mode.
-    return (new DateTimeImmutable())->setTimestamp($this->time->getCurrentTime());
+    return (new \DateTimeImmutable())->setTimestamp($this->time->getCurrentTime());
   }
 
 }

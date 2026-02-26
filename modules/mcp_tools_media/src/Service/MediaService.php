@@ -122,7 +122,11 @@ class MediaService {
 
     $mediaType = $this->entityTypeManager->getStorage('media_type')->load($id);
     if (!$mediaType) {
-      return ['success' => FALSE, 'error' => "Media type '$id' not found. Use mcp_list_media_types to see available types."];
+      return [
+        'success' => FALSE,
+        'error' => "Media type '$id' not found."
+        . " Use mcp_list_media_types to see available types.",
+      ];
     }
 
     // Check if any media entities use this type.
@@ -174,9 +178,15 @@ class MediaService {
     }
 
     try {
-      // Validate directory to prevent path traversal - only allow public:// and private://.
-      if (!preg_match('/^(public|private):\/\/[a-zA-Z0-9_\-\/]+$/', $directory) || str_contains($directory, '..')) {
-        return ['success' => FALSE, 'error' => 'Invalid directory. Only public:// and private:// stream wrappers allowed.'];
+      // Validate directory to prevent path traversal.
+      // Only allow public:// and private://.
+      if (!preg_match('/^(public|private):\/\/[a-zA-Z0-9_\-\/]+$/', $directory)
+        || str_contains($directory, '..')
+      ) {
+        return [
+          'success' => FALSE,
+          'error' => 'Invalid directory. Only public:// and private:// stream wrappers allowed.',
+        ];
       }
 
       // Support data URIs (data:*;base64,...) by stripping the prefix.
@@ -279,7 +289,11 @@ class MediaService {
 
     $mediaType = $this->entityTypeManager->getStorage('media_type')->load($bundle);
     if (!$mediaType) {
-      return ['success' => FALSE, 'error' => "Media type '$bundle' not found. Use mcp_list_media_types to see available types."];
+      return [
+        'success' => FALSE,
+        'error' => "Media type '$bundle' not found."
+        . " Use mcp_list_media_types to see available types.",
+      ];
     }
 
     try {

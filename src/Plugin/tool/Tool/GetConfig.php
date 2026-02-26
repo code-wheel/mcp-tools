@@ -19,7 +19,7 @@ use Drupal\tool\TypedData\InputDefinition;
 #[Tool(
   id: 'mcp_tools_get_config',
   label: new TranslatableMarkup('Get Configuration'),
-  description: new TranslatableMarkup('View a specific configuration object by name (e.g., \'system.site\', \'node.type.article\').'),
+  description: new TranslatableMarkup("View a specific configuration object by name (e.g., 'system.site', 'node.type.article')."),
   operation: ToolOperation::Read,
   input_definitions: [
     'name' => new InputDefinition(
@@ -47,6 +47,11 @@ class GetConfig extends McpToolsToolBase {
   protected const MCP_CATEGORY = 'config';
 
 
+  /**
+   * The config analysis.
+   *
+   * @var \Drupal\mcp_tools\Service\ConfigAnalysisService
+   */
   protected ConfigAnalysisService $configAnalysis;
 
   /**
@@ -85,9 +90,5 @@ class GetConfig extends McpToolsToolBase {
       'data' => $data,
     ];
   }
-
-  
-
-  
 
 }

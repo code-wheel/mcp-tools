@@ -84,8 +84,4 @@ class CheckSecurityUpdates extends McpToolsToolBase {
     ];
   }
 
-  
-
-  
-
 }

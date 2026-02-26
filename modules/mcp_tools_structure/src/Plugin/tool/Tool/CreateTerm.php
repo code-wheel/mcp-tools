@@ -83,14 +83,25 @@ class CreateTerm extends McpToolsToolBase {
   protected const MCP_WRITE_KIND = 'content';
 
 
+  /**
+   * The taxonomy service.
+   *
+   * @var \Drupal\mcp_tools_structure\Service\TaxonomyManagementService
+   */
   protected TaxonomyManagementService $taxonomyService;
 
+  /**
+   * {@inheritdoc}
+   */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     $instance = parent::create($container, $configuration, $plugin_id, $plugin_definition);
     $instance->taxonomyService = $container->get('mcp_tools_structure.taxonomy');
     return $instance;
   }
 
+  /**
+   * {@inheritdoc}
+   */
   protected function executeLegacy(array $input): array {
     $vocabulary = $input['vocabulary'] ?? '';
     $name = $input['name'] ?? '';
@@ -100,12 +111,17 @@ class CreateTerm extends McpToolsToolBase {
     }
 
     $options = [];
-    if (isset($input['description'])) $options['description'] = $input['description'];
-    if (isset($input['parent'])) $options['parent'] = $input['parent'];
-    if (isset($input['weight'])) $options['weight'] = $input['weight'];
+    if (isset($input['description'])) {
+      $options['description'] = $input['description'];
+    }
+    if (isset($input['parent'])) {
+      $options['parent'] = $input['parent'];
+    }
+    if (isset($input['weight'])) {
+      $options['weight'] = $input['weight'];
+    }
 
     return $this->taxonomyService->createTerm($vocabulary, $name, $options);
   }
-
 
 }

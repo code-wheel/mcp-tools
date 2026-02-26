@@ -69,14 +69,25 @@ class CreateParagraphType extends McpToolsToolBase {
   protected const MCP_CATEGORY = 'paragraphs';
 
 
+  /**
+   * The paragraphs service.
+   *
+   * @var \Drupal\mcp_tools_paragraphs\Service\ParagraphsService
+   */
   protected ParagraphsService $paragraphsService;
 
+  /**
+   * {@inheritdoc}
+   */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     $instance = parent::create($container, $configuration, $plugin_id, $plugin_definition);
     $instance->paragraphsService = $container->get('mcp_tools_paragraphs.paragraphs');
     return $instance;
   }
 
+  /**
+   * {@inheritdoc}
+   */
   protected function executeLegacy(array $input): array {
     $id = $input['id'] ?? '';
     $label = $input['label'] ?? '';
@@ -91,6 +102,5 @@ class CreateParagraphType extends McpToolsToolBase {
       $input['description'] ?? ''
     );
   }
-
 
 }

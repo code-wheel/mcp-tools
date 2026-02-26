@@ -97,8 +97,4 @@ class GetTemplate extends McpToolsToolBase {
     return $this->templateService->getTemplate($templateId);
   }
 
-  
-
-  
-
 }

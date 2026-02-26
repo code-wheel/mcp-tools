@@ -54,6 +54,11 @@ class Regenerate extends McpToolsToolBase {
   protected const MCP_WRITE_KIND = 'ops';
 
 
+  /**
+   * The sitemap service.
+   *
+   * @var \Drupal\mcp_tools_sitemap\Service\SitemapService
+   */
   protected SitemapService $sitemapService;
 
   /**
@@ -72,9 +77,5 @@ class Regenerate extends McpToolsToolBase {
     $variant = $input['variant'] ?? NULL;
     return $this->sitemapService->regenerate($variant);
   }
-
-  
-
-  
 
 }

@@ -11,7 +11,6 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
 use Drupal\tool\Tool\ToolOperation;
-use Drupal\tool\TypedData\InputDefinition;
 
 /**
  * Tool plugin implementation.
@@ -40,6 +39,11 @@ class GetRoles extends McpToolsToolBase {
   protected const MCP_CATEGORY = 'users';
 
 
+  /**
+   * The user analysis.
+   *
+   * @var \Drupal\mcp_tools\Service\UserAnalysisService
+   */
   protected UserAnalysisService $userAnalysis;
 
   /**
@@ -60,9 +64,5 @@ class GetRoles extends McpToolsToolBase {
       'data' => $this->userAnalysis->getRoles(),
     ];
   }
-
-  
-
-  
 
 }

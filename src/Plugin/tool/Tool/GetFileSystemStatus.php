@@ -11,7 +11,6 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
 use Drupal\tool\Tool\ToolOperation;
-use Drupal\tool\TypedData\InputDefinition;
 
 /**
  * Tool plugin implementation.
@@ -40,6 +39,11 @@ class GetFileSystemStatus extends McpToolsToolBase {
   protected const MCP_CATEGORY = 'site_health';
 
 
+  /**
+   * The file system.
+   *
+   * @var \Drupal\mcp_tools\Service\FileSystemService
+   */
   protected FileSystemService $fileSystem;
 
   /**
@@ -60,9 +64,5 @@ class GetFileSystemStatus extends McpToolsToolBase {
       'data' => $this->fileSystem->getFileSystemStatus(),
     ];
   }
-
-  
-
-  
 
 }

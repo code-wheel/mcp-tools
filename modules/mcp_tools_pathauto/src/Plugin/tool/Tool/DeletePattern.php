@@ -53,6 +53,11 @@ class DeletePattern extends McpToolsToolBase {
   protected const MCP_CATEGORY = 'pathauto';
 
 
+  /**
+   * The pathauto service.
+   *
+   * @var \Drupal\mcp_tools_pathauto\Service\PathautoService
+   */
   protected PathautoService $pathautoService;
 
   /**
@@ -76,9 +81,5 @@ class DeletePattern extends McpToolsToolBase {
 
     return $this->pathautoService->deletePattern($id);
   }
-
-  
-
-  
 
 }

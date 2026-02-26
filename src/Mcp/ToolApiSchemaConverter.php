@@ -24,6 +24,8 @@ class ToolApiSchemaConverter {
   private array $inputSchemaCache = [];
 
   /**
+   * {@inheritdoc}
+   *
    * @var array<string, array<string, mixed>>
    */
   private array $annotationCache = [];
@@ -43,6 +45,8 @@ class ToolApiSchemaConverter {
   /**
    * Builds an MCP inputSchema JSON Schema from a Tool API ToolDefinition.
    *
+   * @param \Drupal\tool\Tool\ToolDefinition $definition
+   *   The tool definition.
    * @param string|null $cacheKey
    *   Optional cache key (for example, a plugin ID).
    *

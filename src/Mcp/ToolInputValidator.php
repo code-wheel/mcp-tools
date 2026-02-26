@@ -15,6 +15,11 @@ use Psr\Log\NullLogger;
  */
 class ToolInputValidator {
 
+  /**
+   * The validator.
+   *
+   * @var \Opis\JsonSchema\Validator
+   */
   private Validator $validator;
 
   public function __construct(
@@ -73,7 +78,10 @@ class ToolInputValidator {
   }
 
   /**
-   * @return array<int, array<string, mixed>>
+   * Collect Errors.
+   *
+   * @return array<int,
+   *   array<string, mixed>>
    */
   private function collectErrors(ValidationError $error): array {
     $errors = [$this->formatError($error)];
@@ -88,7 +96,10 @@ class ToolInputValidator {
   }
 
   /**
-   * @return array<string, mixed>
+   * Formats error.
+   *
+   * @return array<string,
+   *   mixed>
    */
   private function formatError(ValidationError $error): array {
     $path = $error->data()->fullPath();

@@ -71,6 +71,11 @@ class GetTerms extends McpToolsToolBase {
   protected const MCP_CATEGORY = 'content';
 
 
+  /**
+   * The taxonomy.
+   *
+   * @var \Drupal\mcp_tools\Service\TaxonomyService
+   */
   protected TaxonomyService $taxonomy;
 
   /**
@@ -111,9 +116,5 @@ class GetTerms extends McpToolsToolBase {
       'data' => $data,
     ];
   }
-
-  
-
-  
 
 }

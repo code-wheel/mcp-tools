@@ -85,9 +85,22 @@ class SetupTaxonomy extends McpToolsToolBase {
 
   protected const MCP_CATEGORY = 'structure';
 
+  /**
+   * The taxonomy service.
+   *
+   * @var \Drupal\mcp_tools_structure\Service\TaxonomyManagementService
+   */
   protected TaxonomyManagementService $taxonomyService;
+  /**
+   * The entity type manager.
+   *
+   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
+   */
   protected EntityTypeManagerInterface $entityTypeManager;
 
+  /**
+   * {@inheritdoc}
+   */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     $instance = parent::create($container, $configuration, $plugin_id, $plugin_definition);
     $instance->taxonomyService = $container->get('mcp_tools_structure.taxonomy');
@@ -95,6 +108,9 @@ class SetupTaxonomy extends McpToolsToolBase {
     return $instance;
   }
 
+  /**
+   * {@inheritdoc}
+   */
   protected function executeLegacy(array $input): array {
     $id = $input['id'] ?? '';
     $label = $input['label'] ?? '';

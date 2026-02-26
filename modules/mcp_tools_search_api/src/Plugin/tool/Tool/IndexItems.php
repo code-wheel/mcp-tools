@@ -65,8 +65,23 @@ class IndexItems extends McpToolsToolBase {
   protected const MCP_CATEGORY = 'search_api';
 
 
+  /**
+   * The search api service.
+   *
+   * @var \Drupal\mcp_tools_search_api\Service\SearchApiService
+   */
   protected SearchApiService $searchApiService;
+  /**
+   * The access manager.
+   *
+   * @var \Drupal\mcp_tools\Service\AccessManager
+   */
   protected AccessManager $accessManager;
+  /**
+   * The audit logger.
+   *
+   * @var \Drupal\mcp_tools\Service\AuditLogger
+   */
   protected AuditLogger $auditLogger;
 
   /**
@@ -119,9 +134,5 @@ class IndexItems extends McpToolsToolBase {
 
     return $result;
   }
-
-  
-
-  
 
 }

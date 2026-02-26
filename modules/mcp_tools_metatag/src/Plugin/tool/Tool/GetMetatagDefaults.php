@@ -47,6 +47,11 @@ class GetMetatagDefaults extends McpToolsToolBase {
   protected const MCP_CATEGORY = 'metatag';
 
 
+  /**
+   * The metatag service.
+   *
+   * @var \Drupal\mcp_tools_metatag\Service\MetatagService
+   */
   protected MetatagService $metatagService;
 
   /**
@@ -65,9 +70,5 @@ class GetMetatagDefaults extends McpToolsToolBase {
     $type = $input['type'] ?? NULL;
     return $this->metatagService->getMetatagDefaults($type);
   }
-
-  
-
-  
 
 }

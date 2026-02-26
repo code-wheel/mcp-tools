@@ -17,15 +17,24 @@ class SecurityUpdateChecker {
    * Update status constants from update module.
    */
   protected const STATUS_LABELS = [
-    1 => 'not_secure',           // UPDATE_NOT_SECURE
-    2 => 'revoked',              // UPDATE_REVOKED
-    3 => 'not_supported',        // UPDATE_NOT_SUPPORTED
-    4 => 'not_current',          // UPDATE_NOT_CURRENT
-    5 => 'current',              // UPDATE_CURRENT
-    -1 => 'not_checked',         // UPDATE_NOT_CHECKED
-    -2 => 'unknown',             // UPDATE_UNKNOWN
-    -3 => 'not_fetched',         // UPDATE_NOT_FETCHED
-    -4 => 'fetch_pending',       // UPDATE_FETCH_PENDING
+  // UPDATE_NOT_SECURE.
+    1 => 'not_secure',
+  // UPDATE_REVOKED.
+    2 => 'revoked',
+  // UPDATE_NOT_SUPPORTED.
+    3 => 'not_supported',
+  // UPDATE_NOT_CURRENT.
+    4 => 'not_current',
+  // UPDATE_CURRENT.
+    5 => 'current',
+  // UPDATE_NOT_CHECKED.
+    -1 => 'not_checked',
+  // UPDATE_UNKNOWN.
+    -2 => 'unknown',
+  // UPDATE_NOT_FETCHED.
+    -3 => 'not_fetched',
+  // UPDATE_FETCH_PENDING.
+    -4 => 'fetch_pending',
   ];
 
   public function __construct(
@@ -65,7 +74,8 @@ class SecurityUpdateChecker {
         continue;
       }
 
-      $isSecurity = in_array($status, [1, 2, 3]); // not_secure, revoked, not_supported
+      // not_secure, revoked, not_supported.
+      $isSecurity = in_array($status, [1, 2, 3]);
 
       // Filter to security only if requested.
       if ($securityOnly && !$isSecurity) {

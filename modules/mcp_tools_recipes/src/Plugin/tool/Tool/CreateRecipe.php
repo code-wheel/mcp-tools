@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools_recipes\Plugin\tool\Tool;
 
-use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Trait\WriteAccessTrait;
 use Drupal\mcp_tools_recipes\Service\RecipesService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -21,7 +20,7 @@ use Drupal\tool\TypedData\InputDefinition;
 #[Tool(
   id: 'mcp_recipes_create',
   label: new TranslatableMarkup('Create Recipe'),
-  description: new TranslatableMarkup('Create a new Drupal Recipe file in the site\'s recipes directory. Requires admin scope.'),
+  description: new TranslatableMarkup("Create a new Drupal Recipe file in the site's recipes directory. Requires admin scope."),
   operation: ToolOperation::Trigger,
   input_definitions: [
     'name' => new InputDefinition(
@@ -165,9 +164,5 @@ class CreateRecipe extends McpToolsToolBase {
 
     return $this->recipesService->createRecipe($name, $description, $config);
   }
-
-  
-
-  
 
 }

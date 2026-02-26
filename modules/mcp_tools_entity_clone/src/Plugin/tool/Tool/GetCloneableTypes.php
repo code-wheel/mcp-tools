@@ -11,7 +11,6 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
 use Drupal\tool\Tool\ToolOperation;
-use Drupal\tool\TypedData\InputDefinition;
 
 /**
  * Tool plugin implementation.
@@ -40,17 +39,27 @@ class GetCloneableTypes extends McpToolsToolBase {
   protected const MCP_CATEGORY = 'entity_clone';
 
 
+  /**
+   * The entity clone service.
+   *
+   * @var \Drupal\mcp_tools_entity_clone\Service\EntityCloneService
+   */
   protected EntityCloneService $entityCloneService;
 
+  /**
+   * {@inheritdoc}
+   */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     $instance = parent::create($container, $configuration, $plugin_id, $plugin_definition);
     $instance->entityCloneService = $container->get('mcp_tools_entity_clone.entity_clone');
     return $instance;
   }
 
+  /**
+   * {@inheritdoc}
+   */
   protected function executeLegacy(array $input): array {
     return $this->entityCloneService->getCloneableTypes();
   }
-
 
 }

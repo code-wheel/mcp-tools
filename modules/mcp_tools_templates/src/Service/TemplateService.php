@@ -35,8 +35,16 @@ class TemplateService {
             'fields' => [
               'body' => ['type' => 'text_with_summary', 'label' => 'Body'],
               'field_image' => ['type' => 'image', 'label' => 'Featured Image'],
-              'field_tags' => ['type' => 'entity_reference', 'label' => 'Tags', 'target' => 'taxonomy_term:tags'],
-              'field_categories' => ['type' => 'entity_reference', 'label' => 'Categories', 'target' => 'taxonomy_term:categories'],
+              'field_tags' => [
+                'type' => 'entity_reference',
+                'label' => 'Tags',
+                'target' => 'taxonomy_term:tags',
+              ],
+              'field_categories' => [
+                'type' => 'entity_reference',
+                'label' => 'Categories',
+                'target' => 'taxonomy_term:categories',
+              ],
             ],
           ],
         ],
@@ -87,8 +95,17 @@ class TemplateService {
             'description' => 'Portfolio project with description, images, and skills.',
             'fields' => [
               'body' => ['type' => 'text_with_summary', 'label' => 'Description'],
-              'field_project_images' => ['type' => 'image', 'label' => 'Project Images', 'cardinality' => -1],
-              'field_skills' => ['type' => 'entity_reference', 'label' => 'Skills', 'target' => 'taxonomy_term:skills', 'cardinality' => -1],
+              'field_project_images' => [
+                'type' => 'image',
+                'label' => 'Project Images',
+                'cardinality' => -1,
+              ],
+              'field_skills' => [
+                'type' => 'entity_reference',
+                'label' => 'Skills',
+                'target' => 'taxonomy_term:skills',
+                'cardinality' => -1,
+              ],
               'field_project_url' => ['type' => 'link', 'label' => 'Project URL'],
               'field_client' => ['type' => 'string', 'label' => 'Client'],
               'field_completion_date' => ['type' => 'datetime', 'label' => 'Completion Date'],
@@ -203,10 +220,23 @@ class TemplateService {
             'description' => 'Documentation pages with code examples.',
             'fields' => [
               'body' => ['type' => 'text_with_summary', 'label' => 'Content'],
-              'field_toc' => ['type' => 'entity_reference', 'label' => 'Table of Contents Section', 'target' => 'taxonomy_term:toc'],
+              'field_toc' => [
+                'type' => 'entity_reference',
+                'label' => 'Table of Contents Section',
+                'target' => 'taxonomy_term:toc',
+              ],
               'field_doc_version' => ['type' => 'string', 'label' => 'Version'],
-              'field_code_examples' => ['type' => 'text_long', 'label' => 'Code Examples', 'cardinality' => -1],
-              'field_related_docs' => ['type' => 'entity_reference', 'label' => 'Related Documentation', 'target' => 'node:doc', 'cardinality' => -1],
+              'field_code_examples' => [
+                'type' => 'text_long',
+                'label' => 'Code Examples',
+                'cardinality' => -1,
+              ],
+              'field_related_docs' => [
+                'type' => 'entity_reference',
+                'label' => 'Related Documentation',
+                'target' => 'node:doc',
+                'cardinality' => -1,
+              ],
             ],
           ],
           'api_reference' => [
@@ -215,10 +245,20 @@ class TemplateService {
             'fields' => [
               'body' => ['type' => 'text_with_summary', 'label' => 'Description'],
               'field_endpoint' => ['type' => 'string', 'label' => 'Endpoint'],
-              'field_method' => ['type' => 'list_string', 'label' => 'HTTP Method', 'allowed_values' => ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']],
+              'field_method' => [
+                'type' => 'list_string',
+                'label' => 'HTTP Method',
+                'allowed_values' => [
+                  'GET', 'POST', 'PUT', 'PATCH', 'DELETE',
+                ],
+              ],
               'field_parameters' => ['type' => 'text_long', 'label' => 'Parameters'],
               'field_response' => ['type' => 'text_long', 'label' => 'Response Example'],
-              'field_toc' => ['type' => 'entity_reference', 'label' => 'API Section', 'target' => 'taxonomy_term:toc'],
+              'field_toc' => [
+                'type' => 'entity_reference',
+                'label' => 'API Section',
+                'target' => 'taxonomy_term:toc',
+              ],
             ],
           ],
         ],

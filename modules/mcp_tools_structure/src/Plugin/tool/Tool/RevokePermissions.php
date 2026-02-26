@@ -64,14 +64,25 @@ class RevokePermissions extends McpToolsToolBase {
   protected const MCP_CATEGORY = 'structure';
 
 
+  /**
+   * The role service.
+   *
+   * @var \Drupal\mcp_tools_structure\Service\RoleService
+   */
   protected RoleService $roleService;
 
+  /**
+   * {@inheritdoc}
+   */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     $instance = parent::create($container, $configuration, $plugin_id, $plugin_definition);
     $instance->roleService = $container->get('mcp_tools_structure.role');
     return $instance;
   }
 
+  /**
+   * {@inheritdoc}
+   */
   protected function executeLegacy(array $input): array {
     $role = $input['role'] ?? '';
     $permissions = $input['permissions'] ?? [];
@@ -86,6 +97,5 @@ class RevokePermissions extends McpToolsToolBase {
 
     return $this->roleService->revokePermissions($role, $permissions);
   }
-
 
 }

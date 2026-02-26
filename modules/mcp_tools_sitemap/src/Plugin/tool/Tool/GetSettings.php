@@ -57,6 +57,11 @@ class GetSettings extends McpToolsToolBase {
   protected const MCP_CATEGORY = 'sitemap';
 
 
+  /**
+   * The sitemap service.
+   *
+   * @var \Drupal\mcp_tools_sitemap\Service\SitemapService
+   */
   protected SitemapService $sitemapService;
 
   /**
@@ -75,9 +80,5 @@ class GetSettings extends McpToolsToolBase {
     $variant = $input['variant'] ?? 'default';
     return $this->sitemapService->getSettings($variant);
   }
-
-  
-
-  
 
 }

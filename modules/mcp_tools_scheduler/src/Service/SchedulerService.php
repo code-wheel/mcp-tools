@@ -45,8 +45,11 @@ class SchedulerService {
 
     try {
       // For combined queries, we need to fetch more than the limit to handle
-      // proper pagination after sorting. Fetch extra items then apply offset/limit.
-      $fetchLimit = ($type === 'all') ? ($limit + $offset) * 2 : $limit + $offset;
+      // proper pagination after sorting. Fetch extra items
+      // then apply offset/limit.
+      $fetchLimit = ($type === 'all')
+        ? ($limit + $offset) * 2
+        : $limit + $offset;
 
       if ($type === 'publish' || $type === 'all') {
         $query = $nodeStorage->getQuery()
@@ -143,16 +146,25 @@ class SchedulerService {
     }
 
     if ($entityType !== 'node') {
-      return ['success' => FALSE, 'error' => "Entity type '$entityType' is not supported. Only 'node' is currently supported."];
+      return [
+        'success' => FALSE,
+        'error' => "Entity type '$entityType' is not supported. Only 'node' is currently supported.",
+      ];
     }
 
     $node = $this->entityTypeManager->getStorage('node')->load($entityId);
     if (!$node) {
-      return ['success' => FALSE, 'error' => "Node with ID $entityId not found."];
+      return [
+        'success' => FALSE,
+        'error' => "Node with ID $entityId not found.",
+      ];
     }
 
     if (!$node->hasField('publish_on')) {
-      return ['success' => FALSE, 'error' => "Content type '{$node->bundle()}' is not configured for scheduling. Enable scheduling for this content type in the Scheduler settings."];
+      return [
+        'success' => FALSE,
+        'error' => "Content type '{$node->bundle()}' is not configured for scheduling. Enable scheduling for this content type in the Scheduler settings.",
+      ];
     }
 
     $currentTime = $this->time->getCurrentTime();
@@ -177,7 +189,8 @@ class SchedulerService {
           'type' => $node->bundle(),
           'scheduled_publish' => date('Y-m-d H:i:s', $timestamp),
           'timestamp' => $timestamp,
-          'message' => "Content '{$node->getTitle()}' scheduled for publication on " . date('Y-m-d H:i:s', $timestamp) . ".",
+          'message' => "Content '{$node->getTitle()}' scheduled for publication on "
+          . date('Y-m-d H:i:s', $timestamp) . ".",
         ],
       ];
     }
@@ -206,16 +219,25 @@ class SchedulerService {
     }
 
     if ($entityType !== 'node') {
-      return ['success' => FALSE, 'error' => "Entity type '$entityType' is not supported. Only 'node' is currently supported."];
+      return [
+        'success' => FALSE,
+        'error' => "Entity type '$entityType' is not supported. Only 'node' is currently supported.",
+      ];
     }
 
     $node = $this->entityTypeManager->getStorage('node')->load($entityId);
     if (!$node) {
-      return ['success' => FALSE, 'error' => "Node with ID $entityId not found."];
+      return [
+        'success' => FALSE,
+        'error' => "Node with ID $entityId not found.",
+      ];
     }
 
     if (!$node->hasField('unpublish_on')) {
-      return ['success' => FALSE, 'error' => "Content type '{$node->bundle()}' is not configured for scheduling. Enable scheduling for this content type in the Scheduler settings."];
+      return [
+        'success' => FALSE,
+        'error' => "Content type '{$node->bundle()}' is not configured for scheduling. Enable scheduling for this content type in the Scheduler settings.",
+      ];
     }
 
     $currentTime = $this->time->getCurrentTime();
@@ -240,7 +262,8 @@ class SchedulerService {
           'type' => $node->bundle(),
           'scheduled_unpublish' => date('Y-m-d H:i:s', $timestamp),
           'timestamp' => $timestamp,
-          'message' => "Content '{$node->getTitle()}' scheduled for unpublication on " . date('Y-m-d H:i:s', $timestamp) . ".",
+          'message' => "Content '{$node->getTitle()}' scheduled for unpublication on "
+          . date('Y-m-d H:i:s', $timestamp) . ".",
         ],
       ];
     }
@@ -269,12 +292,18 @@ class SchedulerService {
     }
 
     if ($entityType !== 'node') {
-      return ['success' => FALSE, 'error' => "Entity type '$entityType' is not supported. Only 'node' is currently supported."];
+      return [
+        'success' => FALSE,
+        'error' => "Entity type '$entityType' is not supported. Only 'node' is currently supported.",
+      ];
     }
 
     $node = $this->entityTypeManager->getStorage('node')->load($entityId);
     if (!$node) {
-      return ['success' => FALSE, 'error' => "Node with ID $entityId not found."];
+      return [
+        'success' => FALSE,
+        'error' => "Node with ID $entityId not found.",
+      ];
     }
 
     try {
@@ -345,12 +374,18 @@ class SchedulerService {
    */
   public function getSchedule(string $entityType, int $entityId): array {
     if ($entityType !== 'node') {
-      return ['success' => FALSE, 'error' => "Entity type '$entityType' is not supported. Only 'node' is currently supported."];
+      return [
+        'success' => FALSE,
+        'error' => "Entity type '$entityType' is not supported. Only 'node' is currently supported.",
+      ];
     }
 
     $node = $this->entityTypeManager->getStorage('node')->load($entityId);
     if (!$node) {
-      return ['success' => FALSE, 'error' => "Node with ID $entityId not found."];
+      return [
+        'success' => FALSE,
+        'error' => "Node with ID $entityId not found.",
+      ];
     }
 
     try {

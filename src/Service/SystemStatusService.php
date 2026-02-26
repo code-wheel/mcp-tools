@@ -20,8 +20,9 @@ class SystemStatusService {
    * Severity level labels.
    */
   protected const SEVERITY_LABELS = [
-    // REQUIREMENT_INFO is a global constant defined in core/includes/install.inc.
-    // It is not available as a SystemManager class constant in Drupal 10/11.
+    // REQUIREMENT_INFO is a global constant defined in
+    // core/includes/install.inc. It is not available as a
+    // SystemManager class constant in Drupal 10/11.
     -1 => 'info',
     SystemManager::REQUIREMENT_OK => 'ok',
     SystemManager::REQUIREMENT_WARNING => 'warning',

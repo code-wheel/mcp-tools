@@ -42,6 +42,11 @@ class GetServer extends McpToolsToolBase {
   protected const MCP_CATEGORY = 'search_api';
 
 
+  /**
+   * The search api service.
+   *
+   * @var \Drupal\mcp_tools_search_api\Service\SearchApiService
+   */
   protected SearchApiService $searchApiService;
 
   /**
@@ -68,9 +73,5 @@ class GetServer extends McpToolsToolBase {
 
     return $this->searchApiService->getServer($id);
   }
-
-  
-
-  
 
 }

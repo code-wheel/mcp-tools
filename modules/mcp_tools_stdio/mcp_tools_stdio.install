@@ -1,5 +1,12 @@
 <?php
 
+/**
+ * @file
+ * {@inheritdoc}
+ */
+
+use Mcp\Server;
+
 declare(strict_types=1);
 
 /**
@@ -14,7 +21,7 @@ function mcp_tools_stdio_requirements(string $phase): array {
   $requirements = [];
 
   if (in_array($phase, ['install', 'runtime'], TRUE)) {
-    if (!class_exists(\Mcp\Server::class)) {
+    if (!class_exists(Server::class)) {
       $requirements['mcp_tools_stdio_sdk'] = [
         'title' => t('MCP SDK (mcp/sdk)'),
         'value' => t('Missing'),
@@ -26,4 +33,3 @@ function mcp_tools_stdio_requirements(string $phase): array {
 
   return $requirements;
 }
-

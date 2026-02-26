@@ -74,14 +74,25 @@ class CreateMedia extends McpToolsToolBase {
   protected const MCP_CATEGORY = 'media';
 
 
+  /**
+   * The media service.
+   *
+   * @var \Drupal\mcp_tools_media\Service\MediaService
+   */
   protected MediaService $mediaService;
 
+  /**
+   * {@inheritdoc}
+   */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     $instance = parent::create($container, $configuration, $plugin_id, $plugin_definition);
     $instance->mediaService = $container->get('mcp_tools_media.media');
     return $instance;
   }
 
+  /**
+   * {@inheritdoc}
+   */
   protected function executeLegacy(array $input): array {
     $bundle = $input['bundle'] ?? '';
     $name = $input['name'] ?? '';
@@ -97,6 +108,5 @@ class CreateMedia extends McpToolsToolBase {
 
     return $this->mediaService->createMedia($bundle, $name, $sourceFieldValue);
   }
-
 
 }

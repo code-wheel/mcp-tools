@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Drupal\mcp_tools_cache\Service;
 
 use Drupal\Core\Asset\AssetCollectionOptimizerInterface;
-use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Core\Cache\CacheFactoryInterface;
 use Drupal\Core\Cache\CacheTagsInvalidatorInterface;
 use Drupal\Core\Database\Connection;

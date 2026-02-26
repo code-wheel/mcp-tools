@@ -68,6 +68,11 @@ class ExportToCsv extends McpToolsToolBase {
   protected const MCP_CATEGORY = 'migration';
 
 
+  /**
+   * The migration service.
+   *
+   * @var \Drupal\mcp_tools_migration\Service\MigrationService
+   */
   protected MigrationService $migrationService;
 
   /**
@@ -92,9 +97,5 @@ class ExportToCsv extends McpToolsToolBase {
 
     return $this->migrationService->exportToCsv($contentType, $limit);
   }
-
-  
-
-  
 
 }

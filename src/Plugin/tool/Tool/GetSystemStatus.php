@@ -53,6 +53,11 @@ class GetSystemStatus extends McpToolsToolBase {
   protected const MCP_CATEGORY = 'site_health';
 
 
+  /**
+   * The system status.
+   *
+   * @var \Drupal\mcp_tools\Service\SystemStatusService
+   */
   protected SystemStatusService $systemStatus;
 
   /**
@@ -79,9 +84,5 @@ class GetSystemStatus extends McpToolsToolBase {
       ],
     ];
   }
-
-  
-
-  
 
 }

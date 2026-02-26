@@ -643,7 +643,7 @@ class ParagraphsService {
     string $bundle,
     string $fieldName,
     string $widget,
-    array $settings = []
+    array $settings = [],
   ): void {
     $formDisplay = $this->entityTypeManager
       ->getStorage('entity_form_display')
@@ -673,7 +673,7 @@ class ParagraphsService {
     string $bundle,
     string $fieldName,
     string $formatter,
-    array $settings = []
+    array $settings = [],
   ): void {
     $viewDisplay = $this->entityTypeManager
       ->getStorage('entity_view_display')
