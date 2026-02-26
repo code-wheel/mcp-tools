@@ -20,6 +20,12 @@ use Drupal\Tests\UnitTestCase;
 #[\PHPUnit\Framework\Attributes\Group('mcp_tools_batch')]
 final class BatchServiceTest extends UnitTestCase {
 
+  private function mockTime(): TimeInterface {
+    $time = $this->createMock(TimeInterface::class);
+    $time->method('getCurrentTime')->willReturn(time());
+    return $time;
+  }
+
   private function createService(): BatchService {
     return new class(
       $this->createMock(EntityTypeManagerInterface::class),
@@ -50,7 +56,7 @@ final class BatchServiceTest extends UnitTestCase {
       $overrides['module_handler'] ?? $this->createMock(ModuleHandlerInterface::class),
       $overrides['access_manager'] ?? $this->createMock(AccessManager::class),
       $overrides['audit_logger'] ?? $this->createMock(AuditLogger::class),
-      $overrides['time'] ?? $this->createMock(TimeInterface::class),
+      $overrides['time'] ?? $this->mockTime(),
     );
   }
 
@@ -124,6 +130,8 @@ final class BatchServiceTest extends UnitTestCase {
       public function save(): void {}
       public function id(): int { return 123; }
       public function uuid(): string { return 'uuid-123'; }
+      public function setCreatedTime(int $timestamp): void {}
+      public function setChangedTime(int $timestamp): void {}
       public function toUrl(): object {
         return new class() { public function toString(): string { return '/node/123'; } };
       }
