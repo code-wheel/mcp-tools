@@ -671,6 +671,97 @@ class McpToolsCommands extends DrushCommands {
   }
 
   /**
+   * Generate MCP client configuration JSON for AI editors.
+   */
+  #[CLI\Command(name: 'mcp-tools:client-config', aliases: ['mcp-client-config'])]
+  #[CLI\Usage(name: 'drush mcp-tools:client-config', description: 'Generate MCP client config JSON')]
+  #[CLI\Usage(name: 'drush mcp-tools:client-config --scope=read', description: 'Generate read-only config')]
+  #[CLI\Usage(name: 'drush mcp-tools:client-config > .mcp.json', description: 'Save config directly to file')]
+  #[CLI\Option(name: 'scope', description: 'Scopes for the MCP server (default: read,write)')]
+  #[CLI\Option(name: 'uid', description: 'Drupal user ID for tool execution (default: 1)')]
+  public function clientConfig(array $options = ['scope' => 'read,write', 'uid' => '1']): void {
+    $scope = is_string($options['scope']) ? $options['scope'] : 'read,write';
+    $uid = is_string($options['uid']) ? $options['uid'] : '1';
+
+    $drupalRoot = \Drupal::root();
+    $isDdev = (bool) getenv('IS_DDEV_PROJECT');
+    $isLando = (bool) getenv('LANDO');
+
+    if ($isDdev) {
+      // Inside DDEV: the project root is one level above the Drupal root
+      // (web/ docroot), or if Drupal IS the project root, use that.
+      $projectRoot = dirname($drupalRoot);
+      if (basename($drupalRoot) === $drupalRoot) {
+        $projectRoot = $drupalRoot;
+      }
+      $config = [
+        'mcpServers' => [
+          'drupal' => [
+            'command' => 'ddev',
+            'args' => [
+              'drush',
+              'mcp-tools:serve',
+              '--quiet',
+              "--uid={$uid}",
+              "--scope={$scope}",
+            ],
+            'cwd' => $projectRoot,
+          ],
+        ],
+      ];
+    }
+    elseif ($isLando) {
+      $projectRoot = dirname($drupalRoot);
+      if (basename($drupalRoot) === $drupalRoot) {
+        $projectRoot = $drupalRoot;
+      }
+      $config = [
+        'mcpServers' => [
+          'drupal' => [
+            'command' => 'lando',
+            'args' => [
+              'drush',
+              'mcp-tools:serve',
+              '--quiet',
+              "--uid={$uid}",
+              "--scope={$scope}",
+            ],
+            'cwd' => $projectRoot,
+          ],
+        ],
+      ];
+    }
+    else {
+      // Bare metal / native.
+      $drushPath = $drupalRoot . '/vendor/bin/drush';
+      $config = [
+        'mcpServers' => [
+          'drupal' => [
+            'command' => $drushPath,
+            'args' => [
+              'mcp-tools:serve',
+              '--quiet',
+              "--uid={$uid}",
+              "--scope={$scope}",
+            ],
+            'cwd' => $drupalRoot,
+          ],
+        ],
+      ];
+    }
+
+    // JSON to stdout (pipeable to file).
+    $this->output()->write(json_encode($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
+
+    // Instructions to stderr (not captured when piping).
+    fwrite(\STDERR, "\nSave this as one of:\n");
+    fwrite(\STDERR, "  Claude Code:    .mcp.json (project root)\n");
+    fwrite(\STDERR, "  Claude Desktop: ~/Library/Application Support/Claude/claude_desktop_config.json\n");
+    fwrite(\STDERR, "  Cursor:         .cursor/mcp.json (project root)\n");
+    fwrite(\STDERR, "  Windsurf:       .windsurf/mcp.json (project root)\n");
+  }
+
+  /**
    * Count MCP tools from the tool manager.
    *
    * @return int
