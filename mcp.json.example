@@ -1,22 +1,11 @@
 {
   "mcpServers": {
-    "drupal-stdio": {
-      "command": "drush",
-      "args": [
-        "--root=/path/to/drupal",
-        "mcp-tools:serve",
-        "--server=development",
-        "--uid=1"
-      ],
+    "drupal": {
+      "command": "/path/to/drupal/vendor/bin/drush",
+      "args": ["mcp-tools:serve", "--quiet", "--uid=1", "--scope=read,write"],
+      "cwd": "/path/to/drupal",
       "env": {
-        "MCP_SCOPE": "read,write"
-      }
-    },
-    "drupal-http": {
-      "type": "http",
-      "url": "https://example.com/_mcp_tools",
-      "headers": {
-        "Authorization": "Bearer YOUR_API_KEY"
+        "SYMFONY_DEPRECATIONS_HELPER": "disabled"
       }
     }
   }
