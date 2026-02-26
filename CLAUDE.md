@@ -28,6 +28,7 @@ This project uses TWO repositories:
 - `DRUPAL_ORG_DESCRIPTION.html` - Drupal.org project page content
 - `DRUPAL_ORG_DESCRIPTION.md` - Drupal.org project page source
 - `INTERNAL_PLANNING.md` - Internal planning notes
+- `RELEASE_NOTES.md` - Release draft notes
 - `docs/DRUPALCON_TALK.md` - Presentation materials
 - `docs/TESTIMONIALS.md` - Marketing testimonials
 - `docs/DEMO_SITE.md` - Demo site setup
@@ -46,7 +47,6 @@ This project uses TWO repositories:
 - `LICENSE` - GPL-2.0-or-later
 - `CONTRIBUTING.md` - Contribution guidelines
 - `TESTING.md` - Testing instructions
-- `ROADMAP.md` - Project roadmap
 
 ### User Documentation
 - `docs/ARCHITECTURE.md`
@@ -74,9 +74,11 @@ This project uses TWO repositories:
 
 ### Releasing to Public
 1. Ensure dev repo CI is green
-2. Push to public repo (exclude internal files)
-3. Create release tag
-4. Sync to Drupal.org if needed
+2. Dry-run the sync: `scripts/sync-to-public.sh`
+3. Review the diff — verify no internal files leaked
+4. Push: `scripts/sync-to-public.sh --push` (syncs to GitHub + Drupal.org)
+5. Use `--skip-drupal` to push to GitHub only
+6. Create release tag on public repo if needed
 
 ## SDK Packages (Separate Repos)
 
@@ -96,16 +98,6 @@ drupal  -> git.drupal.org:project/mcp_tools
 
 ## IMPORTANT: Before Pushing to Public
 
-Always verify you're not including internal files:
-```bash
-git diff --name-only origin/master public/master
-```
-
-Check for files that shouldn't be public:
-- No `.gitleaks.toml`
-- No `.gitlab-ci.yml`
-- No `.ddev/`
-- No `codecov.yml`
-- No `DRUPAL*` files (except in dev)
-- No `scripts/`
-- No `packages/`
+The sync script (`scripts/sync-to-public.sh`) handles exclusions automatically via its `INTERNAL_FILES` array. When adding new dev-only files, add them to both:
+1. The `INTERNAL_FILES` array in `scripts/sync-to-public.sh`
+2. The "Files that should ONLY be in Dev Repo" list above

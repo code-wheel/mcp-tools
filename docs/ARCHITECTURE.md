@@ -35,12 +35,12 @@ MCP Tools provides a comprehensive set of tools for AI assistants to interact wi
 ### Base Module (`mcp_tools`)
 
 The base module provides:
-- **28 read-only tools** for site introspection
+- **22 read-only tools** for site introspection
 - **Core services** (AccessManager, RateLimiter, AuditLogger)
 - **Admin UI** for configuration
 - **McpToolsToolBase** base class for all tool plugins
 
-### Submodules (29 total)
+### Submodules (34 total)
 
 Each submodule is self-contained with its own:
 - Tool plugins in `src/Plugin/tool/Tool/`
@@ -169,6 +169,10 @@ All write operations are logged to Drupal watchdog with:
 - User who performed the action
 - Sanitized details
 
+### Webhook Notifications
+
+The `WebhookNotifier` service can send HMAC-signed payloads to external systems (Slack, audit logs, etc.) when operations occur. Configure via `mcp_tools.settings` (`webhooks.enabled`, `webhooks.url`, `webhooks.secret`, `webhooks.allowed_hosts`). Payloads include operation type, entity info, user, and sanitized details. A `X-MCP-Signature` header carries the HMAC-SHA256 signature when a secret is set.
+
 ## Configuration Modes
 
 Three preset modes simplify configuration:
@@ -237,17 +241,7 @@ Tools expose MCP hints for AI clients:
 
 ## Testing
 
-### Unit Tests
-Test services in isolation with mocked dependencies.
-
-### Kernel Tests
-Test tool registration, access control, and integration.
-
-### Functional Tests
-Test admin UI and end-to-end workflows.
-
-### E2E Tests
-Scripts in `scripts/` test STDIO and HTTP transports.
+See [TESTING.md](../TESTING.md) for the full testing guide.
 
 ## References
 

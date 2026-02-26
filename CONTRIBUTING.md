@@ -364,90 +364,6 @@ mcp_yourfeature_create(name: "Example")
 \`\`\`
 ```
 
-## Security Guidelines
-
-### 1. Always Use AccessManager
-
-```php
-// Check write access before any write operation
-if (!$this->accessManager->hasWriteAccess()) {
-  return ['success' => FALSE, 'error' => 'Write access denied'];
-}
-
-// Check admin access for dangerous operations
-if (!$this->accessManager->hasAdminAccess()) {
-  return ['success' => FALSE, 'error' => 'Admin access required'];
-}
-```
-
-### 2. Protect Critical Entities
-
-```php
-// Never allow deletion of user 1
-if ($userId === 1) {
-  return ['success' => FALSE, 'error' => 'Cannot modify user 1'];
-}
-
-// Never allow deletion of administrator role
-if ($roleId === 'administrator') {
-  return ['success' => FALSE, 'error' => 'Cannot modify administrator role'];
-}
-```
-
-### 3. Block Dangerous Permissions
-
-```php
-$dangerousPermissions = [
-  'administer permissions',
-  'administer users',
-  'administer modules',
-  'bypass node access',
-];
-
-foreach ($permissions as $permission) {
-  if (in_array($permission, $dangerousPermissions)) {
-    return ['success' => FALSE, 'error' => "Cannot grant: $permission"];
-  }
-}
-```
-
-### 4. Validate Input
-
-```php
-// Validate machine names
-if (!preg_match('/^[a-z][a-z0-9_]*$/', $machineName)) {
-  return ['success' => FALSE, 'error' => 'Invalid machine name format'];
-}
-
-// Validate entity references
-$entity = $this->entityTypeManager->getStorage('node')->load($id);
-if (!$entity) {
-  return ['success' => FALSE, 'error' => 'Entity not found'];
-}
-```
-
-### 5. Log All Operations
-
-```php
-$this->auditLogger->log('operation_type', 'entity_type', $entityId, [
-  'label' => $entity->label(),
-  // Never log passwords or secrets
-]);
-```
-
-### 6. Implement Batch Limits
-
-```php
-// Limit batch operations to prevent timeouts
-$maxItems = 50;
-if (count($items) > $maxItems) {
-  return [
-    'success' => FALSE,
-    'error' => "Maximum $maxItems items per batch",
-  ];
-}
-```
-
 ## Testing
 
 ### Unit Tests
@@ -499,12 +415,14 @@ class YourFeatureIntegrationTest extends KernelTestBase {
 
 ## Submitting Your Contribution
 
-1. Fork the repository
-2. Create a feature branch
-3. Implement your changes following these guidelines
+MCP Tools is a Drupal.org project. Contributions follow the standard Drupal.org workflow:
+
+1. Create an issue in the [MCP Tools issue queue](https://www.drupal.org/project/issues/mcp_tools)
+2. Create a merge request from the issue
+3. Follow the guidelines above in your implementation
 4. Add tests for new functionality
-5. Update documentation (README, CHANGELOG)
-6. Submit a pull request
+5. Update documentation (submodule README, CHANGELOG)
+6. Mark the issue as "Needs review"
 
 ### Checklist
 
@@ -519,4 +437,4 @@ class YourFeatureIntegrationTest extends KernelTestBase {
 
 ## Questions?
 
-Open an issue on the project repository for questions or suggestions.
+Open an issue in the [MCP Tools issue queue](https://www.drupal.org/project/issues/mcp_tools).

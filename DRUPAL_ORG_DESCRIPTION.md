@@ -168,7 +168,7 @@ This module is developed and maintained by [Code Wheel](https://github.com/code-
 
 | Submodule | Tools | Description |
 |-----------|-------|-------------|
-| mcp_tools (base) | 23 | Read-only site status, health, content listing |
+| mcp_tools (base) | 22 | Read-only site status, health, content listing |
 | mcp_tools_mcp_server | 0 | Optional bridge for drupal/mcp_server |
 | mcp_tools_content | 4 | Content CRUD operations |
 | mcp_tools_structure | 12 | Content types, fields, taxonomy, roles |
