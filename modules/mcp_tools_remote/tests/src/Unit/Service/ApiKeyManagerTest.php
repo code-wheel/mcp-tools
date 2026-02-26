@@ -39,6 +39,7 @@ final class ApiKeyManagerTest extends UnitTestCase {
 
     $this->time = $this->createMock(TimeInterface::class);
     $this->time->method('getRequestTime')->willReturn(1700000000);
+    $this->time->method('getCurrentTime')->willReturn(1700000000);
   }
 
   public function testCreateValidateAndList(): void {
@@ -67,6 +68,9 @@ final class ApiKeyManagerTest extends UnitTestCase {
     $now = 1700000000;
     $time = $this->createMock(TimeInterface::class);
     $time->method('getRequestTime')->willReturnCallback(static function () use (&$now): int {
+      return $now;
+    });
+    $time->method('getCurrentTime')->willReturnCallback(static function () use (&$now): int {
       return $now;
     });
 
