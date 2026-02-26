@@ -18,7 +18,7 @@ interface PromptProviderInterface {
    *   description?: string,
    *   icons?: array<int, mixed>|null,
    *   meta?: array<string, mixed>|null,
-   * }>
+   *   }>
    *   Prompt definitions.
    */
   public function getPrompts(): array;

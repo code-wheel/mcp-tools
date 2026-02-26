@@ -193,7 +193,7 @@ class ViewsService {
       $viewOptions['block_items'] = $options['block_items'] ?? 5;
     }
 
-    // Note: createView also checks access, but we check here for early return
+    // Note: createView also checks access, but we check here for early return.
     return $this->createView($id, $label, 'node_field_data', $viewOptions);
   }
 
@@ -502,7 +502,7 @@ class ViewsService {
 
     $fieldList = !empty($requestedFields) ? $requestedFields : $defaultFields;
 
-    foreach ($fieldList as $index => $field) {
+    foreach ($fieldList as $field) {
       $fields[$field] = [
         'id' => $field,
         'table' => $baseTable,

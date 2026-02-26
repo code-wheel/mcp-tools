@@ -62,14 +62,25 @@ class BlockUser extends McpToolsToolBase {
   protected const MCP_CATEGORY = 'users';
 
 
+  /**
+   * The user service.
+   *
+   * @var \Drupal\mcp_tools_users\Service\UserService
+   */
   protected UserService $userService;
 
+  /**
+   * {@inheritdoc}
+   */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     $instance = parent::create($container, $configuration, $plugin_id, $plugin_definition);
     $instance->userService = $container->get('mcp_tools_users.user');
     return $instance;
   }
 
+  /**
+   * {@inheritdoc}
+   */
   protected function executeLegacy(array $input): array {
     $uid = $input['uid'] ?? 0;
 
@@ -79,6 +90,5 @@ class BlockUser extends McpToolsToolBase {
 
     return $this->userService->blockUser((int) $uid);
   }
-
 
 }

@@ -86,6 +86,11 @@ class GenerateAliases extends McpToolsToolBase {
   protected const MCP_WRITE_KIND = 'content';
 
 
+  /**
+   * The pathauto service.
+   *
+   * @var \Drupal\mcp_tools_pathauto\Service\PathautoService
+   */
   protected PathautoService $pathautoService;
 
   /**
@@ -111,9 +116,5 @@ class GenerateAliases extends McpToolsToolBase {
 
     return $this->pathautoService->generateAliases($entityType, $bundle, (bool) $update);
   }
-
-  
-
-  
 
 }

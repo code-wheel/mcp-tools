@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools_remote\Controller;
 
+use Mcp\Server;
 use CodeWheel\McpSecurity\Validation\IpValidator;
 use CodeWheel\McpSecurity\Validation\OriginValidator;
 use Drupal\Core\Config\ConfigFactoryInterface;
@@ -51,6 +52,9 @@ final class McpToolsRemoteController implements ContainerInjectionInterface {
     private readonly LoggerInterface $logger,
   ) {}
 
+  /**
+   * {@inheritdoc}
+   */
   public static function create(ContainerInterface $container): static {
     return new static(
       $container->get('config.factory'),
@@ -83,7 +87,7 @@ final class McpToolsRemoteController implements ContainerInjectionInterface {
       return $securityCheck;
     }
 
-    if (!class_exists(\Mcp\Server::class)) {
+    if (!class_exists(Server::class)) {
       return new Response('Missing dependency: mcp/sdk', 500);
     }
 
@@ -269,6 +273,7 @@ final class McpToolsRemoteController implements ContainerInjectionInterface {
       $serverParams['pagination_limit'],
       $serverParams['include_all_tools'],
       new FileSessionStore(
+        // phpcs:ignore DrupalPractice.Objects.GlobalDrupal.GlobalDrupal
         rtrim(sys_get_temp_dir(), \DIRECTORY_SEPARATOR) . \DIRECTORY_SEPARATOR . 'mcp_tools_remote_sessions_' . substr(hash('sha256', \Drupal::root()), 0, 12),
         3600,
       ),
@@ -338,6 +343,9 @@ final class McpToolsRemoteController implements ContainerInjectionInterface {
     return array_values(array_filter(array_map('trim', $value)));
   }
 
+  /**
+   * Extract Api Key.
+   */
   private function extractApiKey(Request $request): ?string {
     $auth = (string) $request->headers->get('Authorization', '');
     if (str_starts_with($auth, 'Bearer ')) {
@@ -443,6 +451,9 @@ final class McpToolsRemoteController implements ContainerInjectionInterface {
     return NULL;
   }
 
+  /**
+   * Extract Hostname From Header.
+   */
   private function extractHostnameFromHeader(string $value): ?string {
     return (new OriginValidator([]))->extractHostname($value);
   }

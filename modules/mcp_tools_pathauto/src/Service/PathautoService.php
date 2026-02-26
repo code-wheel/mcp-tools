@@ -447,7 +447,7 @@ class PathautoService {
 
     // Extract bundle from selection criteria.
     if (!empty($selectionCriteria)) {
-      foreach ($selectionCriteria as $key => $value) {
+      foreach ($selectionCriteria as $value) {
         if (is_array($value)) {
           $bundles = array_keys($value);
           break;

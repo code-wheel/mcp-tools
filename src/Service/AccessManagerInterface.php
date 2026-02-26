@@ -63,7 +63,7 @@ interface AccessManagerInterface {
   public function isConfigOnlyMode(): bool;
 
   /**
-   * Check if a given write kind is allowed under the current config-only policy.
+   * Check if a given write kind is allowed under config-only policy.
    *
    * @param string $kind
    *   One of: config, content, ops.
@@ -126,9 +126,10 @@ interface AccessManagerInterface {
    * Convenience access check for write/admin tools.
    *
    * @param string $operation
-   *   A high-level operation label (e.g., create, update, delete, clear, admin).
+   *   A high-level operation label
+   *   (e.g., create, update, delete, clear, admin).
    * @param string $entityType
-   *   The entity type being modified (used for context only).
+   *   The entity type being modified (context only).
    *
    * @return array
    *   Array with keys:
@@ -151,7 +152,8 @@ interface AccessManagerInterface {
    * Get access denied response for write operations.
    *
    * @return array
-   *   Error response array with keys: success, error, code, and optionally retry_after.
+   *   Error response array with keys: success, error, code,
+   *   and optionally retry_after.
    */
   public function getWriteAccessDenied(): array;
 

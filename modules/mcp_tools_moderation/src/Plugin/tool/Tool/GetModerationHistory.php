@@ -81,6 +81,11 @@ class GetModerationHistory extends McpToolsToolBase {
   protected const MCP_CATEGORY = 'moderation';
 
 
+  /**
+   * The moderation service.
+   *
+   * @var \Drupal\mcp_tools_moderation\Service\ModerationService
+   */
   protected ModerationService $moderationService;
 
   /**
@@ -106,9 +111,5 @@ class GetModerationHistory extends McpToolsToolBase {
 
     return $this->moderationService->getModerationHistory($entityType, (int) $entityId, (int) $limit);
   }
-
-  
-
-  
 
 }

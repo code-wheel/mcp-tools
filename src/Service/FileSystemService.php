@@ -143,7 +143,8 @@ class FileSystemService {
     $query->leftJoin('file_usage', 'fu', 'fm.fid = fu.fid');
     $query->fields('fm', ['fid']);
     $query->isNull('fu.fid');
-    $query->condition('fm.status', 1); // Only permanent files.
+    // Only permanent files.
+    $query->condition('fm.status', 1);
     $query->range(0, $limit);
 
     $orphanedFids = $query->execute()->fetchCol();

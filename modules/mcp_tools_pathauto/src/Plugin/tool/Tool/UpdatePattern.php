@@ -92,6 +92,11 @@ class UpdatePattern extends McpToolsToolBase {
   protected const MCP_CATEGORY = 'pathauto';
 
 
+  /**
+   * The pathauto service.
+   *
+   * @var \Drupal\mcp_tools_pathauto\Service\PathautoService
+   */
   protected PathautoService $pathautoService;
 
   /**
@@ -137,14 +142,14 @@ class UpdatePattern extends McpToolsToolBase {
     }
 
     if (empty($values)) {
-      return ['success' => FALSE, 'error' => 'At least one field to update is required (label, pattern, weight, status, or bundle).'];
+      return [
+        'success' => FALSE,
+        'error' => 'At least one field to update is required'
+        . ' (label, pattern, weight, status, or bundle).',
+      ];
     }
 
     return $this->pathautoService->updatePattern($id, $values);
   }
-
-  
-
-  
 
 }

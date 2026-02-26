@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools\Service;
 
+use Drupal\field\FieldConfigInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
@@ -60,8 +61,8 @@ class SiteBlueprintService {
       $fields = [];
       $fieldDefinitions = $this->entityFieldManager->getFieldDefinitions('node', $type->id());
       foreach ($fieldDefinitions as $fieldName => $fieldDefinition) {
-        if (interface_exists(\Drupal\field\FieldConfigInterface::class)
-          && !$fieldDefinition instanceof \Drupal\field\FieldConfigInterface) {
+        if (interface_exists(FieldConfigInterface::class)
+          && !$fieldDefinition instanceof FieldConfigInterface) {
           continue;
         }
 
@@ -227,9 +228,13 @@ class SiteBlueprintService {
    * Limits a list to a maximum size.
    *
    * @param array<int, array<string, mixed>> $items
+   *   The items to limit.
    * @param int $limit
+   *   The maximum number of items.
    *
-   * @return array{items: array<int, array<string, mixed>>, total: int, truncated: bool}
+   * @return array{items: array<int, array<string, mixed>>,
+   *   total: int, truncated: bool}
+   *   The limited list with metadata.
    */
   private function limitList(array $items, int $limit): array {
     $total = count($items);

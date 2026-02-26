@@ -14,7 +14,6 @@ use Drupal\Component\Plugin\Exception\PluginException;
 use Drupal\Component\Plugin\PluginManagerInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\tool\Tool\ToolDefinition;
-use Drupal\tool\Tool\ToolInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -30,7 +29,7 @@ class DrupalToolProvider implements ToolProviderInterface {
    *
    * @var array<string, ToolInfo>|null
    */
-  private ?array $toolCache = null;
+  private ?array $toolCache = NULL;
 
   public function __construct(
     private readonly PluginManagerInterface $toolManager,
@@ -44,7 +43,7 @@ class DrupalToolProvider implements ToolProviderInterface {
    * {@inheritdoc}
    */
   public function getTools(): array {
-    if ($this->toolCache !== null) {
+    if ($this->toolCache !== NULL) {
       return $this->toolCache;
     }
 
@@ -85,22 +84,22 @@ class DrupalToolProvider implements ToolProviderInterface {
       }
     }
 
-    return null;
+    return NULL;
   }
 
   /**
    * {@inheritdoc}
    */
-  public function execute(string $toolName, array $arguments, ?ExecutionContext $context = null): ToolResult {
+  public function execute(string $toolName, array $arguments, ?ExecutionContext $context = NULL): ToolResult {
     $toolInfo = $this->getTool($toolName);
-    if ($toolInfo === null) {
+    if ($toolInfo === NULL) {
       throw new ToolNotFoundException("Tool not found: $toolName");
     }
 
     $pluginId = $toolInfo->metadata['plugin_id'] ?? $this->mcpNameToPluginId($toolName);
 
     try {
-      /** @var ToolInterface $plugin */
+      /** @var \Drupal\tool\Tool\ToolInterface $plugin */
       $plugin = $this->toolManager->createInstance($pluginId);
 
       $result = $plugin->execute($arguments);
@@ -203,7 +202,10 @@ class DrupalToolProvider implements ToolProviderInterface {
    * Normalizes an array for structured output.
    *
    * @param array<string, mixed> $data
+   *   The data to normalize.
+   *
    * @return array<string, mixed>
+   *   The normalized data.
    */
   private function normalizeArray(array $data): array {
     $normalized = [];
@@ -238,7 +240,7 @@ class DrupalToolProvider implements ToolProviderInterface {
    * Call this when tool definitions may have changed.
    */
   public function clearCache(): void {
-    $this->toolCache = null;
+    $this->toolCache = NULL;
   }
 
 }

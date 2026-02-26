@@ -92,8 +92,4 @@ class ValidateRecipe extends McpToolsToolBase {
     return $this->recipesService->validateRecipe($recipeName);
   }
 
-  
-
-  
-
 }

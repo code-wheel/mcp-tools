@@ -87,14 +87,25 @@ class AddSection extends McpToolsToolBase {
   protected const MCP_CATEGORY = 'layout_builder';
 
 
+  /**
+   * The layout builder service.
+   *
+   * @var \Drupal\mcp_tools_layout_builder\Service\LayoutBuilderService
+   */
   protected LayoutBuilderService $layoutBuilderService;
 
+  /**
+   * {@inheritdoc}
+   */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     $instance = parent::create($container, $configuration, $plugin_id, $plugin_definition);
     $instance->layoutBuilderService = $container->get('mcp_tools_layout_builder.layout_builder');
     return $instance;
   }
 
+  /**
+   * {@inheritdoc}
+   */
   protected function executeLegacy(array $input): array {
     $entityType = $input['entity_type'] ?? 'node';
     $bundle = $input['bundle'] ?? '';
@@ -106,11 +117,13 @@ class AddSection extends McpToolsToolBase {
     }
 
     if (empty($layoutId)) {
-      return ['success' => FALSE, 'error' => 'Layout ID is required. Use mcp_layout_list_plugins to see available layouts.'];
+      return [
+        'success' => FALSE,
+        'error' => 'Layout ID is required. Use mcp_layout_list_plugins to see available layouts.',
+      ];
     }
 
     return $this->layoutBuilderService->addSection($entityType, $bundle, $layoutId, (int) $delta);
   }
-
 
 }

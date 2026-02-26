@@ -47,6 +47,11 @@ class GetIndexStatus extends McpToolsToolBase {
   protected const MCP_CATEGORY = 'search_api';
 
 
+  /**
+   * The search api service.
+   *
+   * @var \Drupal\mcp_tools_search_api\Service\SearchApiService
+   */
   protected SearchApiService $searchApiService;
 
   /**
@@ -73,9 +78,5 @@ class GetIndexStatus extends McpToolsToolBase {
 
     return $this->searchApiService->getIndexStatus($id);
   }
-
-  
-
-  
 
 }

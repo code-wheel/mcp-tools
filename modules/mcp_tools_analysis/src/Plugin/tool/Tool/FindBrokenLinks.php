@@ -121,8 +121,4 @@ class FindBrokenLinks extends McpToolsToolBase {
     return $this->analysisService->findBrokenLinks($limit, $baseUrl);
   }
 
-  
-
-  
-
 }

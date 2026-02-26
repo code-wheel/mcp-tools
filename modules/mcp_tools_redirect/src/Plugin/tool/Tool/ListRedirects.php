@@ -63,6 +63,11 @@ class ListRedirects extends McpToolsToolBase {
   protected const MCP_CATEGORY = 'redirect';
 
 
+  /**
+   * The redirect service.
+   *
+   * @var \Drupal\mcp_tools_redirect\Service\RedirectService
+   */
   protected RedirectService $redirectService;
 
   /**
@@ -83,9 +88,5 @@ class ListRedirects extends McpToolsToolBase {
 
     return $this->redirectService->listRedirects((int) $limit, (int) $offset);
   }
-
-  
-
-  
 
 }

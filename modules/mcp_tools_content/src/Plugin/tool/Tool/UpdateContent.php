@@ -63,14 +63,25 @@ class UpdateContent extends McpToolsToolBase {
   protected const MCP_CATEGORY = 'content';
 
 
+  /**
+   * The content service.
+   *
+   * @var \Drupal\mcp_tools_content\Service\ContentService
+   */
   protected ContentService $contentService;
 
+  /**
+   * {@inheritdoc}
+   */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     $instance = parent::create($container, $configuration, $plugin_id, $plugin_definition);
     $instance->contentService = $container->get('mcp_tools_content.content');
     return $instance;
   }
 
+  /**
+   * {@inheritdoc}
+   */
   protected function executeLegacy(array $input): array {
     $nid = $input['nid'] ?? 0;
     $updates = $input['updates'] ?? [];
@@ -84,6 +95,5 @@ class UpdateContent extends McpToolsToolBase {
 
     return $this->contentService->updateContent((int) $nid, $updates);
   }
-
 
 }

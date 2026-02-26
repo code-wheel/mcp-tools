@@ -145,7 +145,7 @@ mcp_tools/                        # Base module (25 read-only tools)
 │       └── ErrorFormatter.php    # Standardized error responses
 └── modules/
     ├── mcp_tools_content/        # Content CRUD (4 tools)
-    ├── mcp_tools_structure/      # Content types, fields, taxonomy, roles (12 tools)
+    ├── mcp_tools_structure/      # Content types, fields, taxonomy, roles (20 tools)
     ├── mcp_tools_users/          # User management (5 tools)
     ├── mcp_tools_menus/          # Menu management (5 tools)
     ├── mcp_tools_views/          # Views management (6 tools)
@@ -168,12 +168,13 @@ mcp_tools/                        # Base module (25 read-only tools)
     ├── mcp_tools_pathauto/       # URL aliases (6 tools)
     ├── mcp_tools_redirect/       # URL redirects (7 tools)
     ├── mcp_tools_sitemap/        # XML sitemap (7 tools)
-    ├── mcp_tools_search_api/     # Search API (8 tools)
+    ├── mcp_tools_search_api/     # Search API (9 tools)
     ├── mcp_tools_entity_clone/   # Entity cloning (4 tools)
     ├── mcp_tools_analysis/       # Site analysis (8 tools)
     ├── mcp_tools_batch/          # Bulk operations (6 tools)
     ├── mcp_tools_templates/      # Site templates (5 tools)
-    └── mcp_tools_migration/      # Content migration (7 tools)
+    ├── mcp_tools_migration/      # Content migration (7 tools)
+    └── mcp_tools_jsonapi/        # JSON:API entity CRUD (6 tools)
 ```
 
 Enable submodules as needed:
@@ -287,7 +288,7 @@ Available scopes:
 - `write` - Write operations
 - `admin` - Administrative operations
 
-## Read-Only Tools (22)
+## Read-Only Tools (25)
 
 ### Site Health
 
@@ -320,6 +321,8 @@ Available scopes:
 | `get_config_status` | Config sync status (active vs staged) |
 | `get_config` | View specific configuration object |
 | `list_config` | List config names with optional prefix filter |
+| `list_text_formats` | List all available text formats |
+| `get_text_format` | Get details about a specific text format |
 
 ### Users
 
@@ -342,14 +345,14 @@ Available scopes:
 |------|-------------|
 | `mcp_tools_list_available` | List all available MCP tools by category or search |
 
-## Write Submodules (197 tools across 29 submodules)
+## Write Submodules (197 tools across 30 submodules)
 
 Enable submodules for the capabilities you need. Each submodule's tools are listed in its own `README.md`.
 
 | Submodule | Tools | Description |
 |-----------|------:|-------------|
 | `mcp_tools_content` | 4 | Content CRUD (create, update, delete, publish) |
-| `mcp_tools_structure` | 12 | Content types, fields, vocabularies, roles, permissions |
+| `mcp_tools_structure` | 20 | Content types, fields, vocabularies, roles, permissions |
 | `mcp_tools_users` | 5 | User accounts, roles, blocking |
 | `mcp_tools_menus` | 5 | Menus and menu links |
 | `mcp_tools_views` | 6 | Views creation and management |
@@ -371,12 +374,13 @@ Enable submodules for the capabilities you need. Each submodule's tools are list
 | `mcp_tools_pathauto` | 6 | URL alias patterns (requires `pathauto`) |
 | `mcp_tools_redirect` | 7 | URL redirects (requires `redirect`) |
 | `mcp_tools_sitemap` | 7 | XML sitemap management (requires `simple_sitemap`) |
-| `mcp_tools_search_api` | 8 | Search indexes and servers (requires `search_api`) |
+| `mcp_tools_search_api` | 9 | Search indexes and servers (requires `search_api`) |
 | `mcp_tools_entity_clone` | 4 | Entity cloning (requires `entity_clone`) |
 | `mcp_tools_analysis` | 8 | SEO, security, accessibility, performance audits |
 | `mcp_tools_batch` | 6 | Bulk content operations (max 50 items/batch) |
 | `mcp_tools_templates` | 5 | Site templates (blog, portfolio, business, docs) |
 | `mcp_tools_migration` | 7 | CSV/JSON import and export (max 100 items) |
+| `mcp_tools_jsonapi` | 6 | Generic entity CRUD via JSON:API (requires `jsonapi`) |
 
 **Safety built in:** uid 1 protected, administrator role unassignable, system menus/views/themes guarded, dangerous permissions blocked, batch limits enforced, base64 uploads capped.
 

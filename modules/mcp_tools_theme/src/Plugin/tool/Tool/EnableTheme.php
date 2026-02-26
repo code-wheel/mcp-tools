@@ -62,14 +62,25 @@ class EnableTheme extends McpToolsToolBase {
   protected const MCP_CATEGORY = 'theme';
 
 
+  /**
+   * The theme service.
+   *
+   * @var \Drupal\mcp_tools_theme\Service\ThemeService
+   */
   protected ThemeService $themeService;
 
+  /**
+   * {@inheritdoc}
+   */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     $instance = parent::create($container, $configuration, $plugin_id, $plugin_definition);
     $instance->themeService = $container->get('mcp_tools_theme.theme');
     return $instance;
   }
 
+  /**
+   * {@inheritdoc}
+   */
   protected function executeLegacy(array $input): array {
     $theme = $input['theme'] ?? '';
 
@@ -79,6 +90,5 @@ class EnableTheme extends McpToolsToolBase {
 
     return $this->themeService->enableTheme($theme);
   }
-
 
 }

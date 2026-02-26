@@ -78,14 +78,25 @@ class GetVocabulary extends McpToolsToolBase {
 
   protected const MCP_CATEGORY = 'structure';
 
+  /**
+   * The taxonomy service.
+   *
+   * @var \Drupal\mcp_tools_structure\Service\TaxonomyManagementService
+   */
   protected TaxonomyManagementService $taxonomyService;
 
+  /**
+   * {@inheritdoc}
+   */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     $instance = parent::create($container, $configuration, $plugin_id, $plugin_definition);
     $instance->taxonomyService = $container->get('mcp_tools_structure.taxonomy');
     return $instance;
   }
 
+  /**
+   * {@inheritdoc}
+   */
   protected function executeLegacy(array $input): array {
     $id = $input['id'] ?? '';
     $limit = (int) ($input['limit'] ?? 100);

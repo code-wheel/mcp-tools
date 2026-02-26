@@ -52,7 +52,10 @@ class BlockService {
     // Validate the block plugin exists.
     $definitions = $this->blockManager->getDefinitions();
     if (!isset($definitions[$pluginId])) {
-      return ['success' => FALSE, 'error' => "Block plugin '$pluginId' not found. Use mcp_list_block_plugins to see available block types."];
+      return [
+        'success' => FALSE,
+        'error' => "Block plugin '$pluginId' not found. Use mcp_list_block_plugins to see available block types.",
+      ];
     }
 
     // Determine theme.

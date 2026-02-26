@@ -9,7 +9,7 @@ use Drupal\Core\Config\StorageInterface;
 /**
  * Service for previewing configuration operations before execution.
  *
- * Provides dry-run capabilities for various configuration management operations.
+ * Provides dry-run capabilities for configuration management operations.
  */
 class OperationPreviewService {
 
@@ -139,7 +139,7 @@ class OperationPreviewService {
             "Configuration '%s' would be deleted. WARNING: %d dependent configs may be affected.",
             $configName,
             count($dependents)
-          ),
+        ),
       ],
     ];
   }
@@ -435,7 +435,7 @@ class OperationPreviewService {
           : sprintf(
             "Would create %s field '$fullFieldName' on $entityType.$bundle.",
             $storageExists ? 'instance of existing' : 'new'
-          ),
+        ),
       ],
     ];
   }

@@ -92,8 +92,4 @@ class PreviewTemplate extends McpToolsToolBase {
     return $this->templateService->previewTemplate($templateId);
   }
 
-  
-
-  
-
 }

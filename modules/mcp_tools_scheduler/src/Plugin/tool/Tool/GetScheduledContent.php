@@ -25,7 +25,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'type' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Schedule Type'),
-      description: new TranslatableMarkup('Filter by schedule type: \'publish\', \'unpublish\', or \'all\''),
+      description: new TranslatableMarkup("Filter by schedule type: 'publish', 'unpublish', or 'all'"),
       required: FALSE,
       default_value: 'all',
     ),
@@ -60,6 +60,11 @@ class GetScheduledContent extends McpToolsToolBase {
   protected const MCP_CATEGORY = 'scheduler';
 
 
+  /**
+   * The scheduler service.
+   *
+   * @var \Drupal\mcp_tools_scheduler\Service\SchedulerService
+   */
   protected SchedulerService $schedulerService;
 
   /**
@@ -88,9 +93,5 @@ class GetScheduledContent extends McpToolsToolBase {
 
     return $this->schedulerService->getScheduledContent($type, $limit);
   }
-
-  
-
-  
 
 }

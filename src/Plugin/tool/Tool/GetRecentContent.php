@@ -96,8 +96,4 @@ class GetRecentContent extends McpToolsToolBase {
     ];
   }
 
-  
-
-  
-
 }

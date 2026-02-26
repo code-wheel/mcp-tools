@@ -30,6 +30,9 @@ final class ToolExecutionLogSubscriber implements EventSubscriberInterface {
     ];
   }
 
+  /**
+   * Handles started.
+   */
   public function onStarted(ToolExecutionStartedEvent $event): void {
     $this->logger->debug('MCP tool execution started: @tool', [
       '@tool' => $event->toolName,
@@ -41,6 +44,9 @@ final class ToolExecutionLogSubscriber implements EventSubscriberInterface {
     ]);
   }
 
+  /**
+   * Handles succeeded.
+   */
   public function onSucceeded(ToolExecutionSucceededEvent $event): void {
     $this->logger->info('MCP tool execution succeeded: @tool (@duration_ms ms)', [
       '@tool' => $event->toolName,
@@ -54,6 +60,9 @@ final class ToolExecutionLogSubscriber implements EventSubscriberInterface {
     ]);
   }
 
+  /**
+   * Handles failed.
+   */
   public function onFailed(ToolExecutionFailedEvent $event): void {
     $context = [
       '@tool' => $event->toolName,

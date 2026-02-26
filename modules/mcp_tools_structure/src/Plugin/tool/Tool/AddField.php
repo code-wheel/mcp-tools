@@ -120,14 +120,25 @@ class AddField extends McpToolsToolBase {
   protected const MCP_CATEGORY = 'structure';
 
 
+  /**
+   * The field service.
+   *
+   * @var \Drupal\mcp_tools_structure\Service\FieldService
+   */
   protected FieldService $fieldService;
 
+  /**
+   * {@inheritdoc}
+   */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     $instance = parent::create($container, $configuration, $plugin_id, $plugin_definition);
     $instance->fieldService = $container->get('mcp_tools_structure.field');
     return $instance;
   }
 
+  /**
+   * {@inheritdoc}
+   */
   protected function executeLegacy(array $input): array {
     $entityType = $input['entity_type'] ?? 'node';
     $bundle = $input['bundle'] ?? '';
@@ -140,15 +151,26 @@ class AddField extends McpToolsToolBase {
     }
 
     $options = [];
-    if (isset($input['required'])) $options['required'] = $input['required'];
-    if (isset($input['description'])) $options['description'] = $input['description'];
-    if (isset($input['cardinality'])) $options['cardinality'] = $input['cardinality'];
-    if (isset($input['target_type'])) $options['target_type'] = $input['target_type'];
-    if (isset($input['target_bundles'])) $options['target_bundles'] = $input['target_bundles'];
-    if (isset($input['allowed_values'])) $options['allowed_values'] = $input['allowed_values'];
+    if (isset($input['required'])) {
+      $options['required'] = $input['required'];
+    }
+    if (isset($input['description'])) {
+      $options['description'] = $input['description'];
+    }
+    if (isset($input['cardinality'])) {
+      $options['cardinality'] = $input['cardinality'];
+    }
+    if (isset($input['target_type'])) {
+      $options['target_type'] = $input['target_type'];
+    }
+    if (isset($input['target_bundles'])) {
+      $options['target_bundles'] = $input['target_bundles'];
+    }
+    if (isset($input['allowed_values'])) {
+      $options['allowed_values'] = $input['allowed_values'];
+    }
 
     return $this->fieldService->addField($entityType, $bundle, $fieldName, $fieldType, $label, $options);
   }
-
 
 }

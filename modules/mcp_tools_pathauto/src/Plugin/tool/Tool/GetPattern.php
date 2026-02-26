@@ -72,6 +72,11 @@ class GetPattern extends McpToolsToolBase {
   protected const MCP_CATEGORY = 'pathauto';
 
 
+  /**
+   * The pathauto service.
+   *
+   * @var \Drupal\mcp_tools_pathauto\Service\PathautoService
+   */
   protected PathautoService $pathautoService;
 
   /**
@@ -95,9 +100,5 @@ class GetPattern extends McpToolsToolBase {
 
     return $this->pathautoService->getPattern($id);
   }
-
-  
-
-  
 
 }

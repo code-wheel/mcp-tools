@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools\Mcp;
 
-use CodeWheel\McpToolGateway\ToolInfo;
 use Drupal\Component\Plugin\PluginManagerInterface;
 use Drupal\mcp_tools\Mcp\Error\ToolErrorHandlerInterface;
 use Mcp\Schema\Content\TextContent;
@@ -26,7 +25,17 @@ class ToolApiGateway {
   public const GET_INFO_TOOL = 'mcp_tools/get-tool-info';
   public const EXECUTE_TOOL = 'mcp_tools/execute-tool';
 
+  /**
+   * The tool executor.
+   *
+   * @var ToolApiCallToolHandler
+   */
   private ToolApiCallToolHandler $toolExecutor;
+  /**
+   * The tool provider.
+   *
+   * @var DrupalToolProvider
+   */
   private DrupalToolProvider $toolProvider;
 
   public function __construct(
@@ -76,7 +85,7 @@ class ToolApiGateway {
    *   description: string,
    *   annotations: \Mcp\Schema\ToolAnnotations,
    *   inputSchema: array<string, mixed>,
-   * }>
+   *   }>
    */
   public function getGatewayTools(): array {
     return [
@@ -151,7 +160,7 @@ class ToolApiGateway {
     $tools = [];
     $query = $query !== NULL ? trim($query) : NULL;
 
-    /** @var ToolInfo $toolInfo */
+    /** @var \CodeWheel\McpToolGateway\ToolInfo $toolInfo */
     foreach ($allTools as $toolInfo) {
       if ($query !== NULL && $query !== '') {
         $haystack = strtolower($toolInfo->name . ' ' . $toolInfo->label . ' ' . $toolInfo->description);
@@ -226,7 +235,10 @@ class ToolApiGateway {
   /**
    * Creates a tool error result.
    *
+   * @param string $message
+   *   The error message.
    * @param array<string, mixed> $structured
+   *   The structured error data.
    */
   private function errorResult(string $message, array $structured = []): CallToolResult {
     $payload = ['success' => FALSE, 'error' => $message] + $structured;
@@ -238,9 +250,12 @@ class ToolApiGateway {
    * Builds a simple JSON schema for gateway tools.
    *
    * @param array<string, mixed> $properties
+   *   The schema properties.
    * @param string[] $required
+   *   The required property names.
    *
    * @return array<string, mixed>
+   *   The JSON schema.
    */
   private function buildSchema(array $properties, array $required = []): array {
     $schema = [

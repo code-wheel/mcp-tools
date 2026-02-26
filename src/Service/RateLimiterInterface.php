@@ -10,7 +10,7 @@ namespace Drupal\mcp_tools\Service;
  * Provides configurable rate limiting to prevent abuse:
  * - Per-minute limits
  * - Per-hour limits
- * - Per-operation type limits
+ * - Per-operation type limits.
  */
 interface RateLimiterInterface {
 

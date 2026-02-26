@@ -15,11 +15,13 @@ use Symfony\Component\HttpFoundation\Request;
 /**
  * Loads MCP server profiles from configuration.
  *
- * Note: This class injects ContainerInterface to resolve dynamic permission
- * callback references from configuration (e.g., 'mcp_tools.access_manager:checkAccess').
- * This is intentional - the service locator pattern is necessary here because
- * callback services are configured dynamically and can't be known at compile time.
- * This is similar to how Drupal's plugin managers resolve tagged services.
+ * Note: This class injects ContainerInterface to resolve dynamic
+ * permission callback references from configuration (e.g.,
+ * 'mcp_tools.access_manager:checkAccess'). This is intentional -
+ * the service locator pattern is necessary here because callback
+ * services are configured dynamically and can't be known at
+ * compile time. This is similar to how Drupal's plugin managers
+ * resolve tagged services.
  */
 class ServerConfigRepository {
 
@@ -112,7 +114,7 @@ class ServerConfigRepository {
     }
 
     $first = array_key_first($servers);
-    return $first !== NULL ? $first : self::DEFAULT_SERVER_ID;
+    return $first ?? self::DEFAULT_SERVER_ID;
   }
 
   /**
@@ -173,9 +175,13 @@ class ServerConfigRepository {
   /**
    * Normalize and apply defaults to a server config.
    *
+   * @param string $serverId
+   *   The server ID.
    * @param array<string, mixed> $server
+   *   The server configuration.
    *
    * @return array<string, mixed>
+   *   The normalized server configuration.
    */
   private function applyDefaults(string $serverId, array $server): array {
     $merged = array_merge(self::DEFAULTS, $server);
@@ -198,8 +204,10 @@ class ServerConfigRepository {
    * Normalize scope configuration.
    *
    * @param mixed $scopes
+   *   The scopes.
    *
    * @return string[]
+   *   The result.
    */
   private function normalizeScopes(mixed $scopes): array {
     if (is_string($scopes)) {
@@ -219,8 +227,10 @@ class ServerConfigRepository {
    * Normalize transport configuration.
    *
    * @param mixed $transports
+   *   The transports.
    *
    * @return string[]
+   *   The result.
    */
   private function normalizeTransports(mixed $transports): array {
     if (is_string($transports)) {
@@ -304,7 +314,11 @@ class ServerConfigRepository {
    * Invoke a permission callback with supported arguments.
    *
    * @param callable $callback
+   *   The callback.
+   * @param \Symfony\Component\HttpFoundation\Request|null $request
+   *   The current request.
    * @param array<string, mixed> $serverConfig
+   *   The server configuration.
    */
   private function invokePermissionCallback(callable $callback, ?Request $request, array $serverConfig): mixed {
     $reflection = $this->getCallbackReflection($callback);

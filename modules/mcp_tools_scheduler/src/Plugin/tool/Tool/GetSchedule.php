@@ -25,7 +25,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'entity_type' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Entity Type'),
-      description: new TranslatableMarkup('The entity type (currently only \'node\' is supported)'),
+      description: new TranslatableMarkup("The entity type (currently only 'node' is supported)"),
       required: FALSE,
       default_value: 'node',
     ),
@@ -84,6 +84,11 @@ class GetSchedule extends McpToolsToolBase {
   protected const MCP_CATEGORY = 'scheduler';
 
 
+  /**
+   * The scheduler service.
+   *
+   * @var \Drupal\mcp_tools_scheduler\Service\SchedulerService
+   */
   protected SchedulerService $schedulerService;
 
   /**
@@ -108,9 +113,5 @@ class GetSchedule extends McpToolsToolBase {
 
     return $this->schedulerService->getSchedule($entityType, (int) $entityId);
   }
-
-  
-
-  
 
 }

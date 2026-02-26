@@ -10,6 +10,8 @@ namespace Drupal\mcp_tools\Mcp\Prompt;
 class PromptRegistry {
 
   /**
+   * {@inheritdoc}
+   *
    * @var \Drupal\mcp_tools\Mcp\Prompt\PromptProviderInterface[]
    */
   private array $providers = [];
@@ -22,6 +24,8 @@ class PromptRegistry {
   private ?array $cache = NULL;
 
   /**
+   * Constructs a new instance.
+   *
    * @param iterable<\Drupal\mcp_tools\Mcp\Prompt\PromptProviderInterface> $providers
    *   Tagged prompt providers.
    */

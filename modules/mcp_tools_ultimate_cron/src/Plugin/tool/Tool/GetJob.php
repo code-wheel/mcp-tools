@@ -105,8 +105,4 @@ class GetJob extends McpToolsToolBase {
     return $this->ultimateCronService->getJob($id);
   }
 
-  
-
-  
-
 }

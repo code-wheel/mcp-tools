@@ -11,7 +11,6 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
 use Drupal\tool\Tool\ToolOperation;
-use Drupal\tool\TypedData\InputDefinition;
 
 /**
  * Tool plugin implementation.
@@ -40,6 +39,11 @@ class ListServers extends McpToolsToolBase {
   protected const MCP_CATEGORY = 'search_api';
 
 
+  /**
+   * The search api service.
+   *
+   * @var \Drupal\mcp_tools_search_api\Service\SearchApiService
+   */
   protected SearchApiService $searchApiService;
 
   /**
@@ -57,9 +61,5 @@ class ListServers extends McpToolsToolBase {
   protected function executeLegacy(array $input): array {
     return $this->searchApiService->listServers();
   }
-
-  
-
-  
 
 }

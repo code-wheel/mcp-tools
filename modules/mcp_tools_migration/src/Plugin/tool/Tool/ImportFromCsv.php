@@ -90,6 +90,11 @@ class ImportFromCsv extends McpToolsToolBase {
   protected const MCP_CATEGORY = 'migration';
 
 
+  /**
+   * The migration service.
+   *
+   * @var \Drupal\mcp_tools_migration\Service\MigrationService
+   */
   protected MigrationService $migrationService;
 
   /**
@@ -119,9 +124,5 @@ class ImportFromCsv extends McpToolsToolBase {
 
     return $this->migrationService->importFromCsv($contentType, $csvData, $fieldMapping);
   }
-
-  
-
-  
 
 }

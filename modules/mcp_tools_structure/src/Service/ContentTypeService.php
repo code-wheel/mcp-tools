@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools_structure\Service;
 
+use Drupal\field\FieldConfigInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
@@ -42,7 +43,7 @@ class ContentTypeService {
           ->getFieldDefinitions('node', $nodeType->id());
         // Filter to only configurable fields (exclude base fields).
         $customFields = array_filter($fieldDefinitions, function ($field) {
-          return $field instanceof \Drupal\field\FieldConfigInterface;
+          return $field instanceof FieldConfigInterface;
         });
 
         // Count content of this type.
@@ -108,7 +109,7 @@ class ContentTypeService {
       $fields = [];
       foreach ($fieldDefinitions as $fieldName => $field) {
         // Include configurable fields only.
-        if ($field instanceof \Drupal\field\FieldConfigInterface) {
+        if ($field instanceof FieldConfigInterface) {
           $fieldInfo = [
             'name' => $fieldName,
             'label' => $field->getLabel(),

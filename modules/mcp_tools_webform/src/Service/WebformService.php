@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools_webform\Service;
 
+use Drupal\Component\Serialization\Yaml;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AuditLogger;
@@ -488,7 +489,7 @@ class WebformService {
       $yamlElements[$key] = $yamlElement;
     }
 
-    return \Drupal\Component\Serialization\Yaml::encode($yamlElements);
+    return Yaml::encode($yamlElements);
   }
 
 }

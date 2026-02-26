@@ -58,6 +58,11 @@ class DeleteWebform extends McpToolsToolBase {
   protected const MCP_CATEGORY = 'webform';
 
 
+  /**
+   * The webform service.
+   *
+   * @var \Drupal\mcp_tools_webform\Service\WebformService
+   */
   protected WebformService $webformService;
 
   /**
@@ -81,9 +86,5 @@ class DeleteWebform extends McpToolsToolBase {
 
     return $this->webformService->deleteWebform($id);
   }
-
-  
-
-  
 
 }

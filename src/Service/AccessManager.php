@@ -49,10 +49,10 @@ class AccessManager implements AccessManagerInterface {
   }
 
   /**
-   * Check if a given write kind is allowed under the current config-only policy.
+   * Check if a write kind is allowed under config-only policy.
    *
-   * When config-only mode is disabled, all write kinds are allowed (subject to
-   * scopes/read-only mode and tool permissions).
+   * When config-only mode is disabled, all write kinds are allowed
+   * (subject to scopes/read-only mode and tool permissions).
    *
    * @param string $kind
    *   One of: config, content, ops.
@@ -268,9 +268,10 @@ class AccessManager implements AccessManagerInterface {
    * Some submodules call this helper to return a normalized access result.
    *
    * @param string $operation
-   *   A high-level operation label (e.g., create, update, delete, clear, admin).
+   *   A high-level operation label
+   *   (e.g., create, update, delete, clear, admin).
    * @param string $entityType
-   *   The entity type being modified (used for context only).
+   *   The entity type being modified (context only).
    *
    * @return array
    *   Array with keys:

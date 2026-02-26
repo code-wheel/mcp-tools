@@ -32,7 +32,22 @@ class SettingsForm extends ConfigFormBase {
   public function buildForm(array $form, FormStateInterface $form_state): array {
     $config = $this->config('mcp_tools.settings');
 
-    // Mode selector at the top.
+    $this->buildModeSection($form, $config);
+    $this->buildAccessSection($form, $config);
+    $this->buildRateLimitingSection($form, $config);
+    $this->buildReadLimitsSection($form, $config);
+    $this->buildOutputSection($form, $config);
+    $this->buildSsrfSection($form, $config);
+    $this->buildWebhooksSection($form, $config);
+    $this->buildProductionWarning($form);
+
+    return parent::buildForm($form, $form_state);
+  }
+
+  /**
+   * Build the mode selector section.
+   */
+  private function buildModeSection(array &$form, $config): void {
     $form['mode'] = [
       '#type' => 'select',
       '#title' => $this->t('Configuration Mode'),
@@ -50,15 +65,19 @@ class SettingsForm extends ConfigFormBase {
     $form['mode_description'] = [
       '#type' => 'markup',
       '#markup' => '<div class="description">' .
-        '<strong>' . $this->t('Mode presets:') . '</strong><br>' .
-        '<em>' . $this->t('Development:') . '</em> ' . $this->t('Read + Write scopes, no rate limiting, no audit logging. Best for local development.') . '<br>' .
-        '<em>' . $this->t('Staging:') . '</em> ' . $this->t('Config-only mode (no content writes), rate limiting enabled, audit logging enabled.') . '<br>' .
-        '<em>' . $this->t('Production:') . '</em> ' . $this->t('Read-only mode, strict rate limits, audit logging enabled. Safest for production.') .
-        '</div>',
+      '<strong>' . $this->t('Mode presets:') . '</strong><br>' .
+      '<em>' . $this->t('Development:') . '</em> ' . $this->t('Read + Write scopes, no rate limiting, no audit logging. Best for local development.') . '<br>' .
+      '<em>' . $this->t('Staging:') . '</em> ' . $this->t('Config-only mode (no content writes), rate limiting enabled, audit logging enabled.') . '<br>' .
+      '<em>' . $this->t('Production:') . '</em> ' . $this->t('Read-only mode, strict rate limits, audit logging enabled. Safest for production.') .
+      '</div>',
       '#weight' => -199,
     ];
+  }
 
-    // Access Control section.
+  /**
+   * Build the access control section.
+   */
+  private function buildAccessSection(array &$form, $config): void {
     $form['access'] = [
       '#type' => 'details',
       '#title' => $this->t('Access Control'),
@@ -147,8 +166,12 @@ class SettingsForm extends ConfigFormBase {
       '#description' => $this->t('Log all MCP operations to the watchdog. Recommended for security auditing.'),
       '#default_value' => $config->get('access.audit_logging') ?? TRUE,
     ];
+  }
 
-    // Rate Limiting section.
+  /**
+   * Build the rate limiting section.
+   */
+  private function buildRateLimitingSection(array &$form, $config): void {
     $form['rate_limiting'] = [
       '#type' => 'details',
       '#title' => $this->t('Rate Limiting'),
@@ -175,63 +198,52 @@ class SettingsForm extends ConfigFormBase {
       ],
     ];
 
-    $form['rate_limiting']['max_writes_per_minute'] = [
-      '#type' => 'number',
-      '#title' => $this->t('Maximum writes per minute'),
-      '#description' => $this->t('Maximum write operations allowed per minute per client.'),
-      '#default_value' => $config->get('rate_limiting.max_writes_per_minute') ?? 30,
-      '#min' => 1,
-      '#max' => 1000,
-      '#states' => [
-        'visible' => [
-          ':input[name="rate_limiting_enabled"]' => ['checked' => TRUE],
-        ],
+    $rateLimitFields = [
+      'max_writes_per_minute' => [
+        'Maximum writes per minute',
+        'Maximum write operations allowed per minute per client.',
+        30, 1, 1000,
+      ],
+      'max_writes_per_hour' => [
+        'Maximum writes per hour',
+        'Maximum write operations allowed per hour per client.',
+        500, 1, 10000,
+      ],
+      'max_deletes_per_hour' => [
+        'Maximum deletes per hour',
+        'Maximum delete operations allowed per hour per client. Delete operations are more dangerous.',
+        50, 1, 1000,
+      ],
+      'max_structure_changes_per_hour' => [
+        'Maximum structure changes per hour',
+        'Maximum structural changes (content types, fields, roles) per hour. These affect site architecture.',
+        100, 1, 1000,
       ],
     ];
 
-    $form['rate_limiting']['max_writes_per_hour'] = [
-      '#type' => 'number',
-      '#title' => $this->t('Maximum writes per hour'),
-      '#description' => $this->t('Maximum write operations allowed per hour per client.'),
-      '#default_value' => $config->get('rate_limiting.max_writes_per_hour') ?? 500,
-      '#min' => 1,
-      '#max' => 10000,
-      '#states' => [
-        'visible' => [
-          ':input[name="rate_limiting_enabled"]' => ['checked' => TRUE],
+    foreach ($rateLimitFields as $key => [$title, $desc, $default, $min, $max]) {
+      $form['rate_limiting'][$key] = [
+        '#type' => 'number',
+        // phpcs:ignore Drupal.Semantics.FunctionT.NotLiteralString
+        '#title' => $this->t($title),
+        // phpcs:ignore Drupal.Semantics.FunctionT.NotLiteralString
+        '#description' => $this->t($desc),
+        '#default_value' => $config->get('rate_limiting.' . $key) ?? $default,
+        '#min' => $min,
+        '#max' => $max,
+        '#states' => [
+          'visible' => [
+            ':input[name="rate_limiting_enabled"]' => ['checked' => TRUE],
+          ],
         ],
-      ],
-    ];
+      ];
+    }
+  }
 
-    $form['rate_limiting']['max_deletes_per_hour'] = [
-      '#type' => 'number',
-      '#title' => $this->t('Maximum deletes per hour'),
-      '#description' => $this->t('Maximum delete operations allowed per hour per client. Delete operations are more dangerous.'),
-      '#default_value' => $config->get('rate_limiting.max_deletes_per_hour') ?? 50,
-      '#min' => 1,
-      '#max' => 1000,
-      '#states' => [
-        'visible' => [
-          ':input[name="rate_limiting_enabled"]' => ['checked' => TRUE],
-        ],
-      ],
-    ];
-
-    $form['rate_limiting']['max_structure_changes_per_hour'] = [
-      '#type' => 'number',
-      '#title' => $this->t('Maximum structure changes per hour'),
-      '#description' => $this->t('Maximum structural changes (content types, fields, roles) per hour. These affect site architecture.'),
-      '#default_value' => $config->get('rate_limiting.max_structure_changes_per_hour') ?? 100,
-      '#min' => 1,
-      '#max' => 1000,
-      '#states' => [
-        'visible' => [
-          ':input[name="rate_limiting_enabled"]' => ['checked' => TRUE],
-        ],
-      ],
-    ];
-
-    // Read Operation Rate Limits.
+  /**
+   * Build the read operation limits section.
+   */
+  private function buildReadLimitsSection(array &$form, $config): void {
     $form['rate_limits'] = [
       '#type' => 'details',
       '#title' => $this->t('Read Operation Limits'),
@@ -262,8 +274,12 @@ class SettingsForm extends ConfigFormBase {
       '#min' => 1,
       '#max' => 100,
     ];
+  }
 
-    // Output Settings.
+  /**
+   * Build the output settings section.
+   */
+  private function buildOutputSection(array &$form, $config): void {
     $form['output'] = [
       '#type' => 'details',
       '#title' => $this->t('Output Settings'),
@@ -285,8 +301,12 @@ class SettingsForm extends ConfigFormBase {
       '#description' => $this->t('<strong>Warning:</strong> When enabled, some tools may expose sensitive configuration values. Only enable for trusted environments.'),
       '#default_value' => $config->get('output.include_sensitive') ?? FALSE,
     ];
+  }
 
-    // SSRF Protection.
+  /**
+   * Build the SSRF protection section.
+   */
+  private function buildSsrfSection(array &$form, $config): void {
     $form['ssrf'] = [
       '#type' => 'details',
       '#title' => $this->t('SSRF Protection'),
@@ -301,8 +321,12 @@ class SettingsForm extends ConfigFormBase {
       '#default_value' => implode("\n", $config->get('allowed_hosts') ?? ['localhost', '*.local']),
       '#rows' => 5,
     ];
+  }
 
-    // Webhook Notifications.
+  /**
+   * Build the webhooks section.
+   */
+  private function buildWebhooksSection(array &$form, $config): void {
     $form['webhooks'] = [
       '#type' => 'details',
       '#title' => $this->t('Webhook Notifications'),
@@ -316,11 +340,7 @@ class SettingsForm extends ConfigFormBase {
       '#default_value' => $config->get('webhooks.enabled') ?? FALSE,
     ];
 
-    $form['webhooks']['webhook_url'] = [
-      '#type' => 'url',
-      '#title' => $this->t('Webhook URL'),
-      '#description' => $this->t('URL to POST notifications to. Must be HTTPS in production.'),
-      '#default_value' => $config->get('webhooks.url') ?? '',
+    $webhookVisible = [
       '#states' => [
         'visible' => [
           ':input[name="webhooks_enabled"]' => ['checked' => TRUE],
@@ -328,17 +348,19 @@ class SettingsForm extends ConfigFormBase {
       ],
     ];
 
+    $form['webhooks']['webhook_url'] = [
+      '#type' => 'url',
+      '#title' => $this->t('Webhook URL'),
+      '#description' => $this->t('URL to POST notifications to. Must be HTTPS in production.'),
+      '#default_value' => $config->get('webhooks.url') ?? '',
+    ] + $webhookVisible;
+
     $form['webhooks']['webhook_secret'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Webhook secret'),
       '#description' => $this->t('Secret for HMAC-SHA256 signing. The signature is sent in the X-MCP-Signature header.'),
       '#default_value' => $config->get('webhooks.secret') ?? '',
-      '#states' => [
-        'visible' => [
-          ':input[name="webhooks_enabled"]' => ['checked' => TRUE],
-        ],
-      ],
-    ];
+    ] + $webhookVisible;
 
     $form['webhooks']['webhook_allowed_hosts'] = [
       '#type' => 'textarea',
@@ -346,12 +368,7 @@ class SettingsForm extends ConfigFormBase {
       '#description' => $this->t('One host pattern per line (e.g., hooks.slack.com, *.example.com). When empty, any public host is allowed. Private networks and metadata services are always blocked.'),
       '#default_value' => implode("\n", $config->get('webhooks.allowed_hosts') ?? []),
       '#rows' => 4,
-      '#states' => [
-        'visible' => [
-          ':input[name="webhooks_enabled"]' => ['checked' => TRUE],
-        ],
-      ],
-    ];
+    ] + $webhookVisible;
 
     $form['webhooks']['webhook_timeout'] = [
       '#type' => 'number',
@@ -359,24 +376,14 @@ class SettingsForm extends ConfigFormBase {
       '#default_value' => $config->get('webhooks.timeout') ?? 5,
       '#min' => 1,
       '#max' => 30,
-      '#states' => [
-        'visible' => [
-          ':input[name="webhooks_enabled"]' => ['checked' => TRUE],
-        ],
-      ],
-    ];
+    ] + $webhookVisible;
 
     $form['webhooks']['batch_notifications'] = [
       '#type' => 'checkbox',
       '#title' => $this->t('Batch notifications'),
       '#description' => $this->t('Queue notifications and send in batches for better performance.'),
       '#default_value' => $config->get('webhooks.batch_notifications') ?? TRUE,
-      '#states' => [
-        'visible' => [
-          ':input[name="webhooks_enabled"]' => ['checked' => TRUE],
-        ],
-      ],
-    ];
+    ] + $webhookVisible;
 
     $form['webhooks']['notify_on'] = [
       '#type' => 'checkboxes',
@@ -388,39 +395,39 @@ class SettingsForm extends ConfigFormBase {
         'structure' => $this->t('Structure - Content types, fields, roles changed'),
       ],
       '#default_value' => $config->get('webhooks.notify_on') ?? ['create', 'update', 'delete', 'structure'],
-      '#states' => [
-        'visible' => [
-          ':input[name="webhooks_enabled"]' => ['checked' => TRUE],
-        ],
-      ],
-    ];
+    ] + $webhookVisible;
+  }
 
-    // Production Warning.
+  /**
+   * Build the production warning section.
+   */
+  private function buildProductionWarning(array &$form): void {
     $form['production_warning'] = [
       '#type' => 'markup',
       '#markup' => '<div class="messages messages--warning">' .
-        '<h3>' . $this->t('Production Environment Warning') . '</h3>' .
-        '<p>' . $this->t('MCP Tools is designed primarily for <strong>local development and prototyping</strong>. If you must use it in production:') . '</p>' .
-        '<ul>' .
-        '<li>' . $this->t('Enable read-only mode') . '</li>' .
-        '<li>' . $this->t('Or enable config-only mode') . '</li>' .
-        '<li>' . $this->t('Enable rate limiting') . '</li>' .
-        '<li>' . $this->t('Enable audit logging') . '</li>' .
-        '<li>' . $this->t('Restrict default scopes to "read" only') . '</li>' .
-        '<li>' . $this->t('Use IP allowlisting at the web server level') . '</li>' .
-        '<li>' . $this->t('Monitor audit logs regularly') . '</li>' .
-        '</ul>' .
-        '</div>',
+      '<h3>' . $this->t('Production Environment Warning') . '</h3>' .
+      '<p>' . $this->t('MCP Tools is designed primarily for <strong>local development and prototyping</strong>. If you must use it in production:') . '</p>' .
+      '<ul>' .
+      '<li>' . $this->t('Enable read-only mode') . '</li>' .
+      '<li>' . $this->t('Or enable config-only mode') . '</li>' .
+      '<li>' . $this->t('Enable rate limiting') . '</li>' .
+      '<li>' . $this->t('Enable audit logging') . '</li>' .
+      '<li>' . $this->t('Restrict default scopes to "read" only') . '</li>' .
+      '<li>' . $this->t('Use IP allowlisting at the web server level') . '</li>' .
+      '<li>' . $this->t('Monitor audit logs regularly') . '</li>' .
+      '</ul>' .
+      '</div>',
       '#weight' => -100,
     ];
-
-    return parent::buildForm($form, $form_state);
   }
 
   /**
    * {@inheritdoc}
    */
-  public function submitForm(array &$form, FormStateInterface $form_state): void {
+  public function submitForm(
+    array &$form,
+    FormStateInterface $form_state,
+  ): void {
     $config = $this->config('mcp_tools.settings');
 
     // Handle mode changes - apply preset values.
@@ -430,14 +437,16 @@ class SettingsForm extends ConfigFormBase {
 
     // If switching to a preset mode (not custom), apply preset values.
     $presets = $this->getPresets();
-    if ($mode !== 'custom' && $mode !== $previousMode && isset($presets[$mode])) {
+    if ($mode !== 'custom' && $mode !== $previousMode
+      && isset($presets[$mode])) {
       foreach ($presets[$mode] as $key => $value) {
         $config->set($key, $value);
       }
       $this->messenger()->addStatus($this->t('Applied @mode mode preset settings.', ['@mode' => $mode]));
     }
 
-    // Always save individual settings (user can customize after applying preset).
+    // Always save individual settings
+    // (user can customize after applying preset).
     // If they changed individual settings, switch mode to 'custom'.
     $config->set('access.read_only_mode', (bool) $form_state->getValue('read_only_mode'));
     $config->set('access.config_only_mode', (bool) $form_state->getValue('config_only_mode'));
@@ -507,7 +516,8 @@ class SettingsForm extends ConfigFormBase {
   /**
    * Returns environment presets for quick configuration.
    *
-   * @return array<string, array<string, mixed>>
+   * @return array<string,
+   *   array<string, mixed>>
    */
   private function getPresets(): array {
     return [

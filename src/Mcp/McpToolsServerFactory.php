@@ -45,7 +45,7 @@ class McpToolsServerFactory {
    *   If TRUE, expose all Tool API tools. If FALSE, only expose tools whose
    *   provider starts with "mcp_tools".
    * @param \Mcp\Server\Session\SessionStoreInterface|null $sessionStore
-   *   Optional session store to use (required for Streamable HTTP across requests).
+   *   Optional session store (required for Streamable HTTP).
    * @param int $sessionTtl
    *   Session TTL in seconds.
    * @param bool $gatewayMode
@@ -58,7 +58,17 @@ class McpToolsServerFactory {
    * @return \Mcp\Server
    *   MCP server instance.
    */
-  public function create(string $serverName, string $serverVersion, int $paginationLimit = 50, bool $includeAllTools = FALSE, ?SessionStoreInterface $sessionStore = NULL, int $sessionTtl = 3600, bool $gatewayMode = FALSE, bool $enableResources = TRUE, bool $enablePrompts = TRUE): Server {
+  public function create(
+    string $serverName,
+    string $serverVersion,
+    int $paginationLimit = 50,
+    bool $includeAllTools = FALSE,
+    ?SessionStoreInterface $sessionStore = NULL,
+    int $sessionTtl = 3600,
+    bool $gatewayMode = FALSE,
+    bool $enableResources = TRUE,
+    bool $enablePrompts = TRUE,
+  ): Server {
     $builder = Server::builder()
       ->setServerInfo($serverName, $serverVersion)
       ->setPaginationLimit($paginationLimit)

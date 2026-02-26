@@ -138,8 +138,4 @@ class DisableJob extends McpToolsToolBase {
     return $result;
   }
 
-  
-
-  
-
 }

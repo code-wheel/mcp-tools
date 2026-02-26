@@ -22,7 +22,8 @@ class UserService {
    */
   protected const BLOCKED_ROLES = [
     'administrator',
-    'admin',  // Common alternative name
+  // Common alternative name.
+    'admin',
   ];
 
   /**
@@ -31,9 +32,12 @@ class UserService {
    * Prevents bypass attempts via similar role names.
    */
   protected const BLOCKED_ROLE_PATTERNS = [
-    '/^admin/i',  // Anything starting with "admin"
-    '/administrator/i',  // Anything containing "administrator"
-    '/^super/i',  // super_user, superadmin, etc.
+  // Anything starting with "admin".
+    '/^admin/i',
+  // Anything containing "administrator".
+    '/administrator/i',
+  // super_user, superadmin, etc.
+    '/^super/i',
   ];
 
   public function __construct(
@@ -164,7 +168,11 @@ class UserService {
 
     $user = $this->entityTypeManager->getStorage('user')->load($uid);
     if (!$user) {
-      return ['success' => FALSE, 'error' => "User with ID $uid not found. Use mcp_list_users or mcp_find_user to locate users."];
+      return [
+        'success' => FALSE,
+        'error' => "User with ID $uid not found."
+        . " Use mcp_list_users or mcp_find_user to locate users.",
+      ];
     }
 
     try {
@@ -253,7 +261,11 @@ class UserService {
 
     $user = $this->entityTypeManager->getStorage('user')->load($uid);
     if (!$user) {
-      return ['success' => FALSE, 'error' => "User with ID $uid not found. Use mcp_list_users or mcp_find_user to locate users."];
+      return [
+        'success' => FALSE,
+        'error' => "User with ID $uid not found."
+        . " Use mcp_list_users or mcp_find_user to locate users.",
+      ];
     }
 
     // Protect users with administrator role.
@@ -315,7 +327,11 @@ class UserService {
 
     $user = $this->entityTypeManager->getStorage('user')->load($uid);
     if (!$user) {
-      return ['success' => FALSE, 'error' => "User with ID $uid not found. Use mcp_list_users or mcp_find_user to locate users."];
+      return [
+        'success' => FALSE,
+        'error' => "User with ID $uid not found."
+        . " Use mcp_list_users or mcp_find_user to locate users.",
+      ];
     }
 
     if ($user->isActive()) {
@@ -374,7 +390,11 @@ class UserService {
 
     $user = $this->entityTypeManager->getStorage('user')->load($uid);
     if (!$user) {
-      return ['success' => FALSE, 'error' => "User with ID $uid not found. Use mcp_list_users or mcp_find_user to locate users."];
+      return [
+        'success' => FALSE,
+        'error' => "User with ID $uid not found."
+        . " Use mcp_list_users or mcp_find_user to locate users.",
+      ];
     }
 
     // Filter out 'administrator' role.
@@ -435,7 +455,7 @@ class UserService {
    * SECURITY: This method uses multiple layers of protection:
    * 1. Explicit blocklist of known dangerous role names
    * 2. Pattern matching to catch variations (admin*, *administrator*, super*)
-   * 3. Case-insensitive matching to prevent bypass via case variation
+   * 3. Case-insensitive matching to prevent bypass via case variation.
    *
    * @param array $roles
    *   Array of role machine names.

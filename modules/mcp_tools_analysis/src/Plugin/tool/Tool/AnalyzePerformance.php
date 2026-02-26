@@ -11,7 +11,6 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
 use Drupal\tool\Tool\ToolOperation;
-use Drupal\tool\TypedData\InputDefinition;
 
 /**
  * Tool plugin implementation.
@@ -80,9 +79,5 @@ class AnalyzePerformance extends McpToolsToolBase {
   protected function executeLegacy(array $input): array {
     return $this->analysisService->analyzePerformance();
   }
-
-  
-
-  
 
 }

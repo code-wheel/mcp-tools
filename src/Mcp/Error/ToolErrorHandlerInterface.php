@@ -14,6 +14,8 @@ interface ToolErrorHandlerInterface {
   /**
    * Builds a validation error response.
    *
+   * @param string $toolName
+   *   The tool name.
    * @param array<int, array<string, mixed>> $errors
    *   Validation error details.
    */

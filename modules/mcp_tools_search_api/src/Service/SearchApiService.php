@@ -6,7 +6,6 @@ namespace Drupal\mcp_tools_search_api\Service;
 
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\search_api\IndexInterface;
-use Drupal\search_api\ServerInterface;
 
 /**
  * Service for Search API operations.
@@ -367,7 +366,6 @@ class SearchApiService {
 
     /** @var \Drupal\search_api\ServerInterface $server */
     $backend = $server->getBackend();
-    $backendConfig = $backend->getConfiguration();
 
     // Get indexes using this server.
     $indexStorage = $this->entityTypeManager->getStorage('search_api_index');

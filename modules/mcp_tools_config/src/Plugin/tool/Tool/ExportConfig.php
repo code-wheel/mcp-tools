@@ -57,6 +57,11 @@ class ExportConfig extends McpToolsToolBase {
   protected const MCP_CATEGORY = 'config';
 
 
+  /**
+   * The config management.
+   *
+   * @var \Drupal\mcp_tools_config\Service\ConfigManagementService
+   */
   protected ConfigManagementService $configManagement;
 
   /**
@@ -85,9 +90,5 @@ class ExportConfig extends McpToolsToolBase {
 
     return $this->configManagement->exportConfig();
   }
-
-  
-
-  
 
 }

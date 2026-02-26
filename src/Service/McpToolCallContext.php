@@ -12,8 +12,18 @@ namespace Drupal\mcp_tools\Service;
  */
 class McpToolCallContext {
 
+  /**
+   * The depth.
+   *
+   * @var int
+   */
   private int $depth = 0;
 
+  /**
+   * The correlation id.
+   *
+   * @var string|null
+   */
   private ?string $correlationId = NULL;
 
   /**

@@ -84,14 +84,25 @@ class CloneWithReferences extends McpToolsToolBase {
   protected const MCP_CATEGORY = 'entity_clone';
 
 
+  /**
+   * The entity clone service.
+   *
+   * @var \Drupal\mcp_tools_entity_clone\Service\EntityCloneService
+   */
   protected EntityCloneService $entityCloneService;
 
+  /**
+   * {@inheritdoc}
+   */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     $instance = parent::create($container, $configuration, $plugin_id, $plugin_definition);
     $instance->entityCloneService = $container->get('mcp_tools_entity_clone.entity_clone');
     return $instance;
   }
 
+  /**
+   * {@inheritdoc}
+   */
   protected function executeLegacy(array $input): array {
     $entityType = $input['entity_type'] ?? '';
     $entityId = $input['entity_id'] ?? '';
@@ -107,6 +118,5 @@ class CloneWithReferences extends McpToolsToolBase {
 
     return $this->entityCloneService->cloneWithReferences($entityType, $entityId, $referenceFields);
   }
-
 
 }

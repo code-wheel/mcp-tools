@@ -68,6 +68,11 @@ class GetEntityMetatags extends McpToolsToolBase {
   protected const MCP_CATEGORY = 'metatag';
 
 
+  /**
+   * The metatag service.
+   *
+   * @var \Drupal\mcp_tools_metatag\Service\MetatagService
+   */
   protected MetatagService $metatagService;
 
   /**
@@ -92,9 +97,5 @@ class GetEntityMetatags extends McpToolsToolBase {
 
     return $this->metatagService->getEntityMetatags($entityType, (int) $entityId);
   }
-
-  
-
-  
 
 }

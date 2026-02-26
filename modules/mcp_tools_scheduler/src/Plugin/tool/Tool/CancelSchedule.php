@@ -26,7 +26,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'entity_type' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Entity Type'),
-      description: new TranslatableMarkup('The entity type (currently only \'node\' is supported)'),
+      description: new TranslatableMarkup("The entity type (currently only 'node' is supported)"),
       required: FALSE,
       default_value: 'node',
     ),
@@ -39,7 +39,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'type' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Schedule Type'),
-      description: new TranslatableMarkup('Which schedule to cancel: \'publish\', \'unpublish\', or \'all\''),
+      description: new TranslatableMarkup("Which schedule to cancel: 'publish', 'unpublish', or 'all'"),
       required: FALSE,
       default_value: 'all',
     ),
@@ -72,6 +72,11 @@ class CancelSchedule extends McpToolsToolBase {
   protected const MCP_CATEGORY = 'scheduler';
 
 
+  /**
+   * The scheduler service.
+   *
+   * @var \Drupal\mcp_tools_scheduler\Service\SchedulerService
+   */
   protected SchedulerService $schedulerService;
 
   /**
@@ -101,9 +106,5 @@ class CancelSchedule extends McpToolsToolBase {
 
     return $this->schedulerService->cancelSchedule($entityType, (int) $entityId, $type);
   }
-
-  
-
-  
 
 }

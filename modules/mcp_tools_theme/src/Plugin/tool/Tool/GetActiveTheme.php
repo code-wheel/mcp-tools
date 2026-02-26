@@ -11,7 +11,6 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
 use Drupal\tool\Tool\ToolOperation;
-use Drupal\tool\TypedData\InputDefinition;
 
 /**
  * Tool plugin implementation.
@@ -50,17 +49,27 @@ class GetActiveTheme extends McpToolsToolBase {
   protected const MCP_CATEGORY = 'theme';
 
 
+  /**
+   * The theme service.
+   *
+   * @var \Drupal\mcp_tools_theme\Service\ThemeService
+   */
   protected ThemeService $themeService;
 
+  /**
+   * {@inheritdoc}
+   */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     $instance = parent::create($container, $configuration, $plugin_id, $plugin_definition);
     $instance->themeService = $container->get('mcp_tools_theme.theme');
     return $instance;
   }
 
+  /**
+   * {@inheritdoc}
+   */
   protected function executeLegacy(array $input): array {
     return $this->themeService->getActiveTheme();
   }
-
 
 }

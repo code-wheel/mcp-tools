@@ -11,7 +11,6 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
 use Drupal\tool\Tool\ToolOperation;
-use Drupal\tool\TypedData\InputDefinition;
 
 /**
  * Tool plugin implementation.
@@ -40,6 +39,11 @@ class GetMenus extends McpToolsToolBase {
   protected const MCP_CATEGORY = 'structure';
 
 
+  /**
+   * The menu service.
+   *
+   * @var \Drupal\mcp_tools\Service\MenuService
+   */
   protected MenuService $menuService;
 
   /**
@@ -60,9 +64,5 @@ class GetMenus extends McpToolsToolBase {
       'data' => $this->menuService->getMenus(),
     ];
   }
-
-  
-
-  
 
 }

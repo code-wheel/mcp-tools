@@ -13,7 +13,6 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
 use Drupal\tool\Tool\ToolOperation;
-use Drupal\tool\TypedData\InputDefinition;
 
 /**
  * Tool plugin implementation.
@@ -42,8 +41,23 @@ class RunCron extends McpToolsToolBase {
   protected const MCP_CATEGORY = 'cron';
 
 
+  /**
+   * The cron service.
+   *
+   * @var \Drupal\mcp_tools_cron\Service\CronService
+   */
   protected CronService $cronService;
+  /**
+   * The access manager.
+   *
+   * @var \Drupal\mcp_tools\Service\AccessManager
+   */
   protected AccessManager $accessManager;
+  /**
+   * The audit logger.
+   *
+   * @var \Drupal\mcp_tools\Service\AuditLogger
+   */
   protected AuditLogger $auditLogger;
 
   /**
@@ -81,9 +95,5 @@ class RunCron extends McpToolsToolBase {
 
     return $result;
   }
-
-  
-
-  
 
 }

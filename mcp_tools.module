@@ -17,21 +17,23 @@ function mcp_tools_help($route_name, RouteMatchInterface $route_match) {
     case 'help.page.mcp_tools':
       $output = '<h3>' . t('About') . '</h3>';
       $output .= '<p>' . t('MCP Tools provides batteries-included tools for AI assistants working with Drupal sites via the Model Context Protocol (MCP).') . '</p>';
-      $output .= '<h3>' . t('Available Tools (22 read-only)') . '</h3>';
+      $output .= '<h3>' . t('Available Tools (25 read-only)') . '</h3>';
       $output .= '<dl>';
       $output .= '<dt>' . t('Site Health') . '</dt>';
       $output .= '<dd>' . t('GetSiteStatus, GetSystemStatus, CheckSecurityUpdates, CheckCronStatus, AnalyzeWatchdog, GetQueueStatus, GetFileSystemStatus') . '</dd>';
       $output .= '<dt>' . t('Content') . '</dt>';
       $output .= '<dd>' . t('ListContentTypes, GetRecentContent, SearchContent, GetVocabularies, GetTerms, GetFiles, FindOrphanedFiles') . '</dd>';
       $output .= '<dt>' . t('Configuration') . '</dt>';
-      $output .= '<dd>' . t('GetConfigStatus, GetConfig, ListConfig') . '</dd>';
+      $output .= '<dd>' . t('GetConfigStatus, GetConfig, ListConfig, ListTextFormats, GetTextFormat') . '</dd>';
       $output .= '<dt>' . t('Users') . '</dt>';
       $output .= '<dd>' . t('GetRoles, GetUsers, GetPermissions') . '</dd>';
       $output .= '<dt>' . t('Structure') . '</dt>';
       $output .= '<dd>' . t('GetMenus, GetMenuTree') . '</dd>';
+      $output .= '<dt>' . t('Discovery') . '</dt>';
+      $output .= '<dd>' . t('ListAvailableTools') . '</dd>';
       $output .= '</dl>';
       $output .= '<h3>' . t('Write Operations') . '</h3>';
-      $output .= '<p>' . t('Enable the MCP Tools Write submodule for 21 additional write tools (content types, fields, roles, taxonomies, menus).') . '</p>';
+      $output .= '<p>' . t('197 write/analysis tools across 34 optional submodules. Enable the submodules you need for content, structure, views, blocks, media, and more.') . '</p>';
       return $output;
   }
 }

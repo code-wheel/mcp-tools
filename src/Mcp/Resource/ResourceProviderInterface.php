@@ -22,7 +22,7 @@ interface ResourceProviderInterface {
    *   annotations?: array<string, mixed>|null,
    *   icons?: array<int, mixed>|null,
    *   meta?: array<string, mixed>|null,
-   * }>
+   *   }>
    *   Resource definitions.
    */
   public function getResources(): array;
@@ -38,7 +38,7 @@ interface ResourceProviderInterface {
    *   mimeType?: string,
    *   annotations?: array<string, mixed>|null,
    *   meta?: array<string, mixed>|null,
-   * }>
+   *   }>
    *   Resource template definitions.
    */
   public function getResourceTemplates(): array;

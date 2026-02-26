@@ -88,6 +88,7 @@ abstract class McpToolsToolBase extends ToolBase {
           unset($context['success'], $context['message']);
         }
 
+        // phpcs:ignore Drupal.Semantics.FunctionT.NotLiteralString
         return ExecutableResult::success(new TranslatableMarkup($message), $context);
       }
 
@@ -96,6 +97,7 @@ abstract class McpToolsToolBase extends ToolBase {
         $error = 'Tool execution failed.';
       }
 
+      // phpcs:ignore Drupal.Semantics.FunctionT.NotLiteralString
       return ExecutableResult::failure(new TranslatableMarkup($error));
     }
     finally {

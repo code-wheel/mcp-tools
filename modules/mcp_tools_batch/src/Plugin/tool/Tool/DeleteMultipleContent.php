@@ -84,14 +84,25 @@ class DeleteMultipleContent extends McpToolsToolBase {
   protected const MCP_CATEGORY = 'batch';
 
 
+  /**
+   * The batch service.
+   *
+   * @var \Drupal\mcp_tools_batch\Service\BatchService
+   */
   protected BatchService $batchService;
 
+  /**
+   * {@inheritdoc}
+   */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     $instance = parent::create($container, $configuration, $plugin_id, $plugin_definition);
     $instance->batchService = $container->get('mcp_tools_batch.batch');
     return $instance;
   }
 
+  /**
+   * {@inheritdoc}
+   */
   protected function executeLegacy(array $input): array {
     $ids = $input['ids'] ?? [];
     $force = (bool) ($input['force'] ?? FALSE);
@@ -102,6 +113,5 @@ class DeleteMultipleContent extends McpToolsToolBase {
 
     return $this->batchService->deleteMultipleContent($ids, $force);
   }
-
 
 }

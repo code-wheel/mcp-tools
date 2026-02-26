@@ -71,14 +71,25 @@ class AllowCustomLayouts extends McpToolsToolBase {
   protected const MCP_CATEGORY = 'layout_builder';
 
 
+  /**
+   * The layout builder service.
+   *
+   * @var \Drupal\mcp_tools_layout_builder\Service\LayoutBuilderService
+   */
   protected LayoutBuilderService $layoutBuilderService;
 
+  /**
+   * {@inheritdoc}
+   */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     $instance = parent::create($container, $configuration, $plugin_id, $plugin_definition);
     $instance->layoutBuilderService = $container->get('mcp_tools_layout_builder.layout_builder');
     return $instance;
   }
 
+  /**
+   * {@inheritdoc}
+   */
   protected function executeLegacy(array $input): array {
     $entityType = $input['entity_type'] ?? 'node';
     $bundle = $input['bundle'] ?? '';
@@ -90,6 +101,5 @@ class AllowCustomLayouts extends McpToolsToolBase {
 
     return $this->layoutBuilderService->allowCustomLayouts($entityType, $bundle, (bool) $allow);
   }
-
 
 }

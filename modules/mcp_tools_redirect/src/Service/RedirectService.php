@@ -360,7 +360,7 @@ class RedirectService {
    *   - source: The source path
    *   - destination: The destination path or URL
    *   - status_code: (optional) HTTP status code, defaults to 301
-   *   - language: (optional) Language code
+   *   - language: (optional) Language code.
    *
    * @return array
    *   Import results.

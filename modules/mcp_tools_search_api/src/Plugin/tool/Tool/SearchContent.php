@@ -31,7 +31,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
     'keywords' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Keywords'),
-      description: new TranslatableMarkup('Search keywords. Supports the search backend\'s query syntax (e.g., Solr, Elasticsearch, or database).'),
+      description: new TranslatableMarkup("Search keywords. Supports the search backend's query syntax (e.g., Solr, Elasticsearch, or database)."),
       required: TRUE,
     ),
     'filters' => new InputDefinition(
@@ -75,6 +75,11 @@ class SearchContent extends McpToolsToolBase {
 
   protected const MCP_CATEGORY = 'search_api';
 
+  /**
+   * The search api service.
+   *
+   * @var \Drupal\mcp_tools_search_api\Service\SearchApiService
+   */
   protected SearchApiService $searchApiService;
 
   /**
@@ -94,7 +99,10 @@ class SearchContent extends McpToolsToolBase {
     $keywords = $input['keywords'] ?? '';
 
     if (empty($indexId)) {
-      return ['success' => FALSE, 'error' => 'index is required. Use mcp_search_api_list_indexes to find available indexes.'];
+      return [
+        'success' => FALSE,
+        'error' => 'index is required. Use mcp_search_api_list_indexes to find available indexes.',
+      ];
     }
 
     if (empty($keywords)) {

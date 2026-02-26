@@ -49,14 +49,25 @@ class DeleteMenu extends McpToolsToolBase {
   protected const MCP_WRITE_KIND = 'config';
 
 
+  /**
+   * The menu service.
+   *
+   * @var \Drupal\mcp_tools_menus\Service\MenuManagementService
+   */
   protected MenuManagementService $menuService;
 
+  /**
+   * {@inheritdoc}
+   */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     $instance = parent::create($container, $configuration, $plugin_id, $plugin_definition);
     $instance->menuService = $container->get('mcp_tools_menus.menu');
     return $instance;
   }
 
+  /**
+   * {@inheritdoc}
+   */
   protected function executeLegacy(array $input): array {
     $id = $input['id'] ?? '';
 
@@ -66,6 +77,5 @@ class DeleteMenu extends McpToolsToolBase {
 
     return $this->menuService->deleteMenu($id);
   }
-
 
 }

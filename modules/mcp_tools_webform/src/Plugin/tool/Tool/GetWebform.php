@@ -67,6 +67,11 @@ class GetWebform extends McpToolsToolBase {
   protected const MCP_CATEGORY = 'webform';
 
 
+  /**
+   * The webform service.
+   *
+   * @var \Drupal\mcp_tools_webform\Service\WebformService
+   */
   protected WebformService $webformService;
 
   /**
@@ -90,9 +95,5 @@ class GetWebform extends McpToolsToolBase {
 
     return $this->webformService->getWebform($id);
   }
-
-  
-
-  
 
 }

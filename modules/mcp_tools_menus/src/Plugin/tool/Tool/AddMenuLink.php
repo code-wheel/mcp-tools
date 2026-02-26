@@ -103,14 +103,25 @@ class AddMenuLink extends McpToolsToolBase {
   protected const MCP_CATEGORY = 'menus';
 
 
+  /**
+   * The menu service.
+   *
+   * @var \Drupal\mcp_tools_menus\Service\MenuManagementService
+   */
   protected MenuManagementService $menuService;
 
+  /**
+   * {@inheritdoc}
+   */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
     $instance = parent::create($container, $configuration, $plugin_id, $plugin_definition);
     $instance->menuService = $container->get('mcp_tools_menus.menu');
     return $instance;
   }
 
+  /**
+   * {@inheritdoc}
+   */
   protected function executeLegacy(array $input): array {
     $menu = $input['menu'] ?? '';
     $title = $input['title'] ?? '';
@@ -136,6 +147,5 @@ class AddMenuLink extends McpToolsToolBase {
 
     return $this->menuService->addMenuLink($menu, $title, $uri, $options);
   }
-
 
 }

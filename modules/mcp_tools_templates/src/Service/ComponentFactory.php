@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools_templates\Service;
 
+use Symfony\Component\Yaml\Yaml;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Psr\Log\LoggerInterface;
 
@@ -426,7 +427,7 @@ class ComponentFactory {
           'id' => $webformId,
           'title' => $config['label'],
           'description' => $config['description'] ?? '',
-          'elements' => \Symfony\Component\Yaml\Yaml::dump($elements),
+          'elements' => Yaml::dump($elements),
           'status' => 'open',
         ]);
         $webform->save();

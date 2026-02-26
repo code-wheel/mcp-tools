@@ -59,6 +59,11 @@ class DeleteSubmission extends McpToolsToolBase {
   protected const MCP_WRITE_KIND = 'content';
 
 
+  /**
+   * The webform service.
+   *
+   * @var \Drupal\mcp_tools_webform\Service\WebformService
+   */
   protected WebformService $webformService;
 
   /**
@@ -82,9 +87,5 @@ class DeleteSubmission extends McpToolsToolBase {
 
     return $this->webformService->deleteSubmission((int) $sid);
   }
-
-  
-
-  
 
 }

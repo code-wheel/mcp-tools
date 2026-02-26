@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools\Commands;
 
+use Mcp\Server;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Extension\ModuleExtensionList;
@@ -13,14 +14,12 @@ use Drupal\mcp_tools\Mcp\Prompt\PromptRegistry;
 use Drupal\mcp_tools\Mcp\Resource\ResourceRegistry;
 use Drupal\mcp_tools\Mcp\ServerConfigRepository;
 use Drupal\mcp_tools\Service\AccessManager;
+use Drupal\mcp_tools\Service\ClientConfigGenerator;
 use Drupal\mcp_tools\Service\RateLimiter;
 use Drush\Attributes as CLI;
 use Drush\Commands\DrushCommands;
 use Drupal\tool\Tool\ToolDefinition;
 use Drupal\tool\Tool\ToolManager;
-use RecursiveDirectoryIterator;
-use RecursiveIteratorIterator;
-use FilesystemIterator;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -316,7 +315,15 @@ class McpToolsCommands extends DrushCommands {
   #[CLI\Option(name: 'tools', description: 'List tool names for this server')]
   #[CLI\Option(name: 'resources', description: 'List resources for this server')]
   #[CLI\Option(name: 'prompts', description: 'List prompts for this server')]
-  public function serverInfo(array $options = ['server' => NULL, 'format' => 'table', 'tools' => FALSE, 'resources' => FALSE, 'prompts' => FALSE]): void {
+  public function serverInfo(
+    array $options = [
+      'server' => NULL,
+      'format' => 'table',
+      'tools' => FALSE,
+      'resources' => FALSE,
+      'prompts' => FALSE,
+    ],
+  ): void {
     $serverId = isset($options['server']) && is_string($options['server']) ? trim($options['server']) : NULL;
     $server = $this->serverConfigRepository->getServer($serverId);
 
@@ -458,7 +465,7 @@ class McpToolsCommands extends DrushCommands {
 
     $issues = [];
 
-    if (!class_exists(\Mcp\Server::class)) {
+    if (!class_exists(Server::class)) {
       $issues[] = 'Missing dependency: mcp/sdk (composer require mcp/sdk:^0.2).';
     }
 
@@ -512,13 +519,15 @@ class McpToolsCommands extends DrushCommands {
   #[CLI\Option(name: 'description', description: 'Module description')]
   #[CLI\Option(name: 'destination', description: 'Destination directory (defaults to DRUPAL_ROOT/modules/custom)')]
   #[CLI\Option(name: 'force', description: 'Overwrite existing files if the module directory exists')]
-  public function scaffold(array $options = [
-    'machine-name' => NULL,
-    'name' => NULL,
-    'description' => NULL,
-    'destination' => NULL,
-    'force' => FALSE,
-  ]): void {
+  public function scaffold(
+    array $options = [
+      'machine-name' => NULL,
+      'name' => NULL,
+      'description' => NULL,
+      'destination' => NULL,
+      'force' => FALSE,
+    ],
+  ): void {
     $machineName = isset($options['machine-name']) && is_string($options['machine-name'])
       ? trim($options['machine-name'])
       : '';
@@ -543,6 +552,7 @@ class McpToolsCommands extends DrushCommands {
 
     $destination = isset($options['destination']) && is_string($options['destination']) && $options['destination'] !== ''
       ? rtrim($options['destination'], DIRECTORY_SEPARATOR)
+      // phpcs:ignore DrupalPractice.Objects.GlobalDrupal.GlobalDrupal
       : rtrim(\Drupal::root() . DIRECTORY_SEPARATOR . 'modules' . DIRECTORY_SEPARATOR . 'custom', DIRECTORY_SEPARATOR);
 
     $modulePath = $destination . DIRECTORY_SEPARATOR . $machineName;
@@ -683,72 +693,13 @@ class McpToolsCommands extends DrushCommands {
     $scope = is_string($options['scope']) ? $options['scope'] : 'read,write';
     $uid = is_string($options['uid']) ? $options['uid'] : '1';
 
+    // phpcs:ignore DrupalPractice.Objects.GlobalDrupal.GlobalDrupal
     $drupalRoot = \Drupal::root();
     $isDdev = (bool) getenv('IS_DDEV_PROJECT');
     $isLando = (bool) getenv('LANDO');
 
-    if ($isDdev) {
-      // Inside DDEV: the project root is one level above the Drupal root
-      // (web/ docroot), or if Drupal IS the project root, use that.
-      $projectRoot = dirname($drupalRoot);
-      if (basename($drupalRoot) === $drupalRoot) {
-        $projectRoot = $drupalRoot;
-      }
-      $config = [
-        'mcpServers' => [
-          'drupal' => [
-            'command' => 'ddev',
-            'args' => [
-              'drush',
-              'mcp-tools:serve',
-              '--quiet',
-              "--uid={$uid}",
-              "--scope={$scope}",
-            ],
-            'cwd' => $projectRoot,
-          ],
-        ],
-      ];
-    }
-    elseif ($isLando) {
-      $projectRoot = dirname($drupalRoot);
-      if (basename($drupalRoot) === $drupalRoot) {
-        $projectRoot = $drupalRoot;
-      }
-      $config = [
-        'mcpServers' => [
-          'drupal' => [
-            'command' => 'lando',
-            'args' => [
-              'drush',
-              'mcp-tools:serve',
-              '--quiet',
-              "--uid={$uid}",
-              "--scope={$scope}",
-            ],
-            'cwd' => $projectRoot,
-          ],
-        ],
-      ];
-    }
-    else {
-      // Bare metal / native.
-      $drushPath = $drupalRoot . '/vendor/bin/drush';
-      $config = [
-        'mcpServers' => [
-          'drupal' => [
-            'command' => $drushPath,
-            'args' => [
-              'mcp-tools:serve',
-              '--quiet',
-              "--uid={$uid}",
-              "--scope={$scope}",
-            ],
-            'cwd' => $drupalRoot,
-          ],
-        ],
-      ];
-    }
+    $generator = new ClientConfigGenerator();
+    $config = $generator->buildConfig($drupalRoot, $isDdev, $isLando, $scope, $uid);
 
     // JSON to stdout (pipeable to file).
     $this->output()->write(json_encode($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
@@ -787,7 +738,8 @@ class McpToolsCommands extends DrushCommands {
   /**
    * Returns allowed Tool API plugin definitions for a server profile.
    *
-   * @return array<string, \Drupal\tool\Tool\ToolDefinition>
+   * @return array<string,
+   *   \Drupal\tool\Tool\ToolDefinition>
    */
   private function getAllowedTools(bool $includeAllTools, string $providerPrefix = 'mcp_tools'): array {
     $definitions = $this->toolManager->getDefinitions();
@@ -811,9 +763,12 @@ class McpToolsCommands extends DrushCommands {
    * Deduplicates component lists by key.
    *
    * @param array<int, array<string, mixed>> $items
+   *   The items to deduplicate.
    * @param string $key
+   *   The key to deduplicate by.
    *
    * @return array<int, array<string, mixed>>
+   *   The deduplicated items.
    */
   private function dedupeListByKey(array $items, string $key): array {
     $seen = [];
@@ -856,8 +811,8 @@ class McpToolsCommands extends DrushCommands {
   private function renderScaffoldTemplates(string $templateRoot, string $destination, array $replacements, bool $force, string $machineName): array {
     $created = [];
 
-    $iterator = new RecursiveIteratorIterator(
-      new RecursiveDirectoryIterator($templateRoot, FilesystemIterator::SKIP_DOTS)
+    $iterator = new \RecursiveIteratorIterator(
+      new \RecursiveDirectoryIterator($templateRoot, \FilesystemIterator::SKIP_DOTS)
     );
 
     foreach ($iterator as $file) {

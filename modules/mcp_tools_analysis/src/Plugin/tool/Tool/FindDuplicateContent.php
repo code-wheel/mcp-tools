@@ -117,8 +117,4 @@ class FindDuplicateContent extends McpToolsToolBase {
     return $this->analysisService->findDuplicateContent($contentType, $field, $threshold);
   }
 
-  
-
-  
-
 }

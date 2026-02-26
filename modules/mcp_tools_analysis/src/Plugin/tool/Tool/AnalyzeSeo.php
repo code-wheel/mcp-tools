@@ -115,8 +115,4 @@ class AnalyzeSeo extends McpToolsToolBase {
     return $this->analysisService->analyzeSeo($entityType, $entityId);
   }
 
-  
-
-  
-
 }

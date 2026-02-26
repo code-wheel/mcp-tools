@@ -32,6 +32,9 @@ final class McpConfigChangeSubscriber implements EventSubscriberInterface {
     ];
   }
 
+  /**
+   * Handles config save.
+   */
   public function onConfigSave(ConfigCrudEvent $event): void {
     if (!$this->toolCallContext->isActive()) {
       return;
@@ -51,6 +54,9 @@ final class McpConfigChangeSubscriber implements EventSubscriberInterface {
     $this->configManagement->trackChange($name, $operation);
   }
 
+  /**
+   * Handles config delete.
+   */
   public function onConfigDelete(ConfigCrudEvent $event): void {
     if (!$this->toolCallContext->isActive()) {
       return;
@@ -62,6 +68,9 @@ final class McpConfigChangeSubscriber implements EventSubscriberInterface {
     }
   }
 
+  /**
+   * Handles config rename.
+   */
   public function onConfigRename(ConfigRenameEvent $event): void {
     if (!$this->toolCallContext->isActive()) {
       return;
@@ -79,4 +88,3 @@ final class McpConfigChangeSubscriber implements EventSubscriberInterface {
   }
 
 }
-

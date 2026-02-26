@@ -125,8 +125,4 @@ class ContentAudit extends McpToolsToolBase {
     return $this->analysisService->contentAudit($options);
   }
 
-  
-
-  
-
 }
