@@ -21,7 +21,8 @@ final class DrupalClock implements ClockInterface {
    * {@inheritdoc}
    */
   public function now(): DateTimeImmutable {
-    return (new DateTimeImmutable())->setTimestamp($this->time->getRequestTime());
+    // Use getCurrentTime() to avoid frozen REQUEST_TIME in server mode.
+    return (new DateTimeImmutable())->setTimestamp($this->time->getCurrentTime());
   }
 
 }

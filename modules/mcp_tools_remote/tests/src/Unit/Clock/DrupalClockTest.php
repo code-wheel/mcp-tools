@@ -18,7 +18,7 @@ final class DrupalClockTest extends TestCase {
 
   public function testNowReturnsDateTimeImmutable(): void {
     $time = $this->createMock(TimeInterface::class);
-    $time->method('getRequestTime')->willReturn(1704067200);
+    $time->method('getCurrentTime')->willReturn(1704067200);
 
     $clock = new DrupalClock($time);
     $result = $clock->now();
@@ -26,11 +26,11 @@ final class DrupalClockTest extends TestCase {
     $this->assertInstanceOf(DateTimeImmutable::class, $result);
   }
 
-  public function testNowUsesRequestTimestamp(): void {
+  public function testNowUsesCurrentTimestamp(): void {
     $expectedTimestamp = 1704067200;
 
     $time = $this->createMock(TimeInterface::class);
-    $time->method('getRequestTime')->willReturn($expectedTimestamp);
+    $time->method('getCurrentTime')->willReturn($expectedTimestamp);
 
     $clock = new DrupalClock($time);
     $result = $clock->now();
@@ -38,10 +38,10 @@ final class DrupalClockTest extends TestCase {
     $this->assertSame($expectedTimestamp, $result->getTimestamp());
   }
 
-  public function testNowReturnsCurrentRequestTime(): void {
+  public function testNowReturnsCurrentTime(): void {
     $time = $this->createMock(TimeInterface::class);
     $time->expects($this->once())
-      ->method('getRequestTime')
+      ->method('getCurrentTime')
       ->willReturn(1704153600);
 
     $clock = new DrupalClock($time);
