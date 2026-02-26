@@ -4,6 +4,12 @@ All notable changes to the MCP Tools module will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.0.0-beta3] - 2026-02-25
+
+### Fixed
+
+- **Frozen timestamps in server mode**: `getRequestTime()` returns the process start time in long-running `drush mcp-tools:serve` sessions, causing all entities to share the same timestamp. Replaced with `getCurrentTime()` across 7 services: ContentService, MediaService, BatchService, TaxonomyManagementService, ModerationService, SchedulerService, and DrupalClock ([#3575317](https://www.drupal.org/project/issues/mcp_tools/3575317), reported by [guillaumeg](https://www.drupal.org/u/guillaumeg))
+
 ## [1.0.0-beta2] - 2026-02-06
 
 ### Changed
