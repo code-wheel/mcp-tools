@@ -1,0 +1,10 @@
+services:
+  mcp_tools_remote_media.remote_image:
+    class: Drupal\mcp_tools_remote_media\Service\RemoteImageService
+    arguments:
+      - '@entity_type.manager'
+      - '@file_system'
+      - '@http_client'
+      - '@mcp_tools.access_manager'
+      - '@mcp_tools.audit_logger'
+      - '@datetime.time'
