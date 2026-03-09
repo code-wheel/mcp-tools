@@ -1,0 +1,4 @@
+mcp_tools use remote media:
+  title: 'Use MCP remote media tools'
+  description: 'Fetch remote images by URL and create managed media entities via MCP.'
+  restrict access: true
