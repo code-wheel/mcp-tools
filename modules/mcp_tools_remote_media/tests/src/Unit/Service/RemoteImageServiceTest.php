@@ -260,7 +260,7 @@ class RemoteImageServiceTest extends UnitTestCase {
       'https://example.com/image.jpg', 'Test',
     );
     $this->assertFalse($result['success']);
-    $this->assertStringContainsString('Failed to fetch', $result['error']);
+    $this->assertStringContainsString('Connection refused', $result['error']);
   }
 
   /**
