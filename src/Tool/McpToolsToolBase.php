@@ -185,6 +185,7 @@ abstract class McpToolsToolBase extends ToolBase {
       'scheduler',
       'redirect',
       'entity_clone',
+      'remote media',
       // Default menus to content because menu links are content entities.
       'menus',
         => AccessManager::WRITE_KIND_CONTENT,
