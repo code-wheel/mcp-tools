@@ -327,6 +327,26 @@ abstract class AbstractRemoteFileService {
   }
 
   /**
+   * Sanitizes file content if needed for the given MIME type.
+   *
+   * Subclasses can override this to apply format-specific sanitization
+   * (e.g. SVG script removal). The default implementation returns the
+   * content unchanged.
+   *
+   * @param string $body
+   *   The raw file content.
+   * @param string $mimeType
+   *   The detected MIME type.
+   *
+   * @return array
+   *   Array with 'body' key on success, or 'success' => FALSE + 'error'
+   *   if sanitization fails.
+   */
+  protected function sanitizeContent(string $body, string $mimeType): array {
+    return ['body' => $body];
+  }
+
+  /**
    * Builds a safe filename from the URL path and MIME type.
    *
    * Derives the filename from the URL's basename if possible. Falls back to
@@ -527,6 +547,12 @@ abstract class AbstractRemoteFileService {
       if ($error = $this->validateContentMime($body)) {
         return $error;
       }
+
+      $sanitizeResult = $this->sanitizeContent($body, $mimeType);
+      if (isset($sanitizeResult['error'])) {
+        return $sanitizeResult;
+      }
+      $body = $sanitizeResult['body'];
 
       $safeFilename = $this->buildFilename($url, $name, $mimeType);
 

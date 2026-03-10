@@ -13,6 +13,7 @@ use Drupal\mcp_tools_media\Service\MediaService;
 use Drupal\mcp_tools_remote_media\Service\AbstractRemoteFileService;
 use Drupal\Tests\UnitTestCase;
 use GuzzleHttp\Client;
+
 /**
  * Tests for the shared validation logic in AbstractRemoteFileService.
  *
@@ -164,10 +165,10 @@ class AbstractRemoteFileServiceTest extends UnitTestCase {
   /**
    * Tests that invalid directory paths return an error.
    *
-   * @dataProvider invalidDirectoryProvider
-   *
    * @param string $directory
    *   The directory path to test.
+   *
+   * @dataProvider invalidDirectoryProvider
    */
   public function testValidateDirectoryRejectsInvalidPaths(string $directory): void {
     $stub = $this->buildServiceStub();
@@ -236,10 +237,10 @@ class AbstractRemoteFileServiceTest extends UnitTestCase {
   /**
    * Tests SSRF: private/internal IPs are blocked.
    *
-   * @dataProvider privateIpUrlProvider
-   *
    * @param string $url
    *   URL with a private/reserved IP.
+   *
+   * @dataProvider privateIpUrlProvider
    */
   public function testValidateNotInternalUrlBlocksPrivateIps(string $url): void {
     $stub = $this->buildServiceStub();

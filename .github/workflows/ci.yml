@@ -113,7 +113,7 @@ jobs:
       - name: Install MCP dependencies
         run: |
           cd drupal
-          composer require mcp/sdk:^0.2.2 code-wheel/mcp-http-security:^1.0 code-wheel/mcp-error-codes:^1.2 code-wheel/mcp-events:^2.0 code-wheel/mcp-schema-builder:^1.1 code-wheel/mcp-tool-gateway:^1.1 -W --no-interaction
+          composer require mcp/sdk:^0.2.2 code-wheel/mcp-http-security:^1.0 code-wheel/mcp-error-codes:^1.2 code-wheel/mcp-events:^2.0 code-wheel/mcp-schema-builder:^1.1 code-wheel/mcp-tool-gateway:^1.1 enshrined/svg-sanitize:^0.22 -W --no-interaction
 
       - name: Copy MCP Tools module
         run: |
@@ -353,7 +353,7 @@ jobs:
       - name: Install MCP dependencies
         run: |
           cd drupal
-          composer require mcp/sdk:^0.2.2 code-wheel/mcp-http-security:^1.0 code-wheel/mcp-error-codes:^1.2 code-wheel/mcp-events:^2.0 code-wheel/mcp-schema-builder:^1.1 code-wheel/mcp-tool-gateway:^1.1 -W --no-interaction
+          composer require mcp/sdk:^0.2.2 code-wheel/mcp-http-security:^1.0 code-wheel/mcp-error-codes:^1.2 code-wheel/mcp-events:^2.0 code-wheel/mcp-schema-builder:^1.1 code-wheel/mcp-tool-gateway:^1.1 enshrined/svg-sanitize:^0.22 -W --no-interaction
 
       - name: Copy MCP Tools module
         run: |
