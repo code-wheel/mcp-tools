@@ -31,7 +31,7 @@ stub class:
 
 Tests `RemoteImageService` image-specific logic and orchestration:
 
-- Allowed MIME type list (5 image types)
+- Allowed MIME type list (4 image types)
 - MIME-to-extension map completeness
 - Operation name for audit logging
 - Access control (write permission checks)

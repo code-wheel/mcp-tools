@@ -20,7 +20,7 @@ MCP Tools provides a comprehensive set of tools for AI assistants to interact wi
 │                         mcp_tools module                         │
 │  ┌──────────────────┐  ┌──────────────────┐  ┌───────────────┐  │
 │  │   Tool Plugins   │  │    Services      │  │ Access Control│  │
-│  │  (222 tools)     │  │ (Business Logic) │  │ (3 layers)    │  │
+│  │  (223 tools)     │  │ (Business Logic) │  │ (3 layers)    │  │
 │  └────────┬─────────┘  └────────┬─────────┘  └───────┬───────┘  │
 │           │                     │                    │          │
 │           └─────────────────────┼────────────────────┘          │
@@ -40,7 +40,7 @@ The base module provides:
 - **Admin UI** for configuration
 - **McpToolsToolBase** base class for all tool plugins
 
-### Submodules (34 total)
+### Submodules (35 total)
 
 Each submodule is self-contained with its own:
 - Tool plugins in `src/Plugin/tool/Tool/`
@@ -59,7 +59,7 @@ modules/
 ├── mcp_tools_layout_builder/ # Layout Builder (9 tools)
 ├── mcp_tools_config/         # Config management (5 tools)
 ├── mcp_tools_analysis/       # Site analysis (8 tools)
-└── ... (19 more)
+└── ... (20 more)
 ```
 
 ## Design Patterns

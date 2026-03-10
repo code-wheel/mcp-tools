@@ -21,7 +21,7 @@ CI runs tests against all supported Drupal versions on every push.
 
 MCP Tools provides curated, high-value tools that solve real problems—not generic CRUD. Inspired by [Sentry MCP](https://docs.sentry.io/product/sentry-mcp/).
 
-**Current:** 222 tools total (25 read-only + 197 write/analysis operations across 34 submodules)
+**Current:** 223 tools total (25 read-only + 198 write/analysis operations across 35 submodules)
 
 **Resources:** MCP Tools now exposes read-only resources (e.g., `drupal://site/status`, `drupal://site/snapshot`) for lightweight site context, including blueprint + config drift summary.
 **Prompts:** MCP Tools now exposes prompts (e.g., `mcp_tools/site-brief`) for reusable analysis instructions.
@@ -174,7 +174,8 @@ mcp_tools/                        # Base module (25 read-only tools)
     ├── mcp_tools_batch/          # Bulk operations (6 tools)
     ├── mcp_tools_templates/      # Site templates (5 tools)
     ├── mcp_tools_migration/      # Content migration (7 tools)
-    └── mcp_tools_jsonapi/        # JSON:API entity CRUD (6 tools)
+    ├── mcp_tools_jsonapi/        # JSON:API entity CRUD (6 tools)
+    └── mcp_tools_remote_media/   # Remote file fetch & media (1 tool)
 ```
 
 Enable submodules as needed:
@@ -210,6 +211,7 @@ drush en mcp_tools_analysis       # Site analysis tools
 drush en mcp_tools_batch          # Bulk operations
 drush en mcp_tools_templates      # Site templates
 drush en mcp_tools_migration      # Content import/export
+drush en mcp_tools_remote_media   # Remote file fetch & media
 ```
 
 Common starter bundles:
@@ -345,7 +347,7 @@ Available scopes:
 |------|-------------|
 | `mcp_tools_list_available` | List all available MCP tools by category or search |
 
-## Write Submodules (197 tools across 30 submodules)
+## Write Submodules (198 tools across 31 submodules)
 
 Enable submodules for the capabilities you need. Each submodule's tools are listed in its own `README.md`.
 
@@ -381,6 +383,7 @@ Enable submodules for the capabilities you need. Each submodule's tools are list
 | `mcp_tools_templates` | 5 | Site templates (blog, portfolio, business, docs) |
 | `mcp_tools_migration` | 7 | CSV/JSON import and export (max 100 items) |
 | `mcp_tools_jsonapi` | 6 | Generic entity CRUD via JSON:API (requires `jsonapi`) |
+| `mcp_tools_remote_media` | 1 | Remote file fetch and media creation |
 
 **Safety built in:** uid 1 protected, administrator role unassignable, system menus/views/themes guarded, dangerous permissions blocked, batch limits enforced, base64 uploads capped.
 

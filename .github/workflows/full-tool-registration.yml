@@ -1,6 +1,6 @@
 # =============================================================================
 # Full Tool Registration Workflow
-# Installs optional contrib dependencies and verifies all 222 tools register.
+# Installs optional contrib dependencies and verifies all 223 tools register.
 # Intended for scheduled/manual runs (not every PR) to keep CI fast and stable.
 # =============================================================================
 
@@ -13,7 +13,7 @@ on:
 
 jobs:
   all-tools-register:
-    name: Verify All 222 Tools Register
+    name: Verify All 223 Tools Register
     runs-on: ubuntu-latest
     services:
       mysql:
@@ -98,7 +98,8 @@ jobs:
                         mcp_tools_migration mcp_tools_moderation mcp_tools_paragraphs mcp_tools_pathauto \
                         mcp_tools_recipes mcp_tools_redirect mcp_tools_scheduler mcp_tools_search_api \
                         mcp_tools_sitemap mcp_tools_structure mcp_tools_templates mcp_tools_theme \
-                        mcp_tools_ultimate_cron mcp_tools_users mcp_tools_views mcp_tools_webform; do
+                        mcp_tools_ultimate_cron mcp_tools_users mcp_tools_views mcp_tools_webform \
+                        mcp_tools_remote_media; do
             ./vendor/bin/drush en "$module" -y
           done
           ./vendor/bin/drush cr
@@ -109,11 +110,11 @@ jobs:
           MCP_TOOL_COUNT=$(./vendor/bin/drush eval '$defs = \Drupal::service("plugin.manager.tool")->getDefinitions(); $defs = array_filter($defs, static fn($def): bool => str_starts_with($def->getProvider(), "mcp_tools")); echo count($defs);')
           echo "Registered MCP Tools tools: $MCP_TOOL_COUNT"
 
-          if [ "$MCP_TOOL_COUNT" -ne 222 ]; then
-            echo "ERROR: Expected 222 MCP Tools tools, found $MCP_TOOL_COUNT"
+          if [ "$MCP_TOOL_COUNT" -ne 223 ]; then
+            echo "ERROR: Expected 223 MCP Tools tools, found $MCP_TOOL_COUNT"
             exit 1
           fi
-          echo "✓ All tools registered (222)"
+          echo "✓ All tools registered (223)"
 
       - name: Verify all tool schemas convert
         run: |

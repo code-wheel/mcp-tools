@@ -551,7 +551,8 @@ jobs:
                         mcp_tools_migration mcp_tools_moderation mcp_tools_paragraphs mcp_tools_pathauto \
                         mcp_tools_recipes mcp_tools_redirect mcp_tools_scheduler mcp_tools_search_api \
                         mcp_tools_sitemap mcp_tools_structure mcp_tools_templates mcp_tools_theme \
-                        mcp_tools_ultimate_cron mcp_tools_users mcp_tools_views mcp_tools_webform; do
+                        mcp_tools_ultimate_cron mcp_tools_users mcp_tools_views mcp_tools_webform \
+                        mcp_tools_remote_media; do
             ./vendor/bin/drush en $module -y 2>/dev/null || echo "Skipping $module (optional dependency not met)"
           done
           ./vendor/bin/drush cr

@@ -4,12 +4,10 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools_remote_media\Service;
 
-use GuzzleHttp\Exception\RequestException;
-
 /**
  * Service for fetching remote images and creating Drupal file/media entities.
  *
- * Supports JPEG, PNG, GIF, WebP, and SVG formats up to 10 MiB.
+ * Supports JPEG, PNG, GIF, and WebP formats up to 10 MiB.
  *
  * @see \Drupal\mcp_tools_remote_media\Service\AbstractRemoteFileService
  */
@@ -23,7 +21,6 @@ class RemoteImageService extends AbstractRemoteFileService {
     'image/png',
     'image/gif',
     'image/webp',
-    'image/svg+xml',
   ];
 
   /**
@@ -34,7 +31,6 @@ class RemoteImageService extends AbstractRemoteFileService {
     'image/png' => 'png',
     'image/gif' => 'gif',
     'image/webp' => 'webp',
-    'image/svg+xml' => 'svg',
   ];
 
   /**
@@ -82,73 +78,20 @@ class RemoteImageService extends AbstractRemoteFileService {
     string $bundle = 'image',
     bool $createMedia = TRUE,
   ): array {
-    if ($error = $this->validateAccess()) {
-      return $error;
+    $result = $this->fetchAndCreate(
+      $url, $name, $directory, $bundle, $createMedia,
+    );
+
+    // Add image-specific success message.
+    if ($result['success'] && isset($result['data'])) {
+      $fid = $result['data']['fid'];
+      $mid = $result['data']['mid'] ?? NULL;
+      $result['data']['message'] = $mid
+        ? "Remote image fetched and media '$name' created (fid: $fid, mid: $mid)."
+        : "Remote image fetched and saved as file (fid: $fid).";
     }
 
-    if ($error = $this->validateUrl($url)) {
-      return $error;
-    }
-
-    if ($error = $this->validateDirectory($directory)) {
-      return $error;
-    }
-
-    try {
-      $fetchResult = $this->fetchFromRemote($url);
-      if (isset($fetchResult['error'])) {
-        return $fetchResult;
-      }
-
-      $response = $fetchResult['response'];
-      $mimeType = $this->parseMimeFromContentType($response->getHeaderLine('Content-Type'));
-
-      if ($error = $this->validateMimeType($mimeType)) {
-        return $error;
-      }
-
-      $body = (string) $response->getBody();
-
-      if ($error = $this->validateBody($body)) {
-        return $error;
-      }
-
-      if ($error = $this->validateContentMime($body)) {
-        return $error;
-      }
-
-      $safeFilename = $this->buildFilename($url, $name, $mimeType);
-      $fileData = $this->saveFileEntity($body, $directory, $safeFilename, $mimeType, $url);
-
-      if (!$createMedia) {
-        $fileData['message'] = "Remote image fetched and saved as file (fid: {$fileData['fid']}).";
-        return ['success' => TRUE, 'data' => $fileData];
-      }
-
-      $result = $this->createMediaEntity($bundle, $name, $fileData['fid'], $fileData);
-
-      if ($result['success']) {
-        $fid = $result['data']['fid'];
-        $mid = $result['data']['mid'];
-        $result['data']['message'] = "Remote image fetched and media '$name' created successfully (fid: $fid, mid: $mid).";
-      }
-
-      return $result;
-    }
-    catch (RequestException $e) {
-      $this->auditLogger->logFailure($this->getOperationName(), 'file', 'new', [
-        'url' => $url,
-        'error' => $e->getMessage(),
-      ]);
-      return ['success' => FALSE, 'error' => 'HTTP request failed: ' . $e->getMessage()];
-    }
-    catch (\Exception $e) {
-      $this->auditLogger->logFailure($this->getOperationName(), 'file', 'new', [
-        'url' => $url,
-        'error' => $e->getMessage(),
-      ]);
-      return ['success' => FALSE, 'error' => 'Failed to fetch remote image: ' . $e->getMessage()];
-    }
+    return $result;
   }
 
 }

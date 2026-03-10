@@ -11,7 +11,7 @@ use Drupal\Core\File\FileSystemInterface;
 use Drupal\file\Entity\File;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AuditLogger;
-use Drupal\media\Entity\Media;
+use Drupal\mcp_tools_media\Service\MediaService;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\RequestException;
 
@@ -35,6 +35,16 @@ abstract class AbstractRemoteFileService {
    */
   protected const MAX_FILE_BYTES = 10_485_760;
 
+  /**
+   * Extensions blocked from uploads (code execution risk).
+   */
+  protected const BLOCKED_UPLOAD_EXTENSIONS = [
+    'php', 'php3', 'php4', 'php5', 'phtml', 'phar',
+    'cgi', 'pl', 'py', 'sh',
+    'exe', 'bat', 'cmd', 'com', 'msi',
+    'jsp', 'asp', 'aspx',
+  ];
+
   public function __construct(
     protected EntityTypeManagerInterface $entityTypeManager,
     protected FileSystemInterface $fileSystem,
@@ -42,6 +52,7 @@ abstract class AbstractRemoteFileService {
     protected AccessManager $accessManager,
     protected AuditLogger $auditLogger,
     protected TimeInterface $time,
+    protected MediaService $mediaService,
   ) {}
 
   /**
@@ -102,6 +113,63 @@ abstract class AbstractRemoteFileService {
       return ['success' => FALSE, 'error' => 'Only http and https URLs are allowed.'];
     }
 
+    return NULL;
+  }
+
+  /**
+   * Validates that a URL does not resolve to a private/internal IP.
+   *
+   * Prevents SSRF attacks against cloud metadata endpoints, internal
+   * services, and RFC 1918 hosts.
+   *
+   * @param string $url
+   *   The URL to check.
+   *
+   * @return array|null
+   *   Error array if the URL resolves to a blocked IP, NULL if safe.
+   */
+  protected function validateNotInternalUrl(string $url): ?array {
+    $host = parse_url($url, PHP_URL_HOST);
+    if ($host === NULL || $host === FALSE) {
+      return ['success' => FALSE, 'error' => 'Unable to parse host from URL.'];
+    }
+
+    // Resolve hostname to IP.
+    $ip = gethostbyname($host);
+
+    // The gethostbyname() function returns the hostname on failure.
+    if ($ip === $host && !filter_var($host, FILTER_VALIDATE_IP)) {
+      return ['success' => FALSE, 'error' => 'Unable to resolve hostname.'];
+    }
+
+    // Reject private ranges, reserved ranges, loopback, and link-local.
+    if (!filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
+      return [
+        'success' => FALSE,
+        'error' => 'URLs pointing to private or internal networks are not allowed.',
+      ];
+    }
+
+    return NULL;
+  }
+
+  /**
+   * Validates that a filename extension is not blocked.
+   *
+   * @param string $filename
+   *   The filename to check.
+   *
+   * @return array|null
+   *   Error array if extension is blocked, NULL if safe.
+   */
+  protected function validateExtension(string $filename): ?array {
+    $ext = strtolower((string) pathinfo($filename, PATHINFO_EXTENSION));
+    if ($ext !== '' && in_array($ext, static::BLOCKED_UPLOAD_EXTENSIONS, TRUE)) {
+      return [
+        'success' => FALSE,
+        'error' => "File extension '$ext' is not allowed for uploads.",
+      ];
+    }
     return NULL;
   }
 
@@ -354,6 +422,8 @@ abstract class AbstractRemoteFileService {
   /**
    * Creates a Drupal media entity referencing an existing managed file.
    *
+   * Delegates to MediaService to avoid duplicating entity creation logic.
+   *
    * @param string $bundle
    *   The media type machine name.
    * @param string $name
@@ -373,53 +443,122 @@ abstract class AbstractRemoteFileService {
     int $fid,
     array $fileData,
   ): array {
-    $mediaType = $this->entityTypeManager->getStorage('media_type')->load($bundle);
-    if (!$mediaType) {
-      return [
-        'success' => FALSE,
-        'error' => "Media type '$bundle' not found. File was saved (fid: $fid) but media entity not created. Use mcp_list_media_types to see available types.",
-        'data' => $fileData,
-      ];
+    $result = $this->mediaService->createMedia($bundle, $name, $fid);
+
+    if (!$result['success']) {
+      // Preserve file data so callers know the file was saved.
+      $result['data'] = $fileData;
+      $result['error'] .= " File was saved (fid: $fid).";
+      return $result;
     }
-
-    $sourceConfiguration = $mediaType->get('source_configuration');
-    $sourceFieldName = $sourceConfiguration['source_field'] ?? NULL;
-
-    if (!$sourceFieldName) {
-      return [
-        'success' => FALSE,
-        'error' => "Media type '$bundle' has no source field configured. File was saved (fid: $fid).",
-        'data' => $fileData,
-      ];
-    }
-
-    // Use current time rather than REQUEST_TIME, which is frozen in
-    // long-running processes such as mcp-tools:serve.
-    $currentTime = $this->time->getCurrentTime();
-
-    $media = Media::create([
-      'bundle' => $bundle,
-      'name' => $name,
-      $sourceFieldName => $fid,
-    ]);
-    $media->setCreatedTime($currentTime);
-    $media->setChangedTime($currentTime);
-    $media->save();
-    $mid = (int) $media->id();
-
-    $this->auditLogger->logSuccess($this->getOperationName(), 'media', (string) $mid, [
-      'name' => $name,
-      'bundle' => $bundle,
-      'fid' => $fid,
-    ]);
 
     return [
       'success' => TRUE,
       'data' => array_merge($fileData, [
-        'mid' => $mid,
-        'media_uuid' => $media->uuid(),
+        'mid' => $result['data']['mid'],
+        'media_uuid' => $result['data']['uuid'],
       ]),
     ];
+  }
+
+  /**
+   * Template method: fetch a remote file and optionally create media.
+   *
+   * Orchestrates the full validate-fetch-save flow so that concrete
+   * subclasses do not need to reimplement it.
+   *
+   * @param string $url
+   *   The remote file URL (http/https only).
+   * @param string $name
+   *   Human-readable name for the entity.
+   * @param string $directory
+   *   Target Drupal stream wrapper directory.
+   * @param string $bundle
+   *   Media type bundle machine name.
+   * @param bool $createMedia
+   *   Whether to create a media entity after saving the file.
+   *
+   * @return array
+   *   Result array with success status and data.
+   */
+  protected function fetchAndCreate(
+    string $url,
+    string $name,
+    string $directory,
+    string $bundle,
+    bool $createMedia,
+  ): array {
+    if ($error = $this->validateAccess()) {
+      return $error;
+    }
+
+    if ($error = $this->validateUrl($url)) {
+      return $error;
+    }
+
+    if ($error = $this->validateNotInternalUrl($url)) {
+      return $error;
+    }
+
+    if ($error = $this->validateDirectory($directory)) {
+      return $error;
+    }
+
+    try {
+      $fetchResult = $this->fetchFromRemote($url);
+      if (isset($fetchResult['error'])) {
+        return $fetchResult;
+      }
+
+      $response = $fetchResult['response'];
+      $contentType = $response->getHeaderLine('Content-Type');
+      $mimeType = $this->parseMimeFromContentType($contentType);
+
+      if ($error = $this->validateMimeType($mimeType)) {
+        return $error;
+      }
+
+      $body = (string) $response->getBody();
+
+      if ($error = $this->validateBody($body)) {
+        return $error;
+      }
+
+      if ($error = $this->validateContentMime($body)) {
+        return $error;
+      }
+
+      $safeFilename = $this->buildFilename($url, $name, $mimeType);
+
+      if ($error = $this->validateExtension($safeFilename)) {
+        return $error;
+      }
+
+      $fileData = $this->saveFileEntity(
+        $body, $directory, $safeFilename, $mimeType, $url,
+      );
+
+      if (!$createMedia) {
+        $fid = $fileData['fid'];
+        $op = $this->getOperationName();
+        $fileData['message'] = "Remote $op: file saved (fid: $fid).";
+        return ['success' => TRUE, 'data' => $fileData];
+      }
+
+      return $this->createMediaEntity(
+        $bundle, $name, $fileData['fid'], $fileData,
+      );
+    }
+    catch (\Exception $e) {
+      $this->auditLogger->logFailure(
+        $this->getOperationName(), 'file', 'new',
+        ['url' => $url, 'error' => $e->getMessage()],
+      );
+      return [
+        'success' => FALSE,
+        'error' => 'Failed to fetch remote file: ' . $e->getMessage(),
+      ];
+    }
   }
 
 }

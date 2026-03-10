@@ -2,7 +2,7 @@
 
 Fetch remote files by URL and create managed Drupal media entities.
 
-Currently supports **images** (JPEG, PNG, GIF, WebP, SVG). The architecture is
+Currently supports **images** (JPEG, PNG, GIF, WebP). The architecture is
 designed to be extended toward documents, audio, and video in future sub-tools.
 
 ## Tools (1)
@@ -14,6 +14,7 @@ designed to be extended toward documents, audio, and video in future sub-tools.
 ## Requirements
 
 - `mcp_tools` (base module)
+- `mcp_tools_media` (media management submodule)
 - `drupal:media`
 - `drupal:file`
 
@@ -31,7 +32,7 @@ drush cr
 
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
-| `url` | string | yes | — | http/https URL of the remote image |
+| `url` | string | yes | — | http/https URL of the remote image (no SVG) |
 | `name` | string | yes | — | Human-readable name for the media entity |
 | `bundle` | string | no | `image` | Media type machine name. Use `mcp_list_media_types` to list available types |
 | `directory` | string | no | `public://mcp-uploads` | Drupal stream wrapper destination path |
@@ -39,7 +40,7 @@ drush cr
 
 ## Supported Image Formats
 
-`image/jpeg`, `image/png`, `image/gif`, `image/webp`, `image/svg+xml`
+`image/jpeg`, `image/png`, `image/gif`, `image/webp`
 
 Maximum file size: 10 MiB.
 
@@ -121,6 +122,9 @@ needed beyond having the module enabled.
 - Only `public://` and `private://` stream wrappers are allowed;
   path traversal is rejected
 - All operations are logged via `mcp_tools.audit_logger`
+- SSRF protection: private/internal IP ranges are blocked by default
+- Extension blocklist: dangerous file extensions (e.g. `.php`, `.phar`,
+  `.html`) are rejected regardless of MIME type
 
 ## Gotchas
 
