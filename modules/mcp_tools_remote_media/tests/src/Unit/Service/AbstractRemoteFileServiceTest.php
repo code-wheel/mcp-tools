@@ -13,19 +13,16 @@ use Drupal\mcp_tools_media\Service\MediaService;
 use Drupal\mcp_tools_remote_media\Service\AbstractRemoteFileService;
 use Drupal\Tests\UnitTestCase;
 use GuzzleHttp\Client;
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\DataProvider;
-use PHPUnit\Framework\Attributes\Group;
-
 /**
  * Tests for the shared validation logic in AbstractRemoteFileService.
  *
  * Uses an anonymous class stub to instantiate the abstract class so that
  * the base methods can be tested in isolation, independently of any concrete
  * subclass implementation.
+ *
+ * @group mcp_tools_remote_media
  */
-#[CoversClass(AbstractRemoteFileService::class)]
-#[Group('mcp_tools_remote_media')]
+#[\PHPUnit\Framework\Attributes\CoversClass(AbstractRemoteFileService::class)]
 class AbstractRemoteFileServiceTest extends UnitTestCase {
 
   /**
@@ -167,10 +164,11 @@ class AbstractRemoteFileServiceTest extends UnitTestCase {
   /**
    * Tests that invalid directory paths return an error.
    *
+   * @dataProvider invalidDirectoryProvider
+   *
    * @param string $directory
    *   The directory path to test.
    */
-  #[DataProvider('invalidDirectoryProvider')]
   public function testValidateDirectoryRejectsInvalidPaths(string $directory): void {
     $stub = $this->buildServiceStub();
     $result = $stub->exposeValidateDirectory($directory);
@@ -238,10 +236,11 @@ class AbstractRemoteFileServiceTest extends UnitTestCase {
   /**
    * Tests SSRF: private/internal IPs are blocked.
    *
+   * @dataProvider privateIpUrlProvider
+   *
    * @param string $url
    *   URL with a private/reserved IP.
    */
-  #[DataProvider('privateIpUrlProvider')]
   public function testValidateNotInternalUrlBlocksPrivateIps(string $url): void {
     $stub = $this->buildServiceStub();
     $result = $stub->exposeValidateNotInternalUrl($url);

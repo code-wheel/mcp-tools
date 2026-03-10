@@ -17,17 +17,15 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\Group;
-
 /**
  * Tests for RemoteImageService.
  *
  * Covers image-specific logic (MIME validation, orchestration) and
  * integration with the abstract base class via the full service stack.
+ *
+ * @group mcp_tools_remote_media
  */
-#[CoversClass(RemoteImageService::class)]
-#[Group('mcp_tools_remote_media')]
+#[\PHPUnit\Framework\Attributes\CoversClass(RemoteImageService::class)]
 class RemoteImageServiceTest extends UnitTestCase {
 
   /**

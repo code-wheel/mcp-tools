@@ -93,6 +93,11 @@ mcp_tools use media:
   description: 'Access media type and media entity management tools via MCP.'
   restrict access: true
 
+mcp_tools use remote media:
+  title: 'Use MCP remote media tools (category: remote media)'
+  description: 'Fetch remote images by URL and create managed media entities via MCP.'
+  restrict access: true
+
 mcp_tools use menus:
   title: 'Use MCP menu tools (category: menus)'
   description: 'Access menu creation and menu link management tools via MCP.'
