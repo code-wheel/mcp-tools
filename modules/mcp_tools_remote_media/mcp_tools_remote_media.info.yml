@@ -1,6 +1,6 @@
 name: 'MCP Tools - Remote Media'
 type: module
-description: 'Fetch remote files from a URL and create managed Drupal media entities. Currently supports images (JPEG, PNG, GIF, WebP).'
+description: 'Fetch remote files from a URL and create managed Drupal media entities. Currently supports images (JPEG, PNG, GIF, WebP, SVG).'
 package: MCP Tools
 core_version_requirement: ^10.3 || ^11
 dependencies:

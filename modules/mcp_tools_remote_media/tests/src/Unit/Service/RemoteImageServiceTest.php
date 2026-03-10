@@ -17,6 +17,7 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
+
 /**
  * Tests for RemoteImageService.
  *
@@ -122,7 +123,7 @@ class RemoteImageServiceTest extends UnitTestCase {
   }
 
   /**
-   * Tests that getAllowedMimeTypes() returns exactly 4 image types.
+   * Tests that getAllowedMimeTypes() returns exactly 5 image types.
    */
   public function testGetAllowedMimeTypesReturnsImageTypes(): void {
     $service = $this->createService();
@@ -132,25 +133,12 @@ class RemoteImageServiceTest extends UnitTestCase {
     $method->setAccessible(TRUE);
     $mimeTypes = $method->invoke($service);
 
-    $this->assertCount(4, $mimeTypes);
+    $this->assertCount(5, $mimeTypes);
     $this->assertContains('image/jpeg', $mimeTypes);
     $this->assertContains('image/png', $mimeTypes);
     $this->assertContains('image/gif', $mimeTypes);
     $this->assertContains('image/webp', $mimeTypes);
-  }
-
-  /**
-   * Tests SVG is no longer in the allowed MIME types.
-   */
-  public function testSvgIsNotAllowed(): void {
-    $service = $this->createService();
-
-    $reflection = new \ReflectionClass($service);
-    $method = $reflection->getMethod('getAllowedMimeTypes');
-    $method->setAccessible(TRUE);
-    $mimeTypes = $method->invoke($service);
-
-    $this->assertNotContains('image/svg+xml', $mimeTypes);
+    $this->assertContains('image/svg+xml', $mimeTypes);
   }
 
   /**
@@ -224,23 +212,87 @@ class RemoteImageServiceTest extends UnitTestCase {
   }
 
   /**
-   * Tests that SVG content type is rejected.
+   * Tests that SVG sanitization strips script tags.
    */
-  public function testSvgContentTypeIsRejected(): void {
-    $this->accessManager->method('canWrite')->willReturn(TRUE);
+  public function testSvgSanitizationStripsScripts(): void {
+    $service = $this->createService();
+    $reflection = new \ReflectionClass($service);
+    $method = $reflection->getMethod('sanitizeContent');
+    $method->setAccessible(TRUE);
 
-    $response = new Response(
-      200,
-      ['Content-Type' => 'image/svg+xml'],
-      '<svg></svg>',
-    );
-    $this->httpClient->method('get')->willReturn($response);
+    $dirty = '<svg xmlns="http://www.w3.org/2000/svg"><script>alert("xss")</script><circle r="50"/></svg>';
+    $result = $method->invoke($service, $dirty, 'image/svg+xml');
 
-    $result = $this->createService()->fetchRemoteImage(
-      'https://example.com/logo.svg', 'Logo',
-    );
+    $this->assertArrayHasKey('body', $result);
+    $this->assertStringNotContainsString('<script', $result['body']);
+    $this->assertStringNotContainsString('alert', $result['body']);
+    $this->assertStringContainsString('<circle', $result['body']);
+  }
+
+  /**
+   * Tests that SVG sanitization strips event handlers.
+   */
+  public function testSvgSanitizationStripsEventHandlers(): void {
+    $service = $this->createService();
+    $reflection = new \ReflectionClass($service);
+    $method = $reflection->getMethod('sanitizeContent');
+    $method->setAccessible(TRUE);
+
+    $dirty = '<svg xmlns="http://www.w3.org/2000/svg"><rect onload="alert(1)" width="100"/></svg>';
+    $result = $method->invoke($service, $dirty, 'image/svg+xml');
+
+    $this->assertArrayHasKey('body', $result);
+    $this->assertStringNotContainsString('onload', $result['body']);
+    $this->assertStringContainsString('<rect', $result['body']);
+  }
+
+  /**
+   * Tests that SVG sanitization strips foreignObject.
+   */
+  public function testSvgSanitizationStripsForeignObject(): void {
+    $service = $this->createService();
+    $reflection = new \ReflectionClass($service);
+    $method = $reflection->getMethod('sanitizeContent');
+    $method->setAccessible(TRUE);
+
+    $dirty = '<svg xmlns="http://www.w3.org/2000/svg"><foreignObject><body xmlns="http://www.w3.org/1999/xhtml"><script>alert(1)</script></body></foreignObject></svg>';
+    $result = $method->invoke($service, $dirty, 'image/svg+xml');
+
+    $this->assertArrayHasKey('body', $result);
+    $this->assertStringNotContainsString('foreignObject', $result['body']);
+    $this->assertStringNotContainsString('script', $result['body']);
+  }
+
+  /**
+   * Tests that sanitization is skipped for non-SVG MIME types.
+   */
+  public function testSanitizationSkippedForNonSvg(): void {
+    $service = $this->createService();
+    $reflection = new \ReflectionClass($service);
+    $method = $reflection->getMethod('sanitizeContent');
+    $method->setAccessible(TRUE);
+
+    $body = 'raw-jpeg-bytes';
+    $result = $method->invoke($service, $body, 'image/jpeg');
+
+    $this->assertSame($body, $result['body']);
+  }
+
+  /**
+   * Tests that invalid SVG XML returns an error.
+   */
+  public function testSvgSanitizationRejectsInvalidXml(): void {
+    $service = $this->createService();
+    $reflection = new \ReflectionClass($service);
+    $method = $reflection->getMethod('sanitizeContent');
+    $method->setAccessible(TRUE);
+
+    $dirty = 'this is not xml at all <<<<>>>';
+    $result = $method->invoke($service, $dirty, 'image/svg+xml');
+
+    $this->assertArrayHasKey('error', $result);
     $this->assertFalse($result['success']);
-    $this->assertStringContainsString('Unsupported content type', $result['error']);
+    $this->assertStringContainsString('sanitization failed', $result['error']);
   }
 
   /**

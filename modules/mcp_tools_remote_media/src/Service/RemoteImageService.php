@@ -4,10 +4,14 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools_remote_media\Service;
 
+use enshrined\svgSanitize\Sanitizer;
+
 /**
  * Service for fetching remote images and creating Drupal file/media entities.
  *
- * Supports JPEG, PNG, GIF, and WebP formats up to 10 MiB.
+ * Supports JPEG, PNG, GIF, WebP, and SVG formats up to 10 MiB.
+ * SVG files are sanitized using enshrined/svg-sanitize to strip scripts,
+ * event handlers, foreign objects, and remote references.
  *
  * @see \Drupal\mcp_tools_remote_media\Service\AbstractRemoteFileService
  */
@@ -21,6 +25,7 @@ class RemoteImageService extends AbstractRemoteFileService {
     'image/png',
     'image/gif',
     'image/webp',
+    'image/svg+xml',
   ];
 
   /**
@@ -31,6 +36,7 @@ class RemoteImageService extends AbstractRemoteFileService {
     'image/png' => 'png',
     'image/gif' => 'gif',
     'image/webp' => 'webp',
+    'image/svg+xml' => 'svg',
   ];
 
   /**
@@ -52,6 +58,30 @@ class RemoteImageService extends AbstractRemoteFileService {
    */
   protected function getOperationName(): string {
     return 'fetch_remote_image';
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function sanitizeContent(string $body, string $mimeType): array {
+    if ($mimeType !== 'image/svg+xml') {
+      return ['body' => $body];
+    }
+
+    $sanitizer = new Sanitizer();
+    $sanitizer->removeRemoteReferences(TRUE);
+    $sanitizer->minify(FALSE);
+
+    $clean = $sanitizer->sanitize($body);
+
+    if ($clean === FALSE || $clean === '') {
+      return [
+        'success' => FALSE,
+        'error' => 'SVG sanitization failed: file contains invalid XML.',
+      ];
+    }
+
+    return ['body' => $clean];
   }
 
   /**

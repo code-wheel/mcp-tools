@@ -23,6 +23,7 @@
     "code-wheel/mcp-error-codes": "^1.2",
     "code-wheel/mcp-events": "^2.0",
     "code-wheel/mcp-schema-builder": "^1.1",
-    "code-wheel/mcp-tool-gateway": "^1.1"
+    "code-wheel/mcp-tool-gateway": "^1.1",
+    "enshrined/svg-sanitize": "^0.22"
   }
 }

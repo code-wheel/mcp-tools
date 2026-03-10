@@ -19,7 +19,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 #[Tool(
   id: 'mcp_fetch_remote_image',
   label: new TranslatableMarkup('Fetch Remote Image'),
-  description: new TranslatableMarkup('Download an image from a remote URL and create a managed Drupal media entity. Supports JPEG, PNG, GIF, WebP.'),
+  description: new TranslatableMarkup('Download an image from a remote URL and create a managed Drupal media entity. Supports JPEG, PNG, GIF, WebP, SVG.'),
   operation: ToolOperation::Write,
   input_definitions: [
     'url' => new InputDefinition(

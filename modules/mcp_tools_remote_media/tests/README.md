@@ -24,22 +24,28 @@ stub class:
 - URL validation (invalid URLs, non-HTTP schemes, valid http/https)
 - Directory validation (path traversal protection, allowed stream wrappers)
 - File body validation (empty body, size limit enforcement)
+- SSRF protection (private/reserved IP blocking)
+- Extension blocklist (dangerous extensions rejected)
+- Filename building (URL extension, fallback, special chars)
 
-**14 tests**
+**22 tests**
 
 ### RemoteImageServiceTest (Unit)
 
 Tests `RemoteImageService` image-specific logic and orchestration:
 
-- Allowed MIME type list (4 image types)
+- Allowed MIME type list (5 image types including SVG)
 - MIME-to-extension map completeness
 - Operation name for audit logging
 - Access control (write permission checks)
 - Unsupported MIME type rejection
 - HTTP request failure handling
+- SSRF blocking (private IPs)
+- SVG sanitization (script stripping, event handler removal,
+  foreignObject removal, invalid XML rejection, non-SVG passthrough)
 
-**6 tests**
+**14 tests**
 
 ---
 
-**Total: 20 tests, 57 assertions** — no database or Drupal installation required.
+**Total: 36 tests** — no database or Drupal installation required.
