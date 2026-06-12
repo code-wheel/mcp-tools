@@ -12,6 +12,7 @@ Batteries-included MCP tools for AI assistants working with Drupal sites.
 |----------------|-------------|--------|-------|
 | **10.3.x** | 8.3 | ✅ Tested | Minimum supported version |
 | **11.x** | 8.4 | ✅ Tested | Drupal 11 requires PHP 8.4+ |
+| **12.x** | 8.4 | ☑️ Declared | Compatible; no Drupal 12 release to test against yet |
 
 **PHP Support:** 8.3, 8.4
 
@@ -61,15 +62,17 @@ AI:   Creates content type, fields, vocabularies, role, and permissions
 
 ## Requirements
 
-- Drupal 10.3+ or Drupal 11
+- Drupal 10.3+, 11, or 12
+- PHP 8.3+
 - [Tool API](https://www.drupal.org/project/tool) module
+- `mcp/sdk` 0.2.2–0.6 (resolved automatically; supports coexistence with modules that require newer SDK releases)
 
 ### MCP Transports (choose one)
 
 - **Recommended (local dev):** `mcp_tools_stdio` — runs an MCP server over STDIO via Drush.
 - **Experimental (remote HTTP):** `mcp_tools_remote` — exposes an HTTP endpoint with API key authentication.
-- **Optional (MCP Server bridge):** `mcp_tools_mcp_server` — generates MCP Server tool configs for MCP Tools (only relevant if you install `drupal/mcp_server`).
-- **Alternative:** [MCP Server](https://www.drupal.org/project/mcp_server) (optional). Note: `drupal/mcp_server` currently has an upstream Composer metadata issue; see https://www.drupal.org/project/mcp_server/issues/3560993 for the workaround.
+- **Optional (MCP Server bridge):** `mcp_tools_mcp_server` — generates MCP Server tool configs for MCP Tools. Requires `drupal/mcp_server < 2.0`: it integrates with the 1.x tool-config API, which was removed in the 2.x rearchitecture. A 2.x bridge is tracked separately.
+- **Alternative:** [MCP Server](https://www.drupal.org/project/mcp_server) (optional). MCP Tools coexists with MCP Server 2.x (which requires `mcp/sdk ^0.6`) — both can be installed and enabled in the same site. Only the optional sync bridge above is version-bound.
 
 ## Installation
 
@@ -392,6 +395,7 @@ Enable submodules for the capabilities you need. Each submodule's tools are list
 ### Built-in Protections
 
 - **Modular by default** - Enable only the submodules you need
+- **Route-level access control** - The remote HTTP endpoint is gated at the routing layer (returns 404 when disabled or to non-allowlisted clients), not by controller logic alone
 - **Three-layer access control** - Modules, global toggle, connection scopes
 - **Permission-based** - Each category has its own Drupal permission
 - **Audit logging** - All write operations logged with user info
