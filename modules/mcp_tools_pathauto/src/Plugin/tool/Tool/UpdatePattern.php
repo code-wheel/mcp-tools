@@ -145,7 +145,7 @@ class UpdatePattern extends McpToolsToolBase {
       return [
         'success' => FALSE,
         'error' => 'At least one field to update is required'
-        . ' (label, pattern, weight, status, or bundle).',
+          . ' (label, pattern, weight, status, or bundle).',
       ];
     }
 

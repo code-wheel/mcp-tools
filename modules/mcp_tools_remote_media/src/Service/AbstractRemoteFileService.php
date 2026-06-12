@@ -253,7 +253,7 @@ abstract class AbstractRemoteFileService {
       return [
         'success' => FALSE,
         'error' => "Unsupported content type '$mimeType'. Allowed: "
-        . implode(', ', $this->getAllowedMimeTypes()),
+          . implode(', ', $this->getAllowedMimeTypes()),
       ];
     }
 
@@ -274,7 +274,7 @@ abstract class AbstractRemoteFileService {
       return [
         'success' => FALSE,
         'error' => 'Remote file too large. Maximum size is '
-        . self::MAX_FILE_BYTES . ' bytes.',
+          . self::MAX_FILE_BYTES . ' bytes.',
       ];
     }
 

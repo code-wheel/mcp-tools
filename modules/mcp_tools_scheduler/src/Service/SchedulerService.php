@@ -190,7 +190,7 @@ class SchedulerService {
           'scheduled_publish' => date('Y-m-d H:i:s', $timestamp),
           'timestamp' => $timestamp,
           'message' => "Content '{$node->getTitle()}' scheduled for publication on "
-          . date('Y-m-d H:i:s', $timestamp) . ".",
+            . date('Y-m-d H:i:s', $timestamp) . ".",
         ],
       ];
     }
@@ -263,7 +263,7 @@ class SchedulerService {
           'scheduled_unpublish' => date('Y-m-d H:i:s', $timestamp),
           'timestamp' => $timestamp,
           'message' => "Content '{$node->getTitle()}' scheduled for unpublication on "
-          . date('Y-m-d H:i:s', $timestamp) . ".",
+            . date('Y-m-d H:i:s', $timestamp) . ".",
         ],
       ];
     }

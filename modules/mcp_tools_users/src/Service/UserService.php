@@ -171,7 +171,7 @@ class UserService {
       return [
         'success' => FALSE,
         'error' => "User with ID $uid not found."
-        . " Use mcp_list_users or mcp_find_user to locate users.",
+          . " Use mcp_list_users or mcp_find_user to locate users.",
       ];
     }
 
@@ -264,7 +264,7 @@ class UserService {
       return [
         'success' => FALSE,
         'error' => "User with ID $uid not found."
-        . " Use mcp_list_users or mcp_find_user to locate users.",
+          . " Use mcp_list_users or mcp_find_user to locate users.",
       ];
     }
 
@@ -330,7 +330,7 @@ class UserService {
       return [
         'success' => FALSE,
         'error' => "User with ID $uid not found."
-        . " Use mcp_list_users or mcp_find_user to locate users.",
+          . " Use mcp_list_users or mcp_find_user to locate users.",
       ];
     }
 
@@ -393,7 +393,7 @@ class UserService {
       return [
         'success' => FALSE,
         'error' => "User with ID $uid not found."
-        . " Use mcp_list_users or mcp_find_user to locate users.",
+          . " Use mcp_list_users or mcp_find_user to locate users.",
       ];
     }
 

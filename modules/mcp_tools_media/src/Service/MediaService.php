@@ -125,7 +125,7 @@ class MediaService {
       return [
         'success' => FALSE,
         'error' => "Media type '$id' not found."
-        . " Use mcp_list_media_types to see available types.",
+          . " Use mcp_list_media_types to see available types.",
       ];
     }
 
@@ -292,7 +292,7 @@ class MediaService {
       return [
         'success' => FALSE,
         'error' => "Media type '$bundle' not found."
-        . " Use mcp_list_media_types to see available types.",
+          . " Use mcp_list_media_types to see available types.",
       ];
     }
 

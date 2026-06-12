@@ -5,7 +5,11 @@ package: AI
 core_version_requirement: ^10.3 || ^11 || ^12
 lifecycle: experimental
 
+# The bridge targets the mcp_server 1.x tool-config API (McpToolConfig entity,
+# tool_api plugin). mcp_server 2.x removed both in a rearchitecture; constrain
+# below 2.0 until a 2.x bridge lands (tracked separately). The class_exists()
+# guards in src/ keep this safe even if the constraint is bypassed.
 dependencies:
   - mcp_tools:mcp_tools
-  - mcp_server:mcp_server
+  - 'mcp_server:mcp_server (<2.0)'
 

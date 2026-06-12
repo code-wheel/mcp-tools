@@ -121,7 +121,7 @@ class UpdateRedirect extends McpToolsToolBase {
       return [
         'success' => FALSE,
         'error' => 'At least one field to update is required'
-        . ' (source, destination, status_code, or language).',
+          . ' (source, destination, status_code, or language).',
       ];
     }
 

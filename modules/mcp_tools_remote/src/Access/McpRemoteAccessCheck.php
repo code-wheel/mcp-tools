@@ -8,16 +8,21 @@ use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Access\AccessResultInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Routing\Access\AccessInterface;
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\Routing\Route;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
  * Route-level access check for the MCP remote endpoint.
  *
- * Replaces `_access: TRUE` with early gate checks so that requests never reach
- * the controller unless the module is enabled and a plausible credential is
- * present. The controller still performs full validation (key verification,
- * scope resolution, IP allowlist, origin check) as a second defense layer.
+ * Replaces `_access: TRUE` so the route is gated by the framework rather
+ * than relying solely on controller logic (#3587523). Scope is deliberately
+ * minimal: only the module's enabled flag is enforced here, thrown as a 404
+ * so a disabled endpoint is indistinguishable from a nonexistent one.
+ *
+ * Credential and IP/origin validation intentionally stay in the controller:
+ * its response contract conceals the endpoint (404) from non-allowlisted
+ * clients BEFORE evaluating credentials, and answers 401 only to allowlisted
+ * clients. A route-level credential presence check would invert that order
+ * and leak the endpoint's existence as a 403.
  */
 final class McpRemoteAccessCheck implements AccessInterface {
 
@@ -28,51 +33,24 @@ final class McpRemoteAccessCheck implements AccessInterface {
   /**
    * Checks access for the MCP remote endpoint route.
    *
-   * @param \Symfony\Component\Routing\Route $route
-   *   The route being checked.
-   * @param \Symfony\Component\HttpFoundation\Request $request
-   *   The current HTTP request.
-   *
    * @return \Drupal\Core\Access\AccessResultInterface
    *   The access result.
+   *
+   * @throws \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
+   *   When the remote server is disabled — 404, never 403, so the disabled
+   *   endpoint stays concealed.
    */
-  public function access(Route $route, Request $request): AccessResultInterface {
-    // Deny if the remote server is disabled in config.
+  public function access(): AccessResultInterface {
     $remoteConfig = $this->configFactory->get('mcp_tools_remote.settings');
     if (!$remoteConfig->get('enabled')) {
-      return AccessResult::forbidden('MCP remote server is disabled.')
-        ->addCacheableDependency($remoteConfig);
+      throw new NotFoundHttpException();
     }
 
-    // Deny if no API key / Bearer token is present in the request. This is a
-    // presence check only — the controller validates the actual credential.
-    if ($this->extractApiKey($request) === NULL) {
-      return AccessResult::forbidden('Missing API key or Bearer token.')
-        ->setCacheMaxAge(0);
-    }
-
-    // Allow — the controller performs full key validation, scope resolution,
-    // IP allowlist, origin check, and account switching.
-    return AccessResult::allowed()->setCacheMaxAge(0);
-  }
-
-  /**
-   * Extracts an API key from Authorization or X-MCP-Api-Key headers.
-   *
-   * @param \Symfony\Component\HttpFoundation\Request $request
-   *   The current HTTP request.
-   *
-   * @return string|null
-   *   The raw API key string, or NULL if not present.
-   */
-  private function extractApiKey(Request $request): ?string {
-    $auth = (string) $request->headers->get('Authorization', '');
-    if (str_starts_with($auth, 'Bearer ')) {
-      return trim(substr($auth, 7)) ?: NULL;
-    }
-
-    $headerKey = (string) $request->headers->get('X-MCP-Api-Key', '');
-    return $headerKey !== '' ? trim($headerKey) : NULL;
+    // Allowed at the routing layer; the controller performs the full
+    // security pipeline (IP/origin allowlist, key validation, scopes).
+    return AccessResult::allowed()
+      ->addCacheableDependency($remoteConfig)
+      ->setCacheMaxAge(0);
   }
 
 }

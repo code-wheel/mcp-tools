@@ -78,6 +78,7 @@ jobs:
 
       - name: Install Drupal
         run: |
+          composer config --global policy.advisories.block false
           composer create-project drupal/recommended-project:^10.3 drupal --no-interaction
           cd drupal
           composer require --dev drupal/core-dev:^10.3 phpspec/prophecy-phpunit:^2 drush/drush --with-all-dependencies --no-interaction

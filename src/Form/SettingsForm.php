@@ -65,11 +65,11 @@ class SettingsForm extends ConfigFormBase {
     $form['mode_description'] = [
       '#type' => 'markup',
       '#markup' => '<div class="description">' .
-      '<strong>' . $this->t('Mode presets:') . '</strong><br>' .
-      '<em>' . $this->t('Development:') . '</em> ' . $this->t('Read + Write scopes, no rate limiting, no audit logging. Best for local development.') . '<br>' .
-      '<em>' . $this->t('Staging:') . '</em> ' . $this->t('Config-only mode (no content writes), rate limiting enabled, audit logging enabled.') . '<br>' .
-      '<em>' . $this->t('Production:') . '</em> ' . $this->t('Read-only mode, strict rate limits, audit logging enabled. Safest for production.') .
-      '</div>',
+        '<strong>' . $this->t('Mode presets:') . '</strong><br>' .
+        '<em>' . $this->t('Development:') . '</em> ' . $this->t('Read + Write scopes, no rate limiting, no audit logging. Best for local development.') . '<br>' .
+        '<em>' . $this->t('Staging:') . '</em> ' . $this->t('Config-only mode (no content writes), rate limiting enabled, audit logging enabled.') . '<br>' .
+        '<em>' . $this->t('Production:') . '</em> ' . $this->t('Read-only mode, strict rate limits, audit logging enabled. Safest for production.') .
+        '</div>',
       '#weight' => -199,
     ];
   }
@@ -405,18 +405,18 @@ class SettingsForm extends ConfigFormBase {
     $form['production_warning'] = [
       '#type' => 'markup',
       '#markup' => '<div class="messages messages--warning">' .
-      '<h3>' . $this->t('Production Environment Warning') . '</h3>' .
-      '<p>' . $this->t('MCP Tools is designed primarily for <strong>local development and prototyping</strong>. If you must use it in production:') . '</p>' .
-      '<ul>' .
-      '<li>' . $this->t('Enable read-only mode') . '</li>' .
-      '<li>' . $this->t('Or enable config-only mode') . '</li>' .
-      '<li>' . $this->t('Enable rate limiting') . '</li>' .
-      '<li>' . $this->t('Enable audit logging') . '</li>' .
-      '<li>' . $this->t('Restrict default scopes to "read" only') . '</li>' .
-      '<li>' . $this->t('Use IP allowlisting at the web server level') . '</li>' .
-      '<li>' . $this->t('Monitor audit logs regularly') . '</li>' .
-      '</ul>' .
-      '</div>',
+        '<h3>' . $this->t('Production Environment Warning') . '</h3>' .
+        '<p>' . $this->t('MCP Tools is designed primarily for <strong>local development and prototyping</strong>. If you must use it in production:') . '</p>' .
+        '<ul>' .
+        '<li>' . $this->t('Enable read-only mode') . '</li>' .
+        '<li>' . $this->t('Or enable config-only mode') . '</li>' .
+        '<li>' . $this->t('Enable rate limiting') . '</li>' .
+        '<li>' . $this->t('Enable audit logging') . '</li>' .
+        '<li>' . $this->t('Restrict default scopes to "read" only') . '</li>' .
+        '<li>' . $this->t('Use IP allowlisting at the web server level') . '</li>' .
+        '<li>' . $this->t('Monitor audit logs regularly') . '</li>' .
+        '</ul>' .
+        '</div>',
       '#weight' => -100,
     ];
   }

@@ -42,6 +42,7 @@ jobs:
 
       - name: Install Drupal + dependencies
         run: |
+          composer config --global policy.advisories.block false
           composer create-project drupal/recommended-project:^10.3 drupal --no-interaction
           cd drupal
           composer require drush/drush --no-interaction

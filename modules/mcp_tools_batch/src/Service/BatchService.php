@@ -525,7 +525,7 @@ class BatchService {
       return [
         'success' => FALSE,
         'error' => "Role '$role' not found."
-        . " Use mcp_structure_list_roles to see available roles.",
+          . " Use mcp_structure_list_roles to see available roles.",
       ];
     }
 
@@ -651,7 +651,7 @@ class BatchService {
       return [
         'success' => FALSE,
         'error' => "Vocabulary '$vocabulary' not found."
-        . " Use mcp_structure_list_vocabularies to see available vocabularies.",
+          . " Use mcp_structure_list_vocabularies to see available vocabularies.",
       ];
     }
 

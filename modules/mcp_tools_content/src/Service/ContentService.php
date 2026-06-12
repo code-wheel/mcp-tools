@@ -38,7 +38,7 @@ class ContentService {
       return [
         'success' => FALSE,
         'error' => "Content type '$type' not found."
-        . " Use mcp_structure_list_content_types to see available types.",
+          . " Use mcp_structure_list_content_types to see available types.",
       ];
     }
 
@@ -106,7 +106,7 @@ class ContentService {
       return [
         'success' => FALSE,
         'error' => "Content with ID $nid not found."
-        . " Use mcp_content_search to find content by title or mcp_content_list to browse.",
+          . " Use mcp_content_search to find content by title or mcp_content_list to browse.",
       ];
     }
 
@@ -170,7 +170,7 @@ class ContentService {
       return [
         'success' => FALSE,
         'error' => "Content with ID $nid not found."
-        . " Use mcp_content_search to find content by title or mcp_content_list to browse.",
+          . " Use mcp_content_search to find content by title or mcp_content_list to browse.",
       ];
     }
 
@@ -210,7 +210,7 @@ class ContentService {
       return [
         'success' => FALSE,
         'error' => "Content with ID $nid not found."
-        . " Use mcp_content_search to find content by title or mcp_content_list to browse.",
+          . " Use mcp_content_search to find content by title or mcp_content_list to browse.",
       ];
     }
 
