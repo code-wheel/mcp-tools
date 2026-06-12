@@ -1,29 +1,29 @@
 {
-  "name": "drupal/mcp_tools",
-  "description": "Batteries-included MCP tools for AI assistants working with Drupal sites.",
-  "type": "drupal-module",
-  "license": "GPL-2.0-or-later",
-  "homepage": "https://www.drupal.org/project/mcp_tools",
-  "keywords": [
-    "Drupal",
-    "MCP",
-    "Model Context Protocol",
-    "AI",
-    "Tools"
-  ],
-  "support": {
-    "issues": "https://www.drupal.org/project/issues/mcp_tools"
-  },
-  "require": {
-    "php": ">=8.3",
-    "drupal/core": "^10.3 || ^11 || ^12",
-    "drupal/tool": "^1.0@alpha",
-    "mcp/sdk": "^0.2.2",
-    "code-wheel/mcp-http-security": "^1.0",
-    "code-wheel/mcp-error-codes": "^1.2",
-    "code-wheel/mcp-events": "^2.0",
-    "code-wheel/mcp-schema-builder": "^1.1",
-    "code-wheel/mcp-tool-gateway": "^1.1",
-    "enshrined/svg-sanitize": "^0.22"
-  }
+    "name": "drupal/mcp_tools",
+    "description": "Batteries-included MCP tools for AI assistants working with Drupal sites.",
+    "type": "drupal-module",
+    "license": "GPL-2.0-or-later",
+    "homepage": "https://www.drupal.org/project/mcp_tools",
+    "keywords": [
+        "Drupal",
+        "MCP",
+        "Model Context Protocol",
+        "AI",
+        "Tools"
+    ],
+    "support": {
+        "issues": "https://www.drupal.org/project/issues/mcp_tools"
+    },
+    "require": {
+        "php": ">=8.3",
+        "drupal/core": "^10.3 || ^11 || ^12",
+        "drupal/tool": "^1.0@alpha",
+        "mcp/sdk": "^0.2.2 || ^0.3 || ^0.4 || ^0.5 || ^0.6",
+        "code-wheel/mcp-http-security": "^1.0",
+        "code-wheel/mcp-error-codes": "^1.3",
+        "code-wheel/mcp-events": "^2.0",
+        "code-wheel/mcp-schema-builder": "^1.1",
+        "code-wheel/mcp-tool-gateway": "^1.2",
+        "enshrined/svg-sanitize": "^0.22"
+    }
 }
