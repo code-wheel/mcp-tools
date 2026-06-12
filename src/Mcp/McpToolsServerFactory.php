@@ -76,7 +76,22 @@ class McpToolsServerFactory {
       ->setEventDispatcher($this->eventDispatcher);
 
     if ($sessionStore) {
-      $builder->setSession($sessionStore, ttl: $sessionTtl);
+      // setSession()'s signature changed across mcp/sdk majors: 0.2.x–0.5.x
+      // took a `ttl` argument; 0.6+ dropped it for GC-based expiry. Detect
+      // the parameter so this module works across the supported SDK range.
+      $accepts_ttl = FALSE;
+      foreach ((new \ReflectionMethod($builder, 'setSession'))->getParameters() as $param) {
+        if ($param->getName() === 'ttl') {
+          $accepts_ttl = TRUE;
+          break;
+        }
+      }
+      if ($accepts_ttl) {
+        $builder->setSession($sessionStore, ttl: $sessionTtl);
+      }
+      else {
+        $builder->setSession($sessionStore);
+      }
     }
 
     if ($enableResources) {
