@@ -133,6 +133,12 @@ jobs:
               <testsuite name="unit">
                 <directory>web/modules/contrib/mcp_tools/tests/src/Unit</directory>
                 <directory>web/modules/contrib/mcp_tools/modules/*/tests/src/Unit</directory>
+                <!-- Contrib-dependent submodules: their tests need classes not installed here. -->
+                <exclude>web/modules/contrib/mcp_tools/modules/mcp_tools_metatag/tests</exclude>
+                <exclude>web/modules/contrib/mcp_tools/modules/mcp_tools_pathauto/tests</exclude>
+                <exclude>web/modules/contrib/mcp_tools/modules/mcp_tools_scheduler/tests</exclude>
+                <exclude>web/modules/contrib/mcp_tools/modules/mcp_tools_sitemap/tests</exclude>
+                <exclude>web/modules/contrib/mcp_tools/modules/mcp_tools_ultimate_cron/tests</exclude>
               </testsuite>
               <testsuite name="kernel">
                 <directory>web/modules/contrib/mcp_tools/tests/src/Kernel</directory>
