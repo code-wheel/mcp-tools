@@ -1,7 +1,7 @@
 name: 'MCP Tools - Cron'
 type: module
 description: 'MCP Tools for cron management (run, status, scheduling).'
-core_version_requirement: ^10.3 || ^11
+core_version_requirement: ^10.3 || ^11 || ^12
 package: MCP Tools
 lifecycle: experimental
 dependencies:

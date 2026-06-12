@@ -2,7 +2,7 @@ name: 'MCP Tools - Recipes'
 type: module
 description: 'MCP tools for Drupal Recipes integration.'
 package: MCP
-core_version_requirement: ^10.3 || ^11
+core_version_requirement: ^10.3 || ^11 || ^12
 dependencies:
   - mcp_tools:mcp_tools
 lifecycle: experimental

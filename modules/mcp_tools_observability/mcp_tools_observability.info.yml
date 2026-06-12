@@ -2,7 +2,7 @@ name: 'MCP Tools - Observability'
 type: module
 description: 'Observability adapters for MCP tool execution events.'
 package: MCP Tools
-core_version_requirement: ^10.3 || ^11
+core_version_requirement: ^10.3 || ^11 || ^12
 lifecycle: experimental
 dependencies:
   - mcp_tools:mcp_tools

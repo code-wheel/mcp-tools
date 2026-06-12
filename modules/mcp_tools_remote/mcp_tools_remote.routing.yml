@@ -4,7 +4,7 @@ mcp_tools_remote.handle:
     _controller: '\Drupal\mcp_tools_remote\Controller\McpToolsRemoteController::handle'
     _title: 'MCP Tools Remote'
   requirements:
-    _access: 'TRUE'
+    _mcp_remote_access: 'TRUE'
   methods: [GET, POST]
   options:
     no_cache: TRUE

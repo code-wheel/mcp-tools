@@ -9,3 +9,10 @@ services:
       - '@state'
       - '@private_key'
       - '@datetime.time'
+
+  mcp_tools_remote.access_checker:
+    class: Drupal\mcp_tools_remote\Access\McpRemoteAccessCheck
+    arguments:
+      - '@config.factory'
+    tags:
+      - { name: access_check, applies_to: _mcp_remote_access }
