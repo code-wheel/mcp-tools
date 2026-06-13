@@ -530,7 +530,7 @@ class RedirectService {
       'status_code' => $redirect->getStatusCode(),
       'language' => $redirect->language()->getId(),
       'count' => (int) $redirect->getCount(),
-      'created' => $redirect->getCreated() ? date('Y-m-d H:i:s', $redirect->getCreated()) : NULL,
+      'created' => $redirect->getCreated() ? date('Y-m-d H:i:s', (int) $redirect->getCreated()) : NULL,
     ];
   }
 

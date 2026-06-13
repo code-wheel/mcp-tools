@@ -62,7 +62,7 @@ class ContentAuditor {
           'nid' => $node->id(),
           'title' => $node->getTitle(),
           'type' => $node->bundle(),
-          'last_updated' => date('Y-m-d', $node->getChangedTime()),
+          'last_updated' => date('Y-m-d', (int) $node->getChangedTime()),
           'days_since_update' => floor((time() - $node->getChangedTime()) / 86400),
         ];
       }
@@ -85,8 +85,8 @@ class ContentAuditor {
           'nid' => $node->id(),
           'title' => $node->getTitle(),
           'type' => $node->bundle(),
-          'created' => date('Y-m-d', $node->getCreatedTime()),
-          'last_updated' => date('Y-m-d', $node->getChangedTime()),
+          'created' => date('Y-m-d', (int) $node->getCreatedTime()),
+          'last_updated' => date('Y-m-d', (int) $node->getChangedTime()),
         ];
       }
 
@@ -110,7 +110,7 @@ class ContentAuditor {
                 'title' => $node->getTitle(),
                 'type' => $node->bundle(),
                 'author' => $node->getOwner()->getDisplayName(),
-                'created' => date('Y-m-d', $node->getCreatedTime()),
+                'created' => date('Y-m-d', (int) $node->getCreatedTime()),
               ];
             }
           }

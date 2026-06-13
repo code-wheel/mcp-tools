@@ -4,6 +4,16 @@ All notable changes to the MCP Tools module will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.0.0-beta14] - 2026-06-12
+
+### Fixed
+
+- **PHP 8.4 `date()` TypeError on database-sourced timestamps.** Timestamps
+  read from database queries arrive as strings, which PHP 8.4's `date()`
+  rejects, breaking tools across the analysis, watchdog, cron, user and other
+  services (47 call sites in 17 files). The timestamp argument is now cast to
+  int. Affects all sites on PHP 8.4 / Drupal 12.
+
 ## [1.0.0-beta13] - 2026-06-12
 
 ### Added

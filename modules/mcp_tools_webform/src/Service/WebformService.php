@@ -47,8 +47,8 @@ class WebformService {
         'description' => $webform->getDescription(),
         'status' => $webform->isOpen() ? 'open' : 'closed',
         'submission_count' => (int) $submissionCount,
-        'created' => $webform->get('created') ? date('Y-m-d H:i:s', $webform->get('created')) : NULL,
-        'updated' => $webform->get('updated') ? date('Y-m-d H:i:s', $webform->get('updated')) : NULL,
+        'created' => $webform->get('created') ? date('Y-m-d H:i:s', (int) $webform->get('created')) : NULL,
+        'updated' => $webform->get('updated') ? date('Y-m-d H:i:s', (int) $webform->get('updated')) : NULL,
       ];
     }
 
@@ -102,8 +102,8 @@ class WebformService {
           'submission_limit' => $webform->getSetting('limit_total'),
           'submission_limit_user' => $webform->getSetting('limit_user'),
         ],
-        'created' => $webform->get('created') ? date('Y-m-d H:i:s', $webform->get('created')) : NULL,
-        'updated' => $webform->get('updated') ? date('Y-m-d H:i:s', $webform->get('updated')) : NULL,
+        'created' => $webform->get('created') ? date('Y-m-d H:i:s', (int) $webform->get('created')) : NULL,
+        'updated' => $webform->get('updated') ? date('Y-m-d H:i:s', (int) $webform->get('updated')) : NULL,
       ],
     ];
   }
@@ -154,9 +154,9 @@ class WebformService {
       $result[] = [
         'sid' => $submission->id(),
         'uuid' => $submission->uuid(),
-        'created' => date('Y-m-d H:i:s', $submission->getCreatedTime()),
-        'completed' => $submission->getCompletedTime() ? date('Y-m-d H:i:s', $submission->getCompletedTime()) : NULL,
-        'changed' => date('Y-m-d H:i:s', $submission->getChangedTime()),
+        'created' => date('Y-m-d H:i:s', (int) $submission->getCreatedTime()),
+        'completed' => $submission->getCompletedTime() ? date('Y-m-d H:i:s', (int) $submission->getCompletedTime()) : NULL,
+        'changed' => date('Y-m-d H:i:s', (int) $submission->getChangedTime()),
         'uid' => $submission->getOwnerId(),
         'remote_addr' => $submission->getRemoteAddr(),
         'data' => $data,

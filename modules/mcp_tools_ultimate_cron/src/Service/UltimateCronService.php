@@ -331,8 +331,8 @@ class UltimateCronService {
       foreach ($logEntries as $entry) {
         $logs[] = [
           'lid' => $entry->lid,
-          'start_time' => $entry->start_time ? date('Y-m-d H:i:s', (int) $entry->start_time) : NULL,
-          'end_time' => $entry->end_time ? date('Y-m-d H:i:s', (int) $entry->end_time) : NULL,
+          'start_time' => $entry->start_time ? date('Y-m-d H:i:s', (int) (int) $entry->start_time) : NULL,
+          'end_time' => $entry->end_time ? date('Y-m-d H:i:s', (int) (int) $entry->end_time) : NULL,
           'duration' => ($entry->start_time && $entry->end_time)
             ? round((float) $entry->end_time - (float) $entry->start_time, 2)
             : NULL,
@@ -448,8 +448,8 @@ class UltimateCronService {
       if ($entry) {
         return [
           'lid' => $entry->lid,
-          'start_time' => $entry->start_time ? date('Y-m-d H:i:s', (int) $entry->start_time) : NULL,
-          'end_time' => $entry->end_time ? date('Y-m-d H:i:s', (int) $entry->end_time) : NULL,
+          'start_time' => $entry->start_time ? date('Y-m-d H:i:s', (int) (int) $entry->start_time) : NULL,
+          'end_time' => $entry->end_time ? date('Y-m-d H:i:s', (int) (int) $entry->end_time) : NULL,
           'duration' => ($entry->start_time && $entry->end_time)
             ? round((float) $entry->end_time - (float) $entry->start_time, 2)
             : NULL,

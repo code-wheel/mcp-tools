@@ -112,7 +112,7 @@ class FileSystemService {
         'mime' => $mime,
         'size' => $file->getSize(),
         'status' => $file->isPermanent() ? 'permanent' : 'temporary',
-        'created' => date('Y-m-d H:i:s', $file->getCreatedTime()),
+        'created' => date('Y-m-d H:i:s', (int) $file->getCreatedTime()),
       ];
     }
 
@@ -170,7 +170,7 @@ class FileSystemService {
         'filename' => $file->getFilename(),
         'uri' => $file->getFileUri(),
         'size' => $size,
-        'created' => date('Y-m-d H:i:s', $file->getCreatedTime()),
+        'created' => date('Y-m-d H:i:s', (int) $file->getCreatedTime()),
       ];
     }
 

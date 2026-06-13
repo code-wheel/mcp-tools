@@ -439,7 +439,7 @@ class ModerationService {
 
       if ($revision instanceof RevisionLogInterface) {
         $revisionData['revision_log'] = $revision->getRevisionLogMessage();
-        $revisionData['revision_created'] = date('Y-m-d H:i:s', $revision->getRevisionCreationTime());
+        $revisionData['revision_created'] = date('Y-m-d H:i:s', (int) $revision->getRevisionCreationTime());
         $revisionData['revision_user'] = $revision->getRevisionUserId();
       }
 
@@ -550,7 +550,7 @@ class ModerationService {
         // Add changed time if available.
         if ($entity->hasField('changed')) {
           $changed = $entity->get('changed')->value;
-          $entityData['changed'] = $changed ? date('Y-m-d H:i:s', $changed) : NULL;
+          $entityData['changed'] = $changed ? date('Y-m-d H:i:s', (int) $changed) : NULL;
         }
 
         $results[] = $entityData;

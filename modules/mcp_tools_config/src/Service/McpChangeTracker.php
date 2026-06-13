@@ -102,7 +102,7 @@ class McpChangeTracker {
         'config_name' => $change['config_name'],
         'timestamp' => $change['timestamp'] ?? NULL,
         'human_time' => isset($change['timestamp'])
-          ? date('Y-m-d H:i:s', $change['timestamp'])
+          ? date('Y-m-d H:i:s', (int) $change['timestamp'])
           : 'unknown',
       ];
     }

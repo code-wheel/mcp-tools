@@ -57,7 +57,7 @@ class PerformanceAnalyzer {
           $results['watchdog_errors'][] = [
             'type' => $log->type,
             'message' => substr($log->message, 0, 200),
-            'timestamp' => date('Y-m-d H:i:s', $log->timestamp),
+            'timestamp' => date('Y-m-d H:i:s', (int) $log->timestamp),
           ];
         }
 
@@ -72,7 +72,7 @@ class PerformanceAnalyzer {
         foreach ($slowLogs as $log) {
           $results['slow_queries'][] = [
             'message' => substr($log->message, 0, 200),
-            'timestamp' => date('Y-m-d H:i:s', $log->timestamp),
+            'timestamp' => date('Y-m-d H:i:s', (int) $log->timestamp),
           ];
         }
       }

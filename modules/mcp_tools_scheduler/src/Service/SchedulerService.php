@@ -67,7 +67,7 @@ class SchedulerService {
               'title' => $node->getTitle(),
               'type' => $node->bundle(),
               'schedule_type' => 'publish',
-              'scheduled_date' => date('Y-m-d H:i:s', (int) $node->get('publish_on')->value),
+              'scheduled_date' => date('Y-m-d H:i:s', (int) (int) $node->get('publish_on')->value),
               'timestamp' => (int) $node->get('publish_on')->value,
               'status' => $node->isPublished() ? 'published' : 'unpublished',
             ];
@@ -91,7 +91,7 @@ class SchedulerService {
               'title' => $node->getTitle(),
               'type' => $node->bundle(),
               'schedule_type' => 'unpublish',
-              'scheduled_date' => date('Y-m-d H:i:s', (int) $node->get('unpublish_on')->value),
+              'scheduled_date' => date('Y-m-d H:i:s', (int) (int) $node->get('unpublish_on')->value),
               'timestamp' => (int) $node->get('unpublish_on')->value,
               'status' => $node->isPublished() ? 'published' : 'unpublished',
             ];
@@ -178,7 +178,7 @@ class SchedulerService {
 
       $this->auditLogger->logSuccess('schedule_publish', 'node', (string) $entityId, [
         'title' => $node->getTitle(),
-        'scheduled_date' => date('Y-m-d H:i:s', $timestamp),
+        'scheduled_date' => date('Y-m-d H:i:s', (int) $timestamp),
       ]);
 
       return [
@@ -187,10 +187,10 @@ class SchedulerService {
           'nid' => $entityId,
           'title' => $node->getTitle(),
           'type' => $node->bundle(),
-          'scheduled_publish' => date('Y-m-d H:i:s', $timestamp),
+          'scheduled_publish' => date('Y-m-d H:i:s', (int) $timestamp),
           'timestamp' => $timestamp,
           'message' => "Content '{$node->getTitle()}' scheduled for publication on "
-            . date('Y-m-d H:i:s', $timestamp) . ".",
+            . date('Y-m-d H:i:s', (int) $timestamp) . ".",
         ],
       ];
     }
@@ -251,7 +251,7 @@ class SchedulerService {
 
       $this->auditLogger->logSuccess('schedule_unpublish', 'node', (string) $entityId, [
         'title' => $node->getTitle(),
-        'scheduled_date' => date('Y-m-d H:i:s', $timestamp),
+        'scheduled_date' => date('Y-m-d H:i:s', (int) $timestamp),
       ]);
 
       return [
@@ -260,10 +260,10 @@ class SchedulerService {
           'nid' => $entityId,
           'title' => $node->getTitle(),
           'type' => $node->bundle(),
-          'scheduled_unpublish' => date('Y-m-d H:i:s', $timestamp),
+          'scheduled_unpublish' => date('Y-m-d H:i:s', (int) $timestamp),
           'timestamp' => $timestamp,
           'message' => "Content '{$node->getTitle()}' scheduled for unpublication on "
-            . date('Y-m-d H:i:s', $timestamp) . ".",
+            . date('Y-m-d H:i:s', (int) $timestamp) . ".",
         ],
       ];
     }
@@ -395,7 +395,7 @@ class SchedulerService {
       if ($node->hasField('publish_on') && $node->get('publish_on')->value) {
         $timestamp = (int) $node->get('publish_on')->value;
         $publishOn = [
-          'date' => date('Y-m-d H:i:s', $timestamp),
+          'date' => date('Y-m-d H:i:s', (int) $timestamp),
           'timestamp' => $timestamp,
         ];
       }
@@ -403,7 +403,7 @@ class SchedulerService {
       if ($node->hasField('unpublish_on') && $node->get('unpublish_on')->value) {
         $timestamp = (int) $node->get('unpublish_on')->value;
         $unpublishOn = [
-          'date' => date('Y-m-d H:i:s', $timestamp),
+          'date' => date('Y-m-d H:i:s', (int) $timestamp),
           'timestamp' => $timestamp,
         ];
       }

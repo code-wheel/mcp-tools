@@ -130,9 +130,9 @@ class UserAnalysisService {
         'status' => $user->isActive() ? 'active' : 'blocked',
       // Exclude 'authenticated'.
         'roles' => $user->getRoles(TRUE),
-        'created' => date('Y-m-d H:i:s', $user->getCreatedTime()),
+        'created' => date('Y-m-d H:i:s', (int) $user->getCreatedTime()),
         'last_access' => $user->getLastAccessedTime()
-          ? date('Y-m-d H:i:s', $user->getLastAccessedTime())
+          ? date('Y-m-d H:i:s', (int) $user->getLastAccessedTime())
           : 'Never',
       ];
     }

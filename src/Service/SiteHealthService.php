@@ -88,7 +88,7 @@ class SiteHealthService {
   public function getCronStatus(): array {
     $lastRun = $this->state->get('system.cron_last', 0);
     $lastRunFormatted = $lastRun
-      ? date('Y-m-d H:i:s', $lastRun)
+      ? date('Y-m-d H:i:s', (int) $lastRun)
       : 'Never';
 
     $timeSinceLastRun = $lastRun

@@ -106,8 +106,8 @@ class ContentAnalysisService {
         'title' => $node->getTitle(),
         'type' => $node->bundle(),
         'status' => $node->isPublished() ? 'published' : 'unpublished',
-        'created' => date('Y-m-d H:i:s', $node->getCreatedTime()),
-        'changed' => date('Y-m-d H:i:s', $node->getChangedTime()),
+        'created' => date('Y-m-d H:i:s', (int) $node->getCreatedTime()),
+        'changed' => date('Y-m-d H:i:s', (int) $node->getChangedTime()),
         'author' => $node->getOwner()?->getDisplayName() ?? 'Unknown',
         'url' => $node->toUrl()->toString(),
       ];
@@ -172,7 +172,7 @@ class ContentAnalysisService {
         'title' => $node->getTitle(),
         'type' => $node->bundle(),
         'status' => $node->isPublished() ? 'published' : 'unpublished',
-        'changed' => date('Y-m-d H:i:s', $node->getChangedTime()),
+        'changed' => date('Y-m-d H:i:s', (int) $node->getChangedTime()),
         'url' => $node->toUrl()->toString(),
       ];
     }
@@ -226,8 +226,8 @@ class ContentAnalysisService {
       'title' => $node->getTitle(),
       'type' => $node->bundle(),
       'status' => $node->isPublished() ? 'published' : 'unpublished',
-      'created' => date('Y-m-d H:i:s', $node->getCreatedTime()),
-      'changed' => date('Y-m-d H:i:s', $node->getChangedTime()),
+      'created' => date('Y-m-d H:i:s', (int) $node->getCreatedTime()),
+      'changed' => date('Y-m-d H:i:s', (int) $node->getChangedTime()),
       'author' => $node->getOwner()?->getDisplayName() ?? 'Unknown',
       'url' => $node->toUrl()->toString(),
       'fields' => $fields,

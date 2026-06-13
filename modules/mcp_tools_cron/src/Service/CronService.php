@@ -41,7 +41,7 @@ class CronService {
     return [
       'success' => TRUE,
       'data' => [
-        'last_run' => $lastRun ? date('Y-m-d H:i:s', $lastRun) : 'Never',
+        'last_run' => $lastRun ? date('Y-m-d H:i:s', (int) $lastRun) : 'Never',
         'last_run_timestamp' => $lastRun,
         'seconds_since_last_run' => $lastRun ? time() - $lastRun : NULL,
         'autorun_threshold' => $threshold,
@@ -75,8 +75,8 @@ class CronService {
           'success' => TRUE,
           'message' => 'Cron completed successfully.',
           'duration_seconds' => $duration,
-          'previous_run' => $lastRunBefore ? date('Y-m-d H:i:s', $lastRunBefore) : 'Never',
-          'current_run' => date('Y-m-d H:i:s', $lastRunAfter),
+          'previous_run' => $lastRunBefore ? date('Y-m-d H:i:s', (int) $lastRunBefore) : 'Never',
+          'current_run' => date('Y-m-d H:i:s', (int) $lastRunAfter),
         ];
       }
       else {

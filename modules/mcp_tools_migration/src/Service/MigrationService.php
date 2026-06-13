@@ -483,7 +483,7 @@ class MigrationService {
           $row[] = $node->isPublished() ? '1' : '0';
         }
         elseif ($fieldName === 'created') {
-          $row[] = date('Y-m-d H:i:s', $node->getCreatedTime());
+          $row[] = date('Y-m-d H:i:s', (int) $node->getCreatedTime());
         }
         elseif ($node->hasField($fieldName)) {
           $value = $this->extractFieldValue($node->get($fieldName));
@@ -541,8 +541,8 @@ class MigrationService {
         'uuid' => $node->uuid(),
         'title' => $node->getTitle(),
         'status' => $node->isPublished() ? 1 : 0,
-        'created' => date('c', $node->getCreatedTime()),
-        'changed' => date('c', $node->getChangedTime()),
+        'created' => date('c', (int) $node->getCreatedTime()),
+        'changed' => date('c', (int) $node->getChangedTime()),
       ];
 
       foreach (array_keys($fieldDefinitions) as $fieldName) {

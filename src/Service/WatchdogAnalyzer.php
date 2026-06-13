@@ -80,7 +80,7 @@ class WatchdogAnalyzer {
         'severity' => self::SEVERITY_LABELS[$row->severity] ?? 'unknown',
         'severity_level' => (int) $row->severity,
         'message' => $this->formatMessage($row->message, $row->variables),
-        'timestamp' => date('Y-m-d H:i:s', $row->timestamp),
+        'timestamp' => date('Y-m-d H:i:s', (int) $row->timestamp),
       ];
     }
 
@@ -143,7 +143,7 @@ class WatchdogAnalyzer {
 
     return [
       'period_hours' => $hours,
-      'since' => date('Y-m-d H:i:s', $since),
+      'since' => date('Y-m-d H:i:s', (int) $since),
       'types' => array_values($summary),
       'total_issues' => array_sum(array_column($summary, 'total')),
     ];

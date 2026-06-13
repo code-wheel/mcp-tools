@@ -119,7 +119,7 @@ class QueueService {
 
         if ($oldest) {
           $info['oldest_item_age'] = time() - $oldest;
-          $info['oldest_item_date'] = date('Y-m-d H:i:s', $oldest);
+          $info['oldest_item_date'] = date('Y-m-d H:i:s', (int) $oldest);
         }
       }
       catch (\Exception $e) {
