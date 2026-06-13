@@ -1,0 +1,5 @@
+mcp_tools_ai.settings:
+  title: 'AI Function Calls'
+  description: 'Expose MCP Tools to the Drupal AI ecosystem as Function Calls.'
+  route_name: mcp_tools_ai.settings
+  parent: system.admin_config_services

@@ -1,0 +1,8 @@
+# Which Tool API operations are exposed to the AI ecosystem as Function Calls.
+# Default is query-only (read + explain): safe for autonomous agents and a
+# focused set that avoids overwhelming tool selection. Add 'transform',
+# 'trigger', or 'write' to let agents take actions — opt-in, like the rest of
+# MCP Tools' write surface.
+exposed_operations:
+  - read
+  - explain

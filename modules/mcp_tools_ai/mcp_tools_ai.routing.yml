@@ -1,0 +1,7 @@
+mcp_tools_ai.settings:
+  path: '/admin/config/services/mcp-tools/ai'
+  defaults:
+    _form: '\Drupal\mcp_tools_ai\Form\SettingsForm'
+    _title: 'MCP Tools — AI Function Calls'
+  requirements:
+    _permission: 'mcp_tools administer'

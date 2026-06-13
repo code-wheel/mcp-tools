@@ -22,7 +22,9 @@ CI runs tests against all supported Drupal versions on every push.
 
 MCP Tools provides curated, high-value tools that solve real problems—not generic CRUD. Inspired by [Sentry MCP](https://docs.sentry.io/product/sentry-mcp/).
 
-**Current:** 223 tools total (25 read-only + 198 write/analysis operations across 35 submodules)
+**Current:** 223 tools total (25 read-only + 198 write/analysis operations across 35 tool submodules)
+
+**Drupal AI ecosystem:** The optional `mcp_tools_ai` submodule exposes these tools to [Drupal AI](https://www.drupal.org/project/ai) / [AI Agents](https://www.drupal.org/project/ai_agents) as native Function Calls — so in-site AI agents can use the same library MCP clients use. Curated read-only by default; see `modules/mcp_tools_ai/README.md`.
 
 **Resources:** MCP Tools now exposes read-only resources (e.g., `drupal://site/status`, `drupal://site/snapshot`) for lightweight site context, including blueprint + config drift summary.
 **Prompts:** MCP Tools now exposes prompts (e.g., `mcp_tools/site-brief`) for reusable analysis instructions.

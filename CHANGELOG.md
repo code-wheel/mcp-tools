@@ -4,6 +4,23 @@ All notable changes to the MCP Tools module will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.0.0-beta13] - 2026-06-12
+
+### Added
+
+- **Drupal AI ecosystem integration** (`mcp_tools_ai`, optional): exposes
+  MCP Tools' Tool API tools to [drupal/ai](https://www.drupal.org/project/ai)
+  and [AI Agents](https://www.drupal.org/project/ai_agents) as native Function
+  Calls, so in-site AI agents can use the same library MCP clients use. Curated
+  by operation (read-only by default; write/trigger opt-in) and configurable at
+  `/admin/config/services/mcp-tools/ai`.
+
+### Note
+
+- Includes everything from the unreleased beta8–beta12 line: the `/_mcp_tools`
+  route-level access check (#3587523), mcp/sdk 0.3–0.6 support (#3589053),
+  Drupal 12 compatibility, and a fully restored CI/release pipeline.
+
 ## [1.0.0-beta4] - 2026-02-25
 
 ### Fixed

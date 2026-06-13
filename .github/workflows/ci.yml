@@ -173,6 +173,7 @@ jobs:
                 <directory>web/modules/contrib/mcp_tools/tests/src/Unit</directory>
                 <directory>web/modules/contrib/mcp_tools/modules/*/tests/src/Unit</directory>
                 <!-- Contrib-dependent submodules: their tests need classes not installed in CI -->
+                <exclude>web/modules/contrib/mcp_tools/modules/mcp_tools_ai/tests</exclude>
                 <exclude>web/modules/contrib/mcp_tools/modules/mcp_tools_metatag/tests</exclude>
                 <exclude>web/modules/contrib/mcp_tools/modules/mcp_tools_pathauto/tests</exclude>
                 <exclude>web/modules/contrib/mcp_tools/modules/mcp_tools_scheduler/tests</exclude>
@@ -182,6 +183,7 @@ jobs:
               <testsuite name="kernel">
                 <directory>web/modules/contrib/mcp_tools/tests/src/Kernel</directory>
                 <directory>web/modules/contrib/mcp_tools/modules/*/tests/src/Kernel</directory>
+                <exclude>web/modules/contrib/mcp_tools/modules/mcp_tools_ai/tests</exclude>
               </testsuite>
               <testsuite name="functional">
                 <directory>web/modules/contrib/mcp_tools/tests/src/Functional</directory>
@@ -429,6 +431,7 @@ jobs:
                 <directory>web/modules/contrib/mcp_tools/tests/src/Unit</directory>
                 <directory>web/modules/contrib/mcp_tools/modules/*/tests/src/Unit</directory>
                 <!-- Contrib-dependent submodules: their tests need classes not installed in CI -->
+                <exclude>web/modules/contrib/mcp_tools/modules/mcp_tools_ai/tests</exclude>
                 <exclude>web/modules/contrib/mcp_tools/modules/mcp_tools_metatag/tests</exclude>
                 <exclude>web/modules/contrib/mcp_tools/modules/mcp_tools_pathauto/tests</exclude>
                 <exclude>web/modules/contrib/mcp_tools/modules/mcp_tools_scheduler/tests</exclude>
@@ -438,6 +441,7 @@ jobs:
               <testsuite name="kernel">
                 <directory>web/modules/contrib/mcp_tools/tests/src/Kernel</directory>
                 <directory>web/modules/contrib/mcp_tools/modules/*/tests/src/Kernel</directory>
+                <exclude>web/modules/contrib/mcp_tools/modules/mcp_tools_ai/tests</exclude>
               </testsuite>
               <testsuite name="functional">
                 <directory>web/modules/contrib/mcp_tools/tests/src/Functional</directory>
@@ -653,3 +657,42 @@ jobs:
           fi
           LINES=$(wc -l < README.md)
           echo "README.md exists with $LINES lines"
+
+  ai-function-call-bridge:
+    name: AI FunctionCall Bridge
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, gd, dom, xml, pdo_sqlite
+          tools: composer
+
+      - name: Install Drupal + drupal/ai + mcp deps
+        run: |
+          composer config --global policy.advisories.block false
+          composer create-project drupal/recommended-project:^11 drupal --no-interaction
+          cd drupal
+          composer require --dev drupal/core-dev:^11 phpspec/prophecy-phpunit:^2 --with-all-dependencies --no-interaction
+          composer require drupal/ai drupal/tool:1.0.0-alpha9 mcp/sdk:^0.6 \
+            code-wheel/mcp-http-security:^1.0 code-wheel/mcp-error-codes:^1.3 \
+            code-wheel/mcp-events:^2.0 code-wheel/mcp-schema-builder:^1.1 \
+            code-wheel/mcp-tool-gateway:^1.2 enshrined/svg-sanitize:^0.22 -W --no-interaction
+
+      - name: Copy module
+        run: |
+          mkdir -p drupal/web/modules/contrib/mcp_tools
+          rsync -a --exclude='.git' --exclude='.github' --exclude='drupal' \
+            --exclude='vendor' --exclude='.phpunit.cache' ./ drupal/web/modules/contrib/mcp_tools/
+
+      - name: Run the AI bridge kernel test
+        run: |
+          cd drupal
+          mkdir -p sites/simpletest/browser_output
+          SIMPLETEST_DB=sqlite://localhost/sites/default/files/test.sqlite \
+          BROWSERTEST_OUTPUT_DIRECTORY=sites/simpletest/browser_output \
+            ./vendor/bin/phpunit -c web/core/phpunit.xml.dist \
+            web/modules/contrib/mcp_tools/modules/mcp_tools_ai/tests
