@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\Tests\mcp_tools\Unit\Mcp;
 
+use Drupal\Core\Plugin\Context\ContextDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\mcp_tools\Mcp\ToolApiSchemaConverter;
@@ -242,6 +243,49 @@ final class ToolApiSchemaConverterTest extends UnitTestCase {
 
     $this->assertFalse($schema['additionalProperties']);
     $this->assertInstanceOf(\stdClass::class, $schema['properties']);
+  }
+
+  public function testToolDefinitionToOutputSchemaDescribesEnvelope(): void {
+    $converter = new ToolApiSchemaConverter();
+
+    $definition = new ToolDefinition([
+      'id' => 'mcp_tools:out_test',
+      'provider' => 'mcp_tools',
+      'label' => $this->markup('Out'),
+      'description' => $this->markup('Out tool'),
+      'operation' => ToolOperation::Read,
+      'destructive' => FALSE,
+      'output_definitions' => [
+        'nid' => new ContextDefinition(data_type: 'integer', label: 'Node ID'),
+        'language' => new ContextDefinition(data_type: 'string', label: 'Language', required: FALSE),
+        'items' => new ContextDefinition(data_type: 'list', label: 'Items'),
+      ],
+    ]);
+
+    $schema = $converter->toolDefinitionToOutputSchema($definition);
+
+    // The schema describes the structured envelope the handler returns;
+    // every data property is nullable because conditional outputs are
+    // backfilled with NULL.
+    $this->assertSame(['success', 'message'], $schema['required']);
+    $this->assertSame('boolean', $schema['properties']['success']['type']);
+    $data = $schema['properties']['data'];
+    $this->assertSame(['integer', 'null'], $data['properties']['nid']['type']);
+    $this->assertSame(['string', 'null'], $data['properties']['language']['type']);
+    $this->assertSame(['array', 'null'], $data['properties']['items']['type']);
+  }
+
+  public function testToolDefinitionToOutputSchemaNullWithoutOutputs(): void {
+    $definition = new ToolDefinition([
+      'id' => 'mcp_tools:no_out',
+      'provider' => 'mcp_tools',
+      'label' => $this->markup('None'),
+      'description' => $this->markup('No outputs'),
+      'operation' => ToolOperation::Read,
+      'destructive' => FALSE,
+    ]);
+
+    $this->assertNull((new ToolApiSchemaConverter())->toolDefinitionToOutputSchema($definition));
   }
 
   private function mockInputDefinition(

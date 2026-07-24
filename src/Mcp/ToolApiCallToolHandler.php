@@ -17,11 +17,15 @@ use Drupal\tool\TypedData\InputDefinitionInterface;
 use Drupal\tool\TypedData\ListInputDefinition;
 use Drupal\tool\TypedData\MapInputDefinition;
 use Mcp\Schema\Content\TextContent;
+use Mcp\Schema\Elicitation\BooleanSchemaDefinition;
+use Mcp\Schema\Elicitation\ElicitationSchema;
+use Mcp\Schema\Enum\ElicitAction;
 use Mcp\Schema\JsonRpc\Error;
 use Mcp\Schema\JsonRpc\Request;
 use Mcp\Schema\JsonRpc\Response;
 use Mcp\Schema\Request\CallToolRequest;
 use Mcp\Schema\Result\CallToolResult;
+use Mcp\Server\ClientGateway;
 use Mcp\Server\Handler\Request\RequestHandlerInterface;
 use Mcp\Server\Session\SessionInterface;
 use Psr\EventDispatcher\EventDispatcherInterface;
@@ -111,6 +115,15 @@ class ToolApiCallToolHandler implements RequestHandlerInterface {
         return new Response($requestId, $result);
       }
     }
+
+    // Elicitation-based destructive confirmation: when the client can ask
+    // its human, a bare destructive call elicits a native confirmation
+    // instead of returning the refusal round-trip.
+    $elicited = $this->maybeElicitDestructiveConfirmation($pluginId, $arguments, $session, $requestId);
+    if ($elicited instanceof Response) {
+      return $elicited;
+    }
+    $arguments = $elicited;
 
     try {
       $tool = $this->toolManager->createInstance($pluginId);
@@ -357,6 +370,94 @@ class ToolApiCallToolHandler implements RequestHandlerInterface {
     }
 
     return $normalized;
+  }
+
+  /**
+   * Destructive tools that elicit a user confirmation when possible.
+   *
+   * The confirm_argument is the boolean flag the tool requires for the
+   * destructive default; when any bypass_argument is present the call is
+   * not the destructive default and no confirmation is needed.
+   *
+   * @var array<string, array{confirm_argument: string, bypass_arguments: list<string>, message: string}>
+   */
+  private const CONFIRMATION_TOOLS = [
+    'mcp_delete_content' => [
+      'confirm_argument' => 'confirm_delete_all',
+      'bypass_arguments' => ['language'],
+      'message' => 'This will permanently delete node @nid including ALL of its language versions. Proceed?',
+    ],
+  ];
+
+  /**
+   * Elicits a native user confirmation for a bare destructive call.
+   *
+   * Only runs when the installed SDK supports elicitation, the request is
+   * executing inside a Fiber (streaming transports), and the client
+   * advertised the elicitation capability. In every other case the
+   * arguments pass through unchanged and the tool's own refusal-based
+   * guardrail still applies.
+   *
+   * @param string $pluginId
+   *   The Tool API plugin ID.
+   * @param array<string, mixed> $arguments
+   *   The validated call arguments.
+   * @param \Mcp\Server\Session\SessionInterface $session
+   *   The MCP session.
+   * @param mixed $requestId
+   *   The JSON-RPC request id.
+   *
+   * @return array<string, mixed>|\Mcp\Schema\JsonRpc\Response
+   *   The (possibly confirmed) arguments, or a declined-response.
+   */
+  private function maybeElicitDestructiveConfirmation(string $pluginId, array $arguments, SessionInterface $session, mixed $requestId): array|Response {
+    $confirmation = self::CONFIRMATION_TOOLS[$pluginId] ?? NULL;
+    if ($confirmation === NULL || !empty($arguments[$confirmation['confirm_argument']])) {
+      return $arguments;
+    }
+    foreach ($confirmation['bypass_arguments'] as $bypass) {
+      if (isset($arguments[$bypass]) && $arguments[$bypass] !== '') {
+        return $arguments;
+      }
+    }
+    if (!class_exists(ElicitationSchema::class) || \Fiber::getCurrent() === NULL) {
+      return $arguments;
+    }
+
+    $gateway = new ClientGateway($session);
+    if (!$gateway->supportsElicitation()) {
+      return $arguments;
+    }
+
+    $message = strtr($confirmation['message'], ['@nid' => (string) ($arguments['nid'] ?? '?')]);
+    try {
+      $result = $gateway->elicit($message, new ElicitationSchema(
+        properties: [
+          'confirm' => new BooleanSchemaDefinition('Confirm deletion', 'Choose yes to delete everything.'),
+        ],
+        required: ['confirm'],
+      ), 300);
+    }
+    catch (\Throwable $e) {
+      // Client-side failure or timeout: fall back to the refusal-based flow.
+      $this->logger->warning('Elicitation failed for @plugin: @message', [
+        '@plugin' => $pluginId,
+        '@message' => $e->getMessage(),
+      ]);
+      return $arguments;
+    }
+
+    if ($result->action === ElicitAction::Accept && !empty($result->content['confirm'])) {
+      $arguments[$confirmation['confirm_argument']] = TRUE;
+      return $arguments;
+    }
+
+    $text = 'Deletion declined by the user — nothing was deleted.';
+    return new Response($requestId, new CallToolResult(
+      [new TextContent($text)],
+      FALSE,
+      ['success' => FALSE, 'message' => $text, 'data' => []],
+    ));
   }
 
   /**

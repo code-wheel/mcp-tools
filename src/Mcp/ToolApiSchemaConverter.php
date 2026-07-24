@@ -276,4 +276,72 @@ class ToolApiSchemaConverter {
     }
   }
 
+  /**
+   * Converts a tool's output definitions to an MCP outputSchema.
+   *
+   * Describes what the handler actually returns: the structured envelope
+   * {success, message, data}, with the tool's typed outputs nested under
+   * "data". Every data property is nullable — conditional outputs are
+   * backfilled with NULL when a result does not populate them.
+   *
+   * @param \Drupal\tool\Tool\ToolDefinition $definition
+   *   The tool definition.
+   *
+   * @return array|null
+   *   A JSON Schema array, or NULL when the tool declares no outputs.
+   */
+  public function toolDefinitionToOutputSchema(ToolDefinition $definition): ?array {
+    $outputDefinitions = $definition->getOutputDefinitions();
+    if (empty($outputDefinitions)) {
+      return NULL;
+    }
+
+    $typeMap = [
+      'string' => 'string',
+      'integer' => 'integer',
+      'float' => 'number',
+      'boolean' => 'boolean',
+      'timestamp' => 'integer',
+      'email' => 'string',
+      'uri' => 'string',
+      'list' => 'array',
+      'map' => 'object',
+    ];
+
+    $properties = [];
+    foreach ($outputDefinitions as $name => $outputDefinition) {
+      $property = [];
+      $dataType = method_exists($outputDefinition, 'getDataType')
+        ? (string) $outputDefinition->getDataType()
+        : '';
+      if (isset($typeMap[$dataType])) {
+        $property['type'] = [$typeMap[$dataType], 'null'];
+      }
+
+      $label = method_exists($outputDefinition, 'getLabel') ? $outputDefinition->getLabel() : NULL;
+      $description = method_exists($outputDefinition, 'getDescription') ? $outputDefinition->getDescription() : NULL;
+      $text = (string) ($description ?? $label ?? '');
+      if ($text !== '') {
+        $property['description'] = $text;
+      }
+
+      $properties[$name] = $property === [] ? new \stdClass() : $property;
+    }
+
+    return [
+      'type' => 'object',
+      'properties' => [
+        'success' => ['type' => 'boolean'],
+        'message' => ['type' => 'string'],
+        'data' => [
+          // Successful results carry an object; failures serialize an empty
+          // data array.
+          'type' => ['object', 'array'],
+          'properties' => $properties,
+        ],
+      ],
+      'required' => ['success', 'message'],
+    ];
+  }
+
 }

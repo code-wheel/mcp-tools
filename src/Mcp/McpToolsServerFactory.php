@@ -150,16 +150,56 @@ class McpToolsServerFactory {
       $annotationsData = $this->schemaConverter->toolDefinitionToAnnotations($definition, (string) $pluginId);
       $annotations = ToolAnnotations::fromArray($annotationsData);
 
-      $builder->addTool(
-        handler: static fn() => NULL,
-        name: self::pluginIdToMcpName((string) $pluginId),
-        description: (string) $definition->getDescription(),
-        annotations: $annotations,
-        inputSchema: $this->schemaConverter->toolDefinitionToInputSchema($definition, (string) $pluginId),
-      );
+      $outputSchema = self::builderSupportsOutputSchema()
+        ? $this->schemaConverter->toolDefinitionToOutputSchema($definition)
+        : NULL;
+
+      if ($outputSchema !== NULL) {
+        $builder->addTool(
+          handler: static fn() => NULL,
+          name: self::pluginIdToMcpName((string) $pluginId),
+          description: (string) $definition->getDescription(),
+          annotations: $annotations,
+          inputSchema: $this->schemaConverter->toolDefinitionToInputSchema($definition, (string) $pluginId),
+          outputSchema: $outputSchema,
+        );
+      }
+      else {
+        $builder->addTool(
+          handler: static fn() => NULL,
+          name: self::pluginIdToMcpName((string) $pluginId),
+          description: (string) $definition->getDescription(),
+          annotations: $annotations,
+          inputSchema: $this->schemaConverter->toolDefinitionToInputSchema($definition, (string) $pluginId),
+        );
+      }
     }
 
     return $builder->build();
+  }
+
+  /**
+   * Whether the installed mcp/sdk Builder::addTool() accepts outputSchema.
+   *
+   * @var bool|null
+   */
+  private static ?bool $outputSchemaSupported = NULL;
+
+  /**
+   * Detects outputSchema support in the installed SDK (added in 0.6).
+   */
+  private static function builderSupportsOutputSchema(): bool {
+    if (self::$outputSchemaSupported === NULL) {
+      $supported = FALSE;
+      foreach ((new \ReflectionMethod(Builder::class, 'addTool'))->getParameters() as $parameter) {
+        if ($parameter->getName() === 'outputSchema') {
+          $supported = TRUE;
+          break;
+        }
+      }
+      self::$outputSchemaSupported = $supported;
+    }
+    return self::$outputSchemaSupported;
   }
 
   /**

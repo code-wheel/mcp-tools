@@ -4,6 +4,24 @@ All notable changes to the MCP Tools module will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.0.0-beta17] - 2026-07-24
+
+### Added
+
+- **Native user confirmation for destructive deletes (elicitation).** When
+  the MCP client supports elicitation, a bare `mcp_delete_content` call asks
+  the actual human through the client's own UI instead of returning the
+  refusal round-trip — accept proceeds as a confirmed full delete, decline
+  cancels cleanly. Clients without the capability keep the beta15
+  refusal-based guardrail unchanged. Requires mcp/sdk >= 0.6 and a
+  streaming transport.
+- **`outputSchema` in `tools/list`.** All tools now advertise their typed
+  structured-output envelope ({success, message, data}) built from their
+  Tool API output definitions.
+- The weekly Bridge Compat job now registers **every** available Tool API
+  tool through mcp_server_tool_bridge and requires every derivative and
+  generated schema to materialize.
+
 ## [1.0.0-beta16] - 2026-07-24
 
 ### Added
