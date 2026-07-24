@@ -4,9 +4,33 @@ All notable changes to the MCP Tools module will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [Unreleased]
+## [1.0.0-beta16] - 2026-07-24
+
+### Added
+
+- **`mcp_tools_translate` submodule** — content translation workflows
+  ([#3611087](https://www.drupal.org/project/mcp_tools/issues/3611087),
+  patch by julien). Three tools: `mcp_get_translatable_content` (all
+  translatable text from a node and its paragraphs, in reading order),
+  `mcp_get_translation_status`, and `mcp_translate_content` (creates a
+  complete linked translation — incomplete payloads are rejected before
+  anything is saved). `mcp_update_content` with `language` now updates a
+  single existing translation, including a `paragraphs` map keyed by
+  source paragraph ID; non-translatable (shared) fields and unknown
+  fields are rejected. Gated by Drupal's per-bundle content translation
+  permissions plus a new `mcp_tools use translation` permission.
+  Adjustments to the contributed patch: paragraph reference fields are
+  discovered dynamically instead of hardcoded, translations keep the
+  source field's text format instead of a hardcoded one, the paragraphs
+  module is now a soft dependency (plain node translation works without
+  it), and the per-language update path (`updateTranslation()`) was
+  completed. Kernel-tested with and without paragraphs.
 
 ### Fixed
+
+- **`mcp_tools_paragraphs` fataled on paragraphs >= 1.18** — the service
+  called `ParagraphsType::getIconUuid()`, which current paragraphs
+  releases do not provide. Now uses `getIconFile()?->uuid()`.
 
 - **Tools with conditional outputs broke external Tool API consumers.**
   Declared outputs a result did not populate (e.g. `language` on a full-node

@@ -1,0 +1,16 @@
+services:
+  mcp_tools_translate.access:
+    class: Drupal\mcp_tools_translate\Service\ContentTranslationAccess
+    arguments:
+      - '@entity_type.manager'
+      - '@current_user'
+      - '@mcp_tools.audit_logger'
+  mcp_tools_translate.translation:
+    class: Drupal\mcp_tools_translate\Service\ContentTranslationService
+    arguments:
+      - '@entity_type.manager'
+      - '@entity_field.manager'
+      - '@language_manager'
+      - '@mcp_tools.access_manager'
+      - '@mcp_tools.audit_logger'
+      - '@mcp_tools_translate.access'

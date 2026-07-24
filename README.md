@@ -22,7 +22,7 @@ CI runs tests against all supported Drupal versions on every push.
 
 MCP Tools provides curated, high-value tools that solve real problems—not generic CRUD. Inspired by [Sentry MCP](https://docs.sentry.io/product/sentry-mcp/).
 
-**Current:** 223 tools total (25 read-only + 198 write/analysis operations across 35 tool submodules)
+**Current:** 226 tools total (27 read-only + 199 write/analysis operations across 36 tool submodules)
 
 **Drupal AI ecosystem:** The optional `mcp_tools_ai` submodule exposes these tools to [Drupal AI](https://www.drupal.org/project/ai) / [AI Agents](https://www.drupal.org/project/ai_agents) as native Function Calls — so in-site AI agents can use the same library MCP clients use. Curated read-only by default; see `modules/mcp_tools_ai/README.md`.
 
@@ -74,7 +74,7 @@ AI:   Creates content type, fields, vocabularies, role, and permissions
 - **Recommended (local dev):** `mcp_tools_stdio` — runs an MCP server over STDIO via Drush.
 - **Experimental (remote HTTP):** `mcp_tools_remote` — exposes an HTTP endpoint with API key authentication.
 - **Alternative (MCP Server 2.x):** [MCP Server](https://www.drupal.org/project/mcp_server) + [MCP Server Tool Bridge](https://www.drupal.org/project/mcp_server_tool_bridge) serve this tool library through mcp_server's own transports — every exposed tool is selected per-site via the bridge's config entities, and MCP Tools' scope and permission checks still apply. Validated end-to-end against mcp_server 2.0 (see CHANGELOG). MCP Tools coexists with MCP Server 2.x in the same site.
-- **Legacy (MCP Server 1.x only):** `mcp_tools_mcp_server` — the 1.x sync bridge (requires `drupal/mcp_server < 2.0`). It is not being ported to 2.x while the MCP Server Tool Bridge covers that path; it stays available for 1.x sites and as a fallback, and a weekly CI job verifies our tools keep working through the 2.x bridge.
+- **MCP Server 1.x bridge:** `mcp_tools_mcp_server` — the 1.x sync bridge (requires `drupal/mcp_server < 2.0`). It is not being ported to 2.x while the MCP Server Tool Bridge covers that path; it stays available for 1.x sites and as a fallback, and a weekly CI job verifies our tools keep working through the 2.x bridge.
 - **None (library-only):** every tool is a plain [Tool API](https://www.drupal.org/project/tool) plugin, so you can enable the base module plus tool submodules with no transport at all and consume the tools from ECA, AI Agents (via `mcp_tools_ai`), custom code, or another MCP runtime.
 
 ## Installation
@@ -181,6 +181,7 @@ mcp_tools/                        # Base module (25 read-only tools)
     ├── mcp_tools_templates/      # Site templates (5 tools)
     ├── mcp_tools_migration/      # Content migration (7 tools)
     ├── mcp_tools_jsonapi/        # JSON:API entity CRUD (6 tools)
+    ├── mcp_tools_translate/      # Content translations (3 tools)
     └── mcp_tools_remote_media/   # Remote file fetch & media (1 tool)
 ```
 
@@ -353,13 +354,14 @@ Available scopes:
 |------|-------------|
 | `mcp_tools_list_available` | List all available MCP tools by category or search |
 
-## Write Submodules (198 tools across 31 submodules)
+## Write Submodules (199 tools across 32 submodules)
 
 Enable submodules for the capabilities you need. Each submodule's tools are listed in its own `README.md`.
 
 | Submodule | Tools | Description |
 |-----------|------:|-------------|
 | `mcp_tools_content` | 4 | Content CRUD (create, update, delete, publish) |
+| `mcp_tools_translate` | 3 | Content translations: read translatable fields, create and update linked translations (paragraphs-aware) |
 | `mcp_tools_structure` | 20 | Content types, fields, vocabularies, roles, permissions |
 | `mcp_tools_users` | 5 | User accounts, roles, blocking |
 | `mcp_tools_menus` | 5 | Menus and menu links |

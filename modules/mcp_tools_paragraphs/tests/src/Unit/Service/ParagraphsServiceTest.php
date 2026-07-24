@@ -31,6 +31,13 @@ final class ParagraphsServiceTest extends UnitTestCase {
   protected EntityStorageInterface $fieldConfigStorage;
   protected EntityStorageInterface $fieldStorageConfigStorage;
 
+  /**
+   * Field definitions returned by the entity field manager mock.
+   *
+   * @var array<string, \Drupal\Core\Field\FieldDefinitionInterface>
+   */
+  protected array $fieldDefinitions = [];
+
   protected function setUp(): void {
     parent::setUp();
 
@@ -57,9 +64,11 @@ final class ParagraphsServiceTest extends UnitTestCase {
         ['field_storage_config', $this->fieldStorageConfigStorage],
       ]);
 
-    // Default: return empty field definitions.
+    // Default: empty field definitions; tests override via the property —
+    // a second method() stub would be shadowed by this one.
+    $this->fieldDefinitions = [];
     $this->entityFieldManager->method('getFieldDefinitions')
-      ->willReturn([]);
+      ->willReturnCallback(fn () => $this->fieldDefinitions);
   }
 
   protected function createService(): ParagraphsService {
@@ -77,7 +86,7 @@ final class ParagraphsServiceTest extends UnitTestCase {
     $type->method('id')->willReturn($id);
     $type->method('label')->willReturn($label);
     $type->method('getDescription')->willReturn($description);
-    $type->method('getIconUuid')->willReturn(NULL);
+    $type->method('getIconFile')->willReturn(NULL);
     return $type;
   }
 
@@ -331,9 +340,7 @@ final class ParagraphsServiceTest extends UnitTestCase {
       ->willReturn($type);
 
     $existingField = $this->createMock(FieldDefinitionInterface::class);
-    $this->entityFieldManager->method('getFieldDefinitions')
-      ->with('paragraph', 'text')
-      ->willReturn(['field_title' => $existingField]);
+    $this->fieldDefinitions = ['field_title' => $existingField];
 
     $service = $this->createService();
     $result = $service->addField('text', 'title', 'string');

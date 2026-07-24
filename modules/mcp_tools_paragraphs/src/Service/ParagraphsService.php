@@ -160,7 +160,7 @@ class ParagraphsService {
         'id' => $type->id(),
         'label' => $type->label(),
         'description' => $type->getDescription() ?? '',
-        'icon_uuid' => $type->getIconUuid(),
+        'icon_uuid' => $type->getIconFile()?->uuid(),
         'field_count' => count($fields),
         'fields' => array_map(fn($f) => [
           'name' => $f['name'],
@@ -208,7 +208,7 @@ class ParagraphsService {
         'id' => $paragraphType->id(),
         'label' => $paragraphType->label(),
         'description' => $paragraphType->getDescription() ?? '',
-        'icon_uuid' => $paragraphType->getIconUuid(),
+        'icon_uuid' => $paragraphType->getIconFile()?->uuid(),
         'fields' => $fields,
         'admin_path' => "/admin/structure/paragraphs_type/$id",
       ],

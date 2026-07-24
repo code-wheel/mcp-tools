@@ -119,7 +119,7 @@ jobs:
       - name: Install contrib modules exercised by kernel tests
         run: |
           cd drupal
-          composer require drupal/trash:^3 --no-interaction
+          composer require drupal/trash:^3 drupal/paragraphs:^1.18 --no-interaction
 
       - name: Copy MCP Tools module
         run: |
@@ -382,7 +382,7 @@ jobs:
       - name: Install contrib modules exercised by kernel tests
         run: |
           cd drupal
-          composer require drupal/trash:^3 --no-interaction
+          composer require drupal/trash:^3 drupal/paragraphs:^1.18 --no-interaction
 
       - name: Copy MCP Tools module
         run: |

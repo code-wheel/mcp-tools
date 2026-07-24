@@ -193,6 +193,11 @@ mcp_tools use discovery:
   description: 'List available MCP tools and categories via MCP.'
   restrict access: true
 
+mcp_tools use translation:
+  title: 'Use MCP translation tools (category: translation)'
+  description: 'Read translatable fields and create or update content translations via MCP.'
+  restrict access: true
+
 mcp_tools administer:
   title: 'Administer MCP Tools'
   description: 'Configure MCP Tools settings and rate limits.'

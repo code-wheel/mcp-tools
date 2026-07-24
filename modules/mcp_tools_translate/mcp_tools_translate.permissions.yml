@@ -1,0 +1,4 @@
+mcp_tools use translation:
+  title: 'Use MCP translation tools'
+  description: 'Read translatable fields and create content translations via MCP.'
+  restrict access: true
