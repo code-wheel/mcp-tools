@@ -92,7 +92,9 @@ class ToolApiCallToolHandler implements RequestHandlerInterface {
     $validator = $this->inputValidator ?? new ToolInputValidator(new ToolApiSchemaConverter(), $this->logger);
     $inputDefinitions = $definition->getInputDefinitions();
     $normalizedArguments = $this->normalizeArgumentsForValidation($inputDefinitions, $arguments);
-    if (!empty($inputDefinitions)) {
+    // Tools without declared inputs must still reject stray arguments —
+    // their schema declares additionalProperties: false too.
+    if (!empty($inputDefinitions) || !empty($normalizedArguments)) {
       $validation = $validator->validate($definition, $normalizedArguments);
       if (!$validation['valid']) {
         $result = $toolErrorHandler->validationFailed($toolName, $validation['errors']);

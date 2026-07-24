@@ -128,6 +128,11 @@ class ToolApiSchemaConverter {
       // MCP clients expect JSON Schema "properties" to be an object. In PHP,
       // an empty array would JSON-encode to `[]`, so use an empty object.
       'properties' => !empty($properties) ? $properties : new \stdClass(),
+      // Unknown parameters must fail loudly. Without this, an unrecognized
+      // key passes validation, is dropped before reaching the plugin, and a
+      // call like delete {nid, language} silently falls through to the
+      // destructive full-node default.
+      'additionalProperties' => FALSE,
     ];
 
     if (!empty($required)) {

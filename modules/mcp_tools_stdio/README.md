@@ -114,7 +114,7 @@ drush mcp:servers
 drush mcp-tools:serve --uid=1 --server=production
 ```
 
-Configure profiles in `config/sync/mcp_tools_servers.settings.yml`.
+Configure profiles in `config/sync/mcp_tools.servers.yml`.
 
 ## Debugging
 

@@ -69,12 +69,13 @@ AI:   Creates content type, fields, vocabularies, role, and permissions
 - [Tool API](https://www.drupal.org/project/tool) module
 - `mcp/sdk` 0.2.2–0.6 (resolved automatically; supports coexistence with modules that require newer SDK releases)
 
-### MCP Transports (choose one)
+### MCP Transports (choose one, or none)
 
 - **Recommended (local dev):** `mcp_tools_stdio` — runs an MCP server over STDIO via Drush.
 - **Experimental (remote HTTP):** `mcp_tools_remote` — exposes an HTTP endpoint with API key authentication.
 - **Optional (MCP Server bridge):** `mcp_tools_mcp_server` — generates MCP Server tool configs for MCP Tools. Requires `drupal/mcp_server < 2.0`: it integrates with the 1.x tool-config API, which was removed in the 2.x rearchitecture. A 2.x bridge is tracked separately.
 - **Alternative:** [MCP Server](https://www.drupal.org/project/mcp_server) (optional). MCP Tools coexists with MCP Server 2.x (which requires `mcp/sdk ^0.6`) — both can be installed and enabled in the same site. Only the optional sync bridge above is version-bound.
+- **None (library-only):** every tool is a plain [Tool API](https://www.drupal.org/project/tool) plugin, so you can enable the base module plus tool submodules with no transport at all and consume the tools from ECA, AI Agents (via `mcp_tools_ai`), custom code, or another MCP runtime.
 
 ## Installation
 
@@ -264,7 +265,7 @@ MCP_SCOPE=read,write drush mcp-tools:serve --uid=1
 
 ## Server Profiles (YAML-only)
 
-Define multiple MCP server profiles in `mcp_tools_servers.settings.yml` and select them via the STDIO `--server` option or the remote `server_id` setting.
+Define multiple MCP server profiles in `mcp_tools.servers.yml` and select them via the STDIO `--server` option or the remote `server_id` setting.
 
 New installs include `development`, `staging`, and `production` presets; update `default_server` to point at the one you want.
 

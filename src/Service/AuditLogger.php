@@ -131,7 +131,9 @@ class AuditLogger implements AuditLoggerInterface {
     $sensitiveKeys = ['password', 'pass', 'secret', 'token', 'key', 'credentials', 'api_key'];
 
     foreach ($details as $key => $value) {
-      $lowerKey = strtolower($key);
+      // Array keys may be integers (lists); strtolower() rejects non-strings
+      // under strict_types.
+      $lowerKey = strtolower((string) $key);
       $isSensitive = FALSE;
       foreach ($sensitiveKeys as $sensitiveKey) {
         if (str_contains($lowerKey, $sensitiveKey)) {

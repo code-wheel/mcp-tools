@@ -33,7 +33,7 @@ final class ServerConfigRepositoryTest extends UnitTestCase {
 
     $this->config = $this->createMock(ImmutableConfig::class);
     $this->configFactory->method('get')
-      ->with('mcp_tools_servers.settings')
+      ->with('mcp_tools.servers')
       ->willReturn($this->config);
   }
 

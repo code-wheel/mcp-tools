@@ -261,6 +261,9 @@ class ToolApiGateway {
     $schema = [
       'type' => 'object',
       'properties' => !empty($properties) ? $properties : new \stdClass(),
+      // Same fail-loudly policy as generated tool schemas: a mistyped
+      // parameter name must be rejected, not silently dropped.
+      'additionalProperties' => FALSE,
     ];
 
     if (!empty($required)) {

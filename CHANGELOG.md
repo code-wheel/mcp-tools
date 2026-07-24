@@ -4,6 +4,70 @@ All notable changes to the MCP Tools module will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Unreleased]
+
+### Changed
+
+- **BREAKING: `mcp_delete_content` requires explicit confirmation**
+  ([#3612659](https://www.drupal.org/project/mcp_tools/issues/3612659),
+  patch by julien). Deleting a node now requires `confirm_delete_all: true`;
+  a bare `{nid}` call is rejected with a list of the node's language
+  versions. A new optional `language` parameter deletes a single translation
+  instead, with source-language protection and a new revision as a recovery
+  path. When the Trash module soft-deletes nodes, the result message says the
+  node is restorable.
+- **Unknown tool parameters are now rejected**
+  ([#3612659](https://www.drupal.org/project/mcp_tools/issues/3612659),
+  patch by julien). All generated tool schemas declare
+  `additionalProperties: false`, and validation errors list the allowed
+  parameters. Previously an undeclared key passed validation and was silently
+  dropped — a `mcp_delete_content {nid, language}` call fell through to a
+  destructive full-node delete instead of failing loudly. The same policy
+  now covers tools with no declared inputs (stray arguments are rejected
+  rather than skipped past validation) and the gateway meta-tools
+  (`mcp_discover_tools`, `mcp_get_tool_info`, `mcp_execute_tool`).
+- `mcp_update_content` rejects unknown field names before saving and reports
+  the affected language and updated fields. Passing `language` explains that
+  per-language updates need the upcoming `mcp_tools_translate` submodule
+  ([#3611087](https://www.drupal.org/project/mcp_tools/issues/3611087)).
+- **Requires drupal/tool >= 1.0.0-beta2** (constraint was `^1.0@alpha`).
+  Tool API alpha9's normalizers fatal on Drupal core 11.4 (its
+  `SchematicNormalizerTrait::normalize()` signature changed). Composer's
+  prefer-stable already resolves beta2 on fresh installs; the constraint
+  now rules out the broken alphas for everyone.
+
+### Fixed
+
+- **Config deployments broke on `mcp_tools_servers.settings`**
+  ([#3613059](https://www.drupal.org/project/mcp_tools/issues/3613059)).
+  Simple configuration must be prefixed with the owning module's name; the
+  old name declared a dependency on a nonexistent `mcp_tools_servers`
+  extension, so `drush cim` refused to import. The config object is now
+  `mcp_tools.servers` and an update hook migrates existing sites.
+- **Remote SSE streams executed tools as the anonymous user**
+  ([#3611082](https://www.drupal.org/project/mcp_tools/issues/3611082),
+  patch by julien). The execution account was switched back before a
+  streamed (SSE) response ran the MCP request loop; the streaming callback
+  now re-applies the configured account.
+- **Public remote deployments were rejected with "Forbidden: Invalid Host
+  header"** ([#3611083](https://www.drupal.org/project/mcp_tools/issues/3611083),
+  based on julien's patch). mcp/sdk >= 0.3 enables DNS-rebinding protection
+  with a localhost-only allowlist. Hostnames extracted from the configured
+  `allowed_origins` are now passed to the middleware — add your public
+  hostname or origin to the Origin allowlist in the remote settings.
+- **Audit logger TypeError on list values**
+  ([#3612659](https://www.drupal.org/project/mcp_tools/issues/3612659)).
+  Integer array keys crashed `sanitizeDetails()` under strict types.
+
+### Added
+
+- **`entity_reference_revisions` field support with Layout Paragraphs
+  awareness** ([#3611085](https://www.drupal.org/project/mcp_tools/issues/3611085),
+  patch by julien). Content tools can create paragraphs inline (items with a
+  `type` key), preserve `behavior_settings`, and resolve `parent_ref`
+  aliases between sibling paragraphs to real UUIDs. Plain
+  `['target_id' => ...]` references keep working unchanged.
+
 ## [1.0.0-beta14] - 2026-06-12
 
 ### Fixed

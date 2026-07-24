@@ -56,7 +56,7 @@ class ServerConfigRepository {
    *   Server definitions keyed by server ID.
    */
   public function getServers(): array {
-    $config = $this->configFactory->get('mcp_tools_servers.settings');
+    $config = $this->configFactory->get('mcp_tools.servers');
     $servers = $config->get('servers') ?? [];
 
     if (!is_array($servers)) {
@@ -106,7 +106,7 @@ class ServerConfigRepository {
    *   Available servers.
    */
   public function getDefaultServerId(array $servers): string {
-    $config = $this->configFactory->get('mcp_tools_servers.settings');
+    $config = $this->configFactory->get('mcp_tools.servers');
     $default = (string) ($config->get('default_server') ?? self::DEFAULT_SERVER_ID);
 
     if (isset($servers[$default])) {

@@ -1,4 +1,4 @@
-mcp_tools_servers.settings:
+mcp_tools.servers:
   type: config_object
   label: 'MCP Tools server profiles'
   mapping:
@@ -10,22 +10,22 @@ mcp_tools_servers.settings:
       label: 'Server profiles'
       mapping:
         default:
-          type: mcp_tools_servers.server
+          type: mcp_tools.server_profile
           label: 'Default server profile'
         development:
-          type: mcp_tools_servers.server
+          type: mcp_tools.server_profile
           label: 'Development server profile'
         staging:
-          type: mcp_tools_servers.server
+          type: mcp_tools.server_profile
           label: 'Staging server profile'
         production:
-          type: mcp_tools_servers.server
+          type: mcp_tools.server_profile
           label: 'Production server profile'
         '*':
-          type: mcp_tools_servers.server
+          type: mcp_tools.server_profile
           label: 'Server profile'
 
-mcp_tools_servers.server:
+mcp_tools.server_profile:
   type: mapping
   label: 'Server profile'
   mapping:

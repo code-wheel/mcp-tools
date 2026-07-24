@@ -143,6 +143,6 @@ possible causes:
 1. Cache not cleared: run `drush cr` after enabling.
 2. Pagination: if the server exposes more than `pagination_limit` tools
    (default 50), Claude Desktop only loads the first page. Increase
-   `pagination_limit` in `mcp_tools_servers.settings` for the active server
+   `pagination_limit` in `mcp_tools.servers` for the active server
    profile (e.g. set to 200 for the `development` profile) so all tools fit
    on a single page. Then restart Claude Desktop to reload the tool list.

@@ -61,8 +61,36 @@ class ToolInputValidator {
 
     return [
       'valid' => FALSE,
-      'errors' => $this->collectErrors($error),
+      'errors' => $this->describeAllowedParameters($this->collectErrors($error), $definition),
     ];
+  }
+
+  /**
+   * Appends the allowed parameter list to unknown-parameter errors.
+   *
+   * @param array<int, array<string, mixed>> $errors
+   *   Collected validation errors.
+   * @param \Drupal\tool\Tool\ToolDefinition $definition
+   *   The tool definition the arguments were validated against.
+   *
+   * @return array<int, array<string, mixed>>
+   *   The errors, with additionalProperties messages made actionable.
+   */
+  private function describeAllowedParameters(array $errors, ToolDefinition $definition): array {
+    $allowed = array_keys($definition->getInputDefinitions());
+    if (empty($allowed)) {
+      return $errors;
+    }
+
+    foreach ($errors as &$error) {
+      if (($error['keyword'] ?? '') === 'additionalProperties') {
+        $error['message'] = rtrim((string) $error['message'], '.')
+          . '. Unknown parameters are rejected; allowed parameters: '
+          . implode(', ', $allowed) . '.';
+      }
+    }
+
+    return $errors;
   }
 
   /**

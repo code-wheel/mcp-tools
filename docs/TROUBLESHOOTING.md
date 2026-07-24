@@ -15,6 +15,7 @@ Common issues and fixes for MCP Tools.
 - **403 Access denied**: server profile access callback blocked the request, or scopes are disallowed for the profile.
 - **406 Not acceptable**: the endpoint requires `Accept: application/json, text/event-stream` for POST and `Accept: text/event-stream` for GET.
 - **500 Missing dependency**: install `mcp/sdk` via Composer for Streamable HTTP support.
+- **403 Forbidden: Invalid Host header**: mcp/sdk 0.3+ enables DNS-rebinding protection that only allows localhost by default. Add your site's public hostname (or full origin, e.g. `https://example.com`) to the Origin allowlist at `/admin/config/services/mcp-tools/remote` — the configured hostnames are passed to the middleware. Wildcard patterns (`*.example.com`) are matched by the module's own Origin check but not by the SDK host check, so list the exact endpoint hostname too.
 - **Execution user errors**: set a valid uid in remote settings. If uid 1 is configured, the "Use site admin (uid 1)" checkbox must be enabled.
 
 ## STDIO (mcp_tools_stdio)
@@ -36,7 +37,7 @@ Common issues and fixes for MCP Tools.
 ## Scope mismatches
 
 - Scopes are intersected across global settings, server profile scopes, and (for HTTP) API key scopes.
-- Use `mcp_tools.settings` and `mcp_tools_servers.settings` to confirm allowed scopes.
+- Use `mcp_tools.settings` and `mcp_tools.servers` to confirm allowed scopes.
 
 ## Streamable HTTP session issues
 

@@ -199,6 +199,51 @@ final class ToolApiSchemaConverterTest extends UnitTestCase {
     $this->assertSame('{}', json_encode($properties['items']['items']));
   }
 
+  public function testInputSchemaRejectsAdditionalProperties(): void {
+    $converter = new ToolApiSchemaConverter();
+
+    $definition = new ToolDefinition([
+      'id' => 'mcp_tools:delete_test',
+      'provider' => 'mcp_tools',
+      'label' => $this->markup('Delete'),
+      'description' => $this->markup('Delete tool'),
+      'operation' => ToolOperation::Write,
+      'destructive' => TRUE,
+      'input_definitions' => [
+        'nid' => $this->mockInputDefinition(dataType: 'integer', required: TRUE, description: 'Node ID', constraints: []),
+        'language' => $this->mockInputDefinition(dataType: 'string', required: FALSE, description: 'Language', constraints: []),
+      ],
+    ]);
+
+    $schema = $converter->toolDefinitionToInputSchema($definition);
+
+    // An undeclared key (e.g. "language" on a tool without translation
+    // support) must fail validation instead of being silently dropped and
+    // falling through to a destructive default.
+    $this->assertFalse($schema['additionalProperties']);
+    $this->assertSame(['nid', 'language'], array_keys($schema['properties']));
+    $this->assertSame(['nid'], $schema['required']);
+  }
+
+  public function testEmptyInputSchemaRejectsAdditionalProperties(): void {
+    $converter = new ToolApiSchemaConverter();
+
+    $definition = new ToolDefinition([
+      'id' => 'mcp_tools:test_empty_strict',
+      'provider' => 'mcp_tools',
+      'label' => $this->markup('Empty'),
+      'description' => $this->markup('No inputs'),
+      'operation' => ToolOperation::Read,
+      'destructive' => FALSE,
+      'input_definitions' => [],
+    ]);
+
+    $schema = $converter->toolDefinitionToInputSchema($definition);
+
+    $this->assertFalse($schema['additionalProperties']);
+    $this->assertInstanceOf(\stdClass::class, $schema['properties']);
+  }
+
   private function mockInputDefinition(
     string $dataType,
     bool $required,

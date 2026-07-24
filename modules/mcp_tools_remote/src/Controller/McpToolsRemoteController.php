@@ -22,8 +22,12 @@ use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools_remote\Service\ApiKeyManager;
 use GuzzleHttp\Psr7\HttpFactory;
 use Mcp\Server\Session\FileSessionStore;
+use Mcp\Server\Transport\Http\Middleware\CorsMiddleware;
+use Mcp\Server\Transport\Http\Middleware\DnsRebindingProtectionMiddleware;
+use Mcp\Server\Transport\Http\Middleware\ProtocolVersionMiddleware;
 use Mcp\Server\Transport\StreamableHttpTransport;
 use Psr\EventDispatcher\EventDispatcherInterface;
+use Psr\Http\Message\ServerRequestInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Bridge\PsrHttpMessage\Factory\HttpFoundationFactory;
 use Symfony\Bridge\PsrHttpMessage\Factory\PsrHttpFactory;
@@ -31,6 +35,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * HTTP endpoint for MCP Tools remote transport.
@@ -134,11 +139,33 @@ final class McpToolsRemoteController implements ContainerInjectionInterface {
     // Execute request as configured user.
     $this->accountSwitcher->switchTo($accountResult);
     try {
-      return $this->executeRequest($request, $remoteConfig, $serverConfig);
+      $response = $this->executeRequest($request, $remoteConfig, $serverConfig);
     }
     finally {
       $this->accountSwitcher->switchBack();
     }
+
+    // A streamed (SSE) response runs the MCP request loop while the body is
+    // sent — after this method has returned and the switchBack() above has
+    // already reverted to the anonymous user. Re-apply the execution account
+    // around the streaming callback so tool execution keeps the configured
+    // user's permissions.
+    if ($response instanceof StreamedResponse) {
+      $callback = $response->getCallback();
+      if ($callback !== NULL) {
+        $response->setCallback(function () use ($callback, $accountResult): void {
+          $this->accountSwitcher->switchTo($accountResult);
+          try {
+            $callback();
+          }
+          finally {
+            $this->accountSwitcher->switchBack();
+          }
+        });
+      }
+    }
+
+    return $response;
   }
 
   /**
@@ -287,12 +314,7 @@ final class McpToolsRemoteController implements ContainerInjectionInterface {
     $psrHttpFactory = new PsrHttpFactory($httpFactory, $httpFactory, $httpFactory, $httpFactory);
     $psrRequest = $psrHttpFactory->createRequest($request);
 
-    $transport = new StreamableHttpTransport(
-      $psrRequest,
-      $httpFactory,
-      $httpFactory,
-      logger: $this->logger,
-    );
+    $transport = $this->createTransport($psrRequest, $httpFactory, $remoteConfig);
 
     $psrResponse = $server->run($transport);
 
@@ -302,6 +324,64 @@ final class McpToolsRemoteController implements ContainerInjectionInterface {
     $response->headers->set('Cache-Control', 'no-store');
 
     return $response;
+  }
+
+  /**
+   * Creates the Streamable HTTP transport with a tailored host allowlist.
+   *
+   * The mcp/sdk (>= 0.3) installs DnsRebindingProtectionMiddleware with a
+   * localhost-only allowlist by default, which rejects every non-local
+   * deployment with "Forbidden: Invalid Host header.". Feed the middleware
+   * the hostnames from allowed_origins so public deployments work once
+   * their hostname is configured. The middleware matches literal hostnames
+   * only; wildcard patterns (*.example.com) are still enforced by the
+   * Origin validation in performSecurityChecks().
+   */
+  private function createTransport(ServerRequestInterface $psrRequest, HttpFactory $httpFactory, $remoteConfig): StreamableHttpTransport {
+    // mcp/sdk 0.2.x has no HTTP middleware stack.
+    if (!class_exists(DnsRebindingProtectionMiddleware::class)) {
+      return new StreamableHttpTransport(
+        $psrRequest,
+        $httpFactory,
+        $httpFactory,
+        logger: $this->logger,
+      );
+    }
+
+    return new StreamableHttpTransport(
+      $psrRequest,
+      $httpFactory,
+      $httpFactory,
+      logger: $this->logger,
+      middleware: [
+        new CorsMiddleware(),
+        new DnsRebindingProtectionMiddleware($this->dnsRebindAllowedHosts($remoteConfig)),
+        new ProtocolVersionMiddleware(),
+      ],
+    );
+  }
+
+  /**
+   * Builds the DNS-rebind host allowlist from the Origin allowlist config.
+   *
+   * Accepts both bare hostnames and full origins (https://example.com) as
+   * config entries; localhost variants are always allowed so local
+   * development keeps working with an empty allowlist.
+   *
+   * @return list<string>
+   *   Lowercased hostnames for DnsRebindingProtectionMiddleware.
+   */
+  protected function dnsRebindAllowedHosts($remoteConfig): array {
+    $allowedHosts = ['localhost', '127.0.0.1', '[::1]'];
+    $originValidator = new OriginValidator([]);
+    foreach ($this->normalizeConfigList($remoteConfig->get('allowed_origins')) as $origin) {
+      $host = $originValidator->extractHostname($origin);
+      if ($host !== NULL) {
+        $allowedHosts[] = $host;
+      }
+    }
+
+    return array_values(array_unique($allowedHosts));
   }
 
   /**

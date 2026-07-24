@@ -17,7 +17,7 @@
     "require": {
         "php": ">=8.3",
         "drupal/core": "^10.3 || ^11 || ^12",
-        "drupal/tool": "^1.0@alpha",
+        "drupal/tool": "^1.0@beta",
         "mcp/sdk": "^0.2.2 || ^0.3 || ^0.4 || ^0.5 || ^0.6",
         "code-wheel/mcp-http-security": "^1.0",
         "code-wheel/mcp-error-codes": "^1.3",

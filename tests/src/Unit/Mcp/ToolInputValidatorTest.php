@@ -371,4 +371,38 @@ final class ToolInputValidatorTest extends UnitTestCase {
     $this->assertTrue($hasPath, 'Expected at least one error with a path');
   }
 
+  public function testValidateRejectsUnknownArgumentsListingAllowed(): void {
+    $definition = $this->createMockDefinition();
+    $definition->method('getInputDefinitions')->willReturn([
+      'nid' => 'unused',
+      'language' => 'unused',
+    ]);
+
+    $this->schemaConverter->method('toolDefinitionToInputSchema')
+      ->willReturn([
+        'type' => 'object',
+        'properties' => [
+          'nid' => ['type' => 'integer'],
+          'language' => ['type' => 'string'],
+        ],
+        'required' => ['nid'],
+        'additionalProperties' => FALSE,
+      ]);
+
+    $validator = $this->createValidator();
+    // "langauge" is a typo for a declared parameter: it must fail loudly
+    // instead of being silently dropped, and the error must name the
+    // allowed parameters.
+    $result = $validator->validate($definition, ['nid' => 5, 'langauge' => 'it']);
+
+    $this->assertFalse($result['valid']);
+    $additionalPropertyErrors = array_filter(
+      $result['errors'],
+      static fn(array $error): bool => ($error['keyword'] ?? '') === 'additionalProperties',
+    );
+    $this->assertNotEmpty($additionalPropertyErrors);
+    $message = (string) reset($additionalPropertyErrors)['message'];
+    $this->assertStringContainsString('allowed parameters: nid, language', $message);
+  }
+
 }

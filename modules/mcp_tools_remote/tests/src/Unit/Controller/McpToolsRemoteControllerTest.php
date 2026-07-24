@@ -639,4 +639,38 @@ final class McpToolsRemoteControllerTest extends UnitTestCase {
     $controller->handle($request);
   }
 
+  public function testDnsRebindAllowedHostsExtractsHostnames(): void {
+    $remoteConfig = $this->createRemoteConfig([
+      'allowed_origins' => [
+        'https://example.com',
+        'app.example.com:8443',
+        'Example.COM',
+        '  ',
+      ],
+    ]);
+    $controller = $this->createController($this->setupConfigFactory($remoteConfig));
+
+    $method = new \ReflectionMethod($controller, 'dnsRebindAllowedHosts');
+    $hosts = $method->invoke($controller, $remoteConfig);
+
+    // Localhost variants stay allowed; config entries are reduced to
+    // lowercased hostnames (scheme and port stripped) and deduplicated.
+    $this->assertSame(
+      ['localhost', '127.0.0.1', '[::1]', 'example.com', 'app.example.com'],
+      $hosts,
+    );
+  }
+
+  public function testDnsRebindAllowedHostsDefaultsToLocalhostOnly(): void {
+    $remoteConfig = $this->createRemoteConfig(['allowed_origins' => []]);
+    $controller = $this->createController($this->setupConfigFactory($remoteConfig));
+
+    $method = new \ReflectionMethod($controller, 'dnsRebindAllowedHosts');
+
+    $this->assertSame(
+      ['localhost', '127.0.0.1', '[::1]'],
+      $method->invoke($controller, $remoteConfig),
+    );
+  }
+
 }

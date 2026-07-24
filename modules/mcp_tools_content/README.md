@@ -7,8 +7,8 @@ Content CRUD operations for MCP Tools.
 | Tool | Description |
 |------|-------------|
 | `mcp_create_content` | Create nodes with field values |
-| `mcp_update_content` | Update existing content (creates revision) |
-| `mcp_delete_content` | Permanently delete content |
+| `mcp_update_content` | Update existing content (creates revision); with `language`, updates only that translation (translatable fields + a `paragraphs` map keyed by source paragraph ID) |
+| `mcp_delete_content` | Delete a single translation (`language`) or, with the explicit `confirm_delete_all` flag, the whole node with all translations. A bare `nid` is rejected. Unknown parameters are rejected |
 | `mcp_publish_content` | Publish or unpublish content |
 
 ## Requirements

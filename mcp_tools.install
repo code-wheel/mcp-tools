@@ -1,0 +1,26 @@
+<?php
+
+/**
+ * @file
+ * Install, update and uninstall functions for the MCP Tools module.
+ */
+
+declare(strict_types=1);
+
+/**
+ * Rename mcp_tools_servers.settings to mcp_tools.servers.
+ *
+ * Simple configuration must be prefixed with the owning module's name;
+ * the old name declared a dependency on a nonexistent mcp_tools_servers
+ * extension, which broke config imports (drush cim).
+ */
+function mcp_tools_update_10001(): void {
+  $config_factory = \Drupal::configFactory();
+  $old = $config_factory->getEditable('mcp_tools_servers.settings');
+  if (!$old->isNew()) {
+    $config_factory->getEditable('mcp_tools.servers')
+      ->setData($old->getRawData())
+      ->save();
+    $old->delete();
+  }
+}

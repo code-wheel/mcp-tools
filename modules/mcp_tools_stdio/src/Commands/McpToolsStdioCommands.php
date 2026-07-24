@@ -46,7 +46,7 @@ final class McpToolsStdioCommands extends DrushCommands {
    */
   #[CLI\Command(name: 'mcp-tools:serve', aliases: ['mcp-tools-server', 'mcp-tools:server'])]
   #[CLI\Usage(name: 'drush mcp-tools:serve', description: 'Start an MCP server over STDIO exposing Tool API tools')]
-  #[CLI\Option(name: 'server', description: 'Server profile ID from mcp_tools_servers.settings')]
+  #[CLI\Option(name: 'server', description: 'Server profile ID from mcp_tools.servers')]
   #[CLI\Option(name: 'scope', description: 'Override scopes for this process (comma-separated: read,write,admin)')]
   #[CLI\Option(name: 'uid', description: 'Drupal user ID to run tool execution as (defaults to Drush bootstrap user)')]
   #[CLI\Option(name: 'all-tools', description: 'Expose all Tool API tools (not only mcp_tools providers)')]
