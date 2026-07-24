@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **Tools with conditional outputs broke external Tool API consumers.**
+  Declared outputs a result did not populate (e.g. `language` on a full-node
+  delete, the translate-only outputs on `mcp_update_content`) made Tool
+  API's `getOutputValues()` throw after the tool had already executed —
+  surfacing as an error response from
+  [mcp_server_tool_bridge](https://www.drupal.org/project/mcp_server_tool_bridge)
+  even though the operation succeeded. `McpToolsToolBase` now backfills
+  unset declared outputs with NULL and conditional outputs are marked
+  optional. mcp_tools' own transports were unaffected (they fall back to
+  raw context values). Found by running the content tools end-to-end
+  through mcp_server 2.x + mcp_server_tool_bridge.
+
+## [1.0.0-beta15] - 2026-07-24
+
 ### Changed
 
 - **BREAKING: `mcp_delete_content` requires explicit confirmation**

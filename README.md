@@ -73,8 +73,8 @@ AI:   Creates content type, fields, vocabularies, role, and permissions
 
 - **Recommended (local dev):** `mcp_tools_stdio` — runs an MCP server over STDIO via Drush.
 - **Experimental (remote HTTP):** `mcp_tools_remote` — exposes an HTTP endpoint with API key authentication.
-- **Optional (MCP Server bridge):** `mcp_tools_mcp_server` — generates MCP Server tool configs for MCP Tools. Requires `drupal/mcp_server < 2.0`: it integrates with the 1.x tool-config API, which was removed in the 2.x rearchitecture. A 2.x bridge is tracked separately.
-- **Alternative:** [MCP Server](https://www.drupal.org/project/mcp_server) (optional). MCP Tools coexists with MCP Server 2.x (which requires `mcp/sdk ^0.6`) — both can be installed and enabled in the same site. Only the optional sync bridge above is version-bound.
+- **Alternative (MCP Server 2.x):** [MCP Server](https://www.drupal.org/project/mcp_server) + [MCP Server Tool Bridge](https://www.drupal.org/project/mcp_server_tool_bridge) serve this tool library through mcp_server's own transports — every exposed tool is selected per-site via the bridge's config entities, and MCP Tools' scope and permission checks still apply. Validated end-to-end against mcp_server 2.0 (see CHANGELOG). MCP Tools coexists with MCP Server 2.x in the same site.
+- **Legacy (MCP Server 1.x only):** `mcp_tools_mcp_server` — the 1.x sync bridge (requires `drupal/mcp_server < 2.0`). It is not being ported to 2.x while the MCP Server Tool Bridge covers that path; it stays available for 1.x sites and as a fallback, and a weekly CI job verifies our tools keep working through the 2.x bridge.
 - **None (library-only):** every tool is a plain [Tool API](https://www.drupal.org/project/tool) plugin, so you can enable the base module plus tool submodules with no transport at all and consume the tools from ECA, AI Agents (via `mcp_tools_ai`), custom code, or another MCP runtime.
 
 ## Installation

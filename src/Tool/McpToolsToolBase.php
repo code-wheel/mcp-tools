@@ -88,6 +88,18 @@ abstract class McpToolsToolBase extends ToolBase {
           unset($context['success'], $context['message']);
         }
 
+        // Backfill declared outputs the result did not populate (tools with
+        // conditional outputs, e.g. "language" on a full-node delete). Tool
+        // API's getOutputValues() throws for declared-but-unset outputs —
+        // getOutput() lazily initializes them but getOutputValue() does not —
+        // which breaks external consumers such as mcp_server_tool_bridge
+        // after the tool has already executed.
+        foreach (array_keys($this->getOutputDefinitions()) as $outputName) {
+          if (!array_key_exists($outputName, $context)) {
+            $context[$outputName] = NULL;
+          }
+        }
+
         // phpcs:ignore Drupal.Semantics.FunctionT.NotLiteralString
         return ExecutableResult::success(new TranslatableMarkup($message), $context);
       }

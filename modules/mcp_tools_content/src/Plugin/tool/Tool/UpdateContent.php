@@ -67,11 +67,13 @@ use Drupal\tool\TypedData\InputDefinition;
       data_type: 'integer',
       label: new TranslatableMarkup('Updated paragraph fields'),
       description: new TranslatableMarkup('Number of paragraph field values changed by this call.'),
+      required: FALSE,
     ),
     'untouched_translatable_fields' => new ContextDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Untouched translatable fields'),
       description: new TranslatableMarkup('Translatable node fields NOT covered by this update (per-language updates only) — review them for language consistency.'),
+      required: FALSE,
     ),
     'revision_id' => new ContextDefinition(
       data_type: 'integer',

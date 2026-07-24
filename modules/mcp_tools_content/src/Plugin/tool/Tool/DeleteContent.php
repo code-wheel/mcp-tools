@@ -58,6 +58,7 @@ use Drupal\tool\TypedData\InputDefinition;
       data_type: 'string',
       label: new TranslatableMarkup('Deleted language'),
       description: new TranslatableMarkup('Language code of the deleted translation (single-translation delete only).'),
+      required: FALSE,
     ),
     'languages_deleted' => new ContextDefinition(
       data_type: 'list',

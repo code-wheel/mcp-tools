@@ -1,5 +1,13 @@
 # MCP Tools - MCP Server Bridge
 
+**Legacy — mcp_server 1.x only.** This submodule is not being ported to
+mcp_server 2.x: for 2.x, use the
+[MCP Server Tool Bridge](https://www.drupal.org/project/mcp_server_tool_bridge)
+companion project — MCP Tools' tools work through it without any bridge on
+this side (validated end-to-end, and re-checked weekly by the Bridge Compat
+CI job). This submodule stays available for 1.x sites and as a fallback
+while that bridge is pre-release.
+
 Optional bridge for exposing MCP Tools via the `drupal/mcp_server` module.
 
 ## Overview
