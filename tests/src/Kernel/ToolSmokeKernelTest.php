@@ -82,8 +82,8 @@ final class ToolSmokeKernelTest extends KernelTestBase {
       static fn(mixed $definition): bool => $definition instanceof ToolDefinition && str_starts_with($definition->getProvider(), 'mcp_tools')
     );
 
-    // Base module + core-only submodules provide 160 tools.
-    $this->assertCount(160, $mcpDefinitions);
+    // Base module + core-only submodules provide 161 tools.
+    $this->assertCount(161, $mcpDefinitions);
 
     $account = $this->createMock(AccountInterface::class);
     $account->method('hasPermission')->willReturn(FALSE);

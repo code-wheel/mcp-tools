@@ -87,6 +87,7 @@ services:
       - '@mcp_tools.system_status'
       - '@mcp_tools.site_blueprint'
       - '@mcp_tools.config_analysis'
+      - '@entity_type.manager'
     tags:
       - { name: mcp_tools.resource_provider }
 
@@ -182,3 +183,6 @@ services:
     class: Drupal\mcp_tools\Mcp\Error\DefaultToolErrorHandler
     arguments:
       - '@logger.channel.mcp_tools'
+
+  mcp_tools.client_bridge:
+    class: Drupal\mcp_tools\Service\McpClientBridge

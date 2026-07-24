@@ -21,7 +21,7 @@ MCP Tools provides a comprehensive set of tools for AI assistants to interact wi
 │                         mcp_tools module                         │
 │  ┌──────────────────┐  ┌──────────────────┐  ┌───────────────┐  │
 │  │   Tool Plugins   │  │    Services      │  │ Access Control│  │
-│  │  (226 tools)     │  │ (Business Logic) │  │ (3 layers)    │  │
+│  │  (227 tools)     │  │ (Business Logic) │  │ (3 layers)    │  │
 │  └────────┬─────────┘  └────────┬─────────┘  └───────┬───────┘  │
 │           │                     │                    │          │
 │           └─────────────────────┼────────────────────┘          │
@@ -64,7 +64,7 @@ modules/
 ├── mcp_tools_menus/          # Menu management (5 tools)
 ├── mcp_tools_views/          # Views creation (6 tools)
 ├── mcp_tools_blocks/         # Block placement (5 tools)
-├── mcp_tools_media/          # Media management (6 tools)
+├── mcp_tools_media/          # Media management (7 tools)
 ├── mcp_tools_layout_builder/ # Layout Builder (9 tools)
 ├── mcp_tools_config/         # Config management (5 tools)
 ├── mcp_tools_analysis/       # Site analysis (8 tools)

@@ -12,6 +12,7 @@ use CodeWheel\McpEvents\ToolExecutionStartedEvent;
 use CodeWheel\McpEvents\ToolExecutionSucceededEvent;
 use Drupal\mcp_tools\Mcp\Error\DefaultToolErrorHandler;
 use Drupal\mcp_tools\Mcp\Error\ToolErrorHandlerInterface;
+use Drupal\mcp_tools\Service\McpClientBridge;
 use Drupal\tool\Tool\ToolInterface;
 use Drupal\tool\TypedData\InputDefinitionInterface;
 use Drupal\tool\TypedData\ListInputDefinition;
@@ -49,6 +50,7 @@ class ToolApiCallToolHandler implements RequestHandlerInterface {
     private readonly ?ToolInputValidator $inputValidator = NULL,
     private readonly ?ToolErrorHandlerInterface $errorHandler = NULL,
     private readonly ?EventDispatcherInterface $eventDispatcher = NULL,
+    private readonly ?McpClientBridge $clientBridge = NULL,
   ) {}
 
   /**
@@ -125,6 +127,38 @@ class ToolApiCallToolHandler implements RequestHandlerInterface {
     }
     $arguments = $elicited;
 
+    $gateway = NULL;
+    if (class_exists(ClientGateway::class) && \Fiber::getCurrent() !== NULL) {
+      $gateway = new ClientGateway($session);
+    }
+    $this->clientBridge?->setGateway($gateway, (array) $session->get('client_capabilities', []));
+    try {
+      return $this->executeCall($toolName, $pluginId, $arguments, $sanitizedArguments, $toolErrorHandler, $startedAt, $requestId);
+    }
+    finally {
+      $this->clientBridge?->setGateway(NULL);
+    }
+  }
+
+  /**
+   * Instantiates and executes the tool, building the MCP response.
+   *
+   * @param string $toolName
+   *   The wire-format tool name.
+   * @param string $pluginId
+   *   The Tool API plugin ID.
+   * @param array<string, mixed> $arguments
+   *   Validated (and possibly confirmation-amended) arguments.
+   * @param array<string, mixed> $sanitizedArguments
+   *   Redacted arguments for observability payloads.
+   * @param \Drupal\mcp_tools\Mcp\Error\ToolErrorHandlerInterface $toolErrorHandler
+   *   The error handler.
+   * @param float $startedAt
+   *   Execution start time.
+   * @param mixed $requestId
+   *   The JSON-RPC request id.
+   */
+  private function executeCall(string $toolName, string $pluginId, array $arguments, array $sanitizedArguments, ToolErrorHandlerInterface $toolErrorHandler, float $startedAt, mixed $requestId): Response {
     try {
       $tool = $this->toolManager->createInstance($pluginId);
     }

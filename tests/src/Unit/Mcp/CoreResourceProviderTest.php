@@ -66,10 +66,14 @@ final class CoreResourceProviderTest extends TestCase {
     }
   }
 
-  public function testGetResourceTemplatesReturnsEmptyArray(): void {
+  public function testGetResourceTemplatesExposesNodeAndConfig(): void {
     $templates = $this->provider->getResourceTemplates();
 
-    $this->assertSame([], $templates);
+    $uris = array_column($templates, 'uriTemplate');
+    $this->assertSame(['drupal://node/{nid}', 'drupal://config/{name}'], $uris);
+    foreach ($templates as $template) {
+      $this->assertIsCallable($template['handler']);
+    }
   }
 
   public function testGetSiteStatusReturnsHealthData(): void {

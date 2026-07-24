@@ -11,6 +11,7 @@ use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AuditLogger;
+use Drupal\mcp_tools\Service\McpClientBridge;
 
 /**
  * Service for batch/bulk operations.
@@ -30,6 +31,7 @@ class BatchService {
     protected AccessManager $accessManager,
     protected AuditLogger $auditLogger,
     protected TimeInterface $time,
+    protected ?McpClientBridge $clientBridge = NULL,
   ) {}
 
   /**
@@ -72,6 +74,7 @@ class BatchService {
     $errors = [];
 
     foreach ($items as $index => $item) {
+      $this->clientBridge?->progress($index + 1, count($items), sprintf('Creating item %d of %d', $index + 1, count($items)));
       $title = $item['title'] ?? '';
       if (empty($title)) {
         $errors[] = [
@@ -177,6 +180,7 @@ class BatchService {
     $errors = [];
 
     foreach ($updates as $index => $update) {
+      $this->clientBridge?->progress($index + 1, count($updates), sprintf('Updating item %d of %d', $index + 1, count($updates)));
       $nid = $update['id'] ?? $update['nid'] ?? NULL;
       if (empty($nid)) {
         $errors[] = [
@@ -303,6 +307,7 @@ class BatchService {
     $errors = [];
 
     foreach ($ids as $index => $nid) {
+      $this->clientBridge?->progress($index + 1, count($ids), sprintf('Processing node %d of %d', $index + 1, count($ids)));
       try {
         $node = $this->entityTypeManager->getStorage('node')->load($nid);
         if (!$node) {

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools\Mcp\Resource;
 
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\mcp_tools\Service\ConfigAnalysisService;
 use Drupal\mcp_tools\Service\SiteBlueprintService;
 use Drupal\mcp_tools\Service\SiteHealthService;
@@ -19,6 +20,7 @@ class CoreResourceProvider implements ResourceProviderInterface {
     private readonly SystemStatusService $systemStatusService,
     private readonly SiteBlueprintService $siteBlueprintService,
     private readonly ConfigAnalysisService $configAnalysisService,
+    private readonly ?EntityTypeManagerInterface $entityTypeManager = NULL,
   ) {}
 
   /**
@@ -54,7 +56,82 @@ class CoreResourceProvider implements ResourceProviderInterface {
    * {@inheritdoc}
    */
   public function getResourceTemplates(): array {
-    return [];
+    return [
+      [
+        'uriTemplate' => 'drupal://node/{nid}',
+        'name' => 'node-summary',
+        'description' => 'Read-only summary of a node: metadata, publication status, languages, and text field values.',
+        'mimeType' => 'application/json',
+        'handler' => fn(string $nid): array => $this->readNode($nid),
+      ],
+      [
+        'uriTemplate' => 'drupal://config/{name}',
+        'name' => 'config-object',
+        'description' => 'A configuration object by name. Sensitive keys are redacted unless output.include_sensitive is enabled.',
+        'mimeType' => 'application/json',
+        'handler' => fn(string $name): array => $this->readConfig($name),
+      ],
+    ];
+  }
+
+  /**
+   * Resource handler for drupal://node/{nid}.
+   *
+   * @param string $nid
+   *   The node ID from the URI.
+   *
+   * @return array<string, mixed>
+   *   Node summary, or an error entry.
+   */
+  public function readNode(string $nid): array {
+    if ($this->entityTypeManager === NULL) {
+      return ['error' => 'Entity type manager unavailable.'];
+    }
+    $node = $this->entityTypeManager->getStorage('node')->load((int) $nid);
+    if ($node === NULL) {
+      return ['error' => "Node $nid not found."];
+    }
+    if (!$node->access('view')) {
+      return ['error' => 'Access denied.'];
+    }
+
+    $textTypes = ['string', 'string_long', 'text', 'text_long', 'text_with_summary'];
+    $fields = [];
+    foreach ($node->getFieldDefinitions() as $name => $definition) {
+      if (!str_starts_with($name, 'field_') && $name !== 'body') {
+        continue;
+      }
+      if (!in_array($definition->getType(), $textTypes, TRUE) || $node->get($name)->isEmpty()) {
+        continue;
+      }
+      $fields[$name] = $node->get($name)->value;
+    }
+
+    return [
+      'nid' => (int) $node->id(),
+      'uuid' => $node->uuid(),
+      'type' => $node->bundle(),
+      'title' => $node->label(),
+      'status' => $node->isPublished() ? 'published' : 'unpublished',
+      'langcode' => $node->language()->getId(),
+      'languages' => array_keys($node->getTranslationLanguages()),
+      'created' => (int) $node->getCreatedTime(),
+      'changed' => (int) $node->getChangedTime(),
+      'fields' => $fields,
+    ];
+  }
+
+  /**
+   * Resource handler for drupal://config/{name}.
+   *
+   * @param string $name
+   *   The configuration object name from the URI.
+   *
+   * @return array<string, mixed>
+   *   The configuration data with sensitive keys redacted by default.
+   */
+  public function readConfig(string $name): array {
+    return $this->configAnalysisService->getConfig($name);
   }
 
   /**

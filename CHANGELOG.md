@@ -4,6 +4,25 @@ All notable changes to the MCP Tools module will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.0.0-beta18] - 2026-07-24
+
+### Added
+
+- **`mcp_generate_alt_text` (sampling).** Generates image alt text with the
+  connected MCP client's own model: the image is sent to the client via an
+  MCP sampling request, the description comes back, and it is stored as the
+  image field's alt text (audit-logged; refuses politely on clients without
+  the sampling capability). 227 tools total.
+- **Parameterized resource templates.** `drupal://node/{nid}` (read-only
+  node summary honoring view access) and `drupal://config/{name}` (through
+  the redacting config reader) join the static resources.
+- **Progress notifications for bulk operations.** When the client attaches
+  a progressToken to a tool call, the batch tools (create/update/delete
+  multiple) stream per-item MCP progress notifications. Implemented via a
+  new request-scoped `mcp_tools.client_bridge` service the call handler
+  arms during execution — services report progress unconditionally and it
+  no-ops outside an MCP request (cron, drush, other Tool API runtimes).
+
 ## [1.0.0-beta17] - 2026-07-24
 
 ### Added

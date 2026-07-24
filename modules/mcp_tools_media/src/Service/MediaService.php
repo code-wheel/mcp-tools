@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools_media\Service;
 
+use Mcp\Schema\Content\ImageContent;
 use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\File\FileSystemInterface;
@@ -12,6 +13,7 @@ use Drupal\media\Entity\Media;
 use Drupal\media\Entity\MediaType;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AuditLogger;
+use Drupal\mcp_tools\Service\McpClientBridge;
 
 /**
  * Service for media management operations.
@@ -55,6 +57,7 @@ class MediaService {
     protected AccessManager $accessManager,
     protected AuditLogger $auditLogger,
     protected TimeInterface $time,
+    protected ?McpClientBridge $clientBridge = NULL,
   ) {}
 
   /**
@@ -417,6 +420,98 @@ class MediaService {
     catch (\Exception $e) {
       $this->auditLogger->logFailure('list_media_types', 'media_type', 'all', ['error' => $e->getMessage()]);
       return ['success' => FALSE, 'error' => 'Failed to list media types: ' . $e->getMessage()];
+    }
+  }
+
+  /**
+   * Generates image alt text with the connected MCP client's own model.
+   *
+   * Sends the image to the client via an MCP sampling request; the client's
+   * model describes it and the description is stored as the image field's
+   * alt text. Requires a client that advertises the sampling capability.
+   *
+   * @param int $mid
+   *   The media entity ID.
+   * @param bool $overwrite
+   *   Replace existing alt text when TRUE.
+   *
+   * @return array
+   *   Legacy MCP result.
+   */
+  public function generateAltText(int $mid, bool $overwrite = FALSE): array {
+    if (!$this->accessManager->canWrite()) {
+      return $this->accessManager->getWriteAccessDenied();
+    }
+
+    if ($this->clientBridge === NULL || !$this->clientBridge->supportsSampling()) {
+      return [
+        'success' => FALSE,
+        'error' => 'The connected MCP client does not support sampling, which this tool uses to describe the image. Set the alt text directly with mcp_update_media instead.',
+      ];
+    }
+
+    $media = $this->entityTypeManager->getStorage('media')->load($mid);
+    if (!$media) {
+      return ['success' => FALSE, 'error' => "Media $mid not found."];
+    }
+
+    $sourceField = $media->getSource()->getConfiguration()['source_field'] ?? NULL;
+    if (!$sourceField || !$media->hasField($sourceField) || $media->get($sourceField)->isEmpty()) {
+      return ['success' => FALSE, 'error' => "Media $mid has no image source field."];
+    }
+    $item = $media->get($sourceField)->first();
+    if (!isset($item->alt) && !array_key_exists('alt', $item->getValue() + ['alt' => NULL])) {
+      return ['success' => FALSE, 'error' => "Media $mid is not an image with alt text support."];
+    }
+
+    $existingAlt = trim((string) ($item->alt ?? ''));
+    if ($existingAlt !== '' && !$overwrite) {
+      return [
+        'success' => FALSE,
+        'error' => "Media $mid already has alt text ('$existingAlt'). Pass overwrite: true to replace it.",
+      ];
+    }
+
+    $file = $item->entity;
+    if (!$file) {
+      return ['success' => FALSE, 'error' => "Media $mid image file is missing."];
+    }
+    $uri = $file->getFileUri();
+    $realpath = $this->fileSystem->realpath($uri);
+    $size = $realpath ? filesize($realpath) : 0;
+    if (!$realpath || $size === 0 || $size > 4 * 1024 * 1024) {
+      return ['success' => FALSE, 'error' => 'Image file unreadable or larger than 4 MB.'];
+    }
+
+    $imageContent = new ImageContent(
+      base64_encode((string) file_get_contents($realpath)),
+      (string) $file->getMimeType(),
+    );
+
+    $alt = $this->clientBridge->sample($imageContent, 200);
+    if ($alt === NULL) {
+      return ['success' => FALSE, 'error' => 'The client did not return a description.'];
+    }
+    $alt = mb_substr(preg_replace('/\s+/', ' ', $alt), 0, 512);
+
+    try {
+      $item->alt = $alt;
+      $media->save();
+      $this->auditLogger->logSuccess('generate_alt_text', 'media', (string) $mid, [
+        'overwrite' => $overwrite,
+      ]);
+      return [
+        'success' => TRUE,
+        'data' => [
+          'mid' => $mid,
+          'alt' => $alt,
+          'message' => "Alt text set on media $mid.",
+        ],
+      ];
+    }
+    catch (\Exception $e) {
+      $this->auditLogger->logFailure('generate_alt_text', 'media', (string) $mid, ['error' => $e->getMessage()]);
+      return ['success' => FALSE, 'error' => 'Failed to save alt text: ' . $e->getMessage()];
     }
   }
 

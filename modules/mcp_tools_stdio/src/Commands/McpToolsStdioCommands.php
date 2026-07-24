@@ -12,6 +12,7 @@ use Drupal\mcp_tools\Mcp\Error\ToolErrorHandlerInterface;
 use Drupal\mcp_tools\Mcp\Resource\ResourceRegistry;
 use Drupal\mcp_tools\Mcp\Prompt\PromptRegistry;
 use Drupal\mcp_tools\Mcp\ServerConfigRepository;
+use Drupal\mcp_tools\Service\McpClientBridge;
 use Drupal\mcp_tools\Mcp\ToolApiSchemaConverter;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\tool\Tool\ToolManager;
@@ -37,6 +38,7 @@ final class McpToolsStdioCommands extends DrushCommands {
     private readonly AccountSwitcherInterface $accountSwitcher,
     private readonly EventDispatcherInterface $eventDispatcher,
     private readonly LoggerInterface $mcpLogger,
+    private readonly ?McpClientBridge $clientBridge = NULL,
   ) {
     parent::__construct();
   }
@@ -130,6 +132,7 @@ final class McpToolsStdioCommands extends DrushCommands {
       $this->resourceRegistry,
       $this->promptRegistry,
       $this->toolErrorHandler,
+      $this->clientBridge,
     );
 
     fwrite(\STDERR, "MCP Tools STDIO Server\n");

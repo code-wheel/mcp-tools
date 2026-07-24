@@ -8,6 +8,7 @@ use Drupal\Component\Plugin\PluginManagerInterface;
 use Drupal\mcp_tools\Mcp\Resource\ResourceRegistry;
 use Drupal\mcp_tools\Mcp\Prompt\PromptRegistry;
 use Drupal\mcp_tools\Mcp\Error\ToolErrorHandlerInterface;
+use Drupal\mcp_tools\Service\McpClientBridge;
 use Drupal\tool\Tool\ToolDefinition;
 use Mcp\Schema\Annotations;
 use Mcp\Schema\ToolAnnotations;
@@ -30,6 +31,7 @@ class McpToolsServerFactory {
     private readonly ?ResourceRegistry $resourceRegistry = NULL,
     private readonly ?PromptRegistry $promptRegistry = NULL,
     private readonly ?ToolErrorHandlerInterface $toolErrorHandler = NULL,
+    private readonly ?McpClientBridge $clientBridge = NULL,
   ) {}
 
   /**
@@ -134,6 +136,7 @@ class McpToolsServerFactory {
       new ToolInputValidator($this->schemaConverter, $this->logger),
       $this->toolErrorHandler,
       $this->eventDispatcher,
+      $this->clientBridge,
     ));
 
     $definitions = $this->toolManager->getDefinitions();

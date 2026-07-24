@@ -19,6 +19,7 @@ use Drupal\mcp_tools\Mcp\Resource\ResourceRegistry;
 use Drupal\mcp_tools\Mcp\ServerConfigRepository;
 use Drupal\mcp_tools\Mcp\ToolApiSchemaConverter;
 use Drupal\mcp_tools\Service\AccessManager;
+use Drupal\mcp_tools\Service\McpClientBridge;
 use Drupal\mcp_tools_remote\Service\ApiKeyManager;
 use GuzzleHttp\Psr7\HttpFactory;
 use Mcp\Server\Session\FileSessionStore;
@@ -55,6 +56,7 @@ final class McpToolsRemoteController implements ContainerInjectionInterface {
     private readonly AccountSwitcherInterface $accountSwitcher,
     private readonly EventDispatcherInterface $eventDispatcher,
     private readonly LoggerInterface $logger,
+    private readonly ?McpClientBridge $clientBridge = NULL,
   ) {}
 
   /**
@@ -74,6 +76,7 @@ final class McpToolsRemoteController implements ContainerInjectionInterface {
       $container->get('account_switcher'),
       $container->get('event_dispatcher'),
       $container->get('logger.channel.mcp_tools_remote'),
+      $container->get('mcp_tools.client_bridge'),
     );
   }
 
@@ -290,6 +293,7 @@ final class McpToolsRemoteController implements ContainerInjectionInterface {
       $this->resourceRegistry,
       $this->promptRegistry,
       $this->toolErrorHandler,
+      $this->clientBridge,
     );
 
     $serverParams = $this->resolveServerParams($remoteConfig, $serverConfig);

@@ -22,7 +22,7 @@ CI runs tests against all supported Drupal versions on every push.
 
 MCP Tools provides curated, high-value tools that solve real problems—not generic CRUD. Inspired by [Sentry MCP](https://docs.sentry.io/product/sentry-mcp/).
 
-**Current:** 226 tools total (27 read-only + 199 write/analysis operations across 36 tool submodules)
+**Current:** 227 tools total (27 read-only + 200 write/analysis operations across 36 tool submodules)
 
 **Drupal AI ecosystem:** The optional `mcp_tools_ai` submodule exposes these tools to [Drupal AI](https://www.drupal.org/project/ai) / [AI Agents](https://www.drupal.org/project/ai_agents) as native Function Calls — so in-site AI agents can use the same library MCP clients use. Curated read-only by default; see `modules/mcp_tools_ai/README.md`.
 
@@ -156,7 +156,7 @@ mcp_tools/                        # Base module (25 read-only tools)
     ├── mcp_tools_menus/          # Menu management (5 tools)
     ├── mcp_tools_views/          # Views management (6 tools)
     ├── mcp_tools_blocks/         # Block placement (5 tools)
-    ├── mcp_tools_media/          # Media management (6 tools)
+    ├── mcp_tools_media/          # Media management (7 tools)
     ├── mcp_tools_webform/        # Webform integration (7 tools)
     ├── mcp_tools_theme/          # Theme settings (8 tools)
     ├── mcp_tools_layout_builder/ # Layout Builder (9 tools)
@@ -354,7 +354,7 @@ Available scopes:
 |------|-------------|
 | `mcp_tools_list_available` | List all available MCP tools by category or search |
 
-## Write Submodules (199 tools across 32 submodules)
+## Write Submodules (200 tools across 32 submodules)
 
 Enable submodules for the capabilities you need. Each submodule's tools are listed in its own `README.md`.
 
@@ -367,7 +367,7 @@ Enable submodules for the capabilities you need. Each submodule's tools are list
 | `mcp_tools_menus` | 5 | Menus and menu links |
 | `mcp_tools_views` | 6 | Views creation and management |
 | `mcp_tools_blocks` | 5 | Block placement and configuration |
-| `mcp_tools_media` | 6 | Media types, uploads, entities |
+| `mcp_tools_media` | 7 | Media types, uploads, entities |
 | `mcp_tools_webform` | 7 | Webform management and submissions (requires `webform`) |
 | `mcp_tools_theme` | 8 | Theme settings, enable/disable |
 | `mcp_tools_layout_builder` | 9 | Layout sections, blocks, plugins (requires `layout_builder`) |

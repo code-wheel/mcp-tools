@@ -12,5 +12,6 @@ services:
       - '@account_switcher'
       - '@event_dispatcher'
       - '@logger.channel.mcp_tools_stdio'
+      - '@mcp_tools.client_bridge'
     tags:
       - { name: drush.command }
