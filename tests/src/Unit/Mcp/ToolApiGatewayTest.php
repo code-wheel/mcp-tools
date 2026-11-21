@@ -9,6 +9,7 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\mcp_tools\Mcp\ToolApiGateway;
 use Drupal\mcp_tools\Mcp\ToolApiSchemaConverter;
+use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\Tests\UnitTestCase;
 use Drupal\tool\Tool\ToolDefinition;
 use Drupal\tool\Tool\ToolOperation;
@@ -95,6 +96,41 @@ final class ToolApiGatewayTest extends UnitTestCase {
     $this->assertContains(ToolApiGateway::DISCOVER_TOOL, $names);
     $this->assertContains(ToolApiGateway::GET_INFO_TOOL, $names);
     $this->assertContains(ToolApiGateway::EXECUTE_TOOL, $names);
+  }
+
+  /**
+   * The execute tool says "read only" when the session can only read.
+   *
+   * It can run every tool, so it was always marked as one that may change
+   * the site. A client that asks its user before such a call (Codex does)
+   * then asks before every call in gateway mode, and refuses them all when
+   * nobody is there to ask. A session without the write and admin scopes,
+   * or a site in read-only mode, cannot change anything through it.
+   */
+  public function testExecuteToolHintFollowsWhatTheSessionMayDo(): void {
+    $this->toolManager->method('getDefinitions')->willReturn([]);
+    $hint = function (array $scopes, bool $readOnlyMode = FALSE): array {
+      $access = $this->createMock(AccessManager::class);
+      $access->method('hasScope')->willReturnCallback(static fn(string $scope): bool => in_array($scope, $scopes, TRUE));
+      $access->method('isReadOnlyMode')->willReturn($readOnlyMode);
+      $gateway = new ToolApiGateway($this->toolManager, $this->schemaConverter, $this->logger, FALSE, 'mcp_tools', NULL, NULL, $access);
+      foreach ($gateway->getGatewayTools() as $tool) {
+        if ($tool['name'] === ToolApiGateway::EXECUTE_TOOL) {
+          return [$tool['annotations']->readOnlyHint, $tool['annotations']->destructiveHint];
+        }
+      }
+      $this->fail('No execute tool.');
+    };
+
+    $this->assertSame([TRUE, FALSE], $hint(['read']), 'A read session can only read through it.');
+    $this->assertSame([TRUE, FALSE], $hint(['read', 'write', 'admin'], TRUE), 'So can any session while the site is in read-only mode.');
+    $this->assertFalse($hint(['read', 'write'])[0], 'With the write scope it may change the site.');
+    $this->assertFalse($hint(['read', 'admin'])[0], 'With the admin scope too.');
+
+    // A gateway that was built without the access manager knows nothing
+    // of the session and keeps the careful answer.
+    $plain = array_column($this->createGateway()->getGatewayTools(), 'annotations', 'name')[ToolApiGateway::EXECUTE_TOOL];
+    $this->assertFalse($plain->readOnlyHint);
   }
 
   public function testGetGatewayToolsHaveCorrectStructure(): void {
@@ -239,6 +275,53 @@ final class ToolApiGatewayTest extends UnitTestCase {
     $this->assertSame(1, $result->structuredContent['count']);
     $this->assertSame(1, $result->structuredContent['total_matches']);
     $this->assertSame('Create Content', $result->structuredContent['tools'][0]['label']);
+  }
+
+  /**
+   * A question in the model's own words still finds the tool.
+   *
+   * The search took the whole query as one piece of text. A local model
+   * asked for "node type", found nothing, and gave up on a task the
+   * "content type" tool would have done. Words are now tried one by one
+   * when the phrase is nowhere, and an empty answer says what to try next.
+   */
+  public function testDiscoverToolsFindsByWordsWhenThePhraseIsNowhere(): void {
+    $this->toolManager->method('getDefinitions')->willReturn([
+      'mcp_structure:create_content_type' => $this->createToolDefinition('mcp_structure:create_content_type', 'mcp_tools_structure', 'Create Content Type', 'Create a new content type.'),
+      'mcp_structure:add_field' => $this->createToolDefinition('mcp_structure:add_field', 'mcp_tools_structure', 'Add Field', 'Add a field to a content type or another bundle.'),
+      'mcp_cache:clear_all' => $this->createToolDefinition('mcp_cache:clear_all', 'mcp_tools_cache', 'Clear All Caches', 'Clear every cache.'),
+    ]);
+    $gateway = $this->createGateway();
+    $labels = static fn($result): array => array_column($result->structuredContent['tools'], 'label');
+
+    // The phrase itself, as before.
+    $phrase = $gateway->discoverTools('content type');
+    $this->assertSame(['Create Content Type', 'Add Field'], $labels($phrase));
+    $this->assertArrayNotHasKey('match', $phrase->structuredContent);
+
+    // Every word, in any order.
+    $all = $gateway->discoverTools('create type');
+    $this->assertSame(['Create Content Type'], $labels($all));
+    $this->assertSame('all words', $all->structuredContent['match']);
+
+    // Some of the words: the tools with the most of them come first.
+    $any = $gateway->discoverTools('node type');
+    $this->assertSame(['Create Content Type', 'Add Field'], $labels($any));
+    $this->assertSame('some words', $any->structuredContent['match']);
+    $this->assertSame(2, $any->structuredContent['total_matches']);
+
+    // One word that says something next to one that says nothing: "cache
+    // tools", "the caches". The one word is enough to search by.
+    $one = $gateway->discoverTools('cache tools');
+    $this->assertSame(['Clear All Caches'], $labels($one));
+    $this->assertSame('all words', $one->structuredContent['match']);
+
+    // Nothing at all: say so, and say what there is.
+    $none = $gateway->discoverTools('zebra crossing');
+    $this->assertSame(0, $none->structuredContent['count']);
+    $this->assertStringContainsString('No tool matches', $none->structuredContent['hint']);
+    $this->assertStringContainsString('mcp_tools_structure', $none->structuredContent['hint']);
+    $this->assertFalse($none->isError);
   }
 
   public function testDiscoverToolsQueryIsCaseInsensitive(): void {

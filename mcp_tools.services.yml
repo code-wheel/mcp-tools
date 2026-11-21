@@ -34,6 +34,18 @@ services:
       - '@mcp_tools.tool_call_context'
       - '@mcp_tools.rate_limiter'
 
+  # The site's rules for a Tool API tool of any module: what the session may
+  # do, the write limits, the audit line. It knows Tool API and nothing of
+  # MCP. The MCP server and the Drupal AI bridge run tools through it.
+  mcp_tools.tool_policy:
+    class: Drupal\mcp_tools\Policy\ToolPolicy
+    arguments:
+      - '@tool.runner'
+      - '@mcp_tools.access_manager'
+      - '@mcp_tools.rate_limiter'
+      - '@mcp_tools.audit_logger'
+      - '@current_user'
+
   # Tool Call Context (used for MCP-scoped side effects like config tracking).
   mcp_tools.tool_call_context:
     class: Drupal\mcp_tools\Service\McpToolCallContext
@@ -168,15 +180,6 @@ services:
   # Error Formatting
   mcp_tools.error_formatter:
     class: Drupal\mcp_tools\Service\ErrorFormatter
-
-  # Webhook Notifications
-  mcp_tools.webhook_notifier:
-    class: Drupal\mcp_tools\Service\WebhookNotifier
-    arguments:
-      - '@config.factory'
-      - '@http_client'
-      - '@logger.factory'
-      - '@current_user'
 
   # MCP Server Profiles
   mcp_tools.server_config_repository:

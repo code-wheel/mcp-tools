@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Drupal\mcp_tools\Mcp;
 
 use CodeWheel\McpToolGateway\ExecutionContext;
+use Drupal\mcp_tools\Service\AccessManager;
 use CodeWheel\McpToolGateway\ToolExecutionException;
 use CodeWheel\McpToolGateway\ToolInfo;
 use CodeWheel\McpToolGateway\ToolNotFoundException;
@@ -13,6 +14,9 @@ use CodeWheel\McpToolGateway\ToolResult;
 use Drupal\Component\Plugin\Exception\PluginException;
 use Drupal\Component\Plugin\PluginManagerInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\mcp_tools\Policy\ToolRefusal;
+use Drupal\tool\FailureCategory;
+use Drupal\tool\Tool\Invoker;
 use Drupal\tool\Tool\ToolDefinition;
 use Psr\Log\LoggerInterface;
 
@@ -37,6 +41,7 @@ class DrupalToolProvider implements ToolProviderInterface {
     private readonly LoggerInterface $logger,
     private readonly bool $includeAllTools = FALSE,
     private readonly string $allowedProviderPrefix = 'mcp_tools',
+    private readonly ?AccessManager $accessManager = NULL,
   ) {}
 
   /**
@@ -98,26 +103,14 @@ class DrupalToolProvider implements ToolProviderInterface {
 
     $pluginId = $toolInfo->metadata['plugin_id'] ?? $this->mcpNameToPluginId($toolName);
 
+    // Our server runs gateway calls through ToolApiCallToolHandler. This
+    // method is for code that uses the gateway library's own classes. It
+    // goes the same way: Tool API's runner, with the site's rules around it.
     try {
-      /** @var \Drupal\tool\Tool\ToolInterface $plugin */
-      $plugin = $this->toolManager->createInstance($pluginId);
-
-      $result = $plugin->execute($arguments);
-
-      // Normalize the result.
-      if (is_array($result)) {
-        $success = $result['success'] ?? !isset($result['error']);
-        $message = $result['message'] ?? $result['error'] ?? ($success ? 'Tool executed successfully' : 'Tool execution failed');
-        return new ToolResult(
-          success: (bool) $success,
-          message: $this->normalizeValue($message),
-          data: $this->normalizeArray($result),
-          isError: !$success,
-        );
-      }
-
-      // Handle non-array results.
-      return ToolResult::success('Tool executed successfully', ['result' => $result]);
+      $definition = $this->toolManager->getDefinition($pluginId);
+      assert($definition instanceof ToolDefinition);
+      // phpcs:ignore DrupalPractice.Objects.GlobalDrupal.GlobalDrupal
+      $outcome = \Drupal::service('mcp_tools.tool_policy')->run($definition, $arguments, new Invoker('mcp_tools'), $this->accessManager !== NULL);
     }
     catch (PluginException $e) {
       $this->logger->error('Failed to instantiate tool @name: @message', [
@@ -133,6 +126,19 @@ class DrupalToolProvider implements ToolProviderInterface {
       ]);
       throw new ToolExecutionException("Tool execution failed: {$e->getMessage()}", 0, $e);
     }
+
+    if ($outcome instanceof ToolRefusal) {
+      return ToolResult::error($outcome->message, $outcome->reason === ToolRefusal::LIMIT ? ['retry_after' => $outcome->retryAfter] : []);
+    }
+    $result = $outcome->getResult();
+    if (!$outcome->hasExecuted() && $result->getFailureCategory() === FailureCategory::Access) {
+      return ToolResult::error('Access denied.');
+    }
+    $message = (string) $result->getMessage();
+    if (!$result->isSuccess()) {
+      return ToolResult::error($message !== '' ? $message : 'Tool execution failed');
+    }
+    return ToolResult::success($message !== '' ? $message : 'Tool executed successfully', $this->normalizeArray($result->getContextValues()));
   }
 
   /**
@@ -160,16 +166,15 @@ class DrupalToolProvider implements ToolProviderInterface {
    * Determine whether a tool definition should be exposed.
    */
   private function isToolAllowed(ToolDefinition $definition): bool {
-    if ($this->includeAllTools) {
-      return TRUE;
+    if (!$this->includeAllTools) {
+      $provider = $definition->getProvider() ?? '';
+      if (!is_string($provider) || !str_starts_with($provider, $this->allowedProviderPrefix)) {
+        return FALSE;
+      }
     }
 
-    $provider = $definition->getProvider() ?? '';
-    if (!is_string($provider) || !str_starts_with($provider, $this->allowedProviderPrefix)) {
-      return FALSE;
-    }
-
-    return TRUE;
+    // What the session may not call is not offered for discovery either.
+    return $this->accessManager === NULL || $this->accessManager->listsTool($definition);
   }
 
   /**

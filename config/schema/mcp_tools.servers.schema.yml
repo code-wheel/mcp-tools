@@ -6,24 +6,15 @@ mcp_tools.servers:
       type: string
       label: 'Default server profile ID'
     servers:
-      type: mapping
+      # A site names its profiles as it likes, so this is a sequence keyed by
+      # profile ID. As a mapping with a '*' key, any profile other than the
+      # four shipped ones had no schema.
+      type: sequence
       label: 'Server profiles'
-      mapping:
-        default:
-          type: mcp_tools.server_profile
-          label: 'Default server profile'
-        development:
-          type: mcp_tools.server_profile
-          label: 'Development server profile'
-        staging:
-          type: mcp_tools.server_profile
-          label: 'Staging server profile'
-        production:
-          type: mcp_tools.server_profile
-          label: 'Production server profile'
-        '*':
-          type: mcp_tools.server_profile
-          label: 'Server profile'
+      orderby: key
+      sequence:
+        type: mcp_tools.server_profile
+        label: 'Server profile'
 
 mcp_tools.server_profile:
   type: mapping
@@ -50,9 +41,6 @@ mcp_tools.server_profile:
     enable_prompts:
       type: boolean
       label: 'Enable prompts'
-    component_public_only:
-      type: boolean
-      label: 'Expose only public components'
     transports:
       type: sequence
       label: 'Allowed transports'

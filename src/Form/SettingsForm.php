@@ -38,7 +38,6 @@ class SettingsForm extends ConfigFormBase {
     $this->buildReadLimitsSection($form, $config);
     $this->buildOutputSection($form, $config);
     $this->buildSsrfSection($form, $config);
-    $this->buildWebhooksSection($form, $config);
     $this->buildProductionWarning($form);
 
     return parent::buildForm($form, $form_state);
@@ -165,6 +164,20 @@ class SettingsForm extends ConfigFormBase {
       '#title' => $this->t('Enable audit logging'),
       '#description' => $this->t('Log all MCP operations to the watchdog. Recommended for security auditing.'),
       '#default_value' => $config->get('access.audit_logging') ?? TRUE,
+    ];
+
+    $form['access']['confirm_destructive_tools'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Destructive tools of other modules need a confirmation'),
+      '#description' => $this->t('A tool of another module that declares itself destructive is run after the user of the client confirmed it, when the client can ask. Tick this to refuse such a tool for clients that cannot ask. Without it they get the tool run.'),
+      '#default_value' => $config->get('access.confirm_destructive_tools') ?? FALSE,
+    ];
+
+    $form['access']['list_all_tools'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('List every tool'),
+      '#description' => $this->t('By default a connection is shown the tools it may call, going by its scopes, the modes above and the permissions of its user. Tick this to list every tool. A tool a connection may not call is refused either way.'),
+      '#default_value' => $config->get('access.list_all_tools') ?? FALSE,
     ];
   }
 
@@ -324,81 +337,6 @@ class SettingsForm extends ConfigFormBase {
   }
 
   /**
-   * Build the webhooks section.
-   */
-  private function buildWebhooksSection(array &$form, $config): void {
-    $form['webhooks'] = [
-      '#type' => 'details',
-      '#title' => $this->t('Webhook Notifications'),
-      '#description' => $this->t('Send notifications to external systems when MCP performs operations. Useful for Slack, audit systems, etc.'),
-      '#open' => FALSE,
-    ];
-
-    $form['webhooks']['webhooks_enabled'] = [
-      '#type' => 'checkbox',
-      '#title' => $this->t('Enable webhook notifications'),
-      '#default_value' => $config->get('webhooks.enabled') ?? FALSE,
-    ];
-
-    $webhookVisible = [
-      '#states' => [
-        'visible' => [
-          ':input[name="webhooks_enabled"]' => ['checked' => TRUE],
-        ],
-      ],
-    ];
-
-    $form['webhooks']['webhook_url'] = [
-      '#type' => 'url',
-      '#title' => $this->t('Webhook URL'),
-      '#description' => $this->t('URL to POST notifications to. Must be HTTPS in production.'),
-      '#default_value' => $config->get('webhooks.url') ?? '',
-    ] + $webhookVisible;
-
-    $form['webhooks']['webhook_secret'] = [
-      '#type' => 'textfield',
-      '#title' => $this->t('Webhook secret'),
-      '#description' => $this->t('Secret for HMAC-SHA256 signing. The signature is sent in the X-MCP-Signature header.'),
-      '#default_value' => $config->get('webhooks.secret') ?? '',
-    ] + $webhookVisible;
-
-    $form['webhooks']['webhook_allowed_hosts'] = [
-      '#type' => 'textarea',
-      '#title' => $this->t('Allowed webhook hosts (optional)'),
-      '#description' => $this->t('One host pattern per line (e.g., hooks.slack.com, *.example.com). When empty, any public host is allowed. Private networks and metadata services are always blocked.'),
-      '#default_value' => implode("\n", $config->get('webhooks.allowed_hosts') ?? []),
-      '#rows' => 4,
-    ] + $webhookVisible;
-
-    $form['webhooks']['webhook_timeout'] = [
-      '#type' => 'number',
-      '#title' => $this->t('Request timeout (seconds)'),
-      '#default_value' => $config->get('webhooks.timeout') ?? 5,
-      '#min' => 1,
-      '#max' => 30,
-    ] + $webhookVisible;
-
-    $form['webhooks']['batch_notifications'] = [
-      '#type' => 'checkbox',
-      '#title' => $this->t('Batch notifications'),
-      '#description' => $this->t('Queue notifications and send in batches for better performance.'),
-      '#default_value' => $config->get('webhooks.batch_notifications') ?? TRUE,
-    ] + $webhookVisible;
-
-    $form['webhooks']['notify_on'] = [
-      '#type' => 'checkboxes',
-      '#title' => $this->t('Notify on operations'),
-      '#options' => [
-        'create' => $this->t('Create - New entities created'),
-        'update' => $this->t('Update - Existing entities modified'),
-        'delete' => $this->t('Delete - Entities removed'),
-        'structure' => $this->t('Structure - Content types, fields, roles changed'),
-      ],
-      '#default_value' => $config->get('webhooks.notify_on') ?? ['create', 'update', 'delete', 'structure'],
-    ] + $webhookVisible;
-  }
-
-  /**
    * Build the production warning section.
    */
   private function buildProductionWarning(array &$form): void {
@@ -475,6 +413,8 @@ class SettingsForm extends ConfigFormBase {
     $config->set('access.trust_scopes_via_env', (bool) $form_state->getValue('trust_scopes_via_env'));
 
     $config->set('access.audit_logging', (bool) $form_state->getValue('audit_logging'));
+    $config->set('access.list_all_tools', (bool) $form_state->getValue('list_all_tools'));
+    $config->set('access.confirm_destructive_tools', (bool) $form_state->getValue('confirm_destructive_tools'));
 
     // Rate limiting settings.
     $config->set('rate_limiting.enabled', (bool) $form_state->getValue('rate_limiting_enabled'));
@@ -496,17 +436,6 @@ class SettingsForm extends ConfigFormBase {
     // SSRF settings.
     $hosts = array_filter(array_map('trim', explode("\n", $form_state->getValue('allowed_hosts'))));
     $config->set('allowed_hosts', $hosts);
-
-    // Webhook settings.
-    $config->set('webhooks.enabled', (bool) $form_state->getValue('webhooks_enabled'));
-    $config->set('webhooks.url', $form_state->getValue('webhook_url') ?? '');
-    $config->set('webhooks.secret', $form_state->getValue('webhook_secret') ?? '');
-    $webhookHosts = array_filter(array_map('trim', explode("\n", (string) $form_state->getValue('webhook_allowed_hosts'))));
-    $config->set('webhooks.allowed_hosts', $webhookHosts);
-    $config->set('webhooks.timeout', (int) $form_state->getValue('webhook_timeout'));
-    $config->set('webhooks.batch_notifications', (bool) $form_state->getValue('batch_notifications'));
-    $notifyOn = array_filter($form_state->getValue('notify_on') ?? []);
-    $config->set('webhooks.notify_on', array_values($notifyOn));
 
     $config->save();
 

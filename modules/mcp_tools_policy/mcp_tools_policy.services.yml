@@ -1,0 +1,16 @@
+services:
+  # One object in two places: in MCP Server's HTTP stack, where it lets a
+  # tool call in or answers it with a refusal, and on the MCP SDK's events,
+  # where it learns how a call it let in has ended.
+  mcp_tools_policy.mcp_server:
+    class: Drupal\mcp_tools_policy\McpServerPolicy
+    arguments:
+      - '@mcp_tools.tool_policy'
+      - '@plugin.manager.mcp_server.tool'
+      - '@plugin.manager.tool'
+    tags:
+      # After the others (higher priorities run first): a middleware that
+      # checks who is calling, such as MCP Server OAuth's, answers before
+      # this one counts or refuses anything.
+      - { name: mcp_server.transport_middleware, priority: -100 }
+      - { name: event_subscriber }

@@ -94,53 +94,6 @@ class SettingsFormJsTest extends WebDriverTestBase {
   }
 
   /**
-   * Tests webhook fields visibility with #states.
-   */
-  public function testWebhookFieldsVisibility(): void {
-    $this->drupalLogin($this->adminUser);
-    $this->drupalGet('/admin/config/services/mcp-tools');
-
-    $page = $this->getSession()->getPage();
-
-    // Open webhooks details element.
-    $webhooksDetails = $page->find('css', 'details#edit-webhooks');
-    if ($webhooksDetails && !$webhooksDetails->hasAttribute('open')) {
-      $webhooksDetails->click();
-      $this->assertSession()->waitForElementVisible('css', '[name="webhooks_enabled"]');
-    }
-
-    // Webhooks enabled checkbox should exist.
-    $webhooksEnabledCheckbox = $page->findField('webhooks_enabled');
-    $this->assertNotNull($webhooksEnabledCheckbox, 'Webhooks enabled checkbox exists');
-
-    // Initially, webhook fields should be hidden.
-    $webhookUrlField = $page->findField('webhook_url');
-    $this->assertFalse($webhookUrlField->isVisible(), 'Webhook URL hidden when webhooks disabled');
-
-    $webhookSecretField = $page->findField('webhook_secret');
-    $this->assertFalse($webhookSecretField->isVisible(), 'Webhook secret hidden when webhooks disabled');
-
-    $webhookTimeoutField = $page->findField('webhook_timeout');
-    $this->assertFalse($webhookTimeoutField->isVisible(), 'Webhook timeout hidden when webhooks disabled');
-
-    // Enable webhooks.
-    $webhooksEnabledCheckbox->check();
-    $this->assertSession()->waitForElementVisible('css', '[name="webhook_url"]');
-
-    // Now webhook fields should be visible.
-    $this->assertTrue($webhookUrlField->isVisible(), 'Webhook URL visible when webhooks enabled');
-    $this->assertTrue($webhookSecretField->isVisible(), 'Webhook secret visible when webhooks enabled');
-    $this->assertTrue($webhookTimeoutField->isVisible(), 'Webhook timeout visible when webhooks enabled');
-
-    // Disable webhooks.
-    $webhooksEnabledCheckbox->uncheck();
-    $this->assertSession()->waitForElementRemoved('css', '[name="webhook_url"]:visible');
-
-    // Fields should be hidden again.
-    $this->assertFalse($webhookUrlField->isVisible(), 'Webhook URL hidden after disabling');
-  }
-
-  /**
    * Tests form submission persists all settings correctly.
    */
   public function testFormSubmissionPersistence(): void {
@@ -232,55 +185,6 @@ class SettingsFormJsTest extends WebDriverTestBase {
     $this->assertContains('example.com', $hosts);
     $this->assertContains('*.trusted.org', $hosts);
     $this->assertContains('localhost', $hosts);
-  }
-
-  /**
-   * Tests webhook notification options.
-   */
-  public function testWebhookNotificationOptions(): void {
-    $this->drupalLogin($this->adminUser);
-    $this->drupalGet('/admin/config/services/mcp-tools');
-
-    $page = $this->getSession()->getPage();
-
-    // Open webhooks details.
-    $webhooksDetails = $page->find('css', 'details#edit-webhooks');
-    if ($webhooksDetails && !$webhooksDetails->hasAttribute('open')) {
-      $webhooksDetails->click();
-      $this->assertSession()->waitForElementVisible('css', '[name="webhooks_enabled"]');
-    }
-
-    // Enable webhooks.
-    $page->findField('webhooks_enabled')->check();
-    $this->assertSession()->waitForElementVisible('css', '[name="webhook_url"]');
-
-    // Fill webhook settings.
-    $page->fillField('webhook_url', 'https://hooks.example.com/mcp');
-    $page->fillField('webhook_secret', 'my-secret-key');
-    $page->fillField('webhook_timeout', '10');
-
-    // Select notification types.
-    $page->uncheckField('notify_on[create]');
-    $page->uncheckField('notify_on[update]');
-    $page->checkField('notify_on[delete]');
-    $page->checkField('notify_on[structure]');
-
-    // Submit.
-    $page->pressButton('Save configuration');
-    $this->assertSession()->pageTextContains('The configuration options have been saved.');
-
-    // Verify.
-    $config = $this->config('mcp_tools.settings');
-    $this->assertTrue($config->get('webhooks.enabled'));
-    $this->assertEquals('https://hooks.example.com/mcp', $config->get('webhooks.url'));
-    $this->assertEquals('my-secret-key', $config->get('webhooks.secret'));
-    $this->assertEquals(10, $config->get('webhooks.timeout'));
-
-    $notifyOn = $config->get('webhooks.notify_on');
-    $this->assertContains('delete', $notifyOn);
-    $this->assertContains('structure', $notifyOn);
-    $this->assertNotContains('create', $notifyOn);
-    $this->assertNotContains('update', $notifyOn);
   }
 
 }

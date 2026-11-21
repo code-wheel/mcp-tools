@@ -35,7 +35,6 @@ class ServerConfigRepository {
     'gateway_mode' => FALSE,
     'enable_resources' => TRUE,
     'enable_prompts' => TRUE,
-    'component_public_only' => FALSE,
     'transports' => [],
     'enabled' => TRUE,
     'scopes' => [],
@@ -192,7 +191,6 @@ class ServerConfigRepository {
     $merged['gateway_mode'] = (bool) $merged['gateway_mode'];
     $merged['enable_resources'] = (bool) $merged['enable_resources'];
     $merged['enable_prompts'] = (bool) $merged['enable_prompts'];
-    $merged['component_public_only'] = (bool) $merged['component_public_only'];
     $merged['enabled'] = (bool) $merged['enabled'];
     $merged['scopes'] = $this->normalizeScopes($merged['scopes'] ?? []);
     $merged['transports'] = $this->normalizeTransports($merged['transports'] ?? []);

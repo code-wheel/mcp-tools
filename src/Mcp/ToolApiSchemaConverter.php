@@ -142,9 +142,13 @@ class ToolApiSchemaConverter {
     }
 
     $operation = $definition->getOperation() ?? ToolOperation::Transform;
-    $readOnly = $operation === ToolOperation::Read;
+    // Read, explain and transform change nothing: that is what Tool API
+    // means by them (ToolOperation::isModifying()). A tool that says of
+    // itself that it is destructive is not called read-only, whatever
+    // operation it names.
+    $readOnly = !$operation->isModifying() && $definition->get('destructive') !== TRUE;
 
-    // Idempotent hint: Read operations are always idempotent (no state change).
+    // Idempotent hint: a tool that changes nothing can be repeated.
     // Write/Trigger operations are conservatively marked as not idempotent
     // since creates/triggers may have different effects on repeated calls.
     // This could be refined per-tool in the future.
@@ -153,7 +157,9 @@ class ToolApiSchemaConverter {
     $annotations = [
       'title' => (string) $definition->getLabel(),
       'readOnlyHint' => $readOnly,
-      'destructiveHint' => $definition->isDestructive() ?: NULL,
+      // For a tool that modifies, say yes or no. Without the hint a client
+      // takes it for destructive, also when the tool said it is not.
+      'destructiveHint' => $readOnly ? NULL : $definition->isDestructive(),
       'idempotentHint' => $idempotent,
       // Drupal site operations are a closed world (not web search, etc).
       'openWorldHint' => FALSE,
@@ -246,7 +252,7 @@ class ToolApiSchemaConverter {
       $schema['items'] = new \stdClass();
       if ($definition instanceof ListInputDefinition) {
         // getItemDefinition() is on the list definition itself in every
-        // Tool API version we support (beta9 to beta12).
+        // Tool API version we support (1.0.0-beta12 and later).
         $itemDefinition = $definition->getItemDefinition();
         if ($itemDefinition instanceof InputDefinitionInterface) {
           $schema['items'] = $this->inputDefinitionToSchema($itemDefinition);

@@ -8,7 +8,6 @@ servers:
     gateway_mode: false
     enable_resources: true
     enable_prompts: true
-    component_public_only: false
     transports: ['http', 'stdio']
   development:
     name: 'Drupal MCP Tools (Development)'
@@ -18,7 +17,6 @@ servers:
     gateway_mode: false
     enable_resources: true
     enable_prompts: true
-    component_public_only: false
     transports: ['http', 'stdio']
     scopes: ['read', 'write', 'admin']
   staging:
@@ -29,7 +27,6 @@ servers:
     gateway_mode: true
     enable_resources: true
     enable_prompts: true
-    component_public_only: false
     transports: ['http', 'stdio']
     scopes: ['read', 'write']
   production:
@@ -40,6 +37,5 @@ servers:
     gateway_mode: true
     enable_resources: true
     enable_prompts: true
-    component_public_only: false
     transports: ['http', 'stdio']
     scopes: ['read']

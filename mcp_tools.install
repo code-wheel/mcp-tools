@@ -24,3 +24,43 @@ function mcp_tools_update_10001(): void {
     $old->delete();
   }
 }
+
+/**
+ * Remove the settings of webhook notifications, which never sent anything.
+ *
+ * The form, the config and the documentation offered webhook notifications
+ * from the first release, but nothing ever called the service that would
+ * send them. The feature is removed. A site that filled in the form still
+ * has the block in its config, with the signing secret in it.
+ */
+function mcp_tools_update_10002(): void {
+  $config = \Drupal::configFactory()->getEditable('mcp_tools.settings');
+  if ($config->get('webhooks') !== NULL) {
+    $config->clear('webhooks')->save();
+  }
+}
+
+/**
+ * Remove the "public components only" switch from the server profiles.
+ *
+ * It belonged to hook_mcp_tools_components(), a way to add tools that the
+ * server never read: the hook was documented and never invoked. The hook,
+ * the command that scaffolded a module for it and this switch are removed.
+ */
+function mcp_tools_update_10003(): void {
+  $config = \Drupal::configFactory()->getEditable('mcp_tools.servers');
+  $servers = $config->get('servers');
+  if (!is_array($servers)) {
+    return;
+  }
+  $changed = FALSE;
+  foreach ($servers as $id => $profile) {
+    if (is_array($profile) && array_key_exists('component_public_only', $profile)) {
+      unset($servers[$id]['component_public_only']);
+      $changed = TRUE;
+    }
+  }
+  if ($changed) {
+    $config->set('servers', $servers)->save();
+  }
+}

@@ -162,16 +162,52 @@ abstract class McpToolsToolBase extends ToolBase {
    * {@inheritdoc}
    */
   protected function checkAccess(array $values, AccountInterface $account, bool $return_as_object = FALSE): bool|AccessResultInterface {
-    $permission = 'mcp_tools use ' . static::getMcpCategory();
-    $permissionAccess = AccessResult::allowedIfHasPermission($account, $permission);
-
     $definition = $this->getPluginDefinition();
     $operation = $definition instanceof ToolDefinition ? $definition->getOperation() : ToolOperation::Transform;
 
+    $access = static::accessFor($operation, $account, $this->accessManager);
+    return $return_as_object ? $access : $access->isAllowed();
+  }
+
+  /**
+   * Whether a tool is one of MCP Tools' own.
+   *
+   * By what the tool is, not by what its module is called: it extends this
+   * class, so it checks scopes and modes in its access check and limits and
+   * audits from inside its service. A plain Tool API tool does none of
+   * that, also when its module is named mcp_tools_something, and whoever
+   * runs it applies those rules from outside (ToolPolicy).
+   */
+  public static function owns(ToolDefinition $definition): bool {
+    $class = $definition->getClass();
+    return is_string($class) && is_a($class, self::class, TRUE);
+  }
+
+  /**
+   * The access rule of a tool of this class, asked without making the tool.
+   *
+   * The category's permission, the scope the operation needs, read-only mode
+   * and config-only mode. The tool's own access check is this rule, and the
+   * tool list asks it too, so the list never shows what the door refuses.
+   *
+   * @param \Drupal\tool\Tool\ToolOperation $operation
+   *   The operation the tool declares.
+   * @param \Drupal\Core\Session\AccountInterface $account
+   *   The user.
+   * @param \Drupal\mcp_tools\Service\AccessManager $accessManager
+   *   The access manager, for the scopes and modes of this session.
+   *
+   * @return \Drupal\Core\Access\AccessResultInterface
+   *   The access result.
+   */
+  public static function accessFor(ToolOperation $operation, AccountInterface $account, AccessManager $accessManager): AccessResultInterface {
+    $permission = 'mcp_tools use ' . static::getMcpCategory();
+    $permissionAccess = AccessResult::allowedIfHasPermission($account, $permission);
+
     $scopeAllowed = match ($operation) {
-      ToolOperation::Trigger => $this->accessManager->hasScope(AccessManager::SCOPE_ADMIN) && !$this->accessManager->isReadOnlyMode(),
-      ToolOperation::Write => $this->accessManager->hasScope(AccessManager::SCOPE_WRITE) && !$this->accessManager->isReadOnlyMode(),
-      default => $this->accessManager->hasScope(AccessManager::SCOPE_READ),
+      ToolOperation::Trigger => $accessManager->hasScope(AccessManager::SCOPE_ADMIN) && !$accessManager->isReadOnlyMode(),
+      ToolOperation::Write => $accessManager->hasScope(AccessManager::SCOPE_WRITE) && !$accessManager->isReadOnlyMode(),
+      default => $accessManager->hasScope(AccessManager::SCOPE_READ),
     };
 
     $scopeAccess = $scopeAllowed ? AccessResult::allowed() : AccessResult::forbidden();
@@ -179,13 +215,12 @@ abstract class McpToolsToolBase extends ToolBase {
     $policyAccess = AccessResult::allowed();
     if ($operation === ToolOperation::Write || $operation === ToolOperation::Trigger) {
       $writeKind = static::getMcpWriteKind();
-      $policyAccess = $this->accessManager->isWriteKindAllowed($writeKind)
+      $policyAccess = $accessManager->isWriteKindAllowed($writeKind)
         ? AccessResult::allowed()
         : AccessResult::forbidden();
     }
 
-    $access = $permissionAccess->andIf($scopeAccess)->andIf($policyAccess);
-    return $return_as_object ? $access : $access->isAllowed();
+    return $permissionAccess->andIf($scopeAccess)->andIf($policyAccess);
   }
 
   /**

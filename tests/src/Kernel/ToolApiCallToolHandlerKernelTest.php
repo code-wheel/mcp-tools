@@ -4,34 +4,29 @@ declare(strict_types=1);
 
 namespace Drupal\Tests\mcp_tools\Kernel;
 
-use Drupal\Component\Plugin\PluginManagerInterface;
-use Drupal\Core\Access\AccessResultInterface;
-use Drupal\Core\Session\AccountInterface;
-use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\KernelTests\KernelTestBase;
 use Drupal\mcp_tools\Mcp\ToolApiCallToolHandler;
 use Drupal\mcp_tools\Mcp\ToolApiSchemaConverter;
 use Drupal\mcp_tools\Mcp\ToolInputValidator;
-use Drupal\tool\ExecutableResult;
-use Drupal\tool\Tool\ToolBase;
-use Drupal\tool\Tool\ToolDefinition;
-use Drupal\tool\Tool\ToolOperation;
-use Drupal\tool\TypedData\InputDefinition;
+use Drupal\Tests\user\Traits\UserCreationTrait;
 use Mcp\Schema\JsonRpc\Response;
 use Mcp\Schema\Request\CallToolRequest;
 use Mcp\Schema\Result\CallToolResult;
 use Mcp\Server\Session\SessionInterface;
 use Psr\Log\NullLogger;
-use Drupal\Core\Logger\LoggerChannelInterface;
-use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 /**
- * Kernel coverage for ToolApiCallToolHandler input upcasting.
+ * The call handler: Fiber suspensions, input upcasting, stray arguments.
  *
+ * These tests used tools made on the spot and a stand-in for the tool
+ * manager. Tool API's runner only runs tools its own manager knows, so the
+ * tools are real plugins of the test module now.
  */
 #[\PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses]
 #[\PHPUnit\Framework\Attributes\Group('mcp_tools')]
 final class ToolApiCallToolHandlerKernelTest extends KernelTestBase {
+
+  use UserCreationTrait;
 
   /**
    * {@inheritdoc}
@@ -39,7 +34,36 @@ final class ToolApiCallToolHandlerKernelTest extends KernelTestBase {
   protected static $modules = [
     'system',
     'user',
+    'dblog',
+    'update',
+    'tool',
+    'mcp_tools',
+    'foreign_tool_test',
   ];
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function setUp(): void {
+    parent::setUp();
+    $this->installEntitySchema('user');
+    $this->installSchema('dblog', ['watchdog']);
+    $this->installConfig(['mcp_tools']);
+    $this->setUpCurrentUser();
+  }
+
+  /**
+   * Builds the handler around the site's tools, without the access manager.
+   */
+  private function buildHandler(): ToolApiCallToolHandler {
+    return new ToolApiCallToolHandler(
+      $this->container->get('plugin.manager.tool'),
+      new NullLogger(),
+      TRUE,
+      'mcp_tools',
+      new ToolInputValidator(new ToolApiSchemaConverter(), new NullLogger()),
+    );
+  }
 
   /**
    * Drupal's own Fiber suspensions stay inside the handler.
@@ -50,49 +74,8 @@ final class ToolApiCallToolHandlerKernelTest extends KernelTestBase {
    * itself and passes only the SDK's suspensions up.
    */
   public function testCoreFiberSuspensionsDoNotReachTheTransport(): void {
-    $definition = new ToolDefinition([
-      'id' => 'mcp_tools:test',
-      'provider' => 'mcp_tools',
-      'label' => new TranslatableMarkup('Test'),
-      'description' => new TranslatableMarkup('Test tool'),
-      'operation' => ToolOperation::Read,
-      'destructive' => FALSE,
-    ]);
-    $currentUser = $this->createMock(AccountInterface::class);
-    $tool = new class([], 'mcp_tools:test', $definition, $currentUser, $this->createMock(EventDispatcherInterface::class), $this->createMock(LoggerChannelInterface::class)) extends ToolBase {
-
-      /**
-       * {@inheritdoc}
-       */
-      protected function doExecute(array $values): ExecutableResult {
-        // What Drupal core does to let a caller batch work.
-        \Fiber::suspend();
-        \Fiber::suspend('resume me');
-        // What the SDK's client gateway does to reach the client.
-        $answer = \Fiber::suspend(['type' => 'notification', 'notification' => 'ping']);
-        return ExecutableResult::success(new TranslatableMarkup('OK'), ['answer' => $answer]);
-      }
-
-      /**
-       * {@inheritdoc}
-       */
-      protected function checkAccess(array $values, AccountInterface $account, bool $return_as_object = FALSE): bool|AccessResultInterface {
-        return TRUE;
-      }
-
-    };
-
-    $toolManager = $this->createMock(PluginManagerInterface::class);
-    $toolManager->method('getDefinitions')->willReturn(['mcp_tools:test' => $definition]);
-    $toolManager->method('createInstance')->with('mcp_tools:test')->willReturn($tool);
-    $handler = new ToolApiCallToolHandler(
-      $toolManager,
-      new NullLogger(),
-      FALSE,
-      'mcp_tools',
-      new ToolInputValidator(new ToolApiSchemaConverter(), new NullLogger()),
-    );
-    $request = (new CallToolRequest('mcp_tools___test', []))->withId(1);
+    $handler = $this->buildHandler();
+    $request = (new CallToolRequest('foreign_test_suspends', []))->withId(1);
     $session = $this->createMock(SessionInterface::class);
 
     // Play the transport: record what the handler suspends with.
@@ -106,7 +89,7 @@ final class ToolApiCallToolHandlerKernelTest extends KernelTestBase {
     $response = $fiber->getReturn();
 
     $this->assertSame([['type' => 'notification', 'notification' => 'ping']], $seen);
-    $this->assertFalse($response->result->isError);
+    $this->assertFalse($response->result->isError, (string) $response->result->content[0]->text);
     $this->assertSame('pong', $response->result->structuredContent['data']['answer'], 'The answer to the SDK suspension reached the tool.');
   }
 
@@ -114,64 +97,16 @@ final class ToolApiCallToolHandlerKernelTest extends KernelTestBase {
    * Verifies argument upcasting for Tool API typed inputs.
    */
   public function testArgumentUpcasting(): void {
-    $toolManager = $this->createMock(PluginManagerInterface::class);
-
-    $definition = new ToolDefinition([
-      'id' => 'mcp_tools:test',
-      'provider' => 'mcp_tools',
-      'label' => new TranslatableMarkup('Test'),
-      'description' => new TranslatableMarkup('Test tool'),
-      'operation' => ToolOperation::Read,
-      'destructive' => FALSE,
-      'input_definitions' => [
-        'count' => new InputDefinition('integer', 'Count', 'Count', TRUE),
-        'dry_run' => new InputDefinition('boolean', 'Dry run', 'Dry run', FALSE),
-      ],
-    ]);
-
-    $currentUser = $this->createMock(AccountInterface::class);
-    $tool = new class([], 'mcp_tools:test', $definition, $currentUser, $this->createMock(EventDispatcherInterface::class), $this->createMock(LoggerChannelInterface::class)) extends ToolBase {
-
-      /**
-       * {@inheritdoc}
-       */
-      protected function doExecute(array $values): ExecutableResult {
-        return ExecutableResult::success(new TranslatableMarkup('OK'), ['values' => $values]);
-      }
-
-      /**
-       * {@inheritdoc}
-       */
-      protected function checkAccess(array $values, AccountInterface $account, bool $return_as_object = FALSE): bool|AccessResultInterface {
-        return TRUE;
-      }
-
-    };
-
-    $toolManager->method('getDefinitions')->willReturn([
-      'mcp_tools:test' => $definition,
-    ]);
-    $toolManager->method('createInstance')->with('mcp_tools:test')->willReturn($tool);
-
-    $handler = new ToolApiCallToolHandler(
-      $toolManager,
-      new NullLogger(),
-      FALSE,
-      'mcp_tools',
-      new ToolInputValidator(new ToolApiSchemaConverter(), new NullLogger()),
-    );
-
-    $request = (new CallToolRequest('mcp_tools___test', [
+    $request = (new CallToolRequest('foreign_test_echo', [
       'count' => '5',
       'dry_run' => 'false',
     ]))->withId(1);
 
-    $session = $this->createMock(SessionInterface::class);
-    $result = $handler->handle($request, $session);
+    $result = $this->buildHandler()->handle($request, $this->createMock(SessionInterface::class));
 
     $this->assertInstanceOf(Response::class, $result);
     $this->assertInstanceOf(CallToolResult::class, $result->result);
-    $this->assertFalse($result->result->isError);
+    $this->assertFalse($result->result->isError, (string) $result->result->content[0]->text);
 
     $values = $result->result->structuredContent['data']['values'] ?? NULL;
     $this->assertIsArray($values);
@@ -187,87 +122,32 @@ final class ToolApiCallToolHandlerKernelTest extends KernelTestBase {
    * destructive full-node default (#3612659).
    */
   public function testUnknownArgumentIsRejected(): void {
-    $handler = $this->buildHandler([
-      'nid' => new InputDefinition('integer', 'Node ID', 'Node ID', TRUE),
-    ]);
-    $session = $this->createMock(SessionInterface::class);
-
-    $request = (new CallToolRequest('mcp_tools___test', [
-      'nid' => 5,
+    $request = (new CallToolRequest('foreign_test_echo', [
+      'count' => 5,
       'language' => 'it',
     ]))->withId(2);
-    $result = $handler->handle($request, $session);
+    $result = $this->buildHandler()->handle($request, $this->createMock(SessionInterface::class));
 
     $this->assertInstanceOf(Response::class, $result);
     $this->assertInstanceOf(CallToolResult::class, $result->result);
     $this->assertTrue($result->result->isError);
+    $this->assertStringContainsString('language', (string) $result->result->content[0]->text);
   }
 
   /**
    * Tools without declared inputs also reject stray arguments.
    */
   public function testZeroInputToolRejectsStrayArguments(): void {
-    $handler = $this->buildHandler([]);
+    $handler = $this->buildHandler();
     $session = $this->createMock(SessionInterface::class);
 
-    $ok = $handler->handle((new CallToolRequest('mcp_tools___test', []))->withId(3), $session);
+    $ok = $handler->handle((new CallToolRequest('foreign_test_read', []))->withId(3), $session);
     $this->assertInstanceOf(Response::class, $ok);
-    $this->assertFalse($ok->result->isError);
+    $this->assertFalse($ok->result->isError, (string) $ok->result->content[0]->text);
 
-    $bad = $handler->handle((new CallToolRequest('mcp_tools___test', ['bogus' => TRUE]))->withId(4), $session);
+    $bad = $handler->handle((new CallToolRequest('foreign_test_read', ['bogus' => TRUE]))->withId(4), $session);
     $this->assertInstanceOf(Response::class, $bad);
     $this->assertTrue($bad->result->isError);
-  }
-
-  /**
-   * Builds a handler around a passthrough test tool.
-   *
-   * @param array<string, \Drupal\tool\TypedData\InputDefinition> $inputDefinitions
-   *   Input definitions for the test tool.
-   */
-  private function buildHandler(array $inputDefinitions): ToolApiCallToolHandler {
-    $definition = new ToolDefinition([
-      'id' => 'mcp_tools:test',
-      'provider' => 'mcp_tools',
-      'label' => new TranslatableMarkup('Test'),
-      'description' => new TranslatableMarkup('Test tool'),
-      'operation' => ToolOperation::Read,
-      'destructive' => FALSE,
-      'input_definitions' => $inputDefinitions,
-    ]);
-
-    $currentUser = $this->createMock(AccountInterface::class);
-    $tool = new class([], 'mcp_tools:test', $definition, $currentUser, $this->createMock(EventDispatcherInterface::class), $this->createMock(LoggerChannelInterface::class)) extends ToolBase {
-
-      /**
-       * {@inheritdoc}
-       */
-      protected function doExecute(array $values): ExecutableResult {
-        return ExecutableResult::success(new TranslatableMarkup('OK'), ['values' => $values]);
-      }
-
-      /**
-       * {@inheritdoc}
-       */
-      protected function checkAccess(array $values, AccountInterface $account, bool $return_as_object = FALSE): bool|AccessResultInterface {
-        return TRUE;
-      }
-
-    };
-
-    $toolManager = $this->createMock(PluginManagerInterface::class);
-    $toolManager->method('getDefinitions')->willReturn([
-      'mcp_tools:test' => $definition,
-    ]);
-    $toolManager->method('createInstance')->with('mcp_tools:test')->willReturn($tool);
-
-    return new ToolApiCallToolHandler(
-      $toolManager,
-      new NullLogger(),
-      FALSE,
-      'mcp_tools',
-      new ToolInputValidator(new ToolApiSchemaConverter(), new NullLogger()),
-    );
   }
 
 }

@@ -6,6 +6,7 @@ namespace Drupal\Tests\mcp_tools_ai\Kernel;
 
 use Drupal\Core\Session\AnonymousUserSession;
 use Drupal\KernelTests\KernelTestBase;
+use Drupal\Tests\mcp_tools\Traits\ForeignToolTestTrait;
 use Drupal\Tests\user\Traits\UserCreationTrait;
 
 /**
@@ -16,6 +17,7 @@ use Drupal\Tests\user\Traits\UserCreationTrait;
 #[\PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses]
 final class AiFunctionCallBridgeTest extends KernelTestBase {
 
+  use ForeignToolTestTrait;
   use UserCreationTrait;
 
   /**
@@ -147,6 +149,136 @@ final class AiFunctionCallBridgeTest extends KernelTestBase {
     $result = $run();
     $this->assertFalse($result['success'] ?? TRUE, 'Read-only mode stops the tool.');
     $this->assertFalse((bool) $state->get('foreign_tool_test.wrote', FALSE));
+  }
+
+  /**
+   * Another module's write tool is limited and audited through the bridge.
+   *
+   * The MCP server counts such a tool against the write limits and writes
+   * its audit line. An AI agent that calls it through this bridge is held
+   * to the same.
+   */
+  public function testForeignWriteToolIsLimitedAndAudited(): void {
+    $this->enableModules(['foreign_tool_test', 'dblog']);
+    $this->installSchema('dblog', ['watchdog']);
+    $this->installConfig(['mcp_tools']);
+    $this->config('mcp_tools_ai.settings')->set('exposed_operations', ['read', 'explain', 'write'])->save();
+    $this->container->get('plugin.manager.ai.function_calls')->clearCachedDefinitions();
+    $this->setUpCurrentUser();
+    $this->config('mcp_tools.settings')
+      ->set('access.allowed_scopes', ['read', 'write'])
+      ->set('access.default_scopes', ['read', 'write'])
+      ->set('access.read_only_mode', FALSE)
+      ->set('rate_limiting.enabled', TRUE)
+      ->set('rate_limiting.max_writes_per_minute', 1)
+      ->save();
+    $this->container->get('mcp_tools.access_manager')->setScopes(['read', 'write']);
+
+    $run = function (): array {
+      $fc = $this->container->get('plugin.manager.ai.function_calls')->createInstance('mcp_tools_tool:foreign_test_write');
+      $fc->execute();
+      return (array) json_decode($fc->getReadableOutput(), TRUE);
+    };
+
+    $first = $run();
+    $this->assertTrue($first['success'] ?? FALSE, json_encode($first));
+
+    $second = $run();
+    $this->assertFalse($second['success'] ?? TRUE, 'The call over the limit is refused: ' . json_encode($second));
+    $this->assertStringContainsStringIgnoringCase('rate limit', (string) ($second['message'] ?? ''));
+    $this->assertGreaterThan(0, (int) ($second['retry_after'] ?? 0));
+
+    $lines = $this->auditLines();
+    $this->assertCount(1, $lines, implode("\n", $lines));
+    $this->assertStringContainsString('run_write_tool on tool "foreign_test_write"', $lines[0]);
+  }
+
+  /**
+   * A model's tool call finds our function call.
+   *
+   * A model answers with a function name. Drupal AI looks the name up in
+   * the definitions and makes the plugin by the "id" it finds there. Our
+   * deriver left the base ID in every definition, so each call of a real
+   * model ended in "The mcp_tools_tool plugin does not exist". The tests
+   * made the function calls by their full ID and never took that path. It
+   * showed with the first real model: AI Agents and a local model.
+   */
+  public function testAModelsToolCallFindsOurFunctionCall(): void {
+    $manager = $this->container->get('plugin.manager.ai.function_calls');
+    $this->setUpCurrentUser([], ['mcp_tools use site_health']);
+
+    $definition = $manager->getDefinition('mcp_tools_tool:mcp_tools_get_site_status');
+    $this->assertSame('mcp_tools_tool:mcp_tools_get_site_status', $definition['id']);
+
+    // The way an agent gets there: from the name the model used.
+    $fc = $manager->getFunctionCallFromFunctionName($definition['function_name']);
+    $this->assertSame('mcp_tools_tool:mcp_tools_get_site_status', $fc->getPluginId());
+    $fc->execute();
+    $result = json_decode($fc->getReadableOutput(), TRUE);
+    $this->assertTrue($result['success'] ?? FALSE, $fc->getReadableOutput());
+    $this->assertArrayHasKey('drupal_version', $result['data']);
+
+    // And for every one of them: the ID in a definition is its own key.
+    foreach ($manager->getDefinitions() as $id => $each) {
+      if (str_starts_with($id, 'mcp_tools_tool:')) {
+        $this->assertSame($id, $each['id']);
+      }
+    }
+  }
+
+  /**
+   * A tool is told that the AI bridge called it, and gets Tool API's checks.
+   *
+   * The bridge ran tools by hand: made, inputs set, executed. A tool run
+   * that way is not told who called it. It goes through Tool API's runner
+   * now, like the MCP server's calls.
+   */
+  public function testToolLearnsWhoCalledIt(): void {
+    $this->enableModules(['foreign_tool_test']);
+    $this->installConfig(['mcp_tools']);
+    $this->container->get('plugin.manager.ai.function_calls')->clearCachedDefinitions();
+    $this->setUpCurrentUser();
+
+    $fc = $this->container->get('plugin.manager.ai.function_calls')->createInstance('mcp_tools_tool:foreign_test_whoami');
+    $fc->execute();
+    $result = (array) json_decode($fc->getReadableOutput(), TRUE);
+
+    $this->assertTrue($result['success'] ?? FALSE, $fc->getReadableOutput());
+    $this->assertSame('mcp_tools_ai', $result['data']['caller'] ?? NULL);
+  }
+
+  /**
+   * A call the tool itself refuses is not counted against the write limit.
+   */
+  public function testRefusedForeignCallIsNotCounted(): void {
+    $this->enableModules(['foreign_tool_test', 'dblog']);
+    $this->installSchema('dblog', ['watchdog']);
+    $this->installConfig(['mcp_tools']);
+    $this->config('mcp_tools_ai.settings')->set('exposed_operations', ['read', 'explain', 'write'])->save();
+    $this->container->get('plugin.manager.ai.function_calls')->clearCachedDefinitions();
+    $this->setUpCurrentUser();
+    $this->config('mcp_tools.settings')
+      ->set('access.allowed_scopes', ['read', 'write'])
+      ->set('access.default_scopes', ['read', 'write'])
+      ->set('access.read_only_mode', FALSE)
+      ->set('rate_limiting.enabled', TRUE)
+      ->set('rate_limiting.max_writes_per_minute', 1)
+      ->save();
+    $this->container->get('mcp_tools.access_manager')->setScopes(['read', 'write']);
+
+    $run = function (string $tool): array {
+      $fc = $this->container->get('plugin.manager.ai.function_calls')->createInstance('mcp_tools_tool:' . $tool);
+      $fc->execute();
+      return (array) json_decode($fc->getReadableOutput(), TRUE);
+    };
+
+    foreach ([1, 2, 3] as $n) {
+      $refused = $run('foreign_test_forbidden');
+      $this->assertFalse($refused['success'] ?? TRUE, "refused $n");
+      $this->assertStringContainsString('Access denied', (string) ($refused['message'] ?? ''));
+    }
+    $this->assertFalse((bool) $this->container->get('state')->get('foreign_tool_test.forbidden_ran', FALSE));
+    $this->assertTrue($run('foreign_test_write')['success'] ?? FALSE, 'The one write this minute allows still runs.');
   }
 
   /**

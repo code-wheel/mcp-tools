@@ -25,6 +25,68 @@ clients accept a `mcp.json` file with an `mcpServers` map. See
 }
 ```
 
+## Codex CLI
+
+Codex keeps its MCP servers in its own config, not in `mcp.json`:
+
+```bash
+codex mcp add drupal -- /path/to/drupal/vendor/bin/drush --root=/path/to/drupal mcp-tools:serve --quiet --uid=1 --scope=read,write
+```
+
+Tried with Codex CLI 0.166.0: it lists the tools, reads and writes.
+Codex asks you before it runs a tool that can change the site. Where
+there is nobody to ask (`codex exec`), it refuses such a call unless you
+start it with `--approve-for-me`. In gateway mode a read-only connection
+(`--scope=read`) needs no approval. With the write scope every call goes
+through one tool that can also write, so Codex asks for each call.
+
+## A model on your own machine
+
+The model does not have to be in the cloud. Start the server in gateway
+mode, so the model sees three tools (find, describe, run) and not the
+whole list, which fits a small context:
+
+```bash
+drush mcp-tools:serve --quiet --uid=1 --scope=read,write --gateway
+```
+
+What we measured with this release: twelve site tasks, each checked on
+the site itself, with `gpt-oss:20b` under Ollama 0.40.17 on one graphics
+card (an RTX 5090).
+
+- With a small test client of our own: all twelve in nine runs out of
+  ten, eleven in the tenth.
+- With Claude Code as the client: all twelve in five runs out of six,
+  eleven in the sixth.
+
+In both misses the model slipped, not the server: once it created an item
+unpublished, once it asked a question back and did nothing. A smaller
+model, `qwen3:8b`, did five or six of the twelve when we tried it with
+1.0.0-beta19, so the size of the model matters.
+
+Claude Code can be the client because Ollama speaks its message format.
+No cloud model is involved:
+
+```bash
+ANTHROPIC_BASE_URL=http://localhost:11434 ANTHROPIC_AUTH_TOKEN=ollama \
+  claude --model gpt-oss:20b
+```
+
+OpenCode, fast-agent and Goose also ran the tasks with a local model: 10
+or 11 of the twelve, in one run each with 1.0.0-beta19. We have not
+measured them with this release yet.
+
+Three things to know before you judge a model:
+
+- The Ollama version matters. The same model scored lower after an Ollama
+  upgrade, until this release made gateway mode more forgiving. Try your
+  own tasks.
+- A small model often calls a tool by the name it found, and not through
+  the run tool. From this release that works.
+- `ollama ps` has to say "100% GPU". When ours ran on the processor after
+  a reboot, its context was also down to 4,096 tokens, which is too small
+  for any of this.
+
 ## HTTP (remote)
 
 ```json
@@ -48,11 +110,7 @@ To serve this tool library through
 built-in transports:
 
 ```bash
-composer require 'drupal/mcp_server:^2.0@alpha'
-# The Tool Bridge has no tagged release yet and its composer package
-# currently ships no code, so clone the 1.x branch instead:
-git clone https://git.drupalcode.org/project/mcp_server_tool_bridge.git \
-  web/modules/contrib/mcp_server_tool_bridge
+composer require 'drupal/mcp_server:^2.0@beta' 'drupal/mcp_server_tool_bridge:^1.0@beta'
 drush en mcp_server mcp_server_tool_bridge
 ```
 
@@ -61,14 +119,36 @@ drush en mcp_server mcp_server_tool_bridge
 2. Expose tools at `/admin/config/services/mcp-server/tools`: one
    config entity per MCP Tools tool you want available (the form
    autocompletes Tool API tool names). Nothing is exposed by default.
-3. Point your MCP client at mcp_server's `/_mcp` endpoint.
+3. Point your MCP client at mcp_server's `/mcp` endpoint.
 
-MCP Tools' own protections still apply: scopes from
-`mcp_tools.settings`, category permissions, protected entities, and the
-delete confirmation guardrails. Known difference: the bridge currently
-drops unknown tool arguments silently instead of rejecting them the way
-MCP Tools' transports do. Compatibility with the bridge is re-verified
+MCP Tools' own protections still apply to MCP Tools' own tools: scopes
+from `mcp_tools.settings` (a connection of MCP Server gets the default
+scopes), category permissions, protected entities, and the delete
+confirmation guardrails. Compatibility with the bridge is re-verified
 weekly by this project's Bridge Compat CI job.
+
+### The same rules for other modules' tools
+
+The bridge can expose any Tool API tool, not only ours. A tool of another
+module knows nothing of read-only mode, the scopes or the write limits,
+and nothing writes an audit line for it. The optional submodule
+`mcp_tools_policy` holds such tools to the same rules on MCP Server's
+HTTP endpoint:
+
+```bash
+drush en mcp_tools_policy
+```
+
+- A write tool needs the `write` scope in the default scopes, and is
+  refused in read-only mode. The client gets a tool result that says
+  "Access denied".
+- A write counts against the write limits. The call over the limit is
+  answered with how many seconds to wait.
+- A write that ran has a line in the audit log.
+
+It does not cover MCP Server over STDIO, and it does not ask for a
+confirmation before a destructive tool. See the submodule's README for
+what else it cannot see.
 
 ## Notes
 

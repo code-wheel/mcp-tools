@@ -275,6 +275,37 @@ class RateLimiter implements RateLimiterInterface {
   }
 
   /**
+   * Gives back one count that checkLimit() recorded.
+   *
+   * For a call that was counted and then did not run. It undoes exactly what
+   * recordOperation() did for the type, and never takes a count below zero.
+   *
+   * @param string $operationType
+   *   The type that was passed to checkLimit().
+   */
+  public function refund(string $operationType = 'write'): void {
+    if (!$this->configFactory->get('mcp_tools.settings')->get('rate_limiting.enabled')) {
+      return;
+    }
+    $operationType = strtolower(trim($operationType));
+    if ($operationType === 'admin') {
+      $operationType = 'structure';
+    }
+    $clientId = $this->getClientIdentifier();
+    $types = $operationType === 'write' ? ['write'] : [$operationType, 'write'];
+    foreach ($types as $type) {
+      foreach (['minute', 'hour'] as $window) {
+        $stateKey = self::STATE_PREFIX . "$clientId.$type.$window";
+        $windowData = $this->state->get($stateKey);
+        if (is_array($windowData) && ($windowData['count'] ?? 0) > 0) {
+          $windowData['count']--;
+          $this->state->set($stateKey, $windowData);
+        }
+      }
+    }
+  }
+
+  /**
    * Get the limit configuration key for an operation type and window.
    *
    * @param string $operationType

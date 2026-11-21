@@ -111,8 +111,9 @@ class McpToolsServerFactory {
     $resourceCount = $enableResources ? $this->addResources($builder) : 0;
     $promptCount = $enablePrompts ? $this->addPrompts($builder) : 0;
     $this->declareCapabilities($builder, $resourceCount > 0, $promptCount > 0);
+    [$listed, $hidden] = $this->listedTools($includeAllTools);
     if (method_exists($builder, 'setInstructions')) {
-      $builder->setInstructions(self::instructions($gatewayMode));
+      $builder->setInstructions(self::instructions($gatewayMode, $hidden));
     }
     $this->declareCachePolicy($builder);
 
@@ -139,6 +140,24 @@ class McpToolsServerFactory {
         );
       }
 
+      // A model that has found a tool often calls it by its own name.
+      // That call goes through the same door as the run tool's.
+      $builder->addRequestHandler(new GatewayDirectCallHandler(
+        new ToolApiCallToolHandler(
+          $this->toolManager,
+          $this->logger,
+          $includeAllTools,
+          'mcp_tools',
+          new ToolInputValidator($this->schemaConverter, $this->logger),
+          $this->toolErrorHandler,
+          $this->eventDispatcher,
+          $this->clientBridge,
+          $this->accessManager,
+          $this->toolCallContext,
+        ),
+        [ToolApiGateway::DISCOVER_TOOL, ToolApiGateway::GET_INFO_TOOL, ToolApiGateway::EXECUTE_TOOL],
+      ));
+
       return $builder->build();
     }
 
@@ -156,17 +175,7 @@ class McpToolsServerFactory {
       $this->toolCallContext,
     ));
 
-    $definitions = $this->toolManager->getDefinitions();
-    foreach ($definitions as $pluginId => $definition) {
-      if (!$definition instanceof ToolDefinition) {
-        continue;
-      }
-
-      $provider = $definition->getProvider() ?? '';
-      if (!$includeAllTools && (!is_string($provider) || !str_starts_with($provider, 'mcp_tools'))) {
-        continue;
-      }
-
+    foreach ($listed as $pluginId => $definition) {
       $annotationsData = $this->schemaConverter->toolDefinitionToAnnotations($definition, (string) $pluginId);
       $annotations = ToolAnnotations::fromArray($annotationsData);
 
@@ -196,6 +205,42 @@ class McpToolsServerFactory {
     }
 
     return $builder->build();
+  }
+
+  /**
+   * The tools this session is shown, and how many it is not shown.
+   *
+   * The scopes and the user are set before a server is built, so the list
+   * can be what the session may call. A tool that is left out is still
+   * refused by name with "Access denied". A STDIO server builds its list
+   * once: a mode switched on or off later changes what runs at once, and the
+   * list at the next start.
+   *
+   * @param bool $includeAllTools
+   *   Whether tools of other providers are served too.
+   *
+   * @return array{0: array<string, \Drupal\tool\Tool\ToolDefinition>, 1: int}
+   *   The listed tool definitions by plugin ID, and the number left out
+   *   because this session may not call them.
+   */
+  public function listedTools(bool $includeAllTools): array {
+    $listed = [];
+    $hidden = 0;
+    foreach ($this->toolManager->getDefinitions() as $pluginId => $definition) {
+      if (!$definition instanceof ToolDefinition) {
+        continue;
+      }
+      $provider = $definition->getProvider() ?? '';
+      if (!$includeAllTools && (!is_string($provider) || !str_starts_with($provider, 'mcp_tools'))) {
+        continue;
+      }
+      if ($this->accessManager !== NULL && !$this->accessManager->listsTool($definition)) {
+        $hidden++;
+        continue;
+      }
+      $listed[(string) $pluginId] = $definition;
+    }
+    return [$listed, $hidden];
   }
 
   /**
@@ -389,7 +434,7 @@ class McpToolsServerFactory {
    * Clients may put this in the system prompt, and some load only this and
    * the tool names at first, so it stays short and says how to find things.
    */
-  public static function instructions(bool $gatewayMode): string {
+  public static function instructions(bool $gatewayMode, int $hidden = 0): string {
     $text = 'Tools for administering this Drupal site: content, structure (content types, fields, taxonomy, roles), menus, views, media, blocks, users, config, cache and site health. Which tools exist depends on the modules the site enabled. '
       . 'Tools that only read are safe to call. Tools that write change the live site and need the write scope; if a call is denied, tell the user which scope or permission is missing. Deleting asks for an explicit confirm flag: read the refusal, it says what would be removed. '
       . 'Look up IDs and machine names with a list, get or search tool before you write. When a call fails, the error names the parameter and the problem: fix that and retry.';
@@ -397,6 +442,9 @@ class McpToolsServerFactory {
       $text .= ' This server runs in gateway mode: find a tool with ' . ToolApiGateway::DISCOVER_TOOL
         . ' (pass a query), read its inputs with ' . ToolApiGateway::GET_INFO_TOOL
         . ', then run it with ' . ToolApiGateway::EXECUTE_TOOL . '.';
+    }
+    if ($hidden > 0) {
+      $text .= ' ' . $hidden . ' of this site\'s tools are not listed, because this connection may not call them: they need a scope it does not have or a permission its user lacks, or the site is in read-only mode. If the user asks for something that seems to be missing, say that.';
     }
     return $text;
   }

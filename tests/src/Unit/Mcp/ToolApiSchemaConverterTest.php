@@ -51,6 +51,41 @@ final class ToolApiSchemaConverterTest extends UnitTestCase {
     $this->assertTrue($writeAnnotations['destructiveHint']);
   }
 
+  /**
+   * The hints say what a tool changes, for every kind of operation.
+   *
+   * Only "read" was called read-only. Tool API has two more operations that
+   * change nothing, explain and transform, and other modules use them: such
+   * a tool was advertised as one that may modify the site. And a write tool
+   * that says it destroys nothing was sent without a hint, which a client
+   * reads as "destructive".
+   */
+  public function testHintsFollowWhatTheToolChanges(): void {
+    $converter = new ToolApiSchemaConverter();
+    $annotations = fn(array $values): array => $converter->toolDefinitionToAnnotations(new ToolDefinition($values + [
+      'id' => 'other:tool',
+      'provider' => 'other',
+      'label' => $this->markup('Tool'),
+      'description' => $this->markup('Tool'),
+    ]));
+
+    foreach ([ToolOperation::Read, ToolOperation::Explain, ToolOperation::Transform] as $operation) {
+      $hints = $annotations(['operation' => $operation]);
+      $this->assertTrue($hints['readOnlyHint'], $operation->value);
+      $this->assertTrue($hints['idempotentHint'], $operation->value);
+      $this->assertNull($hints['destructiveHint'], $operation->value);
+    }
+
+    foreach ([ToolOperation::Write, ToolOperation::Trigger] as $operation) {
+      // What the tool declares is sent, yes or no.
+      $this->assertFalse($annotations(['operation' => $operation, 'destructive' => FALSE])['readOnlyHint']);
+      $this->assertSame(FALSE, $annotations(['operation' => $operation, 'destructive' => FALSE])['destructiveHint'], $operation->value);
+      $this->assertSame(TRUE, $annotations(['operation' => $operation, 'destructive' => TRUE])['destructiveHint'], $operation->value);
+      // A tool that declares nothing counts as destructive, as in Tool API.
+      $this->assertSame(TRUE, $annotations(['operation' => $operation])['destructiveHint'], $operation->value);
+    }
+  }
+
   public function testToolDefinitionToInputSchemaMapsTypesAndConstraints(): void {
     $converter = new ToolApiSchemaConverter();
 

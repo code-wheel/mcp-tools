@@ -9,6 +9,9 @@ use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Drupal\mcp_tools\Tool\McpToolsToolBase;
+use Drupal\tool\Tool\ToolDefinition;
+use Drupal\tool\Tool\ToolOperation;
 
 /**
  * Service for logging MCP write operations.
@@ -62,8 +65,11 @@ class AuditLogger implements AuditLoggerInterface {
       return;
     }
 
+    // Drush has a request too, so a request alone does not mean HTTP. Our
+    // endpoint marks its request with the key that was used.
     $request = $this->requestStack->getCurrentRequest();
-    $transport = $request ? 'http' : 'cli';
+    $viaEndpoint = $request && $request->attributes->has('mcp_tools.client_id');
+    $transport = ($viaEndpoint || PHP_SAPI !== 'cli') ? 'http' : 'cli';
 
     $client = '';
     if ($request) {
@@ -108,6 +114,38 @@ class AuditLogger implements AuditLoggerInterface {
     else {
       $this->logger->error($message, $context);
     }
+  }
+
+  /**
+   * Logs a call to a write or trigger tool of another provider.
+   *
+   * MCP Tools' own tools log from inside their services, with the thing
+   * they changed. For a Tool API tool of another module, whoever ran it logs
+   * here: which tool, whose, the arguments, and whether it worked. A read
+   * tool and a tool of MCP Tools itself leave no line.
+   *
+   * @param \Drupal\tool\Tool\ToolDefinition $definition
+   *   The tool that ran.
+   * @param array<string, mixed> $arguments
+   *   The arguments it ran with.
+   * @param bool $success
+   *   Whether it reported success.
+   */
+  public function logForeignTool(ToolDefinition $definition, array $arguments, bool $success): void {
+    if (McpToolsToolBase::owns($definition)) {
+      return;
+    }
+    $provider = (string) $definition->getProvider();
+    $operation = $definition->getOperation() ?? ToolOperation::Transform;
+    if (!in_array($operation, [ToolOperation::Write, ToolOperation::Trigger], TRUE)) {
+      return;
+    }
+
+    $this->log('run_' . $operation->value . '_tool', 'tool', (string) $definition->id(), [
+      'provider' => $provider,
+      'declared_destructive' => $definition->get('destructive') === TRUE,
+      'arguments' => $arguments,
+    ], $success);
   }
 
   /**

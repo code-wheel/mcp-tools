@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools\Mcp;
 
+use Drupal\Component\Plugin\Exception\PluginException;
 use Drupal\Component\Plugin\PluginManagerInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\tool\Tool\ToolDefinition;
@@ -12,12 +13,14 @@ use CodeWheel\McpEvents\ToolExecutionStartedEvent;
 use CodeWheel\McpEvents\ToolExecutionSucceededEvent;
 use Drupal\mcp_tools\Mcp\Error\DefaultToolErrorHandler;
 use Drupal\mcp_tools\Mcp\Error\ToolErrorHandlerInterface;
+use Drupal\mcp_tools\Policy\ToolPolicy;
+use Drupal\mcp_tools\Policy\ToolRefusal;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\McpClientBridge;
 use Drupal\mcp_tools\Service\McpToolCallContext;
-use Drupal\mcp_tools\Tool\McpToolsToolBase;
-use Drupal\tool\Tool\ToolInterface;
-use Drupal\tool\Tool\ToolOperation;
+use Drupal\tool\FailureCategory;
+use Drupal\tool\Tool\Invoker;
+use Drupal\tool\Tool\InvokerCapability;
 use Drupal\tool\TypedData\InputDefinitionInterface;
 use Drupal\tool\TypedData\ListInputDefinition;
 use Drupal\tool\TypedData\MapInputDefinition;
@@ -58,6 +61,32 @@ class ToolApiCallToolHandler implements RequestHandlerInterface {
     private readonly ?AccessManager $accessManager = NULL,
     private readonly ?McpToolCallContext $toolCallContext = NULL,
   ) {}
+
+  /**
+   * What runs a tool: Tool API's runner, with the site's rules around it.
+   *
+   * Taken from the container for each call and not kept. Other code builds
+   * this handler too (MCPIO, tests) with the arguments it knew, and a long
+   * STDIO session outlives the container it started with when a module is
+   * installed along the way.
+   */
+  private function policy(): ToolPolicy {
+    // phpcs:ignore DrupalPractice.Objects.GlobalDrupal.GlobalDrupal
+    return \Drupal::service('mcp_tools.tool_policy');
+  }
+
+  /**
+   * Who is calling, as Tool API passes it to the tool.
+   *
+   * A tool can decide by its caller. Without an invoker a call looks like
+   * code of the site itself. Tool API is adding a "remote" capability for
+   * callers outside the site (#3583130): it is passed as soon as the
+   * installed Tool API has it.
+   */
+  private static function invoker(): Invoker {
+    $remote = InvokerCapability::class . '::Remote';
+    return defined($remote) ? new Invoker('mcp_tools', constant($remote)) : new Invoker('mcp_tools');
+  }
 
   /**
    * {@inheritdoc}
@@ -194,7 +223,7 @@ class ToolApiCallToolHandler implements RequestHandlerInterface {
     }
     $this->clientBridge?->setGateway($gateway, (array) $session->get('client_capabilities', []));
     try {
-      return $this->executeCall($toolName, $pluginId, $arguments, $sanitizedArguments, $toolErrorHandler, $startedAt, $requestId);
+      return $this->executeCall($toolName, $pluginId, $definition, $arguments, $sanitizedArguments, $toolErrorHandler, $startedAt, $requestId);
     }
     finally {
       $this->clientBridge?->setGateway(NULL);
@@ -202,12 +231,18 @@ class ToolApiCallToolHandler implements RequestHandlerInterface {
   }
 
   /**
-   * Instantiates and executes the tool, building the MCP response.
+   * Runs the tool through Tool API's runner and builds the MCP response.
+   *
+   * The runner checks the declared permission, sets and validates the
+   * inputs, asks the tool for access and executes it. The site's rules for
+   * a tool of another provider are around it, in ToolPolicy.
    *
    * @param string $toolName
    *   The wire-format tool name.
    * @param string $pluginId
    *   The Tool API plugin ID.
+   * @param \Drupal\tool\Tool\ToolDefinition $definition
+   *   The tool's definition.
    * @param array<string, mixed> $arguments
    *   Validated (and possibly confirmation-amended) arguments.
    * @param array<string, mixed> $sanitizedArguments
@@ -219,153 +254,130 @@ class ToolApiCallToolHandler implements RequestHandlerInterface {
    * @param mixed $requestId
    *   The JSON-RPC request id.
    */
-  private function executeCall(string $toolName, string $pluginId, array $arguments, array $sanitizedArguments, ToolErrorHandlerInterface $toolErrorHandler, float $startedAt, mixed $requestId): Response {
-    try {
-      $tool = $this->toolManager->createInstance($pluginId);
-    }
-    catch (\Throwable $e) {
-      $result = $toolErrorHandler->instantiationFailed($pluginId, $e);
+  private function executeCall(string $toolName, string $pluginId, ToolDefinition $definition, array $arguments, array $sanitizedArguments, ToolErrorHandlerInterface $toolErrorHandler, float $startedAt, mixed $requestId): Response {
+    $failed = function (string $reason, CallToolResult $result, ?\Throwable $exception = NULL) use ($toolName, $pluginId, $sanitizedArguments, $startedAt, $requestId): Response {
       $this->dispatchEvent(new ToolExecutionFailedEvent(
         $toolName,
         $pluginId,
         $sanitizedArguments,
-        ToolExecutionFailedEvent::REASON_INSTANTIATION,
+        $reason,
         $result,
-        $e,
+        $exception,
         $this->calculateDurationMs($startedAt),
         $requestId,
       ));
       return new Response($requestId, $result);
-    }
+    };
 
-    if (!$tool instanceof ToolInterface) {
-      $result = $toolErrorHandler->invalidTool($pluginId, "Tool plugin {$pluginId} does not implement ToolInterface.");
-      $this->dispatchEvent(new ToolExecutionFailedEvent(
-        $toolName,
-        $pluginId,
-        $sanitizedArguments,
-        ToolExecutionFailedEvent::REASON_INVALID_TOOL,
-        $result,
-        NULL,
-        $this->calculateDurationMs($startedAt),
-        $requestId,
-      ));
-      return new Response($requestId, $result);
-    }
-
-    // Set input values with best-effort upcasting.
-    foreach ($tool->getInputDefinitions() as $name => $inputDefinition) {
+    // The values, with best-effort upcasting.
+    $values = [];
+    foreach ($definition->getInputDefinitions() as $name => $inputDefinition) {
       if (!array_key_exists($name, $arguments)) {
         continue;
       }
-      $value = $arguments[$name];
-      if ($inputDefinition instanceof InputDefinitionInterface) {
-        $value = $this->upcastArgument($value, $inputDefinition);
-      }
-      $tool->setInputValue($name, $value);
+      $values[$name] = $inputDefinition instanceof InputDefinitionInterface
+        ? $this->upcastArgument($arguments[$name], $inputDefinition)
+        : $arguments[$name];
     }
 
-    // Check access.
-    if (!$this->scopesAllow($tool) || !$tool->access()) {
-      $result = $toolErrorHandler->accessDenied($toolName);
-      $this->dispatchEvent(new ToolExecutionFailedEvent(
-        $toolName,
-        $pluginId,
-        $sanitizedArguments,
-        ToolExecutionFailedEvent::REASON_ACCESS_DENIED,
-        $result,
-        NULL,
-        $this->calculateDurationMs($startedAt),
-        $requestId,
-      ));
-      return new Response($requestId, $result);
-    }
-
+    // The site's rules apply when this server was built with them. Another
+    // module that builds this handler for its own server brings its own.
     try {
-      $tool->execute();
-      $result = $tool->getResult();
-
-      $message = (string) $result->getMessage();
-      if ($message === '') {
-        $message = $result->isSuccess() ? 'Success.' : 'Tool execution failed.';
-      }
-
-      // A failed tool has no outputs. Its declared outputs are optional, so
-      // reading them would not throw but return NULL for each one.
-      $output = [];
-      $toolOutput = NULL;
-      if ($result->isSuccess()) {
-        try {
-          $toolOutput = $tool->getOutputValues();
-        }
-        catch (\Throwable) {
-          $toolOutput = NULL;
-        }
-      }
-
-      if (!empty($toolOutput)) {
-        $output = $toolOutput;
-      }
-      elseif ($contextValues = $result->getContextValues()) {
-        $output = $contextValues;
-      }
-
-      $output = $this->normalizeValue($output);
-      if (is_array($output)) {
-        $output = self::emptyMapsAsObjects($output, $tool->getOutputDefinitions());
-      }
-
-      $structured = [
-        'success' => $result->isSuccess(),
-        'message' => $message,
-        'data' => $output,
-      ];
-
-      $text = $message;
-      if (!empty($output)) {
-        $text .= "\n" . json_encode($structured, JSON_PRETTY_PRINT);
-      }
-
-      $content = [new TextContent($text)];
-      $callToolResult = new CallToolResult($content, !$result->isSuccess(), $structured);
-      if ($result->isSuccess()) {
-        $this->dispatchEvent(new ToolExecutionSucceededEvent(
-          $toolName,
-          $pluginId,
-          $sanitizedArguments,
-          $callToolResult,
-          $this->calculateDurationMs($startedAt),
-          $requestId,
-        ));
-      }
-      else {
-        $this->dispatchEvent(new ToolExecutionFailedEvent(
-          $toolName,
-          $pluginId,
-          $sanitizedArguments,
-          ToolExecutionFailedEvent::REASON_RESULT,
-          $callToolResult,
-          NULL,
-          $this->calculateDurationMs($startedAt),
-          $requestId,
-        ));
-      }
-      return new Response($requestId, $callToolResult);
+      $outcome = $this->policy()->run($definition, $values, self::invoker(), $this->accessManager !== NULL);
+    }
+    catch (PluginException $e) {
+      return $failed(ToolExecutionFailedEvent::REASON_INSTANTIATION, $toolErrorHandler->instantiationFailed($pluginId, $e), $e);
     }
     catch (\Throwable $e) {
-      $result = $toolErrorHandler->executionFailed($toolName, $e);
-      $this->dispatchEvent(new ToolExecutionFailedEvent(
-        $toolName,
-        $pluginId,
-        $sanitizedArguments,
-        ToolExecutionFailedEvent::REASON_EXECUTION,
-        $result,
-        $e,
-        $this->calculateDurationMs($startedAt),
-        $requestId,
-      ));
-      return new Response($requestId, $result);
+      // Tool API turns what a tool throws while it runs into a failed
+      // result. What gets here was thrown around that, by the tool's own
+      // access check for one.
+      return $failed(ToolExecutionFailedEvent::REASON_EXECUTION, $toolErrorHandler->executionFailed($toolName, $e), $e);
     }
+
+    if ($outcome instanceof ToolRefusal) {
+      if ($outcome->reason === ToolRefusal::ACCESS) {
+        return $failed(ToolExecutionFailedEvent::REASON_ACCESS_DENIED, $toolErrorHandler->accessDenied($toolName));
+      }
+      return $failed(ToolExecutionFailedEvent::REASON_POLICY_BUDGET, new CallToolResult([new TextContent($outcome->message)], TRUE, [
+        'success' => FALSE,
+        'message' => $outcome->message,
+        'error' => $outcome->message,
+        'error_code' => $outcome->code,
+        'tool' => $toolName,
+        'retry_after' => $outcome->retryAfter,
+        'remediation' => 'Wait for the number of seconds in retry_after, then call again.',
+      ]));
+    }
+
+    $result = $outcome->getResult();
+    $message = (string) $result->getMessage();
+
+    // Refused by Tool API before the tool ran: by its declared permission,
+    // by its own access check, or for an input Tool API could not take.
+    if (!$outcome->hasExecuted()) {
+      if ($result->getFailureCategory() === FailureCategory::Access) {
+        return $failed(ToolExecutionFailedEvent::REASON_ACCESS_DENIED, $toolErrorHandler->accessDenied($toolName));
+      }
+      $message = $message !== '' ? $message : 'Invalid input.';
+      return $failed(ToolExecutionFailedEvent::REASON_VALIDATION, new CallToolResult([new TextContent($message)], TRUE, [
+        'success' => FALSE,
+        'message' => $message,
+        'data' => [],
+      ]));
+    }
+
+    if ($message === '') {
+      $message = $result->isSuccess() ? 'Success.' : 'Tool execution failed.';
+    }
+
+    // A failed tool has no outputs. A tool that worked has its declared
+    // outputs, each present, and what it returned when it declares none.
+    // The values are the tool's own, not Tool API's formatted ones: those
+    // follow the schema of Tool API's serializer, and this server
+    // advertises the schema of ToolApiSchemaConverter.
+    $output = [];
+    if ($result->isSuccess()) {
+      $context = $result->getContextValues();
+      $declared = $definition->getOutputDefinitions();
+      if ($declared === []) {
+        $output = $context;
+      }
+      else {
+        foreach (array_keys($declared) as $name) {
+          $output[$name] = $context[$name] ?? NULL;
+        }
+      }
+      $output = $this->normalizeValue($output);
+      if (is_array($output)) {
+        $output = self::emptyMapsAsObjects($output, $declared);
+      }
+    }
+
+    $structured = [
+      'success' => $result->isSuccess(),
+      'message' => $message,
+      'data' => $output,
+    ];
+
+    $text = $message;
+    if (!empty($output)) {
+      $text .= "\n" . json_encode($structured, JSON_PRETTY_PRINT);
+    }
+
+    $callToolResult = new CallToolResult([new TextContent($text)], !$result->isSuccess(), $structured);
+    if (!$result->isSuccess()) {
+      return $failed(ToolExecutionFailedEvent::REASON_RESULT, $callToolResult);
+    }
+    $this->dispatchEvent(new ToolExecutionSucceededEvent(
+      $toolName,
+      $pluginId,
+      $sanitizedArguments,
+      $callToolResult,
+      $this->calculateDurationMs($startedAt),
+      $requestId,
+    ));
+    return new Response($requestId, $callToolResult);
   }
 
   /**
@@ -388,7 +400,7 @@ class ToolApiCallToolHandler implements RequestHandlerInterface {
 
       if ($definition instanceof ListInputDefinition && is_array($argument)) {
         // getItemDefinition() is on the list definition itself in every
-        // Tool API version we support (beta9 to beta12).
+        // Tool API version we support (1.0.0-beta12 and later).
         $itemDefinition = $definition->getItemDefinition();
         if ($itemDefinition instanceof InputDefinitionInterface) {
           foreach ($argument as $key => $value) {
@@ -454,22 +466,131 @@ class ToolApiCallToolHandler implements RequestHandlerInterface {
   }
 
   /**
-   * Applies scopes and site modes to a tool of another provider.
+   * Asks the client's user before another provider's destructive tool runs.
    *
-   * MCP Tools' own tools check these in their access check. A Tool API tool
-   * of another module knows nothing of them, and with "all tools" on the
-   * server runs it too: a read-only key could run another module's write
-   * tool. See AccessManager::allowsForeignToolOperation() for the rule.
+   * MCP Tools' own tools that destroy something take a confirm flag and
+   * refuse without it. A Tool API tool of another module has no such flag,
+   * so the server asks for it: a tool that declares itself destructive runs
+   * after the client's user said yes, where the client can ask. A client
+   * that cannot ask gets the tool run as before, unless the site insists on
+   * a confirmation (access.confirm_destructive_tools): then it is refused.
+   *
+   * Tool API also calls a write tool destructive when it declares nothing.
+   * Going by that, nearly every write would be asked about, so only what
+   * the tool says of itself counts here.
+   *
+   * @param string $pluginId
+   *   The Tool API plugin ID.
+   * @param array<string, mixed> $arguments
+   *   The call arguments.
+   * @param \Mcp\Server\Session\SessionInterface $session
+   *   The MCP session, for the client's capabilities.
+   * @param mixed $requestId
+   *   The JSON-RPC request id, for the refusal or the declined answer.
+   *
+   * @return array<string, mixed>|\Mcp\Schema\JsonRpc\Response
+   *   The arguments when the call may go on, or the answer that ends it.
    */
-  private function scopesAllow(ToolInterface $tool): bool {
-    if ($this->accessManager === NULL || $tool instanceof McpToolsToolBase) {
-      return TRUE;
+  private function maybeConfirmForeignDestructiveTool(string $pluginId, array $arguments, SessionInterface $session, mixed $requestId): array|Response {
+    $definition = $this->toolManager->getDefinitions()[$pluginId] ?? NULL;
+    if (!$definition instanceof ToolDefinition || $definition->get('destructive') !== TRUE) {
+      return $arguments;
+    }
+    $class = $definition->getClass();
+    if (is_string($class) && is_a($class, McpToolsToolBase::class, TRUE)) {
+      return $arguments;
     }
 
-    $definition = $tool->getPluginDefinition();
-    $operation = $definition instanceof ToolDefinition ? $definition->getOperation() : NULL;
+    $canAsk = class_exists(ElicitationSchema::class)
+      && \Fiber::getCurrent() !== NULL
+      && (new ClientGateway($session))->supportsElicitation();
+    $siteInsists = (bool) $this->accessManager?->destructiveToolsNeedConfirmation();
+    if (!$canAsk && !$siteInsists) {
+      return $arguments;
+    }
 
-    return $this->accessManager->allowsForeignToolOperation(($operation ?? ToolOperation::Transform)->value);
+    // Ask, or refuse for want of an answer, only a session that may run the
+    // tool. Any other is refused at the door, as for every tool.
+    if (!$this->sessionMayRun($pluginId)) {
+      return $arguments;
+    }
+
+    $toolName = McpToolsServerFactory::pluginIdToMcpName($pluginId);
+    if (!$canAsk) {
+      return $this->confirmationRefusal($requestId, $toolName, "The tool '$toolName' says it is destructive, and this site runs such a tool only after the user confirmed it. This client cannot ask its user, so the tool was not run.");
+    }
+
+    $message = sprintf('The tool "%s" (%s, from the module %s) says it is destructive. Run it?', (string) $definition->getLabel(), $toolName, (string) $definition->getProvider());
+    $shown = $this->sanitizeArguments($arguments);
+    if ($shown !== []) {
+      $message .= ' Arguments: ' . mb_substr((string) json_encode($shown, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE), 0, 600);
+    }
+    try {
+      $result = (new ClientGateway($session))->elicit($message, new ElicitationSchema(
+        properties: [
+          'confirm' => new BooleanSchemaDefinition('Run it', 'Choose yes to run the tool.'),
+        ],
+        required: ['confirm'],
+      ), 300);
+    }
+    catch (\Throwable $e) {
+      // The question was put and no answer came back. That is not a yes.
+      $this->logger->warning('Elicitation failed for @plugin: @message', [
+        '@plugin' => $pluginId,
+        '@message' => $e->getMessage(),
+      ]);
+      return $this->confirmationRefusal($requestId, $toolName, "The tool '$toolName' says it is destructive. The user was asked to confirm and no answer came back, so the tool was not run.");
+    }
+
+    if ($result->action === ElicitAction::Accept && !empty($result->content['confirm'])) {
+      return $arguments;
+    }
+
+    $text = 'Declined by the user. Nothing was run.';
+    return new Response($requestId, new CallToolResult(
+      [new TextContent($text)],
+      FALSE,
+      ['success' => FALSE, 'message' => $text, 'data' => []],
+    ));
+  }
+
+  /**
+   * The answer to a destructive call that could not be confirmed.
+   */
+  private function confirmationRefusal(mixed $requestId, string $toolName, string $message): Response {
+    return new Response($requestId, new CallToolResult([new TextContent($message)], TRUE, [
+      'success' => FALSE,
+      'message' => $message,
+      'error' => $message,
+      'error_code' => 'CONFIRMATION_REQUIRED',
+      'tool' => $toolName,
+    ]));
+  }
+
+  /**
+   * Whether this session could run a tool at all, asked before any question.
+   *
+   * The user of a session that may not run a tool is not asked to confirm
+   * it. With the access manager this is the rule the tool list follows,
+   * asked without making the tool. A handler built without one (a test,
+   * another module) asks the tool itself, the way it was done before Tool
+   * API's runner: that call leaves when Tool API has a way to ask without
+   * an instance.
+   */
+  private function sessionMayRun(string $pluginId): bool {
+    $definition = $this->toolManager->getDefinitions()[$pluginId] ?? NULL;
+    if (!$definition instanceof ToolDefinition) {
+      return FALSE;
+    }
+    if ($this->accessManager !== NULL) {
+      return $this->accessManager->couldCall($definition);
+    }
+    try {
+      return (bool) $this->toolManager->createInstance($pluginId)->access();
+    }
+    catch (\Throwable) {
+      return FALSE;
+    }
   }
 
   /**
@@ -561,7 +682,10 @@ class ToolApiCallToolHandler implements RequestHandlerInterface {
    */
   private function maybeElicitDestructiveConfirmation(string $pluginId, array $arguments, SessionInterface $session, mixed $requestId): array|Response {
     $confirmation = self::CONFIRMATION_TOOLS[$pluginId] ?? NULL;
-    if ($confirmation === NULL || !empty($arguments[$confirmation['confirm_argument']])) {
+    if ($confirmation === NULL) {
+      return $this->maybeConfirmForeignDestructiveTool($pluginId, $arguments, $session, $requestId);
+    }
+    if (!empty($arguments[$confirmation['confirm_argument']])) {
       return $arguments;
     }
     foreach ($confirmation['bypass_arguments'] as $bypass) {
@@ -581,13 +705,7 @@ class ToolApiCallToolHandler implements RequestHandlerInterface {
     // Ask only a session that may run the tool. The question used to come
     // before the access check, so the user of a read-only session was asked
     // to confirm a deletion that was then refused.
-    try {
-      $tool = $this->toolManager->createInstance($pluginId);
-      if (!$this->scopesAllow($tool) || !$tool->access()) {
-        return $arguments;
-      }
-    }
-    catch (\Throwable) {
+    if (!$this->sessionMayRun($pluginId)) {
       return $arguments;
     }
 

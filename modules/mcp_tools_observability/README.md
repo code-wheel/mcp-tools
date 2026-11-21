@@ -84,4 +84,4 @@ The watchdog subscriber is lightweight, but for high-volume production sites, co
 
 - Using a faster logging backend (syslog, file)
 - Sampling events instead of logging all
-- Disabling this module and using webhooks instead (`mcp_tools.settings.webhooks`)
+- Disabling this module and writing a subscriber of your own for the tool execution events

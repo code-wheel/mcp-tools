@@ -322,4 +322,28 @@ class AuditLoggerTest extends UnitTestCase {
     $auditLogger->logSuccess('create_content', 'node', '123');
   }
 
+  /**
+   * A call through drush is "cli", though drush has a request of its own.
+   *
+   * The STDIO server runs under drush, which puts a request on the stack.
+   * Going by that request, every STDIO call was logged as "http".
+   */
+  public function testCommandLineIsNotLoggedAsHttp(): void {
+    $this->config->method('get')
+      ->with('access.audit_logging')
+      ->willReturn(TRUE);
+
+    $requestStack = new RequestStack();
+    $requestStack->push(Request::create('/'));
+
+    $this->logger->expects($this->once())
+      ->method('notice')
+      ->with(
+        $this->anything(),
+        $this->callback(static fn(array $context): bool => ($context['@transport'] ?? '') === 'cli')
+      );
+
+    $this->createAuditLogger($requestStack)->logSuccess('create_content', 'node', '123');
+  }
+
 }

@@ -9,10 +9,11 @@ use Drupal\ai\Base\FunctionCallBase;
 use Drupal\ai\Service\FunctionCalling\ExecutableFunctionCallInterface;
 use Drupal\ai\Service\FunctionCalling\FunctionCallInterface;
 use Drupal\Component\Plugin\PluginManagerInterface;
-use Drupal\mcp_tools\Service\AccessManager;
-use Drupal\mcp_tools\Tool\McpToolsToolBase;
+use Drupal\mcp_tools\Policy\ToolPolicy;
+use Drupal\mcp_tools\Policy\ToolRefusal;
+use Drupal\tool\FailureCategory;
+use Drupal\tool\Tool\Invoker;
 use Drupal\tool\Tool\ToolDefinition;
-use Drupal\tool\Tool\ToolOperation;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -38,9 +39,9 @@ final class ToolApiFunctionCall extends FunctionCallBase implements ExecutableFu
   protected PluginManagerInterface $toolManager;
 
   /**
-   * The MCP Tools access manager.
+   * What runs a tool: Tool API's runner, with the site's rules around it.
    */
-  protected ?AccessManager $accessManager = NULL;
+  protected ToolPolicy $toolPolicy;
 
   /**
    * Captured readable output from the last execution.
@@ -58,7 +59,7 @@ final class ToolApiFunctionCall extends FunctionCallBase implements ExecutableFu
       $container->get('ai.context_definition_normalizer'),
     );
     $instance->toolManager = $container->get('plugin.manager.tool');
-    $instance->accessManager = $container->get('mcp_tools.access_manager');
+    $instance->toolPolicy = $container->get('mcp_tools.tool_policy');
     return $instance;
   }
 
@@ -66,54 +67,50 @@ final class ToolApiFunctionCall extends FunctionCallBase implements ExecutableFu
    * {@inheritdoc}
    */
   public function execute(): void {
-    $definition = $this->getPluginDefinition();
-    $tool_id = $definition['tool_api_id'] ?? NULL;
+    $tool_id = $this->getPluginDefinition()['tool_api_id'] ?? NULL;
     if (!$tool_id) {
       $this->output = 'Error: no Tool API id bound to this function call.';
       return;
     }
 
     try {
-      $tool = $this->toolManager->createInstance($tool_id);
+      $definition = $this->toolManager->getDefinition($tool_id);
+      assert($definition instanceof ToolDefinition);
 
       // Tool API tools read inputs from their own typed values, not from
-      // execute() arguments — transfer each provided context value across.
+      // execute() arguments: hand over each provided context value.
+      $values = [];
       foreach (array_keys($this->getContextDefinitions()) as $name) {
         $value = $this->getContextValue($name);
         if ($value !== NULL) {
-          $tool->setInputValue($name, $value);
+          $values[$name] = $value;
         }
       }
 
-      // Neither drupal/ai nor Tool API's execute() checks access, so the
-      // bridge does: the tool's permission, scope and policy checks all
-      // apply to the current user before anything runs.
-      // A tool of another provider does not know MCP Tools' scopes and
-      // read-only mode, so those are applied to it here.
-      $allowed = TRUE;
-      if (!$tool instanceof McpToolsToolBase && $this->accessManager !== NULL) {
-        $toolDefinition = $tool->getPluginDefinition();
-        $operation = $toolDefinition instanceof ToolDefinition ? $toolDefinition->getOperation() : NULL;
-        $allowed = $this->accessManager->allowsForeignToolOperation(($operation ?? ToolOperation::Transform)->value);
-      }
-      if (!$allowed || !$tool->access()) {
-        $this->output = json_encode([
-          'success' => FALSE,
-          'message' => 'Access denied.',
-          'data' => [],
-        ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) ?: '';
-        return;
-      }
+      // Drupal AI does not check access before it executes a function call.
+      // Tool API's runner does: the declared permission, the inputs, the
+      // tool's own access check. Around it are the site's rules for a tool
+      // of another provider: scopes, read-only mode, the write limits and
+      // the audit line, the same as when the MCP server runs it.
+      $outcome = $this->toolPolicy->run($definition, $values, new Invoker('mcp_tools_ai'));
 
-      // execute() returns the plugin; the result lives in getResult().
-      $tool->execute();
-      $result = $tool->getResult();
-
-      $payload = [
-        'success' => $result->isSuccess(),
-        'message' => (string) $result->getMessage(),
-        'data' => $result->getContextValues(),
-      ];
+      if ($outcome instanceof ToolRefusal) {
+        $payload = ['success' => FALSE, 'message' => $outcome->message, 'data' => []];
+        if ($outcome->reason === ToolRefusal::LIMIT) {
+          $payload['retry_after'] = $outcome->retryAfter;
+        }
+      }
+      else {
+        $result = $outcome->getResult();
+        $denied = !$outcome->hasExecuted() && $result->getFailureCategory() === FailureCategory::Access;
+        $payload = [
+          'success' => $result->isSuccess(),
+          // A denial says no more than that. Tool API's own text names
+          // the permission that is missing.
+          'message' => $denied ? 'Access denied.' : (string) $result->getMessage(),
+          'data' => $result->getContextValues(),
+        ];
+      }
       $this->output = json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) ?: '';
     }
     catch (\Throwable $e) {

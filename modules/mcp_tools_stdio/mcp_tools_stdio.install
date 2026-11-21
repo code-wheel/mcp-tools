@@ -16,6 +16,13 @@ function mcp_tools_stdio_requirements(string $phase): array {
   $requirements = [];
 
   if (in_array($phase, ['install', 'runtime'], TRUE)) {
+    // This module can be installed in the same step as mcp_tools, for
+    // example with "drush en mcp_tools mcp_tools_stdio". The classes of
+    // mcp_tools cannot be autoloaded then, so the one this check needs is
+    // loaded from its file. 1.0.0-beta19 stopped here with "Class not found".
+    if (!class_exists(Sdk::class)) {
+      require_once __DIR__ . '/../../src/Mcp/Sdk.php';
+    }
     if (Sdk::serverClass() === NULL) {
       $requirements['mcp_tools_stdio_sdk'] = [
         'title' => t('MCP SDK (mcp/sdk)'),

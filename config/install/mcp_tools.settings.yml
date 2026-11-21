@@ -51,6 +51,17 @@ access:
   # Audit logging for all operations.
   audit_logging: true
 
+  # The tool list shows what a connection may call (by its scopes, the modes
+  # above and the user's permissions). Set to true to list every tool, as
+  # before 1.0.0-beta20. A tool that is not listed is refused by name.
+  list_all_tools: false
+
+  # A tool of another module that declares itself destructive is run after
+  # the client's user said yes, when the client can ask (MCP elicitation).
+  # A client that cannot ask gets the tool run. Set to true to refuse it
+  # for such a client. MCP Tools' own tools have their confirm flags.
+  confirm_destructive_tools: false
+
 # Rate limiting for expensive read operations.
 rate_limits:
   broken_link_scan:
@@ -89,25 +100,3 @@ output:
   max_items: 100
   # Include sensitive information (requires administer permission).
   include_sensitive: false
-
-# Webhook notification settings.
-webhooks:
-  # Enable webhook notifications for MCP operations.
-  enabled: false
-  # Webhook URL to POST notifications to.
-  url: ''
-  # Secret for HMAC signing (recommended for security).
-  secret: ''
-  # Optional allowlist of destination hosts for webhook URLs.
-  # When empty, any public (non-private) host is allowed.
-  allowed_hosts: []
-  # Request timeout in seconds.
-  timeout: 5
-  # Batch notifications and send on shutdown (better performance).
-  batch_notifications: true
-  # Operations to notify on: create, update, delete, structure.
-  notify_on:
-    - create
-    - update
-    - delete
-    - structure

@@ -32,7 +32,6 @@ Common issues and fixes for MCP Tools.
 ## Resources or prompts missing
 
 - Confirm the server profile has `enable_resources` / `enable_prompts` enabled.
-- If `component_public_only` is enabled, component definitions must include `public: TRUE` (or `mcp.public: TRUE`).
 
 ## Scope mismatches
 

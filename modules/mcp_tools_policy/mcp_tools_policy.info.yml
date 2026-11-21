@@ -1,0 +1,10 @@
+name: 'MCP Tools - Policy for MCP Server'
+type: module
+description: "Holds Tool API tools that are called through MCP Server's HTTP endpoint to the rules of MCP Tools: scopes, read-only mode, the write limits and the audit log."
+package: MCP Tools
+core_version_requirement: ^10.5 || ^11
+lifecycle: experimental
+dependencies:
+  - mcp_tools:mcp_tools
+  - mcp_server:mcp_server
+  - mcp_server_tool_bridge:mcp_server_tool_bridge

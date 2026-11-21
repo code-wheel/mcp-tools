@@ -8,6 +8,10 @@ use CodeWheel\McpErrorCodes\ErrorCode;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Drupal\mcp_tools\Tool\McpToolsToolBase;
+use Drupal\tool\Tool\ToolDefinition;
+use Drupal\tool\Tool\ToolManager;
+use Drupal\tool\Tool\ToolOperation;
 
 /**
  * Service for managing MCP tool access control.
@@ -94,6 +98,68 @@ class AccessManager implements AccessManagerInterface {
       }
     }
     return TRUE;
+  }
+
+  /**
+   * Whether this session could call a tool at all.
+   *
+   * Asked without making the tool, so it is cheap enough for a list. For a
+   * tool of MCP Tools it is the tool's own access rule. For a tool of
+   * another provider it is the rule the server applies at the door (scopes
+   * and modes); what that tool checks itself is not known here, so it is
+   * never hidden for a reason of its own.
+   *
+   * @param \Drupal\tool\Tool\ToolDefinition $definition
+   *   The tool.
+   *
+   * @return bool
+   *   FALSE when a call would certainly be refused.
+   */
+  public function couldCall(ToolDefinition $definition): bool {
+    $operation = $definition->getOperation() ?? ToolOperation::Transform;
+    if (McpToolsToolBase::owns($definition)) {
+      return $definition->getClass()::accessFor($operation, $this->currentUser, $this)->isAllowed();
+    }
+    // A permission the tool declares is checked by Tool API before the tool
+    // is even made, so a user without it is certain to be refused.
+    if (!ToolManager::checkPermission($definition, $this->currentUser)->isAllowed()) {
+      return FALSE;
+    }
+    return $this->allowsForeignToolOperation($operation->value);
+  }
+
+  /**
+   * Whether a tool belongs on this session's tool list.
+   *
+   * The list is what the session may call, unless the site asks for the
+   * whole list (access.list_all_tools). A tool that is not listed is still
+   * refused by name with "Access denied", as before.
+   *
+   * @param \Drupal\tool\Tool\ToolDefinition $definition
+   *   The tool.
+   *
+   * @return bool
+   *   TRUE if the tool is listed.
+   */
+  public function listsTool(ToolDefinition $definition): bool {
+    if ($this->configFactory->get('mcp_tools.settings')->get('access.list_all_tools')) {
+      return TRUE;
+    }
+    return $this->couldCall($definition);
+  }
+
+  /**
+   * Whether the site insists on a confirmation for destructive tools.
+   *
+   * It decides what happens when a client cannot ask its user: with this
+   * on, another provider's tool that declares itself destructive is refused
+   * for such a client. With it off, which is the default, the tool runs.
+   *
+   * @return bool
+   *   TRUE if a destructive tool may only run after a confirmation.
+   */
+  public function destructiveToolsNeedConfirmation(): bool {
+    return (bool) $this->configFactory->get('mcp_tools.settings')->get('access.confirm_destructive_tools');
   }
 
   /**

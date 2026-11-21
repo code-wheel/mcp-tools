@@ -69,6 +69,11 @@ final class ToolApiFunctionCallDeriver extends DeriverBase implements ContainerD
         }
 
         $definition = $base_plugin_definition;
+        // The full plugin ID. Drupal AI finds a function call by the name
+        // a model used and then makes the plugin by this "id". With the
+        // base ID left in, every tool call of a real model failed with
+        // "The mcp_tools_tool plugin does not exist".
+        $definition['id'] = $base_plugin_definition['id'] . ':' . $tool_id;
         $definition['name'] = (string) $tool_definition->getLabel();
         $definition['description'] = (string) ($tool_definition->getDescription() ?: $tool_definition->getLabel());
         $definition['group'] = 'mcp_tools';

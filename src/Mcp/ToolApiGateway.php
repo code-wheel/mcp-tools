@@ -57,6 +57,7 @@ class ToolApiGateway {
       $this->logger,
       $this->includeAllTools,
       $this->allowedProviderPrefix,
+      $this->accessManager,
     );
 
     $validator = new ToolInputValidator($this->schemaConverter, $this->logger);
@@ -84,6 +85,34 @@ class ToolApiGateway {
   }
 
   /**
+   * Words in a search that say nothing about the tool that is wanted.
+   */
+  private const SEARCH_FILLER_WORDS = ['the', 'and', 'for', 'with', 'all', 'any', 'tool', 'tools'];
+
+  /**
+   * Whether this session can only read through the gateway.
+   *
+   * The execute tool can run every tool, so it was always described as one
+   * that may change the site. A client that asks its user before such a
+   * call then asks before every call in gateway mode, also for a read, and
+   * refuses them all when nobody is there to ask. A session without the
+   * write and the admin scope cannot change anything through it, and no
+   * session can while the site is in read-only mode: then the hint says
+   * "read only". The server builds these tools when a session starts, with
+   * the scopes of that session.
+   */
+  private function sessionCanOnlyRead(): bool {
+    if ($this->accessManager === NULL) {
+      return FALSE;
+    }
+    if ($this->accessManager->isReadOnlyMode()) {
+      return TRUE;
+    }
+    return !$this->accessManager->hasScope(AccessManager::SCOPE_WRITE)
+      && !$this->accessManager->hasScope(AccessManager::SCOPE_ADMIN);
+  }
+
+  /**
    * Returns gateway tool definitions for server registration.
    *
    * @return array<int, array{
@@ -97,8 +126,13 @@ class ToolApiGateway {
   public function getGatewayTools(): array {
     return [
       [
+        // Find and describe check what this session may call, and that
+        // can load the user. Drupal pauses the current Fiber for an entity
+        // load, and from mcp/sdk 0.10 the SDK fails a request whose
+        // handler pauses for anything but the SDK. So the work runs in a
+        // Fiber of its own, as a tool call does.
         'handler' => function (?string $query = NULL, ?int $limit = NULL): CallToolResult {
-          return $this->discoverTools($query, $limit);
+          return FiberIsolation::run(fn(): CallToolResult => $this->discoverTools($query, $limit));
         },
         'name' => self::DISCOVER_TOOL,
         'description' => 'List available MCP Tools with optional filtering.',
@@ -121,7 +155,7 @@ class ToolApiGateway {
       ],
       [
         'handler' => function (string $tool_name): CallToolResult {
-          return $this->getToolInfo($tool_name);
+          return FiberIsolation::run(fn(): CallToolResult => $this->getToolInfo($tool_name));
         },
         'name' => self::GET_INFO_TOOL,
         'description' => 'Get input schema and hints for a specific tool.',
@@ -144,7 +178,12 @@ class ToolApiGateway {
         },
         'name' => self::EXECUTE_TOOL,
         'description' => 'Execute any available tool by name with arguments.',
-        'annotations' => ToolAnnotations::fromArray([
+        'annotations' => ToolAnnotations::fromArray($this->sessionCanOnlyRead() ? [
+          'title' => 'Execute Tool',
+          'readOnlyHint' => TRUE,
+          'destructiveHint' => FALSE,
+          'openWorldHint' => TRUE,
+        ] : [
           'title' => 'Execute Tool',
           'readOnlyHint' => FALSE,
           'openWorldHint' => TRUE,
@@ -200,31 +239,73 @@ class ToolApiGateway {
         'groups' => array_values($groups),
         'hint' => 'Pass query (a keyword, tool name fragment, or provider from this list) to get matching tools with descriptions, then ' . self::GET_INFO_TOOL . ' for the input schema.',
       ];
+      // Three examples a group cannot show the one tool most first
+      // questions need. Name it, when this session has it.
+      foreach ($allTools as $toolInfo) {
+        if ($toolInfo->name === 'mcp_tools_get_site_status') {
+          $structured['hint'] .= ' For the Drupal core version and a first look at the site: mcp_tools_get_site_status.';
+          break;
+        }
+      }
       return new CallToolResult([new TextContent(json_encode($structured))], FALSE, $structured);
     }
 
-    $tools = [];
-    $matched = 0;
+    // The query as one phrase first. A model that asks in its own words
+    // ("node type" for a content type) finds nothing that way, so the
+    // words are then tried one by one: the tools that have all of them,
+    // and failing that the tools that have some, most words first.
+    $needle = strtolower($query);
+    $words = array_values(array_unique(array_filter(
+      preg_split('/[^a-z0-9_]+/', $needle) ?: [],
+      static fn(string $word): bool => strlen($word) > 2 && !in_array($word, self::SEARCH_FILLER_WORDS, TRUE),
+    )));
+    $byPhrase = [];
+    $byWords = [];
     /** @var \CodeWheel\McpToolGateway\ToolInfo $toolInfo */
     foreach ($allTools as $toolInfo) {
       $haystack = strtolower($toolInfo->name . ' ' . $toolInfo->label . ' ' . $toolInfo->description . ' ' . (string) ($toolInfo->provider ?? ''));
-      if (!str_contains($haystack, strtolower($query))) {
+      if (str_contains($haystack, $needle)) {
+        $byPhrase[] = $toolInfo;
         continue;
       }
-      $matched++;
-      if (count($tools) < $limit) {
-        $tools[] = $toolInfo->toDiscoverySummary();
+      $hits = count(array_filter($words, static fn(string $word): bool => str_contains($haystack, $word)));
+      if ($hits > 0) {
+        $byWords[$hits][] = $toolInfo;
       }
     }
 
+    $match = NULL;
+    $found = $byPhrase;
+    if ($found === [] && $words !== []) {
+      if (isset($byWords[count($words)])) {
+        $found = $byWords[count($words)];
+        $match = 'all words';
+      }
+      elseif ($byWords !== []) {
+        krsort($byWords);
+        $found = array_merge(...array_values($byWords));
+        $match = 'some words';
+      }
+    }
+
+    $tools = array_map(static fn($toolInfo) => $toolInfo->toDiscoverySummary(), array_slice($found, 0, $limit));
     $structured = [
       'success' => TRUE,
       'count' => count($tools),
-      'total_matches' => $matched,
+      'total_matches' => count($found),
       'tools' => $tools,
     ];
-    if ($matched > count($tools)) {
-      $structured['hint'] = 'Result truncated to ' . count($tools) . ' of ' . $matched . ' matches. Narrow the query or raise limit.';
+    if ($match !== NULL) {
+      $structured['match'] = $match;
+    }
+    if ($found === []) {
+      // An empty answer is where a model gives up. Say what there is.
+      $providers = array_values(array_unique(array_map(static fn($toolInfo): string => (string) ($toolInfo->provider ?? 'other'), $allTools)));
+      sort($providers);
+      $structured['hint'] = 'No tool matches "' . $query . '". Try one keyword (for example: content type, field, view, menu, role, user), or one of these groups: ' . implode(', ', $providers) . '. Call ' . self::DISCOVER_TOOL . ' without a query for the overview.';
+    }
+    elseif (count($found) > count($tools)) {
+      $structured['hint'] = 'Result truncated to ' . count($tools) . ' of ' . count($found) . ' matches. Narrow the query or raise limit.';
     }
 
     return new CallToolResult([new TextContent(json_encode($structured))], FALSE, $structured);

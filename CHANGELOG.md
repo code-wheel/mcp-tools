@@ -4,6 +4,181 @@ All notable changes to the MCP Tools module will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.0.0-beta20] - 2026-11-21
+
+### Added
+
+- **`mcp_tools_policy`: the rules of MCP Tools on MCP Server's HTTP
+  endpoint (experimental).** For a site that serves tools through MCP
+  Server 2.x and its Tool Bridge. MCP Server runs a Tool API tool for
+  any user who has the tool's permission. With this submodule on, a
+  tool of any module that is called there also answers to the default
+  scopes, read-only mode and config-only mode, counts against the write
+  limits, and leaves an audit line. A refused call does not reach MCP
+  Server: the client gets a tool result that says "Access denied", or
+  the limit and how many seconds to wait. It is a middleware in the
+  place MCP Server documents for such rules. Not covered: MCP Server
+  over STDIO, a confirmation before destructive tools, and callers
+  other than MCP Server. Its README lists what else it cannot see.
+  Tested with the official JS client against MCP Server 2.0.0-beta7 and
+  Tool Bridge 1.0.0-beta5.
+
+### Changed
+
+- **The tool list is what the connection may call.** Until now every
+  tool was listed and a call was refused at the door: a read-only key
+  was shown more than a hundred write tools it could never run. The list
+  now follows the same rule as the door: the scope the tool's operation
+  needs, read-only mode, config-only mode and the category permission of
+  the user. The server's instructions tell the model how many tools are
+  not listed, and why. In gateway mode, discovery leaves the same tools
+  out. A tool that is not listed is still refused with "Access denied"
+  when called by name. The STDIO server builds its list at start.
+  To get the whole list back: `access.list_all_tools` (a checkbox on the
+  settings form).
+- **Tools of other modules are rate limited and audited.** With "all
+  tools" on, the server runs Tool API tools of other modules. Scopes and
+  modes already held for them. Now a write or trigger tool of another
+  module also counts against the write limits (a tool that declares
+  itself destructive counts as a delete), and each one that ran has a
+  line in the audit log.
+- **Gateway mode: the "run a tool" tool says read-only when the
+  connection can only read.** It can run every tool, so it was always
+  described as one that may change the site. A client that asks its
+  user before such a call asked before every call in gateway mode, also
+  for a read, and refused them all when nobody was there to ask (seen
+  with Codex CLI). A connection without the write and admin scopes
+  cannot change anything through it, and no connection can while the
+  site is in read-only mode: its hints now say so.
+- **Gateway mode: a tool can be called by its own name.** Gateway mode
+  lists three tools: find, describe, run. A model that has found a tool
+  often calls it by the name it found, and not through the run tool. The
+  server answered "Tool not found", and a small model tried the same call
+  again until it gave up. Such a call now runs, through the same checks
+  as every other call: access, scopes, limits and the audit log.
+  Arguments sent in the run tool's shape (`tool_name` and `arguments`)
+  are accepted too. The tool list still shows the three tools.
+
+- **The site status tool says what it has.** Its description now names
+  the Drupal core version and the PHP version, and the gateway's overview
+  points to it. "Which version of Drupal core does this site run" was the
+  question a local model failed most: it searched "core" and never found
+  the tool.
+
+- **Gateway mode: the tool search finds a tool by a question in the
+  model's own words.** It took the whole query as one piece of text, so
+  "node type" found nothing and a local model gave up on a task that
+  the content type tools would have done. When the phrase is nowhere,
+  the words are now tried one by one: first the tools that have all of
+  them, then the ones that have some. An answer with no tools says so
+  and names the groups there are.
+- **A destructive tool of another module asks first.** When the client
+  can ask its user (MCP elicitation), a tool of another module that
+  declares itself destructive runs after the user said yes. A no runs
+  nothing, uses nothing of the limits and leaves no audit line. A client
+  that cannot ask gets the tool run, as before; with
+  `access.confirm_destructive_tools` (a checkbox on the settings form)
+  it is refused. Only what a tool declares counts: Tool API also calls
+  every undeclared write tool destructive. MCP Tools' own tools keep
+  their confirm flags.
+
+- **Tools run through Tool API's runner. Requires Tool API 1.0.0-beta12
+  or later.** The server and the Drupal AI bridge used to drive a tool
+  by hand: make it, set its inputs, ask it for access, execute it. Tool
+  API has one sequence for that since beta12 (`tool.runner`), and its
+  plan is to remove the by-hand methods before its 1.0.0. What changes
+  for a tool: it is told who called it (`mcp_tools`, or `mcp_tools_ai`
+  from the AI bridge), a permission it declares is checked before it is
+  made, and Tool API checks the inputs before it asks the tool for
+  access. What a client gets back has the same shape as before. Composer
+  updates Tool API with the module. The new floor also settles the
+  hints: on Tool API beta9 a write tool that declares nothing looks the
+  same as one that declares itself harmless, so it could not be sent as
+  destructive.
+- **The rules for other modules' tools are one piece.** Scopes,
+  read-only mode, config-only mode, the write limits and the audit line
+  were written twice, in the server and in the AI bridge. They are one
+  service now, `mcp_tools.tool_policy`, that knows Tool API and nothing
+  of MCP. It holds for calls through MCP Tools: the server, the gateway
+  and the AI bridge. The new `mcp_tools_policy` submodule puts it in
+  front of MCP Server's HTTP endpoint. A call that reaches a tool
+  another way (ECA, code of the site) does not pass through it, because
+  Tool API has no place yet where a rule can refuse a call for every
+  caller.
+
+- **Docs: Codex CLI, local models, and the MCP Server 2.x section.**
+  `docs/CLIENT_INTEGRATIONS.md` has the line that adds the server to
+  Codex CLI, tried with Codex CLI 0.166.0 (it lists the tools, reads
+  and writes, and asks you before a tool that can change the site). It
+  also says how to use a model on your own machine (gateway mode) and
+  what we measured with two local models under Ollama. The
+  MCP Server 2.x section had three stale lines: the install command,
+  the endpoint (`/mcp`, not `/_mcp`), and a note that the bridge drops
+  unknown arguments, which it no longer does.
+
+### Removed
+
+- **Webhook notifications, which never sent anything.** The settings
+  form, the config and the documentation offered them since the first
+  release, but nothing called the service that would send one. The
+  service, its form section and its settings are gone. An update removes
+  the old `webhooks` block from `mcp_tools.settings`, the signing secret
+  with it: run `drush updb`. To get notified of tool calls, subscribe to
+  the tool execution events, as the `mcp_tools_observability` module
+  does.
+
+- **`drush mcp:scaffold`, `hook_mcp_tools_components()` and the profile
+  setting `component_public_only`.** The hook was documented as a way to
+  add tools without Tool API and was never invoked, so a scaffolded
+  module added nothing, and its "service" variant named an interface
+  that does not exist. The switch that went with it did nothing. All
+  three are gone, and the Quickstart no longer has that step. To add
+  tools, write a Tool API plugin. An update removes the setting from the
+  server profiles: run `drush updb`.
+
+### Fixed
+
+- **Enabling a transport in the same step as the base module stopped
+  with "Class not found".** In 1.0.0-beta19, `drush en mcp_tools
+  mcp_tools_stdio` in one command, or `drush en mcp_tools_stdio` or
+  `drush en mcp_tools_remote` on a site without `mcp_tools`, failed with
+  `Class "Drupal\mcp_tools\Mcp\Sdk" not found`. Nothing was changed
+  when that happened, and enabling `mcp_tools` first, as the docs say,
+  worked. The transports check for the MCP SDK when they are installed,
+  and since beta19 that check used a class of the base module, which
+  cannot be loaded in the same step. It can now. Before a release the
+  modules are now enabled in six ways on a new site, where the tests
+  only enabled them one after the other.
+
+- **`mcp_tools_ai`: no tool call of a real model reached a tool.** A
+  model answers with a function name. Drupal AI looks that name up and
+  makes the plugin by the ID in its definition, and ours all carried the
+  base ID. So every call ended in "The mcp_tools_tool plugin does not
+  exist". The module's tests made the function calls by their full ID
+  and never took that path. It showed with the first run of a real
+  model through AI Agents. Each definition now carries its own ID.
+
+- **The gateway's tool provider ran a tool without its inputs and without
+  an access check, and reported success.** This is
+  `DrupalToolProvider::execute()`, a method for code that uses the
+  gateway library's own classes. The server never called it: gateway
+  calls went through the call handler, which checked both. It runs
+  through the same path as every other call now.
+
+- **A server profile with a name of your own had no config schema.**
+  Only `default`, `development`, `staging` and `production` were
+  described, so strict config validation refused any other profile. The
+  profiles are a list keyed by name now.
+- The audit log called every call through drush "http", the STDIO
+  server included. It says "cli" for those now.
+- **Hints for tools of other modules.** A tool was called read-only only
+  when its operation was "read". Tool API has two more operations that
+  change nothing, explain and transform; other modules' tools that use
+  them were advertised as tools that may modify the site (15 of Tool
+  Belt's). And a write tool that declares it destroys nothing was sent
+  without a destructive hint, which a client reads as destructive. Both
+  hints now say what the tool declares.
+
 ## [1.0.0-beta19] - 2026-11-20
 
 ### Security
@@ -768,7 +943,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Optional Origin/Host allowlist for the remote HTTP endpoint (`mcp_tools_remote.settings.allowed_origins`) as defense-in-depth against DNS rebinding.
-- JS MCP SDK STDIO smoke test (`scripts/mcp_js_sdk_compat.mjs`) wired into CI to catch strict-client schema regressions early.
+- JS MCP SDK STDIO smoke test (`scripts/mcp_js_sdk_compat.mjs`, in the development repository) wired into CI to catch strict-client schema regressions early.
 - HTTP transport E2E coverage for Origin/Host allowlist behavior.
 
 ## [1.0.0-alpha16] - 2026-01-04

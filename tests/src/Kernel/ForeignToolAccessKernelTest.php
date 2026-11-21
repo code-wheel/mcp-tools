@@ -46,6 +46,8 @@ final class ForeignToolAccessKernelTest extends KernelTestBase {
   protected function setUp(): void {
     parent::setUp();
     $this->installEntitySchema('user');
+    // A write tool of another module that ran leaves an audit line.
+    $this->installSchema('dblog', ['watchdog']);
     $this->installConfig(['mcp_tools']);
     $this->setUpCurrentUser();
     $this->config('mcp_tools.settings')

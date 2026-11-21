@@ -45,6 +45,12 @@ mcp_tools.settings:
         audit_logging:
           type: boolean
           label: 'Enable audit logging'
+        list_all_tools:
+          type: boolean
+          label: 'List every tool, also those this connection may not call'
+        confirm_destructive_tools:
+          type: boolean
+          label: 'Run a destructive tool of another module only after the user confirmed'
     rate_limits:
       type: mapping
       label: 'Rate limits for read operations'
@@ -104,34 +110,3 @@ mcp_tools.settings:
         include_sensitive:
           type: boolean
           label: 'Include sensitive information'
-    webhooks:
-      type: mapping
-      label: 'Webhook notification settings'
-      mapping:
-        enabled:
-          type: boolean
-          label: 'Enable webhook notifications'
-        url:
-          type: string
-          label: 'Webhook URL'
-        secret:
-          type: string
-          label: 'Webhook secret for HMAC signing'
-        allowed_hosts:
-          type: sequence
-          label: 'Allowed webhook destination hosts'
-          sequence:
-            type: string
-            label: 'Host pattern'
-        timeout:
-          type: integer
-          label: 'Request timeout in seconds'
-        batch_notifications:
-          type: boolean
-          label: 'Batch notifications'
-        notify_on:
-          type: sequence
-          label: 'Operations to notify on'
-          sequence:
-            type: string
-            label: 'Operation type'

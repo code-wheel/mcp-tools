@@ -178,9 +178,24 @@ All write operations are logged to Drupal watchdog with:
 - User who performed the action
 - Sanitized details
 
-### Webhook Notifications
+### How a tool call runs
 
-The `WebhookNotifier` service can send HMAC-signed payloads to external systems (Slack, audit logs, etc.) when operations occur. Configure via `mcp_tools.settings` (`webhooks.enabled`, `webhooks.url`, `webhooks.secret`, `webhooks.allowed_hosts`). Payloads include operation type, entity info, user, and sanitized details. A `X-MCP-Signature` header carries the HMAC-SHA256 signature when a secret is set.
+Every call through MCP Tools (the server, gateway mode, the Drupal AI
+bridge) takes one path:
+
+1. The server checks the arguments against the tool's input schema.
+2. For a tool of another module: this connection's scopes, read-only
+   mode and config-only mode, then the write limits. MCP Tools' own
+   tools check these themselves.
+3. Tool API's runner (`tool.runner`): the permission the tool declares,
+   the inputs, the tool's own access check, then the tool.
+4. A write tool of another module that ran leaves an audit line.
+
+Steps 2 and 4 are the service `mcp_tools.tool_policy`. It knows Tool API
+and nothing of MCP. It holds for calls through MCP Tools. The optional
+submodule `mcp_tools_policy` puts the same two steps in front of MCP
+Server's HTTP endpoint. A tool that is called another way (MCP Server
+over STDIO, ECA, code of the site) does not pass through it.
 
 ## Configuration Modes
 
