@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools_jsonapi\Plugin\tool\Tool;
 
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\mcp_tools_jsonapi\Service\JsonApiService;
@@ -22,12 +22,12 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
   operation: ToolOperation::Read,
   input_definitions: [],
   output_definitions: [
-    'types' => new ContextDefinition(
+    'types' => new OutputDefinition(
       data_type: 'any',
       label: new TranslatableMarkup('Entity Types'),
       description: new TranslatableMarkup('List of available entity types with metadata (entity_type, bundle, resource_type, label).'),
     ),
-    'total' => new ContextDefinition(
+    'total' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Count'),
       description: new TranslatableMarkup('Total number of available entity type/bundle combinations.'),

@@ -5,12 +5,17 @@ declare(strict_types=1);
 namespace Drupal\Tests\mcp_tools_structure\Kernel;
 
 use Drupal\KernelTests\KernelTestBase;
+use Drupal\Tests\mcp_tools\Traits\DeclaredOutputTypesTrait;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools_structure\Service\ContentTypeService;
 use Drupal\mcp_tools_structure\Service\FieldService;
+use Drupal\Tests\user\Traits\UserCreationTrait;
 
+#[\PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses]
 #[\PHPUnit\Framework\Attributes\Group('mcp_tools_structure')]
 final class StructureServicesKernelTest extends KernelTestBase {
+
+  use DeclaredOutputTypesTrait;
 
   /**
    * {@inheritdoc}
@@ -28,6 +33,8 @@ final class StructureServicesKernelTest extends KernelTestBase {
     'mcp_tools',
     'mcp_tools_structure',
   ];
+
+  use UserCreationTrait;
 
   private ContentTypeService $contentTypeService;
 
@@ -84,6 +91,34 @@ final class StructureServicesKernelTest extends KernelTestBase {
 
     $delete = $this->fieldService->deleteField('node', 'bar', 'subtitle');
     $this->assertTrue($delete['success']);
+  }
+
+  /**
+   * The scaffold tool creates the type, the core body field and its fields.
+   */
+  public function testScaffoldContentTypeTool(): void {
+    $this->setUpCurrentUser([], [], TRUE);
+
+    $tool = $this->container->get('plugin.manager.tool')->createInstance('mcp_structure_scaffold_content_type');
+    $tool->setInputValue('id', 'event');
+    $tool->setInputValue('label', 'Event');
+    $tool->setInputValue('description', 'Things that happen.');
+    $tool->setInputValue('fields', [
+      ['name' => 'venue', 'type' => 'string', 'required' => TRUE],
+    ]);
+    $tool->execute();
+
+    $result = $tool->getResult();
+    $this->assertTrue($result->isSuccess(), (string) $result->getMessage());
+    $this->assertOutputsHaveDeclaredTypes($tool, (string) $tool->getPluginId());
+    $this->assertSame([], $tool->getOutputValues()['fields_failed']);
+
+    $entityTypeManager = $this->container->get('entity_type.manager');
+    $this->assertSame('Things that happen.', $entityTypeManager->getStorage('node_type')->load('event')->getDescription());
+    $this->assertNotNull($entityTypeManager->getStorage('field_config')->load('node.event.body'));
+    $venue = $entityTypeManager->getStorage('field_config')->load('node.event.field_venue');
+    $this->assertNotNull($venue);
+    $this->assertTrue($venue->isRequired());
   }
 
 }

@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_redirect\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_redirect\Service\RedirectService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -30,35 +30,30 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'id' => new ContextDefinition(
+    'id' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Redirect ID'),
       description: new TranslatableMarkup('The unique numeric identifier for this redirect. Use with UpdateRedirect or DeleteRedirect tools.'),
     ),
-    'source' => new ContextDefinition(
+    'source' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Source Path'),
       description: new TranslatableMarkup('The source path that triggers this redirect (e.g., "old-page" or "/legacy/url"). Does not include the domain.'),
     ),
-    'destination' => new ContextDefinition(
+    'destination' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Destination'),
       description: new TranslatableMarkup('The target path or URL where visitors are redirected (e.g., "/new-page" or "https://example.com/page").'),
     ),
-    'status_code' => new ContextDefinition(
+    'status_code' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Status Code'),
       description: new TranslatableMarkup('HTTP redirect status code: 301 (permanent - cached by browsers), 302 (temporary), 303 (see other), or 307 (temporary preserve method).'),
     ),
-    'language' => new ContextDefinition(
+    'language' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Language'),
       description: new TranslatableMarkup('Language code if this is a language-specific redirect (e.g., "en", "de"), or empty for language-neutral redirects.'),
-    ),
-    'count' => new ContextDefinition(
-      data_type: 'integer',
-      label: new TranslatableMarkup('Hit Count'),
-      description: new TranslatableMarkup('Number of times this redirect has been triggered. Useful for identifying high-traffic redirects or unused ones.'),
     ),
   ],
 )]

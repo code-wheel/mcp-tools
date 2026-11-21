@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_paragraphs\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_paragraphs\Service\ParagraphsService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -86,27 +86,27 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'field_name' => new ContextDefinition(
+    'field_name' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Field Name'),
       description: new TranslatableMarkup('Full machine name of the created field (includes field_ prefix). Use with DeleteParagraphField to remove.'),
     ),
-    'bundle' => new ContextDefinition(
+    'bundle' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Paragraph Type'),
       description: new TranslatableMarkup('Paragraph type the field was added to. Use GetParagraphType to view all fields.'),
     ),
-    'field_type' => new ContextDefinition(
+    'field_type' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Field Type'),
       description: new TranslatableMarkup('Type of field created (e.g., string, text_long, entity_reference).'),
     ),
-    'label' => new ContextDefinition(
+    'label' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Label'),
       description: new TranslatableMarkup('Human-readable label assigned to the field.'),
     ),
-    'message' => new ContextDefinition(
+    'message' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
       description: new TranslatableMarkup('Human-readable confirmation of the field creation.'),

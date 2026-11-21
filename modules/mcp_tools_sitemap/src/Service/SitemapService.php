@@ -9,7 +9,7 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AuditLogger;
 use Drupal\simple_sitemap\Manager\Generator;
-use Drupal\simple_sitemap\Manager\SitemapManager;
+use Drupal\simple_sitemap\Queue\QueueWorker;
 
 /**
  * Service for Simple XML Sitemap operations.
@@ -20,7 +20,7 @@ class SitemapService {
     protected EntityTypeManagerInterface $entityTypeManager,
     protected ConfigFactoryInterface $configFactory,
     protected Generator $generator,
-    protected SitemapManager $sitemapManager,
+    protected QueueWorker $queueWorker,
     protected AccessManager $accessManager,
     protected AuditLogger $auditLogger,
   ) {}
@@ -33,11 +33,11 @@ class SitemapService {
    */
   public function getStatus(): array {
     try {
-      $sitemaps = $this->sitemapManager->getSitemaps();
+      $sitemaps = $this->loadSitemaps();
       $status = [];
 
       foreach ($sitemaps as $id => $sitemap) {
-        $sitemapStatus = $sitemap->getStatus();
+        $sitemapStatus = $sitemap->contentStatus();
         $linkCount = $sitemap->getLinkCount();
         $chunkCount = $sitemap->getChunkCount();
 
@@ -50,19 +50,13 @@ class SitemapService {
           'is_enabled' => $sitemap->status(),
         ];
 
-        // Get content status for each sitemap type.
-        $content = $sitemap->getContent();
-        if (!empty($content)) {
-          $status[$id]['has_content'] = TRUE;
-          $status[$id]['content_size'] = strlen(reset($content));
-        }
-        else {
-          $status[$id]['has_content'] = FALSE;
-        }
+        // Content presence: generated chunks or an index exist.
+        $status[$id]['has_content'] = $chunkCount > 0 || $sitemap->hasIndex();
       }
 
-      // Get overall generator status.
-      $generatorStatus = $this->generator->getQueueStatus();
+      // Overall queue status from the queue worker.
+      $queueTotal = (int) ($this->queueWorker->getInitialElementCount() ?? 0);
+      $queueRemaining = (int) ($this->queueWorker->getQueuedElementCount() ?? 0);
 
       return [
         'success' => TRUE,
@@ -70,9 +64,9 @@ class SitemapService {
           'sitemaps' => $status,
           'total_sitemaps' => count($status),
           'generator_queue' => [
-            'total' => $generatorStatus['total'] ?? 0,
-            'processed' => $generatorStatus['processed'] ?? 0,
-            'remaining' => ($generatorStatus['total'] ?? 0) - ($generatorStatus['processed'] ?? 0),
+            'total' => $queueTotal,
+            'processed' => max(0, $queueTotal - $queueRemaining),
+            'remaining' => $queueRemaining,
           ],
         ],
       ];
@@ -93,7 +87,7 @@ class SitemapService {
    */
   public function getSitemaps(): array {
     try {
-      $sitemaps = $this->sitemapManager->getSitemaps();
+      $sitemaps = $this->loadSitemaps();
       $result = [];
 
       foreach ($sitemaps as $id => $sitemap) {
@@ -136,7 +130,7 @@ class SitemapService {
    */
   public function getSettings(string $variant = 'default'): array {
     try {
-      $sitemap = $this->sitemapManager->getSitemap($variant);
+      $sitemap = $this->loadSitemap($variant);
 
       if (!$sitemap) {
         return [
@@ -165,7 +159,8 @@ class SitemapService {
       ];
 
       // Get enabled entity types for this variant.
-      $bundleSettings = $this->generator->setVariants($variant)->getBundleSettings();
+      $allSettings = $this->generator->entityManager()->setSitemaps($sitemap)->getAllBundleSettings();
+      $bundleSettings = $allSettings[$variant] ?? [];
       $settings['entity_types'] = [];
 
       foreach ($bundleSettings as $entityTypeId => $bundles) {
@@ -210,7 +205,7 @@ class SitemapService {
     }
 
     try {
-      $sitemap = $this->sitemapManager->getSitemap($variant);
+      $sitemap = $this->loadSitemap($variant);
 
       if (!$sitemap) {
         return [
@@ -297,18 +292,18 @@ class SitemapService {
 
     try {
       if ($variant) {
-        $sitemap = $this->sitemapManager->getSitemap($variant);
+        $sitemap = $this->loadSitemap($variant);
         if (!$sitemap) {
           return [
             'success' => FALSE,
             'error' => "Sitemap variant '$variant' not found.",
           ];
         }
-        $this->generator->setVariants($variant)->rebuildQueue()->generateSitemap();
+        $this->generator->setSitemaps($sitemap)->rebuildQueue()->generate();
         $message = "Sitemap '$variant' regeneration started.";
       }
       else {
-        $this->generator->rebuildQueue()->generateSitemap();
+        $this->generator->setSitemaps()->rebuildQueue()->generate();
         $message = 'All sitemap variants regeneration started.';
       }
 
@@ -317,15 +312,16 @@ class SitemapService {
       ]);
 
       // Get queue status after starting regeneration.
-      $queueStatus = $this->generator->getQueueStatus();
+      $queueTotal = (int) ($this->queueWorker->getInitialElementCount() ?? 0);
+      $queueRemaining = (int) ($this->queueWorker->getQueuedElementCount() ?? 0);
 
       return [
         'success' => TRUE,
         'data' => [
           'variant' => $variant ?? 'all',
           'queue_status' => [
-            'total' => $queueStatus['total'] ?? 0,
-            'processed' => $queueStatus['processed'] ?? 0,
+            'total' => $queueTotal,
+            'processed' => max(0, $queueTotal - $queueRemaining),
           ],
           'message' => $message,
         ],
@@ -355,7 +351,8 @@ class SitemapService {
    */
   public function getEntitySettings(string $entityType, ?string $bundle = NULL): array {
     try {
-      $bundleSettings = $this->generator->getBundleSettings();
+      $allSettings = $this->generator->entityManager()->setSitemaps()->getAllBundleSettings();
+      $bundleSettings = $allSettings ? (array) reset($allSettings) : [];
 
       if (!isset($bundleSettings[$entityType])) {
         // Get available entity types.
@@ -474,8 +471,8 @@ class SitemapService {
         ];
       }
 
-      // Apply settings using the generator.
-      $this->generator->setBundleSettings($entityType, $bundle, $bundleSettings);
+      // Apply settings for all variants via the entity manager.
+      $this->generator->entityManager()->setSitemaps()->setBundleSettings($entityType, $bundle, $bundleSettings);
 
       $this->auditLogger->logSuccess('set_entity_sitemap_settings', $entityType, $bundle, [
         'settings' => $bundleSettings,
@@ -500,6 +497,33 @@ class SitemapService {
         'error' => 'Failed to set entity settings: ' . $e->getMessage(),
       ];
     }
+  }
+
+  /**
+   * Loads all sitemap variant entities.
+   *
+   * Simple_sitemap >= 4.2 removed the SitemapManager service; variants are
+   * SimpleSitemap config entities.
+   *
+   * @return array<string, \Drupal\simple_sitemap\Entity\SimpleSitemapInterface>
+   *   Sitemap entities keyed by id.
+   */
+  protected function loadSitemaps(): array {
+    return $this->entityTypeManager->getStorage('simple_sitemap')->loadMultiple();
+  }
+
+  /**
+   * Loads a single sitemap variant entity.
+   *
+   * @param string $variant
+   *   The variant id.
+   *
+   * @return \Drupal\simple_sitemap\Entity\SimpleSitemapInterface|null
+   *   The sitemap entity, or NULL.
+   */
+  protected function loadSitemap(string $variant): ?object {
+    $sitemap = $this->entityTypeManager->getStorage('simple_sitemap')->load($variant);
+    return $sitemap ?: NULL;
   }
 
 }

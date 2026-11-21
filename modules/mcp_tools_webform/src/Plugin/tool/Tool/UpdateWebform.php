@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_webform\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_webform\Service\WebformService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -60,22 +60,22 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'id' => new ContextDefinition(
+    'id' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Webform ID'),
       description: new TranslatableMarkup('Machine name of the updated webform.'),
     ),
-    'title' => new ContextDefinition(
+    'title' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Title'),
       description: new TranslatableMarkup('Current title of the webform after update.'),
     ),
-    'status' => new ContextDefinition(
+    'status' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Status'),
       description: new TranslatableMarkup('Current status: "open" or "closed".'),
     ),
-    'message' => new ContextDefinition(
+    'message' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
       description: new TranslatableMarkup('Human-readable confirmation of what was updated.'),

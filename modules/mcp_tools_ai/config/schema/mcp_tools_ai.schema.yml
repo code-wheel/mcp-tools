@@ -1,6 +1,6 @@
 mcp_tools_ai.settings:
   type: config_object
-  label: 'MCP Tools — AI Function Calls settings'
+  label: 'MCP Tools - AI Function Calls settings'
   mapping:
     exposed_operations:
       type: sequence

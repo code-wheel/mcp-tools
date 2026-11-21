@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_migration\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_migration\Service\MigrationService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -22,42 +22,42 @@ use Drupal\tool\Tool\ToolOperation;
   operation: ToolOperation::Read,
   input_definitions: [],
   output_definitions: [
-    'has_import' => new ContextDefinition(
+    'has_import' => new OutputDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Has Import'),
       description: new TranslatableMarkup('Whether there is a recent import record.'),
     ),
-    'import_id' => new ContextDefinition(
+    'import_id' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Import ID'),
       description: new TranslatableMarkup('Unique identifier for the import operation.'),
     ),
-    'status' => new ContextDefinition(
+    'status' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Status'),
       description: new TranslatableMarkup('Import status: in_progress, completed, or failed.'),
     ),
-    'total_items' => new ContextDefinition(
+    'total_items' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Items'),
       description: new TranslatableMarkup('Total number of items in the import.'),
     ),
-    'processed' => new ContextDefinition(
+    'processed' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Processed'),
       description: new TranslatableMarkup('Number of items processed.'),
     ),
-    'failed' => new ContextDefinition(
+    'failed' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Failed'),
       description: new TranslatableMarkup('Number of items that failed.'),
     ),
-    'started_at' => new ContextDefinition(
+    'started_at' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Started At'),
       description: new TranslatableMarkup('When the import started.'),
     ),
-    'updated_at' => new ContextDefinition(
+    'updated_at' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Updated At'),
       description: new TranslatableMarkup('When the status was last updated.'),

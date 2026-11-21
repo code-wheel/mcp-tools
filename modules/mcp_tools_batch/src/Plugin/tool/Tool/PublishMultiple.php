@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_batch\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_batch\Service\BatchService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -36,47 +36,47 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'action' => new ContextDefinition(
+    'action' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Action Performed'),
       description: new TranslatableMarkup('Either "published" or "unpublished" depending on the publish parameter.'),
     ),
-    'total_requested' => new ContextDefinition(
+    'total_requested' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Requested'),
       description: new TranslatableMarkup('Number of items requested for status change.'),
     ),
-    'processed_count' => new ContextDefinition(
+    'processed_count' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Processed Count'),
       description: new TranslatableMarkup('Number of items whose status was actually changed.'),
     ),
-    'unchanged_count' => new ContextDefinition(
+    'unchanged_count' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Unchanged Count'),
       description: new TranslatableMarkup('Number of items already in the target state.'),
     ),
-    'error_count' => new ContextDefinition(
+    'error_count' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Error Count'),
       description: new TranslatableMarkup('Number of items that failed to process.'),
     ),
-    'processed' => new ContextDefinition(
+    'processed' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Processed Items'),
       description: new TranslatableMarkup('Array of items with nid, title whose status was changed.'),
     ),
-    'unchanged' => new ContextDefinition(
+    'unchanged' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Unchanged Items'),
       description: new TranslatableMarkup('Array of items already in the target publish state.'),
     ),
-    'errors' => new ContextDefinition(
+    'errors' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Errors'),
       description: new TranslatableMarkup('Array of errors with nid and error message for each failure.'),
     ),
-    'message' => new ContextDefinition(
+    'message' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
       description: new TranslatableMarkup('Summary of the batch publish operation.'),

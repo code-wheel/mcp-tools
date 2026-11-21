@@ -22,11 +22,14 @@ use Mcp\Schema\Request\CallToolRequest;
 use Mcp\Schema\Result\CallToolResult;
 use Mcp\Server\Session\SessionInterface;
 use Psr\Log\NullLogger;
+use Drupal\Core\Logger\LoggerChannelInterface;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 /**
  * Kernel coverage for ToolApiCallToolHandler input upcasting.
  *
  */
+#[\PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses]
 #[\PHPUnit\Framework\Attributes\Group('mcp_tools')]
 final class ToolApiCallToolHandlerKernelTest extends KernelTestBase {
 
@@ -37,6 +40,75 @@ final class ToolApiCallToolHandlerKernelTest extends KernelTestBase {
     'system',
     'user',
   ];
+
+  /**
+   * Drupal's own Fiber suspensions stay inside the handler.
+   *
+   * The SDK runs the handler in a Fiber and logs every suspension that is
+   * not one of its own as a warning. Drupal core suspends the current Fiber
+   * too (entity loads, path alias lookups), so the handler resumes those
+   * itself and passes only the SDK's suspensions up.
+   */
+  public function testCoreFiberSuspensionsDoNotReachTheTransport(): void {
+    $definition = new ToolDefinition([
+      'id' => 'mcp_tools:test',
+      'provider' => 'mcp_tools',
+      'label' => new TranslatableMarkup('Test'),
+      'description' => new TranslatableMarkup('Test tool'),
+      'operation' => ToolOperation::Read,
+      'destructive' => FALSE,
+    ]);
+    $currentUser = $this->createMock(AccountInterface::class);
+    $tool = new class([], 'mcp_tools:test', $definition, $currentUser, $this->createMock(EventDispatcherInterface::class), $this->createMock(LoggerChannelInterface::class)) extends ToolBase {
+
+      /**
+       * {@inheritdoc}
+       */
+      protected function doExecute(array $values): ExecutableResult {
+        // What Drupal core does to let a caller batch work.
+        \Fiber::suspend();
+        \Fiber::suspend('resume me');
+        // What the SDK's client gateway does to reach the client.
+        $answer = \Fiber::suspend(['type' => 'notification', 'notification' => 'ping']);
+        return ExecutableResult::success(new TranslatableMarkup('OK'), ['answer' => $answer]);
+      }
+
+      /**
+       * {@inheritdoc}
+       */
+      protected function checkAccess(array $values, AccountInterface $account, bool $return_as_object = FALSE): bool|AccessResultInterface {
+        return TRUE;
+      }
+
+    };
+
+    $toolManager = $this->createMock(PluginManagerInterface::class);
+    $toolManager->method('getDefinitions')->willReturn(['mcp_tools:test' => $definition]);
+    $toolManager->method('createInstance')->with('mcp_tools:test')->willReturn($tool);
+    $handler = new ToolApiCallToolHandler(
+      $toolManager,
+      new NullLogger(),
+      FALSE,
+      'mcp_tools',
+      new ToolInputValidator(new ToolApiSchemaConverter(), new NullLogger()),
+    );
+    $request = (new CallToolRequest('mcp_tools___test', []))->withId(1);
+    $session = $this->createMock(SessionInterface::class);
+
+    // Play the transport: record what the handler suspends with.
+    $fiber = new \Fiber(static fn() => $handler->handle($request, $session));
+    $seen = [];
+    $value = $fiber->start();
+    while (!$fiber->isTerminated()) {
+      $seen[] = $value;
+      $value = $fiber->resume('pong');
+    }
+    $response = $fiber->getReturn();
+
+    $this->assertSame([['type' => 'notification', 'notification' => 'ping']], $seen);
+    $this->assertFalse($response->result->isError);
+    $this->assertSame('pong', $response->result->structuredContent['data']['answer'], 'The answer to the SDK suspension reached the tool.');
+  }
 
   /**
    * Verifies argument upcasting for Tool API typed inputs.
@@ -58,7 +130,7 @@ final class ToolApiCallToolHandlerKernelTest extends KernelTestBase {
     ]);
 
     $currentUser = $this->createMock(AccountInterface::class);
-    $tool = new class([], 'mcp_tools:test', $definition, $currentUser) extends ToolBase {
+    $tool = new class([], 'mcp_tools:test', $definition, $currentUser, $this->createMock(EventDispatcherInterface::class), $this->createMock(LoggerChannelInterface::class)) extends ToolBase {
 
       /**
        * {@inheritdoc}
@@ -165,7 +237,7 @@ final class ToolApiCallToolHandlerKernelTest extends KernelTestBase {
     ]);
 
     $currentUser = $this->createMock(AccountInterface::class);
-    $tool = new class([], 'mcp_tools:test', $definition, $currentUser) extends ToolBase {
+    $tool = new class([], 'mcp_tools:test', $definition, $currentUser, $this->createMock(EventDispatcherInterface::class), $this->createMock(LoggerChannelInterface::class)) extends ToolBase {
 
       /**
        * {@inheritdoc}

@@ -124,10 +124,7 @@ class MetatagService {
       }
 
       // Get the metatag values from the field.
-      $metatagValues = [];
-      if ($entity->hasField($metatagFieldName) && !$entity->get($metatagFieldName)->isEmpty()) {
-        $metatagValues = $entity->get($metatagFieldName)->first()->getValue();
-      }
+      $metatagValues = $this->storedTags($entity, $metatagFieldName);
 
       // Get computed metatags (including defaults and tokens).
       $computedTags = $this->metatagManager->tagsFromEntityWithDefaults($entity);
@@ -197,10 +194,7 @@ class MetatagService {
       }
 
       // Get existing values and merge with new ones.
-      $existingValues = [];
-      if (!$entity->get($metatagFieldName)->isEmpty()) {
-        $existingValues = $entity->get($metatagFieldName)->first()->getValue();
-      }
+      $existingValues = $this->storedTags($entity, $metatagFieldName);
 
       $newValues = array_merge($existingValues, $tags);
 
@@ -209,8 +203,9 @@ class MetatagService {
         return $value !== '' && $value !== NULL;
       });
 
-      // Set the metatag field.
-      $entity->set($metatagFieldName, $newValues);
+      // Set the metatag field. Its tags live serialized in a single `value`
+      // column, so they have to be encoded rather than assigned as properties.
+      $entity->set($metatagFieldName, ['value' => metatag_data_encode($newValues)]);
 
       // Save with a revision if supported.
       if (method_exists($entity, 'setNewRevision')) {
@@ -341,16 +336,9 @@ class MetatagService {
    *   The metatag field name or NULL if not found.
    */
   protected function findMetatagField($entity): ?string {
-    // Common metatag field names.
-    $possibleFields = ['field_metatag', 'field_meta_tags', 'metatag'];
-
-    foreach ($possibleFields as $fieldName) {
-      if ($entity->hasField($fieldName)) {
-        return $fieldName;
-      }
-    }
-
-    // Check all fields for metatag type.
+    // Match on the field type, not on a field name: the Metatag module gives
+    // every entity type with a canonical URL a read-only computed field called
+    // `metatag`, which is never the one to write to.
     foreach ($entity->getFieldDefinitions() as $fieldName => $definition) {
       if ($definition->getType() === 'metatag') {
         return $fieldName;
@@ -358,6 +346,27 @@ class MetatagService {
     }
 
     return NULL;
+  }
+
+  /**
+   * Get the meta tags an entity overrides, decoded.
+   *
+   * @param object $entity
+   *   The entity to read.
+   * @param string $fieldName
+   *   The name of its metatag field.
+   *
+   * @return array
+   *   The stored tags, keyed by tag name. Empty if the entity overrides none.
+   */
+  protected function storedTags($entity, string $fieldName): array {
+    if (!$entity->hasField($fieldName) || $entity->get($fieldName)->isEmpty()) {
+      return [];
+    }
+
+    $value = $entity->get($fieldName)->first()->get('value')->getValue();
+
+    return is_string($value) ? metatag_data_decode($value) : (array) $value;
   }
 
 }

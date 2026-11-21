@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_structure\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_structure\Service\RoleService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -30,37 +30,37 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'id' => new ContextDefinition(
+    'id' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Role ID'),
       description: new TranslatableMarkup('Machine name of the role.'),
     ),
-    'label' => new ContextDefinition(
+    'label' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Label'),
       description: new TranslatableMarkup('Human-readable name of the role.'),
     ),
-    'is_admin' => new ContextDefinition(
+    'is_admin' => new OutputDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Is Admin'),
       description: new TranslatableMarkup('TRUE if this role has all permissions (admin role). Permission list will be empty for admin roles.'),
     ),
-    'permissions' => new ContextDefinition(
+    'permissions' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Permissions'),
       description: new TranslatableMarkup('Flat list of permission machine names. Use with GrantPermissions/RevokePermissions.'),
     ),
-    'permissions_by_provider' => new ContextDefinition(
+    'permissions_by_provider' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Permissions by Provider'),
       description: new TranslatableMarkup('Permissions grouped by module with id, title, description, and restrict_access flag. Helps understand what each permission does.'),
     ),
-    'permission_count' => new ContextDefinition(
+    'permission_count' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Permission Count'),
       description: new TranslatableMarkup('Total number of permissions granted to this role.'),
     ),
-    'admin_path' => new ContextDefinition(
+    'admin_path' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Admin Path'),
       description: new TranslatableMarkup('Path to manage this role in admin UI.'),

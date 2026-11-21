@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_structure\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_structure\Service\RoleService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -42,22 +42,22 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'id' => new ContextDefinition(
+    'id' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Role ID'),
       description: new TranslatableMarkup('Machine name of the created role. Use with AssignUserRoles and GrantPermissions.'),
     ),
-    'label' => new ContextDefinition(
+    'label' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Role Label'),
       description: new TranslatableMarkup('Human-readable role name.'),
     ),
-    'permissions_granted' => new ContextDefinition(
+    'permissions_granted' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Permissions Granted'),
       description: new TranslatableMarkup('List of permissions that were successfully granted to the role.'),
     ),
-    'message' => new ContextDefinition(
+    'message' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
       description: new TranslatableMarkup('Success or error message.'),

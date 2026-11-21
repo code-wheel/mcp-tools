@@ -141,7 +141,6 @@ Each redirect contains:
 - `destination` - Destination path or URL
 - `status_code` - HTTP redirect status code
 - `language` - Language code (or "und" for language-neutral)
-- `count` - Number of times the redirect has been used
 - `created` - Creation timestamp
 
 ## Safety Features

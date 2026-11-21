@@ -7,6 +7,7 @@ namespace Drupal\mcp_tools_views\Service;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AuditLogger;
+use Drupal\views\ViewsData;
 
 /**
  * Service for Views management.
@@ -25,9 +26,17 @@ class ViewsService {
   ];
 
   /**
-   * Common sort options.
+   * Sort options.
+   *
+   * The first four are the values the tools document. The rest are older
+   * names of the same sorts. "title" stands for the label of the base table:
+   * the name of a term or a user.
    */
   protected const SORT_OPTIONS = [
+    'newest' => ['field' => 'created', 'order' => 'DESC'],
+    'oldest' => ['field' => 'created', 'order' => 'ASC'],
+    'changed' => ['field' => 'changed', 'order' => 'DESC'],
+    'title' => ['field' => 'title', 'order' => 'ASC'],
     'created_desc' => ['field' => 'created', 'order' => 'DESC'],
     'created_asc' => ['field' => 'created', 'order' => 'ASC'],
     'changed_desc' => ['field' => 'changed', 'order' => 'DESC'],
@@ -39,7 +48,15 @@ class ViewsService {
     protected EntityTypeManagerInterface $entityTypeManager,
     protected AccessManager $accessManager,
     protected AuditLogger $auditLogger,
+    protected ViewsData $viewsData,
   ) {}
+
+  /**
+   * What Views knows about a table: its fields, sorts and entity type.
+   */
+  protected function tableData(string $table): array {
+    return $this->viewsData->get($table) ?: [];
+  }
 
   /**
    * Create a new view.
@@ -94,6 +111,56 @@ class ViewsService {
         'error' => 'Invalid base table. Valid options: ' . implode(', ', array_keys($validBaseTables)),
       ];
     }
+
+    // The table is on the list, but Views only has data for it when the
+    // module that owns it is enabled.
+    if (!$this->tableData($baseTable)) {
+      return [
+        'success' => FALSE,
+        'error' => "Views has no data for the base table '$baseTable' on this site. The module it belongs to may not be enabled. Nothing was created.",
+      ];
+    }
+
+    // A sort nobody knows, or one this table cannot do, is refused. When no
+    // sort is asked for, the newest come first where the table has a date.
+    $sort = [];
+    if (isset($options['sort'])) {
+      if (!isset(self::SORT_OPTIONS[$options['sort']])) {
+        return [
+          'success' => FALSE,
+          'error' => "Unknown sort '{$options['sort']}'. Use newest, oldest, title or changed. Nothing was created.",
+        ];
+      }
+      $sort = $this->buildSorts($baseTable, $options['sort']);
+      if (!$sort) {
+        $column = $this->sortColumn($baseTable, $options['sort']);
+        return [
+          'success' => FALSE,
+          'error' => "The base table '$baseTable' cannot be sorted by '{$options['sort']}': it has no '$column' to sort on. Nothing was created.",
+        ];
+      }
+    }
+    else {
+      $sort = $this->buildSorts($baseTable, 'newest');
+    }
+
+    // Fields that are neither a column of the table nor a field of its
+    // entity type would give a view that cannot be shown.
+    $fields = $this->buildFields($baseTable, $options['fields'] ?? []);
+    $unknown = array_keys(array_filter($fields, static fn($field): bool => $field === NULL));
+    if ($unknown) {
+      return [
+        'success' => FALSE,
+        'error' => "Unknown field(s) for a view of '$baseTable': " . implode(', ', $unknown) . '. Nothing was created.',
+      ];
+    }
+    if (!empty($options['link_title']) && isset($fields['title'])) {
+      // The formatter has to be named for its setting to mean anything.
+      $fields['title']['type'] = 'string';
+      $fields['title']['settings'] = ['link_to_entity' => TRUE];
+    }
+    $options['fields'] = $fields;
+    $options['sorts'] = $sort;
 
     try {
       // Build view configuration.
@@ -178,15 +245,26 @@ class ViewsService {
       return $this->accessManager->getWriteAccessDenied();
     }
 
+    // The title leads the list and links to the content, unless the caller
+    // switches it off. A field list of the caller's does not drop it.
+    $showTitle = $options['show_title'] ?? TRUE;
+    $fields = array_values(array_diff($options['fields'] ?? ['created'], ['title']));
+    if ($showTitle) {
+      array_unshift($fields, 'title');
+    }
+
     $viewOptions = [
       'description' => $options['description'] ?? "Listing of $label",
       'page_path' => $options['page_path'] ?? '/' . str_replace('_', '-', $id),
       'items_per_page' => $options['items_per_page'] ?? 10,
-      'sort' => $options['sort'] ?? 'created_desc',
       'content_type' => $contentType,
-      'show_title' => $options['show_title'] ?? TRUE,
-      'fields' => $options['fields'] ?? ['title', 'created'],
+      'link_title' => $showTitle,
+      'fields' => $fields,
     ];
+
+    if (isset($options['sort'])) {
+      $viewOptions['sort'] = $options['sort'];
+    }
 
     if (!empty($options['block'])) {
       $viewOptions['block'] = TRUE;
@@ -292,8 +370,7 @@ class ViewsService {
     }
 
     try {
-      $executable = $view->getExecutable();
-      $displayId = $executable->addDisplay($displayType);
+      $displayId = $view->addDisplay($displayType);
 
       // Configure the display.
       $display = &$view->getDisplay($displayId);
@@ -302,12 +379,20 @@ class ViewsService {
         $display['display_options']['path'] = ltrim($options['path'], '/');
       }
 
+      // A display takes its title and its pager from the default display
+      // unless it says it has its own. Without the two "defaults" flags
+      // Views stores these values and never uses them.
       if (!empty($options['title'])) {
+        $display['display_options']['defaults']['title'] = FALSE;
         $display['display_options']['title'] = $options['title'];
       }
 
       if (!empty($options['items_per_page'])) {
-        $display['display_options']['pager']['options']['items_per_page'] = $options['items_per_page'];
+        $pager = $view->getDisplay('default')['display_options']['pager'] ?? [];
+        $pager['type'] = $pager['type'] ?? 'some';
+        $pager['options']['items_per_page'] = (int) $options['items_per_page'];
+        $display['display_options']['defaults']['pager'] = FALSE;
+        $display['display_options']['pager'] = $pager;
       }
 
       $view->save();
@@ -408,14 +493,14 @@ class ViewsService {
       'display_title' => 'Default',
       'position' => 0,
       'display_options' => [
-        'fields' => $this->buildFields($baseTable, $options['fields'] ?? []),
+        'fields' => $options['fields'],
         'pager' => [
           'type' => 'full',
           'options' => [
             'items_per_page' => $options['items_per_page'] ?? 10,
           ],
         ],
-        'sorts' => $this->buildSorts($options['sort'] ?? 'created_desc'),
+        'sorts' => $options['sorts'],
         'style' => [
           'type' => $options['style'] ?? 'default',
         ],
@@ -488,6 +573,9 @@ class ViewsService {
 
   /**
    * Build fields configuration.
+   *
+   * @return array
+   *   Field settings by name. A name Views cannot place has NULL.
    */
   protected function buildFields(string $baseTable, array $requestedFields): array {
     $fields = [];
@@ -501,13 +589,27 @@ class ViewsService {
     };
 
     $fieldList = !empty($requestedFields) ? $requestedFields : $defaultFields;
+    $base = $this->tableData($baseTable);
+    $entityType = $base['table']['entity type'] ?? NULL;
 
     foreach ($fieldList as $field) {
+      // A column of the base table, such as title, or a field added to the
+      // entity type, such as body, which lives in a table of its own.
+      $table = $baseTable;
+      $data = $base[$field]['field'] ?? NULL;
+      if (!$data && $entityType) {
+        $table = $entityType . '__' . $field;
+        $data = $this->tableData($table)[$field]['field'] ?? NULL;
+      }
+      if (!$data) {
+        $fields[$field] = NULL;
+        continue;
+      }
       $fields[$field] = [
         'id' => $field,
-        'table' => $baseTable,
+        'table' => $table,
         'field' => $field,
-        'plugin_id' => 'field',
+        'plugin_id' => $data['id'] ?? 'field',
       ];
     }
 
@@ -515,18 +617,41 @@ class ViewsService {
   }
 
   /**
-   * Build sorts configuration.
+   * The column a sort option means on a base table.
    */
-  protected function buildSorts(string $sortOption): array {
-    $sortConfig = self::SORT_OPTIONS[$sortOption] ?? self::SORT_OPTIONS['created_desc'];
+  protected function sortColumn(string $baseTable, string $sortOption): string {
+    $field = self::SORT_OPTIONS[$sortOption]['field'];
+    if ($field !== 'title') {
+      return $field;
+    }
+    return match ($baseTable) {
+      'node_field_data' => 'title',
+      'file_managed' => 'filename',
+      'comment_field_data' => 'subject',
+      default => 'name',
+    };
+  }
+
+  /**
+   * Build sorts configuration.
+   *
+   * @return array
+   *   The sort, or nothing when the table has no such column to sort on.
+   */
+  protected function buildSorts(string $baseTable, string $sortOption): array {
+    $field = $this->sortColumn($baseTable, $sortOption);
+    $sort = $this->tableData($baseTable)[$field]['sort'] ?? NULL;
+    if (!$sort) {
+      return [];
+    }
 
     return [
-      $sortConfig['field'] => [
-        'id' => $sortConfig['field'],
-        'table' => 'node_field_data',
-        'field' => $sortConfig['field'],
-        'order' => $sortConfig['order'],
-        'plugin_id' => 'date',
+      $field => [
+        'id' => $field,
+        'table' => $baseTable,
+        'field' => $field,
+        'order' => self::SORT_OPTIONS[$sortOption]['order'],
+        'plugin_id' => $sort['id'] ?? 'standard',
       ],
     ];
   }

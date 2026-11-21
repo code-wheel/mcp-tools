@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_theme\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_theme\Service\ThemeService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -22,22 +22,22 @@ use Drupal\tool\Tool\ToolOperation;
   operation: ToolOperation::Read,
   input_definitions: [],
   output_definitions: [
-    'active_theme' => new ContextDefinition(
+    'active_theme' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Active Theme'),
       description: new TranslatableMarkup('Machine name of the currently active theme for the current context (may differ from default on admin pages).'),
     ),
-    'default_theme' => new ContextDefinition(
+    'default_theme' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Default Theme'),
       description: new TranslatableMarkup('Machine name of the default frontend theme. Use SetDefaultTheme to change.'),
     ),
-    'admin_theme' => new ContextDefinition(
+    'admin_theme' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Admin Theme'),
       description: new TranslatableMarkup('Machine name of the admin theme. Use SetAdminTheme to change.'),
     ),
-    'active_theme_info' => new ContextDefinition(
+    'active_theme_info' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Active Theme Info'),
       description: new TranslatableMarkup('Detailed info about active theme: label, version, base_theme, regions, and libraries. Use GetThemeSettings for configuration.'),

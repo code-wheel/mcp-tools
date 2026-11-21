@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_config\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_config\Service\ConfigManagementService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -36,32 +36,32 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'dry_run' => new ContextDefinition(
+    'dry_run' => new OutputDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Dry Run'),
       description: new TranslatableMarkup('Always true, indicating this is a preview.'),
     ),
-    'operation' => new ContextDefinition(
+    'operation' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Operation'),
       description: new TranslatableMarkup('The operation that was previewed.'),
     ),
-    'action' => new ContextDefinition(
+    'action' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Action'),
       description: new TranslatableMarkup('Human-readable description of the action.'),
     ),
-    'description' => new ContextDefinition(
+    'description' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Description'),
       description: new TranslatableMarkup('Detailed description of what would happen.'),
     ),
-    'affected_configs' => new ContextDefinition(
+    'affected_configs' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Affected Configs'),
       description: new TranslatableMarkup('Configuration objects that would be affected.'),
     ),
-    'note' => new ContextDefinition(
+    'note' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Note'),
       description: new TranslatableMarkup('Reminder that this is a preview.'),

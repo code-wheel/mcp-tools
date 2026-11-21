@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_metatag\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_metatag\Service\MetatagService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -22,17 +22,17 @@ use Drupal\tool\Tool\ToolOperation;
   operation: ToolOperation::Read,
   input_definitions: [],
   output_definitions: [
-    'total' => new ContextDefinition(
+    'total' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Tags'),
       description: new TranslatableMarkup('Total number of metatag tags available.'),
     ),
-    'by_group' => new ContextDefinition(
+    'by_group' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Tags Grouped'),
       description: new TranslatableMarkup('Tags organized by group (basic, open_graph, twitter_cards, etc.). Use group names to filter ListMetatagGroups.'),
     ),
-    'all_tags' => new ContextDefinition(
+    'all_tags' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('All Tags'),
       description: new TranslatableMarkup('Flat list of all tag definitions with id, name, description, and group. Use tag id/name with SetEntityMetatags.'),

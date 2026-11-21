@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_menus\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_menus\Service\MenuManagementService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -36,17 +36,17 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'id' => new ContextDefinition(
+    'id' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Link ID'),
       description: new TranslatableMarkup('The updated menu link content entity ID.'),
     ),
-    'title' => new ContextDefinition(
+    'title' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Title'),
       description: new TranslatableMarkup('Current link title after update.'),
     ),
-    'message' => new ContextDefinition(
+    'message' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
       description: new TranslatableMarkup('Success confirmation or error details.'),

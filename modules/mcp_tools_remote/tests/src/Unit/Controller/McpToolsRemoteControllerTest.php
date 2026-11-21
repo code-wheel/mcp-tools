@@ -71,6 +71,7 @@ final class McpToolsRemoteControllerTest extends UnitTestCase {
     $container = new ContainerBuilder();
     $container->set('logger.factory', $loggerFactory);
     $container->set('string_translation', $this->getStringTranslationStub());
+    $container->set('cache.default', $this->createMock(\Drupal\Core\Cache\CacheBackendInterface::class));
     $container->setParameter('app.root', '/tmp');
     \Drupal::setContainer($container);
   }

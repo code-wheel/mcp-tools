@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_analysis\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_analysis\Service\AnalysisService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -22,37 +22,37 @@ use Drupal\tool\Tool\ToolOperation;
   operation: ToolOperation::Read,
   input_definitions: [],
   output_definitions: [
-    'critical_issues' => new ContextDefinition(
+    'critical_issues' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Critical Issues'),
       description: new TranslatableMarkup('Critical security issues requiring immediate attention'),
     ),
-    'warnings' => new ContextDefinition(
+    'warnings' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Warnings'),
       description: new TranslatableMarkup('Security warnings to review'),
     ),
-    'critical_count' => new ContextDefinition(
+    'critical_count' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Critical Count'),
       description: new TranslatableMarkup('Number of critical issues requiring immediate action.'),
     ),
-    'warning_count' => new ContextDefinition(
+    'warning_count' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Warning Count'),
       description: new TranslatableMarkup('Number of warnings to review and prioritize.'),
     ),
-    'admin_user_count' => new ContextDefinition(
+    'admin_user_count' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Admin User Count'),
       description: new TranslatableMarkup('Number of users with administrator role'),
     ),
-    'registration_mode' => new ContextDefinition(
+    'registration_mode' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Registration Mode'),
       description: new TranslatableMarkup('Current user registration setting'),
     ),
-    'suggestions' => new ContextDefinition(
+    'suggestions' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Suggestions'),
       description: new TranslatableMarkup('Specific remediations for security issues found.'),

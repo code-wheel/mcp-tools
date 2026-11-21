@@ -25,32 +25,36 @@ class ClientConfigGenerator {
    *   Comma-separated scopes (e.g. "read,write").
    * @param string $uid
    *   Drupal user ID for tool execution.
+   * @param string|null $vendorDir
+   *   Absolute path to Composer's vendor folder. On a site built from
+   *   drupal/recommended-project it is beside the web root, not inside it.
+   *   NULL assumes it is inside the web root.
    *
    * @return array<string, mixed>
    *   The mcpServers configuration array.
    */
-  public function buildConfig(string $drupalRoot, bool $isDdev, bool $isLando, string $scope = 'read,write', string $uid = '1'): array {
+  public function buildConfig(string $drupalRoot, bool $isDdev, bool $isLando, string $scope = 'read,write', string $uid = '1', ?string $vendorDir = NULL): array {
     if ($isDdev) {
-      return $this->buildDdevConfig($drupalRoot, $scope, $uid);
+      return $this->buildDdevConfig($drupalRoot, $scope, $uid, $vendorDir);
     }
 
     if ($isLando) {
-      return $this->buildLandoConfig($drupalRoot, $scope, $uid);
+      return $this->buildLandoConfig($drupalRoot, $scope, $uid, $vendorDir);
     }
 
-    return $this->buildBareMetalConfig($drupalRoot, $scope, $uid);
+    return $this->buildBareMetalConfig($drupalRoot, $scope, $uid, $vendorDir);
   }
 
   /**
    * Build config for a DDEV environment.
    */
-  private function buildDdevConfig(string $drupalRoot, string $scope, string $uid): array {
+  private function buildDdevConfig(string $drupalRoot, string $scope, string $uid, ?string $vendorDir): array {
     return [
       'mcpServers' => [
         'drupal' => [
           'command' => 'ddev',
           'args' => $this->buildArgs($scope, $uid),
-          'cwd' => $this->resolveProjectRoot($drupalRoot),
+          'cwd' => $this->resolveProjectRoot($drupalRoot, $vendorDir),
         ],
       ],
     ];
@@ -59,13 +63,13 @@ class ClientConfigGenerator {
   /**
    * Build config for a Lando environment.
    */
-  private function buildLandoConfig(string $drupalRoot, string $scope, string $uid): array {
+  private function buildLandoConfig(string $drupalRoot, string $scope, string $uid, ?string $vendorDir): array {
     return [
       'mcpServers' => [
         'drupal' => [
           'command' => 'lando',
           'args' => $this->buildArgs($scope, $uid),
-          'cwd' => $this->resolveProjectRoot($drupalRoot),
+          'cwd' => $this->resolveProjectRoot($drupalRoot, $vendorDir),
         ],
       ],
     ];
@@ -74,8 +78,8 @@ class ClientConfigGenerator {
   /**
    * Build config for a bare-metal / native environment.
    */
-  private function buildBareMetalConfig(string $drupalRoot, string $scope, string $uid): array {
-    $drushPath = $drupalRoot . '/vendor/bin/drush';
+  private function buildBareMetalConfig(string $drupalRoot, string $scope, string $uid, ?string $vendorDir): array {
+    $drushPath = ($vendorDir ?? $drupalRoot . '/vendor') . '/bin/drush';
     return [
       'mcpServers' => [
         'drupal' => [
@@ -113,9 +117,13 @@ class ClientConfigGenerator {
    *
    * For DDEV/Lando the project root is typically one level above the
    * Drupal web root (e.g. web/ or docroot/). If the Drupal root itself
-   * is the project root, return it directly.
+   * is the project root, return it directly. The folder that holds vendor/
+   * is the project root when it is known.
    */
-  private function resolveProjectRoot(string $drupalRoot): string {
+  private function resolveProjectRoot(string $drupalRoot, ?string $vendorDir = NULL): string {
+    if ($vendorDir !== NULL) {
+      return dirname($vendorDir);
+    }
     $projectRoot = dirname($drupalRoot);
     if (basename($drupalRoot) === $drupalRoot) {
       $projectRoot = $drupalRoot;

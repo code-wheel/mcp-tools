@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_config\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_config\Service\ConfigManagementService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -30,27 +30,27 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'config_name' => new ContextDefinition(
+    'config_name' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Configuration Name'),
       description: new TranslatableMarkup('The configuration name that was compared.'),
     ),
-    'status' => new ContextDefinition(
+    'status' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Status'),
       description: new TranslatableMarkup('Comparison status: unchanged, modified, new_in_active, deleted_from_active.'),
     ),
-    'diff' => new ContextDefinition(
+    'diff' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Diff'),
       description: new TranslatableMarkup('List of differences between active and sync.'),
     ),
-    'sync_data' => new ContextDefinition(
+    'sync_data' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Sync Data'),
       description: new TranslatableMarkup('Configuration data from sync storage.'),
     ),
-    'active_data' => new ContextDefinition(
+    'active_data' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Active Data'),
       description: new TranslatableMarkup('Configuration data from active storage.'),

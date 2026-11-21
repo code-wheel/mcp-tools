@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_analysis\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_analysis\Service\AnalysisService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -36,42 +36,42 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'entity_type' => new ContextDefinition(
+    'entity_type' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Entity Type'),
       description: new TranslatableMarkup('The entity type that was analyzed.'),
     ),
-    'entity_id' => new ContextDefinition(
+    'entity_id' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Entity ID'),
       description: new TranslatableMarkup('The entity ID that was analyzed.'),
     ),
-    'title' => new ContextDefinition(
+    'title' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Title'),
       description: new TranslatableMarkup('Entity title for reference.'),
     ),
-    'seo_score' => new ContextDefinition(
+    'seo_score' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('SEO Score'),
       description: new TranslatableMarkup('Score from 0-100'),
     ),
-    'score_rating' => new ContextDefinition(
+    'score_rating' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Score Rating'),
       description: new TranslatableMarkup('good, needs_improvement, or poor'),
     ),
-    'issues' => new ContextDefinition(
+    'issues' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Issues'),
       description: new TranslatableMarkup('SEO issues found with type, severity, and message'),
     ),
-    'issue_count' => new ContextDefinition(
+    'issue_count' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Issue Count'),
       description: new TranslatableMarkup('Total number of SEO issues found.'),
     ),
-    'suggestions' => new ContextDefinition(
+    'suggestions' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Suggestions'),
       description: new TranslatableMarkup('Specific fixes to improve SEO score.'),

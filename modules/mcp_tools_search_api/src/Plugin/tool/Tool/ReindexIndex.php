@@ -8,7 +8,7 @@ use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AuditLogger;
 use Drupal\mcp_tools_search_api\Service\SearchApiService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -32,17 +32,17 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'success' => new ContextDefinition(
+    'success' => new OutputDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Success status'),
       description: new TranslatableMarkup('TRUE if items were marked for reindexing, FALSE if an error occurred.'),
     ),
-    'message' => new ContextDefinition(
+    'message' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result message'),
       description: new TranslatableMarkup('Human-readable confirmation. Note: actual indexing happens via cron or IndexItems.'),
     ),
-    'total_items' => new ContextDefinition(
+    'total_items' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total items to reindex'),
       description: new TranslatableMarkup('Total items marked for reindexing. Use GetIndexStatus to monitor progress, IndexItems to trigger indexing.'),

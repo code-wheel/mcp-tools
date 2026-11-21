@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_views\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_views\Service\ViewsService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -31,12 +31,12 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'id' => new ContextDefinition(
+    'id' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('View ID'),
       description: new TranslatableMarkup('Machine name of the deleted view.'),
     ),
-    'message' => new ContextDefinition(
+    'message' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
       description: new TranslatableMarkup('Success confirmation. View is permanently deleted.'),

@@ -129,25 +129,22 @@ class PathautoService {
         return ['success' => FALSE, 'error' => "Invalid entity type '$entityType'."];
       }
 
-      // Build selection criteria.
-      $selectionCriteria = [];
-      if ($bundle) {
-        $bundleKey = $entityTypeDefinition->getKey('bundle');
-        if ($bundleKey) {
-          $selectionCriteria[$bundleKey] = [$bundle => $bundle];
-        }
-      }
-
       // Create the pattern.
       $patternEntity = $storage->create([
         'id' => $id,
         'label' => $label,
         'type' => 'canonical_entities:' . $entityType,
         'pattern' => $pattern,
-        'selection_criteria' => $selectionCriteria,
         'weight' => 0,
         'status' => TRUE,
       ]);
+      if ($bundle && $entityTypeDefinition->getKey('bundle')) {
+        $this->setBundleCondition($patternEntity, $entityType, $bundle);
+        // Pathauto uses the first pattern that matches, by weight. Its own
+        // form gives a pattern for one bundle -5, so that it wins over a
+        // pattern for every bundle.
+        $patternEntity->setWeight(-5);
+      }
 
       $patternEntity->save();
 
@@ -231,9 +228,7 @@ class PathautoService {
         if ($entityTypeDefinition) {
           $bundleKey = $entityTypeDefinition->getKey('bundle');
           if ($bundleKey) {
-            $bundle = $values['bundle'];
-            $selectionCriteria = $bundle ? [$bundleKey => [$bundle => $bundle]] : [];
-            $pattern->set('selection_criteria', $selectionCriteria);
+            $this->setBundleCondition($pattern, $entityType, (string) $values['bundle']);
             $updated[] = 'bundle';
           }
         }
@@ -428,6 +423,36 @@ class PathautoService {
   }
 
   /**
+   * Limits a pattern to one bundle, or to none.
+   *
+   * Pathauto keeps a list of condition plugins, one of them for bundles. It
+   * is not a map of bundle key to bundles: a pattern saved in that shape
+   * fails with "Plugin ID ... was not found".
+   *
+   * @param object $pattern
+   *   The pathauto pattern.
+   * @param string $entityType
+   *   The entity type the pattern is for.
+   * @param string $bundle
+   *   The bundle, or an empty string for every bundle.
+   */
+  protected function setBundleCondition(object $pattern, string $entityType, string $bundle): void {
+    foreach ($pattern->getSelectionConditions() as $conditionId => $condition) {
+      if (in_array($condition->getPluginId(), ['entity_bundle:' . $entityType, 'node_type'], TRUE)) {
+        $pattern->removeSelectionCondition($conditionId);
+      }
+    }
+    if ($bundle !== '') {
+      $pattern->addSelectionCondition([
+        'id' => 'entity_bundle:' . $entityType,
+        'bundles' => [$bundle => $bundle],
+        'negate' => FALSE,
+        'context_mapping' => [$entityType => $entityType],
+      ]);
+    }
+  }
+
+  /**
    * Format a pattern entity for output.
    *
    * @param object $pattern
@@ -445,13 +470,11 @@ class PathautoService {
     $selectionCriteria = $pattern->get('selection_criteria') ?? [];
     $bundles = [];
 
-    // Extract bundle from selection criteria.
-    if (!empty($selectionCriteria)) {
-      foreach ($selectionCriteria as $value) {
-        if (is_array($value)) {
-          $bundles = array_keys($value);
-          break;
-        }
+    // Each entry is the configuration of one condition plugin. The bundle
+    // condition lists its bundles under "bundles".
+    foreach ($selectionCriteria as $condition) {
+      if (is_array($condition) && is_array($condition['bundles'] ?? NULL)) {
+        $bundles = array_values(array_unique(array_merge($bundles, array_keys($condition['bundles']))));
       }
     }
 

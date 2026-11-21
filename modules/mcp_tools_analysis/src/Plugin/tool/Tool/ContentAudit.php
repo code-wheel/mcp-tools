@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_analysis\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_analysis\Service\AnalysisService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -42,37 +42,37 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'stale_content' => new ContextDefinition(
+    'stale_content' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Stale Content'),
       description: new TranslatableMarkup('Content not updated within the specified period'),
     ),
-    'stale_count' => new ContextDefinition(
+    'stale_count' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Stale Count'),
       description: new TranslatableMarkup('Number of content items not updated within threshold.'),
     ),
-    'orphaned_content' => new ContextDefinition(
+    'orphaned_content' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Orphaned Content'),
       description: new TranslatableMarkup('Unpublished content with no recent activity'),
     ),
-    'orphaned_count' => new ContextDefinition(
+    'orphaned_count' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Orphaned Count'),
       description: new TranslatableMarkup('Number of unpublished content items with no activity.'),
     ),
-    'drafts' => new ContextDefinition(
+    'drafts' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Drafts'),
       description: new TranslatableMarkup('Content in draft state'),
     ),
-    'draft_count' => new ContextDefinition(
+    'draft_count' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Draft Count'),
       description: new TranslatableMarkup('Number of content items in draft state.'),
     ),
-    'suggestions' => new ContextDefinition(
+    'suggestions' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Suggestions'),
       description: new TranslatableMarkup('Recommendations for managing stale and orphaned content.'),

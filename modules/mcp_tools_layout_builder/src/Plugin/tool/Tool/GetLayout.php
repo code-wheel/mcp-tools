@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_layout_builder\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_layout_builder\Service\LayoutBuilderService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -37,32 +37,32 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'entity_type' => new ContextDefinition(
+    'entity_type' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Entity Type'),
       description: new TranslatableMarkup('The entity type queried.'),
     ),
-    'bundle' => new ContextDefinition(
+    'bundle' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Bundle'),
       description: new TranslatableMarkup('The bundle queried.'),
     ),
-    'layout_builder_enabled' => new ContextDefinition(
+    'layout_builder_enabled' => new OutputDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Layout Builder Enabled'),
       description: new TranslatableMarkup('Whether Layout Builder is enabled for this bundle.'),
     ),
-    'allow_custom_layouts' => new ContextDefinition(
+    'allow_custom_layouts' => new OutputDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Allow Custom Layouts'),
       description: new TranslatableMarkup('Whether per-entity layout overrides are allowed.'),
     ),
-    'sections' => new ContextDefinition(
+    'sections' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Layout Sections'),
       description: new TranslatableMarkup('Array of sections with layout_id, settings, and components.'),
     ),
-    'section_count' => new ContextDefinition(
+    'section_count' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Section Count'),
       description: new TranslatableMarkup('Number of sections in the layout.'),

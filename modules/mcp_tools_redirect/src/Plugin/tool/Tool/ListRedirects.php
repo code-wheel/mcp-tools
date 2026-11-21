@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_redirect\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_redirect\Service\RedirectService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -36,25 +36,25 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'total' => new ContextDefinition(
+    'total' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Redirects'),
       description: new TranslatableMarkup('Total number of redirects in the system across all pages. Use with limit and offset for pagination calculations.'),
     ),
-    'limit' => new ContextDefinition(
+    'limit' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Limit'),
       description: new TranslatableMarkup('Maximum number of redirects returned in this response. Default is 100.'),
     ),
-    'offset' => new ContextDefinition(
+    'offset' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Offset'),
       description: new TranslatableMarkup('Number of redirects skipped before this page. Use offset + limit for the next page.'),
     ),
-    'redirects' => new ContextDefinition(
+    'redirects' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Redirects'),
-      description: new TranslatableMarkup('Array of redirect objects, each containing id, source, destination, status_code, language, and count. Use id with GetRedirect for full details.'),
+      description: new TranslatableMarkup('Array of redirect objects, each containing id, source, destination, status_code, language and created. Use id with GetRedirect for one redirect.'),
     ),
   ],
 )]

@@ -21,6 +21,7 @@ use Drupal\Tests\user\Traits\UserCreationTrait;
  * module setup — to verify buildPidTargetMap() resolves the target-language
  * paragraph translation and updateTranslation() edits only that language.
  */
+#[\PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses]
 #[\PHPUnit\Framework\Attributes\Group('mcp_tools_translate')]
 class TranslateParagraphsKernelTest extends KernelTestBase {
 
@@ -161,6 +162,31 @@ class TranslateParagraphsKernelTest extends KernelTestBase {
     $this->assertSame('<p>FR mis à jour</p>', $reloaded->getTranslation('fr')->get('field_text')->value);
     $this->assertSame('plain_text', $reloaded->getTranslation('fr')->get('field_text')->format, 'The existing format is preserved.');
     $this->assertSame('<p>EN text</p>', $reloaded->get('field_text')->value, 'The source language paragraph is untouched.');
+  }
+
+  /**
+   * A shared paragraph without the translation gets one on update.
+   *
+   * The node is translated but its paragraph is not yet. The update must
+   * not write the translated text onto the source-language paragraph.
+   */
+  public function testUpdateTranslationAddsMissingSharedParagraphTranslation(): void {
+    [$node, $paragraph] = $this->createNodeWithParagraph();
+    $nid = (int) $node->id();
+    $pid = (string) $paragraph->id();
+    $node->addTranslation('fr', ['title' => 'FR titre'])->save();
+
+    $result = $this->translationService->updateTranslation($nid, 'fr', [
+      'paragraphs' => [$pid => ['field_text' => '<p>FR nouveau</p>']],
+    ]);
+    $this->assertTrue($result['success'], $result['error'] ?? '');
+
+    $storage = $this->container->get('entity_type.manager')->getStorage('paragraph');
+    $storage->resetCache([(int) $pid]);
+    $reloaded = $storage->load((int) $pid);
+    $this->assertSame('<p>EN text</p>', $reloaded->get('field_text')->value, 'The source language paragraph is untouched.');
+    $this->assertTrue($reloaded->hasTranslation('fr'));
+    $this->assertSame('<p>FR nouveau</p>', $reloaded->getTranslation('fr')->get('field_text')->value);
   }
 
   /**

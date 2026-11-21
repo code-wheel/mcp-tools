@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_structure\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_structure\Service\TaxonomyManagementService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -37,37 +37,37 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'id' => new ContextDefinition(
+    'id' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Vocabulary ID'),
       description: new TranslatableMarkup('Machine name of the vocabulary.'),
     ),
-    'label' => new ContextDefinition(
+    'label' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Label'),
       description: new TranslatableMarkup('Human-readable name of the vocabulary.'),
     ),
-    'description' => new ContextDefinition(
+    'description' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Description'),
       description: new TranslatableMarkup('Description of the vocabulary purpose.'),
     ),
-    'terms' => new ContextDefinition(
+    'terms' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Terms'),
       description: new TranslatableMarkup('Array of terms with tid, name, description, weight, and parent tid (0 for root). Use tid when creating entity references to taxonomy terms.'),
     ),
-    'terms_returned' => new ContextDefinition(
+    'terms_returned' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Terms Returned'),
       description: new TranslatableMarkup('Number of terms in this response (may be less than total_terms if limit applied).'),
     ),
-    'total_terms' => new ContextDefinition(
+    'total_terms' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Terms'),
       description: new TranslatableMarkup('Total number of terms in the vocabulary.'),
     ),
-    'admin_path' => new ContextDefinition(
+    'admin_path' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Admin Path'),
       description: new TranslatableMarkup('Path to manage this vocabulary in admin UI.'),

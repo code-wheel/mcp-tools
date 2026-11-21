@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools\Plugin\tool\Tool;
 
 use Drupal\mcp_tools\Service\ConfigAnalysisService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -22,17 +22,17 @@ use Drupal\tool\Tool\ToolOperation;
   operation: ToolOperation::Read,
   input_definitions: [],
   output_definitions: [
-    'has_changes' => new ContextDefinition(
+    'has_changes' => new OutputDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Has Pending Changes'),
       description: new TranslatableMarkup('True if there are differences between active and sync config storage.'),
     ),
-    'total_changes' => new ContextDefinition(
+    'total_changes' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Changes'),
       description: new TranslatableMarkup('Number of config objects that differ.'),
     ),
-    'changes' => new ContextDefinition(
+    'changes' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Change Details'),
       description: new TranslatableMarkup('Array of changes with name and type (create, update, delete, rename).'),

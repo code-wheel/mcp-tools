@@ -2,7 +2,7 @@ name: MCP Tools MCP Server Bridge
 type: module
 description: 'Optional bridge for exposing MCP Tools via drupal/mcp_server when installed.'
 package: AI
-core_version_requirement: ^10.3 || ^11 || ^12
+core_version_requirement: ^10.5 || ^11
 lifecycle: experimental
 
 # The bridge targets the mcp_server 1.x tool-config API (McpToolConfig entity,

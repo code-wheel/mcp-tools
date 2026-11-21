@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools\Plugin\tool\Tool;
 
 use Drupal\mcp_tools\Service\MenuService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -37,17 +37,17 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'menu' => new ContextDefinition(
+    'menu' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Menu Name'),
       description: new TranslatableMarkup('Machine name of the menu queried.'),
     ),
-    'label' => new ContextDefinition(
+    'label' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Menu Label'),
       description: new TranslatableMarkup('Human-readable menu title.'),
     ),
-    'tree' => new ContextDefinition(
+    'tree' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Menu Tree'),
       description: new TranslatableMarkup('Hierarchical array of menu links. Each has id, title, url, weight, enabled, and children (nested links).'),

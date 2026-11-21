@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_views\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_views\Service\ViewsService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -72,32 +72,32 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'id' => new ContextDefinition(
+    'id' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('View ID'),
       description: new TranslatableMarkup('Machine name of the created view. Use with AddViewDisplay, EnableView, DeleteView.'),
     ),
-    'label' => new ContextDefinition(
+    'label' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('View Label'),
       description: new TranslatableMarkup('Human-readable view name.'),
     ),
-    'base_table' => new ContextDefinition(
+    'base_table' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Base Table'),
       description: new TranslatableMarkup('Data source table used by this view.'),
     ),
-    'displays' => new ContextDefinition(
+    'displays' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Display IDs'),
       description: new TranslatableMarkup('List of created display IDs (default, page_1, block_1, etc.).'),
     ),
-    'admin_path' => new ContextDefinition(
+    'admin_path' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Admin Path'),
       description: new TranslatableMarkup('Path to edit this view in Drupal admin UI.'),
     ),
-    'message' => new ContextDefinition(
+    'message' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
       description: new TranslatableMarkup('Success confirmation or error details.'),

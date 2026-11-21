@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_migration\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_migration\Service\MigrationService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -37,42 +37,42 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'import_id' => new ContextDefinition(
+    'import_id' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Import ID'),
       description: new TranslatableMarkup('Unique identifier for this import operation.'),
     ),
-    'content_type' => new ContextDefinition(
+    'content_type' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Content Type'),
       description: new TranslatableMarkup('The content type that was imported.'),
     ),
-    'total_items' => new ContextDefinition(
+    'total_items' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Items'),
       description: new TranslatableMarkup('Total number of items processed.'),
     ),
-    'created_count' => new ContextDefinition(
+    'created_count' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Created Count'),
       description: new TranslatableMarkup('Number of items successfully created.'),
     ),
-    'failed_count' => new ContextDefinition(
+    'failed_count' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Failed Count'),
       description: new TranslatableMarkup('Number of items that failed to import.'),
     ),
-    'created' => new ContextDefinition(
+    'created' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Created Items'),
       description: new TranslatableMarkup('List of successfully created items with nid and title.'),
     ),
-    'failed' => new ContextDefinition(
+    'failed' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Failed Items'),
       description: new TranslatableMarkup('List of failed items with error details.'),
     ),
-    'message' => new ContextDefinition(
+    'message' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Message'),
       description: new TranslatableMarkup('Result message.'),

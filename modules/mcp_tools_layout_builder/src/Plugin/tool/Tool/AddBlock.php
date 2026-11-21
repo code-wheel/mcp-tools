@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_layout_builder\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_layout_builder\Service\LayoutBuilderService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -56,37 +56,37 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'entity_type' => new ContextDefinition(
+    'entity_type' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Entity Type'),
       description: new TranslatableMarkup('The entity type configured.'),
     ),
-    'bundle' => new ContextDefinition(
+    'bundle' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Bundle'),
       description: new TranslatableMarkup('The bundle configured.'),
     ),
-    'section_delta' => new ContextDefinition(
+    'section_delta' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Section Delta'),
       description: new TranslatableMarkup('Section where block was added.'),
     ),
-    'region' => new ContextDefinition(
+    'region' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Region'),
       description: new TranslatableMarkup('Region where block was placed.'),
     ),
-    'block_id' => new ContextDefinition(
+    'block_id' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Block ID'),
       description: new TranslatableMarkup('Block plugin that was added.'),
     ),
-    'component_uuid' => new ContextDefinition(
+    'component_uuid' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Component UUID'),
       description: new TranslatableMarkup('UUID of the block component. Use with RemoveBlock to remove.'),
     ),
-    'message' => new ContextDefinition(
+    'message' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
       description: new TranslatableMarkup('Success or error details.'),

@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_entity_clone\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_entity_clone\Service\EntityCloneService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -42,37 +42,37 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'entity_type' => new ContextDefinition(
+    'entity_type' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Entity Type'),
       description: new TranslatableMarkup('The entity type that was cloned.'),
     ),
-    'source_id' => new ContextDefinition(
+    'source_id' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Source Entity ID'),
       description: new TranslatableMarkup('ID of the original entity.'),
     ),
-    'clone_id' => new ContextDefinition(
+    'clone_id' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Cloned Entity ID'),
       description: new TranslatableMarkup('ID of the new cloned entity. Use with GetContent to view.'),
     ),
-    'clone_uuid' => new ContextDefinition(
+    'clone_uuid' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Cloned Entity UUID'),
       description: new TranslatableMarkup('UUID of the cloned entity for config references.'),
     ),
-    'label' => new ContextDefinition(
+    'label' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Cloned Entity Label'),
       description: new TranslatableMarkup('Title/label of the cloned entity.'),
     ),
-    'cloned_references' => new ContextDefinition(
+    'cloned_references' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Cloned Referenced Entities'),
       description: new TranslatableMarkup('List of referenced entities that were also cloned with their new IDs.'),
     ),
-    'message' => new ContextDefinition(
+    'message' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
       description: new TranslatableMarkup('Success or error details.'),

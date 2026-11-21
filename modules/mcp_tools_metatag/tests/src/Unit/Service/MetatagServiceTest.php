@@ -30,12 +30,12 @@ final class MetatagServiceTest extends UnitTestCase {
   }
 
   public function testGetMetatagDefaultsReturnsAllDefaults(): void {
-    $default1 = $this->createMock(\Drupal\Core\Entity\EntityInterface::class);
+    $default1 = $this->createMock(\Drupal\Core\Config\Entity\ConfigEntityInterface::class);
     $default1->method('id')->willReturn('global');
     $default1->method('label')->willReturn('Global');
     $default1->method('get')->with('tags')->willReturn(['title' => '[site:name]']);
 
-    $default2 = $this->createMock(\Drupal\Core\Entity\EntityInterface::class);
+    $default2 = $this->createMock(\Drupal\Core\Config\Entity\ConfigEntityInterface::class);
     $default2->method('id')->willReturn('node');
     $default2->method('label')->willReturn('Content');
     $default2->method('get')->with('tags')->willReturn(['title' => '[node:title]']);

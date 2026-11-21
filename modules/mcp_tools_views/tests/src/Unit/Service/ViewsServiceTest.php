@@ -11,6 +11,7 @@ use Drupal\mcp_tools\Service\AuditLogger;
 use Drupal\mcp_tools_views\Service\ViewsService;
 use Drupal\Tests\UnitTestCase;
 use Drupal\views\Entity\View;
+use Drupal\views\ViewsData;
 
 /**
  * Tests for ViewsService.
@@ -49,7 +50,10 @@ class ViewsServiceTest extends UnitTestCase {
     return new ViewsService(
       $this->entityTypeManager,
       $this->accessManager,
-      $this->auditLogger
+      $this->auditLogger,
+      // What Views knows about tables. These tests stop at the refusals
+      // that come first; ViewCreationKernelTest runs the real thing.
+      $this->createMock(ViewsData::class),
     );
   }
 

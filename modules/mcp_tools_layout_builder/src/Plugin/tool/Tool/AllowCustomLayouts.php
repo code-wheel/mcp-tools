@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_layout_builder\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_layout_builder\Service\LayoutBuilderService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -20,7 +20,7 @@ use Drupal\tool\TypedData\InputDefinition;
   id: 'mcp_layout_allow_custom',
   label: new TranslatableMarkup('Allow Custom Layouts'),
   description: new TranslatableMarkup('Toggle per-entity layout overrides for a content type.'),
-  operation: ToolOperation::Read,
+  operation: ToolOperation::Write,
   input_definitions: [
     'entity_type' => new InputDefinition(
       data_type: 'string',
@@ -44,22 +44,22 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'entity_type' => new ContextDefinition(
+    'entity_type' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Entity Type'),
       description: new TranslatableMarkup('The entity type configured.'),
     ),
-    'bundle' => new ContextDefinition(
+    'bundle' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Bundle'),
       description: new TranslatableMarkup('The bundle configured.'),
     ),
-    'allow_custom_layouts' => new ContextDefinition(
+    'allow_custom_layouts' => new OutputDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Allow Custom Layouts'),
       description: new TranslatableMarkup('Current state of per-entity layout overrides.'),
     ),
-    'message' => new ContextDefinition(
+    'message' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
       description: new TranslatableMarkup('Success or error details.'),

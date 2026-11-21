@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_moderation\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_moderation\Service\ModerationService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -49,37 +49,37 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'entity_type' => new ContextDefinition(
+    'entity_type' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Entity Type'),
       description: new TranslatableMarkup('The entity type updated.'),
     ),
-    'entity_id' => new ContextDefinition(
+    'entity_id' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Entity ID'),
       description: new TranslatableMarkup('The entity ID updated.'),
     ),
-    'label' => new ContextDefinition(
+    'label' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Entity Label'),
       description: new TranslatableMarkup('Title/label of the entity.'),
     ),
-    'previous_state' => new ContextDefinition(
+    'previous_state' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Previous State'),
       description: new TranslatableMarkup('State before the transition.'),
     ),
-    'new_state' => new ContextDefinition(
+    'new_state' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('New State'),
       description: new TranslatableMarkup('Current state after the transition.'),
     ),
-    'changed' => new ContextDefinition(
+    'changed' => new OutputDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('State Changed'),
       description: new TranslatableMarkup('True if state was changed, false if already in target state.'),
     ),
-    'message' => new ContextDefinition(
+    'message' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
       description: new TranslatableMarkup('Success or error details.'),

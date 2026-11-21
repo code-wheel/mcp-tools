@@ -38,11 +38,11 @@ final class SettingsForm extends ConfigFormBase {
   }
 
   private const OPERATIONS = [
-    'read' => 'Read — query site state (safe, default)',
-    'explain' => 'Explain — descriptive/help output (safe, default)',
-    'transform' => 'Transform — derive or reshape data',
-    'trigger' => 'Trigger — run an action (e.g. cron, cache clear)',
-    'write' => 'Write — create or modify content/config (use with care)',
+    'read' => 'Read: query site state (safe, default)',
+    'explain' => 'Explain: descriptive/help output (safe, default)',
+    'transform' => 'Transform: derive or reshape data',
+    'trigger' => 'Trigger: run an action (e.g. cron, cache clear)',
+    'write' => 'Write: create or modify content/config (use with care)',
   ];
 
   /**
@@ -66,7 +66,7 @@ final class SettingsForm extends ConfigFormBase {
     $exposed = $this->config(self::SETTINGS)->get('exposed_operations') ?? ['read', 'explain'];
 
     $form['intro'] = [
-      '#markup' => $this->t('<p>Choose which MCP Tools operations are exposed to the Drupal AI ecosystem (AI Agents, assistants) as Function Calls. Read-only is the safe default and keeps the tool set focused for reliable agent selection. Enabling write/trigger lets agents take actions — each tool still enforces its own access check.</p>'),
+      '#markup' => $this->t('<p>Choose which MCP Tools operations are exposed to the Drupal AI ecosystem (AI Agents, assistants) as Function Calls. Read-only is the safe default and keeps the tool set focused for reliable agent selection. Enabling write/trigger lets agents take actions. Each tool still enforces its own access check.</p>'),
     ];
     $form['exposed_operations'] = [
       '#type' => 'checkboxes',

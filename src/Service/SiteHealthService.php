@@ -64,14 +64,16 @@ class SiteHealthService {
    *   Module counts and lists.
    */
   protected function getModuleSummary(): array {
-    $modules = $this->moduleExtensionList->getAllInstalledInfo();
-    $enabled = array_filter($modules, fn($m) => $m['status'] ?? FALSE);
+    // getAllInstalledInfo() returns the info of installed modules only. The
+    // info array has no "status" key, so filtering on it dropped them all.
+    $enabled = $this->moduleExtensionList->getAllInstalledInfo();
+    $isCore = static fn(array $m): bool => str_starts_with((string) ($m['package'] ?? ''), 'Core');
 
     return [
       'total_installed' => count($enabled),
-      'core_count' => count(array_filter($enabled, fn($m) => ($m['package'] ?? '') === 'Core')),
+      'core_count' => count(array_filter($enabled, $isCore)),
       'contrib_count' => count(array_filter($enabled, fn($m) =>
-        ($m['package'] ?? '') !== 'Core' && !str_starts_with($m['package'] ?? '', 'Custom')
+        !$isCore($m) && !str_starts_with($m['package'] ?? '', 'Custom')
       )),
       'custom_count' => count(array_filter($enabled, fn($m) =>
         str_starts_with($m['package'] ?? '', 'Custom')

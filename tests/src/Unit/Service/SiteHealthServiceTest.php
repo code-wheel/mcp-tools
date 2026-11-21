@@ -80,11 +80,15 @@ final class SiteHealthServiceTest extends UnitTestCase {
 
   public function testGetSiteStatusIncludesModuleSummary(): void {
     $modules = $this->createMock(ModuleExtensionList::class);
+    // The shape core really returns: the info of installed modules only,
+    // with no "status" key. The old fixture invented that key plus a
+    // disabled module, which hid that the service counted 0 on real sites
+    // (see ToolSmokeKernelTest::testSiteStatusCountsInstalledModules).
     $modules->method('getAllInstalledInfo')->willReturn([
-      'system' => ['status' => TRUE, 'package' => 'Core'],
-      'mcp_tools' => ['status' => TRUE, 'package' => 'Custom'],
-      'contrib_example' => ['status' => TRUE, 'package' => 'Contrib'],
-      'disabled' => ['status' => FALSE, 'package' => 'Core'],
+      'system' => ['package' => 'Core'],
+      'workspaces' => ['package' => 'Core (Experimental)'],
+      'mcp_tools' => ['package' => 'Custom'],
+      'contrib_example' => ['package' => 'Contrib'],
     ]);
 
     $state = $this->createMock(StateInterface::class);
@@ -129,8 +133,8 @@ final class SiteHealthServiceTest extends UnitTestCase {
     $this->assertSame('test-uuid', $status['site_uuid']);
 
     $moduleSummary = $status['modules'];
-    $this->assertSame(3, $moduleSummary['total_installed']);
-    $this->assertSame(1, $moduleSummary['core_count']);
+    $this->assertSame(4, $moduleSummary['total_installed']);
+    $this->assertSame(2, $moduleSummary['core_count'], 'Core and "Core (Experimental)" both count as core.');
     $this->assertSame(1, $moduleSummary['custom_count']);
     $this->assertSame(1, $moduleSummary['contrib_count']);
   }

@@ -7,7 +7,7 @@ namespace Drupal\mcp_tools\Plugin\tool\Tool;
 use Drupal\mcp_tools\Service\ContentAnalysisService;
 use Drupal\mcp_tools\Service\RateLimiter;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -44,17 +44,17 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'query' => new ContextDefinition(
+    'query' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Search Query'),
       description: new TranslatableMarkup('The search query that was executed.'),
     ),
-    'total' => new ContextDefinition(
+    'total' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Results'),
       description: new TranslatableMarkup('Total number of matching content items.'),
     ),
-    'results' => new ContextDefinition(
+    'results' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Search Results'),
       description: new TranslatableMarkup('Array of matching nodes with nid, title, type, status (published/unpublished), created, and changed timestamps.'),
@@ -92,7 +92,9 @@ class SearchContent extends McpToolsToolBase {
   protected function executeLegacy(array $input): array {
     $query = $input['query'] ?? '';
     $limit = min($input['limit'] ?? 20, 100);
-    $type = $input['content_type'] ?? NULL;
+    // Treat an empty string as no filter: clients often send "" instead of
+    // leaving the field out.
+    $type = ($input['content_type'] ?? NULL) ?: NULL;
 
     if (empty($query)) {
       return [

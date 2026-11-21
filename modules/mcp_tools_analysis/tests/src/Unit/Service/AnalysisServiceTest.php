@@ -409,6 +409,8 @@ final class AnalysisServiceTest extends UnitTestCase {
     ]);
 
     $database = $this->createMock(Connection::class);
+    // The table size query is MySQL's and only runs there.
+    $database->method('databaseType')->willReturn('mysql');
     $database->method('query')->willReturn($statement);
 
     $service = $this->createService([

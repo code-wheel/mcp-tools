@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools\Plugin\tool\Tool;
 
 use Drupal\mcp_tools\Service\ConfigAnalysisService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -30,12 +30,12 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'name' => new ContextDefinition(
+    'name' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Configuration Name'),
       description: new TranslatableMarkup('The configuration object name that was retrieved.'),
     ),
-    'data' => new ContextDefinition(
+    'data' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Configuration Data'),
       description: new TranslatableMarkup('The configuration values as a nested object. Structure varies by config type.'),

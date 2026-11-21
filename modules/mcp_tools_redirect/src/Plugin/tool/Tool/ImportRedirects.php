@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_redirect\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_redirect\Service\RedirectService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -31,42 +31,42 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'total_requested' => new ContextDefinition(
+    'total_requested' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Requested'),
       description: new TranslatableMarkup('Total number of redirects submitted in the import request.'),
     ),
-    'created_count' => new ContextDefinition(
+    'created_count' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Created Count'),
       description: new TranslatableMarkup('Number of redirects successfully created. These are now active and can be managed with redirect tools.'),
     ),
-    'skipped_count' => new ContextDefinition(
+    'skipped_count' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Skipped Count'),
       description: new TranslatableMarkup('Number of redirects skipped because a redirect for that source path already exists.'),
     ),
-    'error_count' => new ContextDefinition(
+    'error_count' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Error Count'),
       description: new TranslatableMarkup('Number of redirects that failed to import due to validation errors or other issues.'),
     ),
-    'created' => new ContextDefinition(
+    'created' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Created Redirects'),
       description: new TranslatableMarkup('Array of successfully created redirect objects with their assigned IDs. Use these IDs with GetRedirect or UpdateRedirect.'),
     ),
-    'skipped' => new ContextDefinition(
+    'skipped' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Skipped Redirects'),
       description: new TranslatableMarkup('Array of skipped redirects with reason. Typically skipped because a redirect already exists for the source. Use FindBySource to check existing.'),
     ),
-    'errors' => new ContextDefinition(
+    'errors' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Errors'),
       description: new TranslatableMarkup('Array of failed imports with error details. Check for missing required fields or invalid values.'),
     ),
-    'message' => new ContextDefinition(
+    'message' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
       description: new TranslatableMarkup('Human-readable summary of the import operation results.'),

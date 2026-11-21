@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_scheduler\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_scheduler\Service\SchedulerService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -38,17 +38,17 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'items' => new ContextDefinition(
+    'items' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Scheduled Items'),
       description: new TranslatableMarkup('Array of scheduled content with nid, title, schedule type, and timestamp.'),
     ),
-    'count' => new ContextDefinition(
+    'count' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Item Count'),
       description: new TranslatableMarkup('Number of scheduled items returned.'),
     ),
-    'filter' => new ContextDefinition(
+    'filter' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Applied Filter'),
       description: new TranslatableMarkup('Schedule type filter that was applied.'),

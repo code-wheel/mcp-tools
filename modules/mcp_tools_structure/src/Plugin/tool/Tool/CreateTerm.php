@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_structure\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_structure\Service\TaxonomyManagementService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -55,22 +55,22 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'tid' => new ContextDefinition(
+    'tid' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Term ID'),
       description: new TranslatableMarkup('ID of the created term. Use as target_id in entity reference fields.'),
     ),
-    'name' => new ContextDefinition(
+    'name' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Term Name'),
       description: new TranslatableMarkup('Name of the created term.'),
     ),
-    'vocabulary' => new ContextDefinition(
+    'vocabulary' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Vocabulary'),
       description: new TranslatableMarkup('Vocabulary the term was added to.'),
     ),
-    'message' => new ContextDefinition(
+    'message' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
       description: new TranslatableMarkup('Success or error message.'),

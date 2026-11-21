@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_analysis\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_analysis\Service\AnalysisService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -22,32 +22,32 @@ use Drupal\tool\Tool\ToolOperation;
   operation: ToolOperation::Read,
   input_definitions: [],
   output_definitions: [
-    'cache_status' => new ContextDefinition(
+    'cache_status' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Cache Status'),
       description: new TranslatableMarkup('Current cache configuration settings'),
     ),
-    'watchdog_errors' => new ContextDefinition(
+    'watchdog_errors' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Watchdog Errors'),
       description: new TranslatableMarkup('Recent PHP and system errors from watchdog'),
     ),
-    'error_count' => new ContextDefinition(
+    'error_count' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Error Count'),
       description: new TranslatableMarkup('Total watchdog errors found. High counts indicate systemic issues.'),
     ),
-    'slow_queries' => new ContextDefinition(
+    'slow_queries' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Slow Queries'),
       description: new TranslatableMarkup('Slow query warnings from logs'),
     ),
-    'database' => new ContextDefinition(
+    'database' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Database Info'),
       description: new TranslatableMarkup('Database statistics including largest tables'),
     ),
-    'suggestions' => new ContextDefinition(
+    'suggestions' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Suggestions'),
       description: new TranslatableMarkup('Actionable performance improvement recommendations.'),

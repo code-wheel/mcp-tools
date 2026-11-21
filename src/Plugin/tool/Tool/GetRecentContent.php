@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools\Plugin\tool\Tool;
 
 use Drupal\mcp_tools\Service\ContentAnalysisService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -44,17 +44,17 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'total' => new ContextDefinition(
+    'total' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Items Returned'),
       description: new TranslatableMarkup('Number of content items in the results.'),
     ),
-    'sorted_by' => new ContextDefinition(
+    'sorted_by' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Sorted By'),
       description: new TranslatableMarkup('Field used for sorting: "created" or "changed".'),
     ),
-    'content' => new ContextDefinition(
+    'content' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Content Items'),
       description: new TranslatableMarkup('Array of nodes with nid, title, type, status, author, created, and changed timestamps. Use nid to update/delete content.'),
@@ -85,10 +85,10 @@ class GetRecentContent extends McpToolsToolBase {
    */
   protected function executeLegacy(array $input): array {
     $limit = min($input['limit'] ?? 20, 100);
-    $type = $input['content_type'] ?? NULL;
-    $sort = in_array($input['sort'] ?? 'changed', ['created', 'changed'])
-      ? $input['sort']
-      : 'changed';
+    $type = ($input['content_type'] ?? NULL) ?: NULL;
+    // Read once to avoid returning NULL when the key is absent.
+    $sortInput = $input['sort'] ?? 'changed';
+    $sort = in_array($sortInput, ['created', 'changed']) ? $sortInput : 'changed';
 
     return [
       'success' => TRUE,

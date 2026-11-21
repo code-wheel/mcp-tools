@@ -6,6 +6,8 @@ namespace Drupal\mcp_tools\Mcp;
 
 use Drupal\Component\Plugin\PluginManagerInterface;
 use Drupal\mcp_tools\Mcp\Error\ToolErrorHandlerInterface;
+use Drupal\mcp_tools\Service\AccessManager;
+use Drupal\mcp_tools\Service\McpToolCallContext;
 use Mcp\Schema\Content\TextContent;
 use Mcp\Schema\JsonRpc\Error;
 use Mcp\Schema\JsonRpc\Response;
@@ -21,9 +23,9 @@ use Psr\Log\LoggerInterface;
  */
 class ToolApiGateway {
 
-  public const DISCOVER_TOOL = 'mcp_tools/discover-tools';
-  public const GET_INFO_TOOL = 'mcp_tools/get-tool-info';
-  public const EXECUTE_TOOL = 'mcp_tools/execute-tool';
+  public const DISCOVER_TOOL = 'mcp_tools_discover_tools';
+  public const GET_INFO_TOOL = 'mcp_tools_get_tool_info';
+  public const EXECUTE_TOOL = 'mcp_tools_execute_tool';
 
   /**
    * The tool executor.
@@ -46,6 +48,8 @@ class ToolApiGateway {
     private readonly string $allowedProviderPrefix = 'mcp_tools',
     private readonly ?ToolErrorHandlerInterface $errorHandler = NULL,
     private readonly ?EventDispatcherInterface $eventDispatcher = NULL,
+    private readonly ?AccessManager $accessManager = NULL,
+    private readonly ?McpToolCallContext $toolCallContext = NULL,
   ) {
     $this->toolProvider = new DrupalToolProvider(
       $this->toolManager,
@@ -64,6 +68,9 @@ class ToolApiGateway {
       $validator,
       $this->errorHandler,
       $this->eventDispatcher,
+      NULL,
+      $this->accessManager,
+      $this->toolCallContext,
     );
   }
 
@@ -90,8 +97,8 @@ class ToolApiGateway {
   public function getGatewayTools(): array {
     return [
       [
-        'handler' => function (?string $query = NULL): CallToolResult {
-          return $this->discoverTools($query);
+        'handler' => function (?string $query = NULL, ?int $limit = NULL): CallToolResult {
+          return $this->discoverTools($query, $limit);
         },
         'name' => self::DISCOVER_TOOL,
         'description' => 'List available MCP Tools with optional filtering.',
@@ -104,7 +111,11 @@ class ToolApiGateway {
         'inputSchema' => $this->buildSchema([
           'query' => [
             'type' => 'string',
-            'description' => 'Optional search term for name/label/description.',
+            'description' => 'Search term matched against tool name, label, description, and provider. Omit for a compact grouped overview of the catalog.',
+          ],
+          'limit' => [
+            'type' => 'integer',
+            'description' => 'Maximum matching tools to return (default 25, max 100).',
           ],
         ]),
       ],
@@ -123,7 +134,7 @@ class ToolApiGateway {
         'inputSchema' => $this->buildSchema([
           'tool_name' => [
             'type' => 'string',
-            'description' => 'Tool name from discover-tools.',
+            'description' => 'Tool name from ' . self::DISCOVER_TOOL . '.',
           ],
         ], ['tool_name']),
       ],
@@ -141,11 +152,16 @@ class ToolApiGateway {
         'inputSchema' => $this->buildSchema([
           'tool_name' => [
             'type' => 'string',
-            'description' => 'Tool name from discover-tools.',
+            'description' => 'Tool name from ' . self::DISCOVER_TOOL . '.',
           ],
           'arguments' => [
-            'type' => 'object',
-            'description' => 'Arguments to pass to the tool.',
+            // An object keyed by parameter name. The SDK decodes JSON to PHP
+            // arrays before it checks this schema, so an empty object {}
+            // arrives as an empty array: allow exactly that, and nothing
+            // else that is a list.
+            'type' => ['object', 'array'],
+            'maxItems' => 0,
+            'description' => 'Arguments to pass to the tool, as an object keyed by parameter name. Use {} or leave it out for a tool with no parameters.',
           ],
         ], ['tool_name']),
       ],
@@ -155,35 +171,63 @@ class ToolApiGateway {
   /**
    * Lists available Tool API tools with lightweight metadata.
    */
-  public function discoverTools(?string $query = NULL): CallToolResult {
+  public function discoverTools(?string $query = NULL, ?int $limit = NULL): CallToolResult {
     $allTools = $this->toolProvider->getTools();
-    $tools = [];
-    $query = $query !== NULL ? trim($query) : NULL;
+    $query = $query !== NULL ? trim($query) : '';
+    $limit = $limit !== NULL ? max(1, min(100, $limit)) : 25;
 
-    /** @var \CodeWheel\McpToolGateway\ToolInfo $toolInfo */
-    foreach ($allTools as $toolInfo) {
-      if ($query !== NULL && $query !== '') {
-        $haystack = strtolower($toolInfo->name . ' ' . $toolInfo->label . ' ' . $toolInfo->description);
-        if (!str_contains($haystack, strtolower($query))) {
-          continue;
+    // Without a query, return a compact grouped overview instead of the
+    // full catalog: at 200+ tools the flat listing costs thousands of
+    // context tokens per call, while a query-scoped call costs a few
+    // hundred. The overview teaches the client what to query for.
+    if ($query === '') {
+      $groups = [];
+      /** @var \CodeWheel\McpToolGateway\ToolInfo $toolInfo */
+      foreach ($allTools as $toolInfo) {
+        $key = (string) ($toolInfo->provider ?? 'other');
+        $groups[$key]['provider'] = $key;
+        $groups[$key]['count'] = ($groups[$key]['count'] ?? 0) + 1;
+        if (count($groups[$key]['examples'] ?? []) < 3) {
+          $groups[$key]['examples'][] = $toolInfo->name;
         }
       }
+      ksort($groups);
 
-      $tools[] = $toolInfo->toDiscoverySummary();
+      $structured = [
+        'success' => TRUE,
+        'mode' => 'overview',
+        'total' => count($allTools),
+        'groups' => array_values($groups),
+        'hint' => 'Pass query (a keyword, tool name fragment, or provider from this list) to get matching tools with descriptions, then ' . self::GET_INFO_TOOL . ' for the input schema.',
+      ];
+      return new CallToolResult([new TextContent(json_encode($structured))], FALSE, $structured);
+    }
+
+    $tools = [];
+    $matched = 0;
+    /** @var \CodeWheel\McpToolGateway\ToolInfo $toolInfo */
+    foreach ($allTools as $toolInfo) {
+      $haystack = strtolower($toolInfo->name . ' ' . $toolInfo->label . ' ' . $toolInfo->description . ' ' . (string) ($toolInfo->provider ?? ''));
+      if (!str_contains($haystack, strtolower($query))) {
+        continue;
+      }
+      $matched++;
+      if (count($tools) < $limit) {
+        $tools[] = $toolInfo->toDiscoverySummary();
+      }
     }
 
     $structured = [
       'success' => TRUE,
       'count' => count($tools),
+      'total_matches' => $matched,
       'tools' => $tools,
     ];
-
-    $text = 'Found ' . count($tools) . ' tools.';
-    if (!empty($tools)) {
-      $text .= "\n" . json_encode($structured, JSON_PRETTY_PRINT);
+    if ($matched > count($tools)) {
+      $structured['hint'] = 'Result truncated to ' . count($tools) . ' of ' . $matched . ' matches. Narrow the query or raise limit.';
     }
 
-    return new CallToolResult([new TextContent($text)], FALSE, $structured);
+    return new CallToolResult([new TextContent(json_encode($structured))], FALSE, $structured);
   }
 
   /**
@@ -201,7 +245,7 @@ class ToolApiGateway {
       'plugin_id' => $toolInfo->metadata['plugin_id'] ?? '',
     ];
 
-    $content = [new TextContent(json_encode($structured, JSON_PRETTY_PRINT))];
+    $content = [new TextContent(json_encode($structured))];
 
     return new CallToolResult($content, FALSE, $structured);
   }

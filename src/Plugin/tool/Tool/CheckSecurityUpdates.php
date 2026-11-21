@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools\Plugin\tool\Tool;
 
 use Drupal\mcp_tools\Service\SecurityUpdateChecker;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -31,22 +31,22 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'total_updates' => new ContextDefinition(
+    'total_updates' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Updates Available'),
       description: new TranslatableMarkup('Total number of modules with available updates.'),
     ),
-    'security_updates' => new ContextDefinition(
+    'security_updates' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Security Updates Count'),
       description: new TranslatableMarkup('Number of security-related updates (requires immediate attention).'),
     ),
-    'has_security_issues' => new ContextDefinition(
+    'has_security_issues' => new OutputDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Has Security Issues'),
       description: new TranslatableMarkup('True if any security updates are available.'),
     ),
-    'updates' => new ContextDefinition(
+    'updates' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Update Details'),
       description: new TranslatableMarkup('Array of updates with name, installed_version, recommended_version, security (bool), and link to release notes.'),

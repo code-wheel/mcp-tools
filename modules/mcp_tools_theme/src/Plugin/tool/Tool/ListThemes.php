@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_theme\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_theme\Service\ThemeService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -30,22 +30,22 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'themes' => new ContextDefinition(
+    'themes' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Themes'),
       description: new TranslatableMarkup('Array of theme objects with name, label, version, status, and base_theme. Use name with EnableTheme, GetThemeSettings, etc.'),
     ),
-    'total' => new ContextDefinition(
+    'total' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Themes'),
       description: new TranslatableMarkup('Total number of themes in the list (installed and optionally uninstalled).'),
     ),
-    'default_theme' => new ContextDefinition(
+    'default_theme' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Default Theme'),
       description: new TranslatableMarkup('Machine name of the current default frontend theme. Use SetDefaultTheme to change.'),
     ),
-    'admin_theme' => new ContextDefinition(
+    'admin_theme' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Admin Theme'),
       description: new TranslatableMarkup('Machine name of the current admin theme. Use SetAdminTheme to change.'),

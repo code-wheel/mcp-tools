@@ -30,7 +30,7 @@ final class PathautoServiceTest extends UnitTestCase {
   }
 
   public function testListPatternsReturnsAll(): void {
-    $pattern1 = $this->createMock(\Drupal\Core\Entity\EntityInterface::class);
+    $pattern1 = $this->createMock(\Drupal\pathauto\PathautoPatternInterface::class);
     $pattern1->method('id')->willReturn('article_pattern');
     $pattern1->method('label')->willReturn('Article');
     $pattern1->method('get')->willReturnMap([

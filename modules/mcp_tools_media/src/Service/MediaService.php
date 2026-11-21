@@ -73,6 +73,10 @@ class MediaService {
       return ['success' => FALSE, 'error' => "Media type '$id' already exists."];
     }
 
+    // Drupal calls these two sources audio_file and video_file. The tool
+    // used to document the short names, so they stay accepted.
+    $sourcePlugin = ['audio' => 'audio_file', 'video' => 'video_file'][$sourcePlugin] ?? $sourcePlugin;
+
     try {
       $mediaType = MediaType::create([
         'id' => $id,

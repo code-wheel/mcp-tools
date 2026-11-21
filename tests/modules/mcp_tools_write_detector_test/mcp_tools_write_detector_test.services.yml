@@ -1,0 +1,6 @@
+services:
+  mcp_tools_write_detector_test.detector:
+    class: Drupal\mcp_tools_write_detector_test\WriteDetector
+    arguments: ['@plugin.manager.tool', '@state']
+    tags:
+      - { name: event_subscriber }

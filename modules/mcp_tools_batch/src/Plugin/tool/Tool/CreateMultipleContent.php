@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_batch\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_batch\Service\BatchService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -36,37 +36,37 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'content_type' => new ContextDefinition(
+    'content_type' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Content Type'),
       description: new TranslatableMarkup('Content type that was used for all created items.'),
     ),
-    'total_requested' => new ContextDefinition(
+    'total_requested' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Requested'),
       description: new TranslatableMarkup('Number of items that were requested to be created.'),
     ),
-    'created_count' => new ContextDefinition(
+    'created_count' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Created Count'),
       description: new TranslatableMarkup('Number of items successfully created.'),
     ),
-    'error_count' => new ContextDefinition(
+    'error_count' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Error Count'),
       description: new TranslatableMarkup('Number of items that failed to create. Check errors for details.'),
     ),
-    'created' => new ContextDefinition(
+    'created' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Created Items'),
       description: new TranslatableMarkup('Array of created items with nid, uuid, title, and path for each.'),
     ),
-    'errors' => new ContextDefinition(
+    'errors' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Errors'),
       description: new TranslatableMarkup('Array of errors with index, title, and error message for each failure.'),
     ),
-    'message' => new ContextDefinition(
+    'message' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
       description: new TranslatableMarkup('Summary of the batch operation results.'),

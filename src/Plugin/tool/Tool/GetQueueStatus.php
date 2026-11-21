@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools\Plugin\tool\Tool;
 
 use Drupal\mcp_tools\Service\QueueService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -22,22 +22,22 @@ use Drupal\tool\Tool\ToolOperation;
   operation: ToolOperation::Read,
   input_definitions: [],
   output_definitions: [
-    'total_queues' => new ContextDefinition(
+    'total_queues' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Queues'),
       description: new TranslatableMarkup('Number of queue workers defined on the site.'),
     ),
-    'queues_with_items' => new ContextDefinition(
+    'queues_with_items' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Queues With Pending Items'),
       description: new TranslatableMarkup('Number of queues that have items waiting to be processed.'),
     ),
-    'total_items' => new ContextDefinition(
+    'total_items' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Pending Items'),
       description: new TranslatableMarkup('Total items across all queues waiting to be processed.'),
     ),
-    'queues' => new ContextDefinition(
+    'queues' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Queue Details'),
       description: new TranslatableMarkup('Array of queues with name, title, item_count, and cron settings. Use name with RunQueue.'),

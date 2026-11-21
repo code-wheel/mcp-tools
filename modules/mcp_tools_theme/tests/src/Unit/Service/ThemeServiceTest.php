@@ -9,6 +9,7 @@ use Drupal\Core\Config\ImmutableConfig;
 use Drupal\Core\Extension\Extension;
 use Drupal\Core\Extension\ThemeExtensionList;
 use Drupal\Core\Extension\ThemeHandlerInterface;
+use Drupal\Core\Extension\ThemeInstallerInterface;
 use Drupal\Core\Theme\ActiveTheme;
 use Drupal\Core\Theme\ThemeManagerInterface;
 use Drupal\mcp_tools\Service\AccessManager;
@@ -70,7 +71,8 @@ class ThemeServiceTest extends UnitTestCase {
       $this->configFactory,
       $this->themeExtensionList,
       $this->accessManager,
-      $this->auditLogger
+      $this->auditLogger,
+      $this->createMock(ThemeInstallerInterface::class),
     );
   }
 

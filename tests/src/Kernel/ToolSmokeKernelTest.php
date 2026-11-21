@@ -14,6 +14,7 @@ use Drupal\tool\Tool\ToolManager;
  * Smoke tests for MCP Tools Tool API plugins.
  *
  */
+#[\PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses]
 #[\PHPUnit\Framework\Attributes\Group('mcp_tools')]
 final class ToolSmokeKernelTest extends KernelTestBase {
 
@@ -66,6 +67,20 @@ final class ToolSmokeKernelTest extends KernelTestBase {
     'jsonapi',
     'serialization',
   ];
+
+  /**
+   * The site status counts the modules that are installed.
+   */
+  public function testSiteStatusCountsInstalledModules(): void {
+    $modules = $this->container->get('mcp_tools.site_health')->getSiteStatus()['modules'];
+    $installed = count($this->container->get('module_handler')->getModuleList());
+
+    $this->assertGreaterThan(20, $installed);
+    $this->assertSame($installed, $modules['total_installed']);
+    $this->assertGreaterThan(0, $modules['core_count'], 'Core modules such as system and node are counted.');
+    $this->assertGreaterThan(0, $modules['contrib_count'], 'Contrib modules such as tool and mcp_tools are counted.');
+    $this->assertSame($installed, $modules['core_count'] + $modules['contrib_count'] + $modules['custom_count']);
+  }
 
   /**
    * Verifies all core tools can be instantiated and access() does not throw.

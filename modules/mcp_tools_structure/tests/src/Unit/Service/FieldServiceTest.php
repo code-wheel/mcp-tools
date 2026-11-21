@@ -41,6 +41,9 @@ class FieldServiceTest extends UnitTestCase {
     $this->entityTypeManager = $this->createMock(EntityTypeManagerInterface::class);
     $this->entityFieldManager = $this->createMock(EntityFieldManagerInterface::class);
     $this->fieldTypeManager = $this->createMock(FieldTypePluginManagerInterface::class);
+    // The site in these tests has every field type. FieldTypesKernelTest
+    // covers a site that lacks some.
+    $this->fieldTypeManager->method('hasDefinition')->willReturn(TRUE);
     $this->accessManager = $this->createMock(AccessManager::class);
     $this->auditLogger = $this->createMock(AuditLogger::class);
 
@@ -95,6 +98,24 @@ class FieldServiceTest extends UnitTestCase {
     $this->assertContains('string', $typeIds);
     $this->assertContains('text_long', $typeIds);
     $this->assertContains('entity_reference', $typeIds);
+    // Only the types the site has a definition for are listed.
+    $this->assertNotContains('list_string', $typeIds);
+    $this->assertSame(3, $result['total']);
+  }
+
+  /**
+   * A field type whose description is a list of lines is joined, not "Array".
+   *
+   * Core field types such as text and entity reference describe themselves
+   * with an array of lines since Drupal 10.2.
+   */
+  public function testGetFieldTypesJoinsDescriptionLines(): void {
+    $this->fieldTypeManager->method('getDefinition')
+      ->willReturn(['label' => 'Text', 'description' => ['First line.', 'Second line.']]);
+
+    $types = $this->createService()->getFieldTypes()['types'];
+
+    $this->assertSame('First line. Second line.', $types[0]['description']);
   }
 
   public function testAddFieldAccessDenied(): void {

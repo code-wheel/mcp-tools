@@ -13,5 +13,6 @@ services:
       - '@event_dispatcher'
       - '@logger.channel.mcp_tools_stdio'
       - '@mcp_tools.client_bridge'
+      - '@mcp_tools.tool_call_context'
     tags:
       - { name: drush.command }

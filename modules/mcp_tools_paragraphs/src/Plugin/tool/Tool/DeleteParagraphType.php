@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_paragraphs\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_paragraphs\Service\ParagraphsService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -38,17 +38,17 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'id' => new ContextDefinition(
+    'id' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Deleted Paragraph Type ID'),
       description: new TranslatableMarkup('Machine name of the deleted paragraph type. Use CreateParagraphType to recreate if needed.'),
     ),
-    'message' => new ContextDefinition(
+    'message' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
       description: new TranslatableMarkup('Human-readable confirmation of the deletion. WARNING: This operation cannot be undone.'),
     ),
-    'deleted_paragraphs' => new ContextDefinition(
+    'deleted_paragraphs' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Deleted Paragraphs Count'),
       description: new TranslatableMarkup('Number of paragraph entities deleted when force=true. Zero if no paragraphs existed.'),

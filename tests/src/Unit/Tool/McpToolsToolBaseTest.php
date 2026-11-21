@@ -12,7 +12,10 @@ use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\Tests\UnitTestCase;
 use Drupal\tool\Tool\ToolDefinition;
 use Drupal\tool\Tool\ToolOperation;
+use Drupal\tool\TypedData\OutputDefinition;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Drupal\Core\Logger\LoggerChannelInterface;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 #[\PHPUnit\Framework\Attributes\CoversClass(\Drupal\mcp_tools\Tool\McpToolsToolBase::class)]
 #[\PHPUnit\Framework\Attributes\Group('mcp_tools')]
@@ -29,6 +32,7 @@ final class McpToolsToolBaseTest extends UnitTestCase {
     $cacheContextsManager = $this->createMock(CacheContextsManager::class);
     $cacheContextsManager->method('assertValidTokens')->willReturn(TRUE);
     $container->set('cache_contexts_manager', $cacheContextsManager);
+    $container->set('string_translation', $this->getStringTranslationStub());
 
     \Drupal::setContainer($container);
   }
@@ -60,7 +64,7 @@ final class McpToolsToolBaseTest extends UnitTestCase {
     $definition = $this->definition('mcp_tools:test_success', ToolOperation::Read);
     $currentUser = $this->createMock(AccountInterface::class);
 
-    $tool = new class([], 'mcp_tools:test_success', $definition, $currentUser) extends McpToolsToolBase {
+    $tool = new class([], 'mcp_tools:test_success', $definition, $currentUser, $this->createMock(EventDispatcherInterface::class), $this->createMock(LoggerChannelInterface::class)) extends McpToolsToolBase {
       public function setAccessManager(AccessManager $accessManager): void {
         $this->accessManager = $accessManager;
       }
@@ -80,15 +84,103 @@ final class McpToolsToolBaseTest extends UnitTestCase {
     $result = $tool->getResult();
 
     $this->assertTrue($result->isSuccess());
-    $this->assertSame('OK', $result->getMessage()->getUntranslatedString());
+    $this->assertSame('OK', (string) $result->getMessage());
     $this->assertSame(['foo' => 'bar'], $result->getContextValues());
+  }
+
+  /**
+   * Scalar outputs come back in the type their definition declares.
+   *
+   * Drupal hands out IDs as strings for loaded entities and as integers for
+   * new ones. An output declared "integer" must be an integer either way.
+   */
+  public function testDeclaredScalarOutputsAreReturnedInTheirType(): void {
+    $definition = new ToolDefinition([
+      'id' => 'mcp_tools:test_types',
+      'provider' => 'mcp_tools',
+      'label' => new TranslatableMarkup('Test'),
+      'description' => new TranslatableMarkup('Test tool'),
+      'operation' => ToolOperation::Read,
+      'destructive' => FALSE,
+      'output_definitions' => [
+        'nid' => new OutputDefinition('integer', new TranslatableMarkup('Node ID'), new TranslatableMarkup('Node ID.')),
+        'revision_id' => new OutputDefinition('integer', new TranslatableMarkup('Revision ID'), new TranslatableMarkup('Revision ID.')),
+        'count' => new OutputDefinition('integer', new TranslatableMarkup('Count'), new TranslatableMarkup('Count.')),
+        'label' => new OutputDefinition('string', new TranslatableMarkup('Label'), new TranslatableMarkup('Label.')),
+        'ratio' => new OutputDefinition('float', new TranslatableMarkup('Ratio'), new TranslatableMarkup('Ratio.')),
+        'padded' => new OutputDefinition('integer', new TranslatableMarkup('Padded'), new TranslatableMarkup('Padded.')),
+        'words' => new OutputDefinition('integer', new TranslatableMarkup('Words'), new TranslatableMarkup('Words.')),
+        'flag' => new OutputDefinition('boolean', new TranslatableMarkup('Flag'), new TranslatableMarkup('Flag.')),
+        'on' => new OutputDefinition('boolean', new TranslatableMarkup('On'), new TranslatableMarkup('On.')),
+        'off' => new OutputDefinition('boolean', new TranslatableMarkup('Off'), new TranslatableMarkup('Off.')),
+        'stored' => new OutputDefinition('boolean', new TranslatableMarkup('Stored'), new TranslatableMarkup('Stored.')),
+        'two' => new OutputDefinition('boolean', new TranslatableMarkup('Two'), new TranslatableMarkup('Two.')),
+      ],
+    ]);
+    $currentUser = $this->createMock(AccountInterface::class);
+
+    $tool = new class([], 'mcp_tools:test_types', $definition, $currentUser, $this->createMock(EventDispatcherInterface::class), $this->createMock(LoggerChannelInterface::class)) extends McpToolsToolBase {
+
+      /**
+       * {@inheritdoc}
+       */
+      protected function executeLegacy(array $input): array {
+        return $this->legacy();
+      }
+
+      /**
+       * The raw result, as a service would return it.
+       */
+      public function legacy(): array {
+        return [
+          'success' => TRUE,
+          'data' => [
+            'nid' => '42',
+            'revision_id' => '7',
+            'count' => 3,
+            'label' => 15,
+            'ratio' => '0.5',
+            // Not a clean integer: left alone, for validation to report.
+            'padded' => '007',
+            'words' => 'seven',
+            'flag' => TRUE,
+            // Core's maintenance form stores its checkbox as 0 or 1.
+            'on' => 1,
+            'off' => 0,
+            'stored' => '1',
+            // Not a yes or no: left alone, for validation to report.
+            'two' => 2,
+          ],
+        ];
+      }
+
+    };
+
+    // Called directly: executing a tool with declared outputs needs the
+    // typed data manager, which a unit test does not have. The kernel flow
+    // tests check the same thing on real tools (DeclaredOutputTypesTrait).
+    $convert = new \ReflectionMethod(McpToolsToolBase::class, 'inDeclaredTypes');
+    $values = $convert->invoke($tool, $tool->legacy()['data']);
+
+    $this->assertSame(42, $values['nid']);
+    $this->assertSame(7, $values['revision_id']);
+    $this->assertSame(3, $values['count']);
+    $this->assertSame('15', $values['label']);
+    $this->assertSame(0.5, $values['ratio']);
+    $this->assertSame('007', $values['padded']);
+    $this->assertSame('seven', $values['words']);
+    $this->assertTrue($values['flag']);
+    $this->assertTrue($values['on']);
+    $this->assertFalse($values['off']);
+    $this->assertTrue($values['stored']);
+    $this->assertSame(2, $values['two']);
   }
 
   public function testDoExecuteUsesLegacyPayloadAsContextWhenNoDataKey(): void {
     $definition = $this->definition('mcp_tools:test_context', ToolOperation::Read);
     $currentUser = $this->createMock(AccountInterface::class);
 
-    $tool = new class([], 'mcp_tools:test_context', $definition, $currentUser) extends McpToolsToolBase {
+    $tool = new class([], 'mcp_tools:test_context', $definition, $currentUser, $this->createMock(EventDispatcherInterface::class), $this->createMock(LoggerChannelInterface::class)) extends McpToolsToolBase {
       public function setAccessManager(AccessManager $accessManager): void {
         $this->accessManager = $accessManager;
       }
@@ -108,7 +200,7 @@ final class McpToolsToolBaseTest extends UnitTestCase {
     $result = $tool->getResult();
 
     $this->assertTrue($result->isSuccess());
-    $this->assertSame('Done', $result->getMessage()->getUntranslatedString());
+    $this->assertSame('Done', (string) $result->getMessage());
     $this->assertSame(['extra' => 'value'], $result->getContextValues());
   }
 
@@ -116,7 +208,7 @@ final class McpToolsToolBaseTest extends UnitTestCase {
     $definition = $this->definition('mcp_tools:test_failure', ToolOperation::Read);
     $currentUser = $this->createMock(AccountInterface::class);
 
-    $tool = new class([], 'mcp_tools:test_failure', $definition, $currentUser) extends McpToolsToolBase {
+    $tool = new class([], 'mcp_tools:test_failure', $definition, $currentUser, $this->createMock(EventDispatcherInterface::class), $this->createMock(LoggerChannelInterface::class)) extends McpToolsToolBase {
       public function setAccessManager(AccessManager $accessManager): void {
         $this->accessManager = $accessManager;
       }
@@ -135,14 +227,73 @@ final class McpToolsToolBaseTest extends UnitTestCase {
     $result = $tool->getResult();
 
     $this->assertFalse($result->isSuccess());
-    $this->assertSame('Nope', $result->getMessage()->getUntranslatedString());
+    $this->assertSame('Nope', (string) $result->getMessage());
+  }
+
+  public function testDoExecuteKeepsRuntimeMessagesOutOfTheSourceString(): void {
+    $definition = $this->definition('mcp_tools:test_runtime_message', ToolOperation::Read);
+    $currentUser = $this->createMock(AccountInterface::class);
+
+    $tool = new class([], 'mcp_tools:test_runtime_message', $definition, $currentUser, $this->createMock(EventDispatcherInterface::class), $this->createMock(LoggerChannelInterface::class)) extends McpToolsToolBase {
+      public function setAccessManager(AccessManager $accessManager): void {
+        $this->accessManager = $accessManager;
+      }
+
+      protected function executeLegacy(array $input): array {
+        return [
+          'success' => FALSE,
+          'error' => "Node 274 has no 'it' translation & <b>no</b> \"draft\".",
+        ];
+      }
+    };
+
+    $tool->setAccessManager($this->createMock(AccessManager::class));
+
+    $tool->execute();
+    $message = $tool->getResult()->getMessage();
+
+    // One fixed source string, so locale records no string per message.
+    $this->assertSame('@message', $message->getUntranslatedString());
+    // The text reaches clients as built, not escaped.
+    $this->assertSame("Node 274 has no 'it' translation & <b>no</b> \"draft\".", (string) $message);
+  }
+
+  /**
+   * An exception's text reaches clients as thrown, not HTML-escaped.
+   *
+   * It was passed as an escaped placeholder, so a database error read
+   * SELECT 1 FROM &quot;cache_backend&quot; in the MCP client.
+   */
+  public function testExceptionMessagesAreNotEscaped(): void {
+    $definition = $this->definition('mcp_tools:test_exception', ToolOperation::Read);
+    $currentUser = $this->createMock(AccountInterface::class);
+
+    $tool = new class([], 'mcp_tools:test_exception', $definition, $currentUser, $this->createMock(EventDispatcherInterface::class), $this->createMock(LoggerChannelInterface::class)) extends McpToolsToolBase {
+      public function setAccessManager(AccessManager $accessManager): void {
+        $this->accessManager = $accessManager;
+      }
+
+      protected function executeLegacy(array $input): array {
+        throw new \RuntimeException("no such table: \"cache_backend\".sqlite_master, it's <gone> & lost");
+      }
+    };
+
+    $tool->setAccessManager($this->createMock(AccessManager::class));
+
+    $tool->execute();
+    $result = $tool->getResult();
+
+    $this->assertFalse($result->isSuccess());
+    $this->assertSame("Tool execution failed: no such table: \"cache_backend\".sqlite_master, it's <gone> & lost", (string) $result->getMessage());
+    // Still one fixed source string for locale.
+    $this->assertSame('@message', $result->getMessage()->getUntranslatedString());
   }
 
   public function testAccessGatesReadToolsByPermissionAndScope(): void {
     $definition = $this->definition('mcp_tools:get_site_status', ToolOperation::Read);
 
     $currentUser = $this->createMock(AccountInterface::class);
-    $tool = new class([], 'mcp_tools:get_site_status', $definition, $currentUser) extends McpToolsToolBase {
+    $tool = new class([], 'mcp_tools:get_site_status', $definition, $currentUser, $this->createMock(EventDispatcherInterface::class), $this->createMock(LoggerChannelInterface::class)) extends McpToolsToolBase {
       protected const MCP_CATEGORY = 'site_health';
 
       public function setAccessManager(AccessManager $accessManager): void {
@@ -174,7 +325,7 @@ final class McpToolsToolBaseTest extends UnitTestCase {
     $definition = $this->definition('mcp_cache:clear_all', ToolOperation::Write);
 
     $currentUser = $this->createMock(AccountInterface::class);
-    $tool = new class([], 'mcp_cache:clear_all', $definition, $currentUser) extends McpToolsToolBase {
+    $tool = new class([], 'mcp_cache:clear_all', $definition, $currentUser, $this->createMock(EventDispatcherInterface::class), $this->createMock(LoggerChannelInterface::class)) extends McpToolsToolBase {
       protected const MCP_CATEGORY = 'cache';
 
       public function setAccessManager(AccessManager $accessManager): void {
@@ -222,7 +373,7 @@ final class McpToolsToolBaseTest extends UnitTestCase {
     $definition = $this->definition('mcp_recipes:apply', ToolOperation::Trigger);
 
     $currentUser = $this->createMock(AccountInterface::class);
-    $tool = new class([], 'mcp_recipes:apply', $definition, $currentUser) extends McpToolsToolBase {
+    $tool = new class([], 'mcp_recipes:apply', $definition, $currentUser, $this->createMock(EventDispatcherInterface::class), $this->createMock(LoggerChannelInterface::class)) extends McpToolsToolBase {
       protected const MCP_CATEGORY = 'recipes';
 
       public function setAccessManager(AccessManager $accessManager): void {

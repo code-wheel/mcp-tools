@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_templates\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_templates\Service\TemplateService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -30,27 +30,27 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'template_id' => new ContextDefinition(
+    'template_id' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Template ID'),
       description: new TranslatableMarkup('The template being previewed.'),
     ),
-    'template_label' => new ContextDefinition(
+    'template_label' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Template Label'),
       description: new TranslatableMarkup('Human-readable template name.'),
     ),
-    'will_create' => new ContextDefinition(
+    'will_create' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Will Create'),
       description: new TranslatableMarkup('Components that will be created (do not exist yet).'),
     ),
-    'will_skip' => new ContextDefinition(
+    'will_skip' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Will Skip'),
       description: new TranslatableMarkup('Components that will be skipped (already exist).'),
     ),
-    'conflicts' => new ContextDefinition(
+    'conflicts' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Conflicts'),
       description: new TranslatableMarkup('Any conflicts or issues detected (e.g., missing modules).'),

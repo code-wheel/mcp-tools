@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_search_api\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_search_api\Service\SearchApiService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -30,7 +30,7 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'server' => new ContextDefinition(
+    'server' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Server details'),
       description: new TranslatableMarkup('Server configuration: id, label, backend (solr/elasticsearch/db), status, and connection details. Lists indexes using this server.'),

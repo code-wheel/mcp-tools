@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_blocks\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_blocks\Service\BlockService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -22,12 +22,12 @@ use Drupal\tool\Tool\ToolOperation;
   operation: ToolOperation::Read,
   input_definitions: [],
   output_definitions: [
-    'blocks' => new ContextDefinition(
+    'blocks' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Available Blocks'),
       description: new TranslatableMarkup('Array of block plugins with id, label, category. Use id as plugin_id in PlaceBlock.'),
     ),
-    'count' => new ContextDefinition(
+    'count' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Block Count'),
       description: new TranslatableMarkup('Total number of available block plugins.'),

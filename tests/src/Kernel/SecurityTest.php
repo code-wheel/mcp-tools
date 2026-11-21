@@ -11,6 +11,7 @@ use Drupal\mcp_tools\Service\AccessManager;
  * Security-focused tests for MCP Tools.
  *
  */
+#[\PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses]
 #[\PHPUnit\Framework\Attributes\Group('mcp_tools')]
 class SecurityTest extends KernelTestBase {
 

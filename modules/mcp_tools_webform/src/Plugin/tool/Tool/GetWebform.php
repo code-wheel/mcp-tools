@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_webform\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_webform\Service\WebformService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -30,32 +30,32 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'id' => new ContextDefinition(
+    'id' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Webform ID'),
       description: new TranslatableMarkup('Machine name of the webform.'),
     ),
-    'title' => new ContextDefinition(
+    'title' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Title'),
       description: new TranslatableMarkup('Human-readable title of the webform.'),
     ),
-    'description' => new ContextDefinition(
+    'description' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Description'),
       description: new TranslatableMarkup('Administrative description of the webform.'),
     ),
-    'status' => new ContextDefinition(
+    'status' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Status'),
       description: new TranslatableMarkup('Webform status: "open" (accepting submissions) or "closed".'),
     ),
-    'elements' => new ContextDefinition(
+    'elements' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Elements'),
       description: new TranslatableMarkup('Form element definitions with #type, #title, #required, etc. Use with UpdateWebform to modify.'),
     ),
-    'settings' => new ContextDefinition(
+    'settings' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Settings'),
       description: new TranslatableMarkup('Webform configuration: confirmation settings, submission handling, access controls, etc.'),

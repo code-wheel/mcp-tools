@@ -11,6 +11,7 @@ use Drupal\mcp_tools\Service\AccessManager;
  * Kernel tests for MCP Tools access control integration.
  *
  */
+#[\PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses]
 #[\PHPUnit\Framework\Attributes\Group('mcp_tools')]
 class AccessControlKernelTest extends KernelTestBase {
 
@@ -169,6 +170,57 @@ class AccessControlKernelTest extends KernelTestBase {
     $this->assertFalse($response['success']);
     $this->assertEquals('READ_ONLY_MODE', $response['code']);
     $this->assertStringContainsString('read-only mode', $response['error']);
+  }
+
+  /**
+   * The STDIO server keeps its scopes when a tool rebuilds the container.
+   *
+   * `drush mcp-tools:serve --scope=read,write` is one PHP process for a whole
+   * client session. mcp_cache_clear_all rebuilds the container inside it,
+   * which replaces the access manager: the session then fell back to the
+   * default scopes and every later write was refused until a restart.
+   */
+  public function testProcessScopesSurviveAContainerRebuild(): void {
+    $this->config('mcp_tools.settings')
+      ->set('access.default_scopes', ['read'])
+      ->save();
+
+    // What the STDIO command does when it starts.
+    $manager = $this->container->get('mcp_tools.access_manager');
+    $manager->setScopes(['read', 'write']);
+    AccessManager::setProcessScopes(['read', 'write']);
+    try {
+      $this->assertTrue($manager->hasScope('write'));
+
+      // What mcp_cache_clear_all does inside the running server.
+      $this->container->get('kernel')->rebuildContainer();
+      $rebuilt = \Drupal::service('mcp_tools.access_manager');
+      $this->assertNotSame($manager, $rebuilt, 'The rebuild replaced the service.');
+      $this->assertTrue($rebuilt->hasScope('write'), 'The write scope is still there after the rebuild.');
+      $this->assertFalse($rebuilt->hasScope('admin'), 'Nothing more than what was set.');
+    }
+    finally {
+      AccessManager::setProcessScopes(NULL);
+    }
+
+    // Without process scopes a new instance uses the configured default.
+    $this->container->get('kernel')->rebuildContainer();
+    $this->assertFalse(\Drupal::service('mcp_tools.access_manager')->hasScope('write'));
+  }
+
+  /**
+   * The link to the MCP client survives a container rebuild.
+   *
+   * The server arms one bridge object per call. After a cache clear in a
+   * long STDIO session, tools were handed a new, unarmed one: progress
+   * updates stopped and sampling reported "not supported".
+   */
+  public function testClientBridgeSurvivesAContainerRebuild(): void {
+    $bridge = $this->container->get('mcp_tools.client_bridge');
+
+    $this->container->get('kernel')->rebuildContainer();
+
+    $this->assertSame($bridge, \Drupal::service('mcp_tools.client_bridge'));
   }
 
 }

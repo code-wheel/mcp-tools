@@ -8,7 +8,7 @@ use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\mcp_tools\Service\RateLimiter;
 use Drupal\mcp_tools_analysis\Service\AnalysisService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -38,22 +38,22 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'broken_links' => new ContextDefinition(
+    'broken_links' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Broken Links'),
       description: new TranslatableMarkup('List of broken links found with source information'),
     ),
-    'total_checked' => new ContextDefinition(
+    'total_checked' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Checked'),
       description: new TranslatableMarkup('Number of links checked'),
     ),
-    'broken_count' => new ContextDefinition(
+    'broken_count' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Broken Count'),
       description: new TranslatableMarkup('Number of broken links found'),
     ),
-    'suggestions' => new ContextDefinition(
+    'suggestions' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Suggestions'),
       description: new TranslatableMarkup('Recommendations for fixing issues'),

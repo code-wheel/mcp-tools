@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools\Plugin\tool\Tool;
 
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -30,32 +30,32 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'id' => new ContextDefinition(
+    'id' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Format ID'),
       description: new TranslatableMarkup('Machine name of the text format.'),
     ),
-    'label' => new ContextDefinition(
+    'label' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Label'),
       description: new TranslatableMarkup('Human-readable name.'),
     ),
-    'roles' => new ContextDefinition(
+    'roles' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Roles'),
       description: new TranslatableMarkup('Roles that can use this format.'),
     ),
-    'filters' => new ContextDefinition(
+    'filters' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Filters'),
       description: new TranslatableMarkup('Enabled filters with their settings.'),
     ),
-    'allowed_html' => new ContextDefinition(
+    'allowed_html' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Allowed HTML'),
       description: new TranslatableMarkup('HTML tags allowed by the filter_html filter, if enabled.'),
     ),
-    'admin_path' => new ContextDefinition(
+    'admin_path' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Admin Path'),
       description: new TranslatableMarkup('Path to configure this format in admin UI.'),

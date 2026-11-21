@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_blocks\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_blocks\Service\BlockService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -30,17 +30,17 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'theme' => new ContextDefinition(
+    'theme' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Theme'),
       description: new TranslatableMarkup('Theme machine name queried.'),
     ),
-    'regions' => new ContextDefinition(
+    'regions' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Available Regions'),
       description: new TranslatableMarkup('Array of regions with id, label, and placed blocks. Use id as region in PlaceBlock.'),
     ),
-    'count' => new ContextDefinition(
+    'count' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Region Count'),
       description: new TranslatableMarkup('Number of regions in this theme.'),
@@ -72,7 +72,7 @@ class ListRegions extends McpToolsToolBase {
    * {@inheritdoc}
    */
   protected function executeLegacy(array $input): array {
-    $theme = $input['theme'] ?? NULL;
+    $theme = ($input['theme'] ?? NULL) ?: NULL;
     return $this->blockService->listRegions($theme);
   }
 

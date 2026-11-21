@@ -1,0 +1,7 @@
+name: 'MCP Tools Translate test'
+type: module
+description: 'Duplicates paragraphs for a new translation, as Layout Paragraphs does.'
+package: Testing
+core_version_requirement: ^10.5 || ^11
+dependencies:
+  - paragraphs:paragraphs

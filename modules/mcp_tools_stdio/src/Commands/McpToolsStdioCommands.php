@@ -4,15 +4,16 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools_stdio\Commands;
 
-use Mcp\Server;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Session\AccountSwitcherInterface;
 use Drupal\mcp_tools\Mcp\McpToolsServerFactory;
 use Drupal\mcp_tools\Mcp\Error\ToolErrorHandlerInterface;
 use Drupal\mcp_tools\Mcp\Resource\ResourceRegistry;
 use Drupal\mcp_tools\Mcp\Prompt\PromptRegistry;
+use Drupal\mcp_tools\Mcp\Sdk;
 use Drupal\mcp_tools\Mcp\ServerConfigRepository;
 use Drupal\mcp_tools\Service\McpClientBridge;
+use Drupal\mcp_tools\Service\McpToolCallContext;
 use Drupal\mcp_tools\Mcp\ToolApiSchemaConverter;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\tool\Tool\ToolManager;
@@ -39,6 +40,7 @@ final class McpToolsStdioCommands extends DrushCommands {
     private readonly EventDispatcherInterface $eventDispatcher,
     private readonly LoggerInterface $mcpLogger,
     private readonly ?McpClientBridge $clientBridge = NULL,
+    private readonly ?McpToolCallContext $toolCallContext = NULL,
   ) {
     parent::__construct();
   }
@@ -62,8 +64,8 @@ final class McpToolsStdioCommands extends DrushCommands {
       'gateway' => FALSE,
     ],
   ): void {
-    if (!class_exists(Server::class)) {
-      fwrite(\STDERR, "Missing dependency: mcp/sdk. Run: composer require mcp/sdk:^0.2\n");
+    if (Sdk::serverClass() === NULL) {
+      fwrite(\STDERR, 'Missing dependency: mcp/sdk. Run: ' . Sdk::INSTALL_COMMAND . "\n");
       return;
     }
 
@@ -103,14 +105,21 @@ final class McpToolsStdioCommands extends DrushCommands {
       $scopes = array_filter(array_map('trim', explode(',', $options['scope'])));
       if (!empty($scopes)) {
         $this->accessManager->setScopes($scopes);
+        // Also for the replacement of the access manager, should a tool
+        // rebuild the container during the session.
+        AccessManager::setProcessScopes($scopes);
       }
     }
     elseif (!empty($serverConfig['scopes'])) {
       $this->accessManager->setScopes((array) $serverConfig['scopes']);
+      AccessManager::setProcessScopes((array) $serverConfig['scopes']);
     }
 
-    $includeAllTools = (bool) ($options['all-tools'] ?? ($serverConfig['include_all_tools'] ?? FALSE));
-    $gatewayMode = (bool) ($options['gateway'] ?? ($serverConfig['gateway_mode'] ?? FALSE));
+    // Either the command line or the server profile can turn these on. An
+    // option that is not given arrives as FALSE, so it cannot be used to
+    // tell "not given" from "off": ask both.
+    $includeAllTools = !empty($options['all-tools']) || !empty($serverConfig['include_all_tools']);
+    $gatewayMode = !empty($options['gateway']) || !empty($serverConfig['gateway_mode']);
     $enableResources = (bool) ($serverConfig['enable_resources'] ?? TRUE);
     $enablePrompts = (bool) ($serverConfig['enable_prompts'] ?? TRUE);
 
@@ -133,6 +142,8 @@ final class McpToolsStdioCommands extends DrushCommands {
       $this->promptRegistry,
       $this->toolErrorHandler,
       $this->clientBridge,
+      $this->accessManager,
+      $this->toolCallContext,
     );
 
     fwrite(\STDERR, "MCP Tools STDIO Server\n");

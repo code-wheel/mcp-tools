@@ -77,25 +77,35 @@ class PerformanceAnalyzer {
         }
       }
 
-      // Check database size.
-      $dbSizeQuery = $this->database->query("
-        SELECT table_name,
+      // Check database size. The query below is MySQL's (MariaDB included);
+      // other databases have no such table and would fail the whole analysis.
+      $largestTables = [];
+      $tableSizesKnown = $this->database->databaseType() === 'mysql';
+      if ($tableSizesKnown) {
+        // The alias matters: MySQL 8 names this column TABLE_NAME in the
+        // result, MariaDB table_name.
+        $dbSizeQuery = $this->database->query("
+        SELECT table_name AS table_name,
                ROUND(((data_length + index_length) / 1024 / 1024), 2) AS size_mb
         FROM information_schema.tables
         WHERE table_schema = DATABASE()
         ORDER BY (data_length + index_length) DESC
         LIMIT 10
-      ");
-      $largestTables = $dbSizeQuery->fetchAll();
+        ");
+        $largestTables = $dbSizeQuery->fetchAll();
+      }
 
       $results['database'] = [
         'largest_tables' => array_map(function ($row) {
           return [
             'table' => $row->table_name,
-            'size_mb' => $row->size_mb,
+            'size_mb' => (float) $row->size_mb,
           ];
         }, $largestTables),
       ];
+      if (!$tableSizesKnown) {
+        $results['database']['note'] = 'Table sizes are only read on MySQL and MariaDB.';
+      }
 
       // Generate suggestions.
       $suggestions = [];

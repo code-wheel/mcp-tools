@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_theme\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_theme\Service\ThemeService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -30,27 +30,27 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'theme' => new ContextDefinition(
+    'theme' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Theme'),
       description: new TranslatableMarkup('Machine name of the theme whose settings are returned.'),
     ),
-    'settings' => new ContextDefinition(
+    'settings' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Theme Settings'),
       description: new TranslatableMarkup('Theme-specific settings including features, colors, and custom options. Use UpdateThemeSettings to modify.'),
     ),
-    'global_settings' => new ContextDefinition(
+    'global_settings' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Global Settings'),
       description: new TranslatableMarkup('Global settings that apply to all themes: features, toggles, and system defaults.'),
     ),
-    'logo' => new ContextDefinition(
+    'logo' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Logo Settings'),
       description: new TranslatableMarkup('Logo configuration: use_default (bool), path (string). Modify via UpdateThemeSettings with logo key.'),
     ),
-    'favicon' => new ContextDefinition(
+    'favicon' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Favicon Settings'),
       description: new TranslatableMarkup('Favicon configuration: use_default (bool), path (string), mimetype. Modify via UpdateThemeSettings with favicon key.'),

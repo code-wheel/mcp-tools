@@ -1,0 +1,7 @@
+name: 'Foreign tool test'
+type: module
+description: 'Tool API tools from a provider other than MCP Tools, for tests.'
+package: Testing
+core_version_requirement: ^10.5 || ^11
+dependencies:
+  - tool:tool

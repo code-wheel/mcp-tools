@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools_remote_media\Plugin\tool\Tool;
 
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\mcp_tools_remote_media\Service\RemoteImageService;
@@ -54,32 +54,32 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
     ),
   ],
   output_definitions: [
-    'fid' => new ContextDefinition(
+    'fid' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('File ID'),
       description: new TranslatableMarkup('Managed file entity ID.'),
     ),
-    'mid' => new ContextDefinition(
+    'mid' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Media ID'),
       description: new TranslatableMarkup('Media entity ID (only when create_media is true).'),
     ),
-    'filename' => new ContextDefinition(
+    'filename' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Filename'),
       description: new TranslatableMarkup('Sanitized filename as stored on disk.'),
     ),
-    'uri' => new ContextDefinition(
+    'uri' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('URI'),
       description: new TranslatableMarkup('Drupal file URI (e.g. public://mcp-uploads/photo.jpg).'),
     ),
-    'url' => new ContextDefinition(
+    'url' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Public URL'),
       description: new TranslatableMarkup('Publicly accessible URL of the saved file.'),
     ),
-    'message' => new ContextDefinition(
+    'message' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
       description: new TranslatableMarkup('Success confirmation or error details.'),

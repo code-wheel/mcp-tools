@@ -10,6 +10,7 @@ use Drupal\media\Entity\Media;
 use Drupal\mcp_tools\Mcp\ToolApiCallToolHandler;
 use Drupal\mcp_tools\Mcp\ToolApiSchemaConverter;
 use Drupal\mcp_tools\Mcp\ToolInputValidator;
+use Drupal\Tests\mcp_tools\Traits\SdkSuspensionTrait;
 use Drupal\Tests\media\Traits\MediaTypeCreationTrait;
 use Drupal\Tests\user\Traits\UserCreationTrait;
 use Mcp\Schema\JsonRpc\Response;
@@ -22,10 +23,12 @@ use Symfony\Component\Uid\Uuid;
 /**
  * Alt text generation via MCP sampling (the client's own model).
  */
+#[\PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses]
 #[\PHPUnit\Framework\Attributes\Group('mcp_tools_media')]
 class GenerateAltTextKernelTest extends KernelTestBase {
 
   use MediaTypeCreationTrait;
+  use SdkSuspensionTrait;
   use UserCreationTrait;
 
   /**
@@ -132,8 +135,8 @@ class GenerateAltTextKernelTest extends KernelTestBase {
     $value = $fiber->start();
     $sampling = NULL;
     while (!$fiber->isTerminated()) {
-      if (is_array($value) && ($value['type'] ?? '') === 'request' && $value['request'] instanceof CreateSamplingMessageRequest) {
-        $sampling = $value['request'];
+      if ($this->suspendedRequest($value) instanceof CreateSamplingMessageRequest) {
+        $sampling = $this->suspendedRequest($value);
         $value = $fiber->resume(new Response(1, [
           'role' => 'assistant',
           'model' => 'client-model',

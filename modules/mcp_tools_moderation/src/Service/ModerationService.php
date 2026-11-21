@@ -8,6 +8,7 @@ use Drupal\Component\Datetime\TimeInterface;
 use Drupal\content_moderation\ModerationInformationInterface;
 use Drupal\content_moderation\StateTransitionValidationInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Entity\RevisionableStorageInterface;
 use Drupal\Core\Entity\RevisionLogInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\mcp_tools\Service\AccessManager;
@@ -511,10 +512,27 @@ class ModerationService {
       $storage = $this->entityTypeManager->getStorage($entityTypeId);
       $entityTypeDefinition = $this->entityTypeManager->getDefinition($entityTypeId);
 
-      // Query entities in this state.
+      // The state is not stored on the content: "moderation_state" is a
+      // computed field and no query can filter on it. Content Moderation
+      // keeps the state in entities of its own, one per item and language.
+      // An item counts under the state of its newest revision, so content
+      // that is published with a newer draft waiting is listed as a draft.
+      $rows = $this->entityTypeManager->getStorage('content_moderation_state')->getAggregateQuery()
+        ->accessCheck(FALSE)
+        ->latestRevision()
+        ->condition('workflow', $workflowId)
+        ->condition('moderation_state', $state)
+        ->condition('content_entity_type_id', $entityTypeId)
+        ->groupBy('content_entity_id')
+        ->execute();
+      $contentIds = array_column($rows, 'content_entity_id');
+      if (empty($contentIds)) {
+        continue;
+      }
+
       $query = $storage->getQuery()
         ->accessCheck(TRUE)
-        ->condition('moderation_state', $state);
+        ->condition($entityTypeDefinition->getKey('id'), $contentIds, 'IN');
 
       if ($bundleKey = $entityTypeDefinition->getKey('bundle')) {
         $query->condition($bundleKey, $bundles, 'IN');
@@ -527,9 +545,15 @@ class ModerationService {
 
       // Get entities with limit.
       $entityIds = $query->range(0, $limit)->execute();
-      $entities = $storage->loadMultiple($entityIds);
 
-      foreach ($entities as $entity) {
+      foreach ($entityIds as $entityId) {
+        // Show the newest revision, the one the state belongs to. For
+        // published content with a draft waiting, that is the draft.
+        $revisionId = $storage instanceof RevisionableStorageInterface ? $storage->getLatestRevisionId($entityId) : NULL;
+        $entity = $revisionId ? $storage->loadRevision($revisionId) : $storage->load($entityId);
+        if (!$entity) {
+          continue;
+        }
         $entityData = [
           'entity_type' => $entityTypeId,
           'entity_id' => $entity->id(),

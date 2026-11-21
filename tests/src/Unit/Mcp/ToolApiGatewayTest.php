@@ -124,8 +124,9 @@ final class ToolApiGatewayTest extends UnitTestCase {
     $this->assertFalse($result->isError);
     $this->assertNotEmpty($result->structuredContent);
     $this->assertTrue($result->structuredContent['success']);
-    $this->assertSame(0, $result->structuredContent['count']);
-    $this->assertEmpty($result->structuredContent['tools']);
+    $this->assertSame('overview', $result->structuredContent['mode']);
+    $this->assertSame(0, $result->structuredContent['total']);
+    $this->assertEmpty($result->structuredContent['groups']);
   }
 
   public function testDiscoverToolsReturnsAllowedTools(): void {
@@ -143,9 +144,20 @@ final class ToolApiGatewayTest extends UnitTestCase {
     $gateway = $this->createGateway();
     $result = $gateway->discoverTools();
 
-    $this->assertSame(1, $result->structuredContent['count']);
-    $this->assertSame('mcp_tools___test_tool', $result->structuredContent['tools'][0]['name']);
-    $this->assertSame('Test Tool', $result->structuredContent['tools'][0]['label']);
+    // No query: a compact grouped overview, not the flat catalog.
+    $this->assertSame('overview', $result->structuredContent['mode']);
+    // The hint names the tool as the client sees it in the list.
+    $this->assertStringContainsString(ToolApiGateway::GET_INFO_TOOL, $result->structuredContent['hint']);
+    $this->assertStringNotContainsString('get-tool-info', $result->structuredContent['hint']);
+    $this->assertSame(1, $result->structuredContent['total']);
+    $this->assertSame('mcp_tools', $result->structuredContent['groups'][0]['provider']);
+    $this->assertContains('mcp_tools___test_tool', $result->structuredContent['groups'][0]['examples']);
+
+    // A query returns the flat listing with details.
+    $queried = $gateway->discoverTools('test');
+    $this->assertSame(1, $queried->structuredContent['count']);
+    $this->assertSame('mcp_tools___test_tool', $queried->structuredContent['tools'][0]['name']);
+    $this->assertSame('Test Tool', $queried->structuredContent['tools'][0]['label']);
   }
 
   public function testDiscoverToolsFiltersNonMatchingProviders(): void {
@@ -171,8 +183,8 @@ final class ToolApiGatewayTest extends UnitTestCase {
     $gateway = $this->createGateway(includeAllTools: FALSE);
     $result = $gateway->discoverTools();
 
-    $this->assertSame(1, $result->structuredContent['count']);
-    $this->assertSame('Allowed Tool', $result->structuredContent['tools'][0]['label']);
+    $this->assertSame(1, $result->structuredContent['total']);
+    $this->assertSame(['mcp_tools'], array_column($result->structuredContent['groups'], 'provider'));
   }
 
   public function testDiscoverToolsIncludesAllWhenFlagSet(): void {
@@ -198,7 +210,7 @@ final class ToolApiGatewayTest extends UnitTestCase {
     $gateway = $this->createGateway(includeAllTools: TRUE);
     $result = $gateway->discoverTools();
 
-    $this->assertSame(2, $result->structuredContent['count']);
+    $this->assertSame(2, $result->structuredContent['total']);
   }
 
   public function testDiscoverToolsFiltersWithQuery(): void {
@@ -225,6 +237,7 @@ final class ToolApiGatewayTest extends UnitTestCase {
     $result = $gateway->discoverTools('create');
 
     $this->assertSame(1, $result->structuredContent['count']);
+    $this->assertSame(1, $result->structuredContent['total_matches']);
     $this->assertSame('Create Content', $result->structuredContent['tools'][0]['label']);
   }
 
@@ -274,7 +287,7 @@ final class ToolApiGatewayTest extends UnitTestCase {
     ]);
 
     $gateway = $this->createGateway();
-    $result = $gateway->discoverTools();
+    $result = $gateway->discoverTools('operation');
 
     $tools = $result->structuredContent['tools'];
     $readTool = array_values(array_filter($tools, fn($t) => $t['label'] === 'Read Operation'))[0];
@@ -364,9 +377,24 @@ final class ToolApiGatewayTest extends UnitTestCase {
   }
 
   public function testToolNameConstantsAreCorrect(): void {
-    $this->assertSame('mcp_tools/discover-tools', ToolApiGateway::DISCOVER_TOOL);
-    $this->assertSame('mcp_tools/get-tool-info', ToolApiGateway::GET_INFO_TOOL);
-    $this->assertSame('mcp_tools/execute-tool', ToolApiGateway::EXECUTE_TOOL);
+    $this->assertSame('mcp_tools_discover_tools', ToolApiGateway::DISCOVER_TOOL);
+    $this->assertSame('mcp_tools_get_tool_info', ToolApiGateway::GET_INFO_TOOL);
+    $this->assertSame('mcp_tools_execute_tool', ToolApiGateway::EXECUTE_TOOL);
+  }
+
+
+  public function testDiscoverToolsLimitTruncatesWithHint(): void {
+    $this->toolManager->method('getDefinitions')->willReturn([
+      'mcp_tools:alpha_thing' => $this->createToolDefinition('mcp_tools:alpha_thing', 'mcp_tools', 'Alpha Thing', 'Shared keyword widget'),
+      'mcp_tools:beta_thing' => $this->createToolDefinition('mcp_tools:beta_thing', 'mcp_tools', 'Beta Thing', 'Shared keyword widget'),
+    ]);
+
+    $gateway = $this->createGateway();
+    $result = $gateway->discoverTools('widget', 1);
+
+    $this->assertSame(1, $result->structuredContent['count']);
+    $this->assertSame(2, $result->structuredContent['total_matches']);
+    $this->assertStringContainsString('truncated', $result->structuredContent['hint']);
   }
 
 }

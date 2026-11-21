@@ -17,13 +17,18 @@ use Drupal\tool\ExecutableResult;
 use Drupal\tool\Tool\ToolBase;
 use Drupal\tool\Tool\ToolDefinition;
 use Drupal\tool\Tool\ToolOperation;
+use Drupal\tool\TypedData\InputDefinition;
 use Drupal\tool\TypedData\InputDefinitionInterface;
+use Drupal\tool\TypedData\ListInputDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Mcp\Schema\JsonRpc\Error;
 use Mcp\Schema\JsonRpc\Response;
 use Mcp\Schema\Request\CallToolRequest;
 use Mcp\Schema\Result\CallToolResult;
 use Mcp\Server\Session\SessionInterface;
 use Psr\Log\NullLogger;
+use Drupal\Core\Logger\LoggerChannelInterface;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 /**
  * Tests for ToolApiCallToolHandler.
@@ -103,7 +108,7 @@ final class ToolApiCallToolHandlerTest extends UnitTestCase {
     ]);
 
     $currentUser = $this->createMock(AccountInterface::class);
-    $tool = new class([], 'mcp_tools:test', $definition, $currentUser) extends ToolBase {
+    $tool = new class([], 'mcp_tools:test', $definition, $currentUser, $this->createMock(EventDispatcherInterface::class), $this->createMock(LoggerChannelInterface::class)) extends ToolBase {
 
       /**
        * {@inheritdoc}
@@ -175,6 +180,34 @@ final class ToolApiCallToolHandlerTest extends UnitTestCase {
     $this->assertSame(['foo' => 'bar'], $result->result->structuredContent['data'] ?? NULL);
   }
 
+  /**
+   * An empty map goes out as {} and not as [].
+   *
+   * PHP has one empty array for both. A client that checks the result
+   * against the outputSchema rejects [] for an output declared as a map.
+   */
+  public function testEmptyMapOutputsAreSentAsObjects(): void {
+    $definitions = [
+      'by_type' => new OutputDefinition('map', new TranslatableMarkup('By type'), new TranslatableMarkup('Counts by type.')),
+      'items' => new OutputDefinition('list', new TranslatableMarkup('Items'), new TranslatableMarkup('Items.')),
+      'filled' => new OutputDefinition('map', new TranslatableMarkup('Filled'), new TranslatableMarkup('A map with values.')),
+      'total' => new OutputDefinition('integer', new TranslatableMarkup('Total'), new TranslatableMarkup('Total.')),
+    ];
+    $shape = new \ReflectionMethod(ToolApiCallToolHandler::class, 'emptyMapsAsObjects');
+    $output = $shape->invoke(NULL, [
+      'by_type' => [],
+      'items' => [],
+      'filled' => ['a' => 1],
+      'total' => 0,
+      'undeclared' => [],
+    ], $definitions);
+
+    $this->assertSame(
+      '{"by_type":{},"items":[],"filled":{"a":1},"total":0,"undeclared":[]}',
+      json_encode($output),
+    );
+  }
+
   public function testAccessDeniedReturnsIsErrorResult(): void {
     $toolManager = $this->createMock(PluginManagerInterface::class);
 
@@ -188,7 +221,7 @@ final class ToolApiCallToolHandlerTest extends UnitTestCase {
     ]);
 
     $currentUser = $this->createMock(AccountInterface::class);
-    $tool = new class([], 'mcp_tools:denied', $definition, $currentUser) extends ToolBase {
+    $tool = new class([], 'mcp_tools:denied', $definition, $currentUser, $this->createMock(EventDispatcherInterface::class), $this->createMock(LoggerChannelInterface::class)) extends ToolBase {
 
       /**
        * {@inheritdoc}
@@ -274,6 +307,70 @@ final class ToolApiCallToolHandlerTest extends UnitTestCase {
     $this->assertTrue($result->result->isError);
     $this->assertSame(FALSE, $result->result->structuredContent['success'] ?? NULL);
     $this->assertArrayHasKey('validation_errors', $result->result->structuredContent);
+  }
+
+  /**
+   * A call with a real Tool API list input is checked, not crashed.
+   *
+   * Other modules' tools (Tool Belt, for one) declare lists with
+   * ListInputDefinition. Preparing such an argument called a method that
+   * class does not have.
+   */
+  public function testListInputArgumentsAreValidated(): void {
+    $toolManager = $this->createMock(PluginManagerInterface::class);
+
+    // The schema converter prints descriptions, which needs a translation
+    // service the unit test does not have: give the markup a stub.
+    $t = fn(string $text): TranslatableMarkup => new TranslatableMarkup($text, [], [], $this->getStringTranslationStub());
+    $tags = new ListInputDefinition(
+      label: $t('Tags'),
+      description: $t('Tag names.'),
+      required: TRUE,
+      constraints: [],
+      item_definition: new InputDefinition('string', $t('Tag'), $t('A tag name.')),
+    );
+    $countDefinition = $this->createMock(InputDefinitionInterface::class);
+    $countDefinition->method('getDataType')->willReturn('integer');
+    $countDefinition->method('isRequired')->willReturn(TRUE);
+    $countDefinition->method('getDescription')->willReturn(NULL);
+    $countDefinition->method('getConstraints')->willReturn([]);
+    $countDefinition->method('isMultiple')->willReturn(FALSE);
+
+    $definition = new ToolDefinition([
+      'id' => 'other_module:tagged',
+      'provider' => 'other_module',
+      'label' => $t('Tagged'),
+      'description' => $t('Takes a list of tags'),
+      'operation' => ToolOperation::Read,
+      'destructive' => FALSE,
+      'input_definitions' => [
+        'tags' => $tags,
+        'count' => $countDefinition,
+      ],
+    ]);
+    $toolManager->method('getDefinitions')->willReturn([
+      'other_module:tagged' => $definition,
+    ]);
+
+    $handler = new ToolApiCallToolHandler(
+      $toolManager,
+      new NullLogger(),
+      TRUE,
+      'mcp_tools',
+      new ToolInputValidator(new ToolApiSchemaConverter(), new NullLogger()),
+    );
+
+    // The list is fine; the bad count stops the call at the input check, so
+    // no tool has to run.
+    $request = (new CallToolRequest('other_module___tagged', ['tags' => ['a', 'b'], 'count' => 'many']))->withId('list-1');
+    $result = $handler->handle($request, $this->createMock(SessionInterface::class));
+
+    $this->assertInstanceOf(Response::class, $result);
+    $this->assertTrue($result->result->isError);
+    $errors = $result->result->structuredContent['validation_errors'] ?? [];
+    $paths = array_column($errors, 'path');
+    $this->assertContains('count', $paths);
+    $this->assertNotContains('tags', $paths, 'The list of strings is accepted.');
   }
 
 }

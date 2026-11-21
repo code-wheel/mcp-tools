@@ -98,9 +98,9 @@ drush mcp-tools:serve --uid=1 --gateway
 ```
 
 This exposes:
-- `mcp_tools/discover-tools` - List available tools
-- `mcp_tools/get-tool-info` - Get tool details
-- `mcp_tools/execute-tool` - Execute any tool by name
+- `mcp_tools_discover_tools` - List available tools
+- `mcp_tools_get_tool_info` - Get tool details
+- `mcp_tools_execute_tool` - Execute any tool by name
 
 ## Server Profiles
 

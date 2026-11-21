@@ -493,9 +493,9 @@ class LayoutBuilderService {
     try {
       $componentUuid = $this->uuid->generate();
       $component = new SectionComponent($componentUuid, $region, ['id' => $blockId]);
+      // The section is the object the display holds, so the change is in
+      // the display already. setSection() is protected on Drupal 10.
       $section->appendComponent($component);
-
-      $display->setSection($sectionDelta, $section);
       $display->save();
 
       $this->auditLogger->logSuccess('add_block', 'entity_view_display', "$entityType.$bundle", [
@@ -587,8 +587,6 @@ class LayoutBuilderService {
     try {
       $section = $sections[$foundSectionDelta];
       $section->removeComponent($blockUuid);
-
-      $display->setSection($foundSectionDelta, $section);
       $display->save();
 
       $this->auditLogger->logSuccess('remove_block', 'entity_view_display', "$entityType.$bundle", [

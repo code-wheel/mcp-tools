@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_search_api\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_search_api\Service\SearchApiService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -22,12 +22,12 @@ use Drupal\tool\Tool\ToolOperation;
   operation: ToolOperation::Read,
   input_definitions: [],
   output_definitions: [
-    'total' => new ContextDefinition(
+    'total' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total servers'),
       description: new TranslatableMarkup('Total number of search servers configured in the system.'),
     ),
-    'servers' => new ContextDefinition(
+    'servers' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('List of search servers'),
       description: new TranslatableMarkup('Array of server objects with id, label, backend type, status, and index count. Use id with GetServer for full details.'),

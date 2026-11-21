@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_webform\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_webform\Service\WebformService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -42,32 +42,32 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'webform_id' => new ContextDefinition(
+    'webform_id' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Webform ID'),
       description: new TranslatableMarkup('Machine name of the webform these submissions belong to.'),
     ),
-    'webform_title' => new ContextDefinition(
+    'webform_title' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Webform Title'),
       description: new TranslatableMarkup('Human-readable title of the webform.'),
     ),
-    'total' => new ContextDefinition(
+    'total' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Submissions'),
       description: new TranslatableMarkup('Total number of submissions for this webform across all pages.'),
     ),
-    'limit' => new ContextDefinition(
+    'limit' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Limit'),
       description: new TranslatableMarkup('Maximum submissions returned in this response.'),
     ),
-    'offset' => new ContextDefinition(
+    'offset' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Offset'),
       description: new TranslatableMarkup('Number of submissions skipped. Use offset + limit for next page.'),
     ),
-    'submissions' => new ContextDefinition(
+    'submissions' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Submissions'),
       description: new TranslatableMarkup('Array of submission objects with sid, created, remote_addr, and data. Use sid with DeleteSubmission to remove.'),

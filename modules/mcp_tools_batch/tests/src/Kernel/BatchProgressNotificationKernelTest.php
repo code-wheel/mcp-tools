@@ -9,6 +9,7 @@ use Drupal\mcp_tools\Mcp\ToolApiCallToolHandler;
 use Drupal\mcp_tools\Mcp\ToolApiSchemaConverter;
 use Drupal\mcp_tools\Mcp\ToolInputValidator;
 use Drupal\node\Entity\NodeType;
+use Drupal\Tests\mcp_tools\Traits\SdkSuspensionTrait;
 use Drupal\Tests\user\Traits\UserCreationTrait;
 use Mcp\Schema\Notification\ProgressNotification;
 use Mcp\Schema\Request\CallToolRequest;
@@ -23,9 +24,11 @@ use Symfony\Component\Uid\Uuid;
  * Drives the SDK Fiber protocol: when the client attached a progressToken,
  * the batch tools emit ProgressNotification suspensions per processed item.
  */
+#[\PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses]
 #[\PHPUnit\Framework\Attributes\Group('mcp_tools_batch')]
 class BatchProgressNotificationKernelTest extends KernelTestBase {
 
+  use SdkSuspensionTrait;
   use UserCreationTrait;
 
   /**
@@ -106,8 +109,8 @@ class BatchProgressNotificationKernelTest extends KernelTestBase {
     $fiber = new \Fiber(static fn() => $handler->handle($request, $session));
     $value = $fiber->start();
     while (!$fiber->isTerminated()) {
-      if (is_array($value) && ($value['type'] ?? '') === 'notification') {
-        $notifications[] = $value['notification'];
+      if ($notification = $this->suspendedNotification($value)) {
+        $notifications[] = $notification;
       }
       $value = $fiber->resume();
     }
@@ -131,6 +134,36 @@ class BatchProgressNotificationKernelTest extends KernelTestBase {
       ['title' => 'Plain'],
     ]);
     $this->assertNotEmpty($result['data']['created'] ?? $result['created'] ?? $result, 'Bulk create works with the bridge disarmed.');
+  }
+
+  /**
+   * A batch in which every item fails is a failure, not a success.
+   *
+   * The batch tools answered "success" whatever happened, with the errors
+   * listed inside. A call that changed nothing must not read as a success.
+   */
+  public function testABatchInWhichEverythingFailsIsAFailure(): void {
+    $batch = $this->container->get('mcp_tools_batch.batch');
+    $created = $batch->createMultipleContent('article', [['title' => 'One'], ['title' => 'Two']]);
+    $nids = array_column($created['data']['created'], 'nid');
+
+    // Both updates lack the "fields" map, so neither can be applied.
+    $result = $batch->updateMultipleContent([
+      ['id' => $nids[0], 'title' => 'Changed'],
+      ['id' => $nids[1], 'title' => 'Changed'],
+    ]);
+    $this->assertFalse($result['success']);
+    $this->assertStringContainsString('None of the 2 items', $result['error']);
+    $this->assertStringContainsString('field', $result['error']);
+
+    // One of two works: that is a success, with the error listed.
+    $result = $batch->updateMultipleContent([
+      ['id' => $nids[0], 'fields' => ['title' => 'Changed']],
+      ['id' => $nids[1], 'title' => 'Changed'],
+    ]);
+    $this->assertTrue($result['success']);
+    $this->assertSame(1, $result['data']['updated_count']);
+    $this->assertSame(1, $result['data']['error_count']);
   }
 
 }

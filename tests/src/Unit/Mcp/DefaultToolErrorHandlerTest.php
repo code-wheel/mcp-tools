@@ -40,9 +40,25 @@ final class DefaultToolErrorHandlerTest extends TestCase {
     $this->assertFalse($structured['success']);
     $this->assertSame('VALIDATION_ERROR', $structured['error_code']);
     $this->assertSame('test_tool', $structured['tool']);
-    $this->assertSame('Field is required', $structured['error']);
+    $this->assertSame('Field is required; Invalid type', $structured['error']);
     $this->assertCount(2, $structured['validation_errors']);
     $this->assertArrayHasKey('remediation', $structured);
+  }
+
+  /**
+   * The headline is the specific problem and where it is, not the wrapper.
+   */
+  public function testValidationHeadlineNamesThePropertyAndTheProblem(): void {
+    $errors = [
+      ['message' => 'The properties must match schema: nid', 'keyword' => 'properties', 'path' => NULL],
+      ['message' => 'The data (string) must match the type: integer', 'keyword' => 'type', 'path' => 'nid'],
+    ];
+
+    $result = $this->handler->validationFailed('test_tool', $errors);
+
+    $this->assertSame('nid: The data (string) must match the type: integer', $result->structuredContent['error']);
+    $this->assertStringStartsWith('nid: The data (string) must match the type: integer', $result->content[0]->text);
+    $this->assertCount(2, $result->structuredContent['validation_errors']);
   }
 
   public function testValidationFailedWithEmptyErrors(): void {
@@ -50,6 +66,34 @@ final class DefaultToolErrorHandlerTest extends TestCase {
 
     $structured = $result->structuredContent;
     $this->assertSame('Invalid tool input.', $structured['error']);
+  }
+
+  /**
+   * Every error result has the keys the advertised outputSchema requires.
+   *
+   * The schema of each tool requires "success" and "message". Error results
+   * only had "error", and the official JS client checks error results too:
+   * it replaced our error with "Structured content does not match the tool's
+   * output schema", so the model never saw what was wrong.
+   */
+  public function testErrorResultsCarryTheKeysTheOutputSchemaRequires(): void {
+    $handler = new DefaultToolErrorHandler($this->createMock(LoggerInterface::class));
+    $results = [
+      'validation' => $handler->validationFailed('t', [['message' => 'The data (string) must match the type: integer', 'path' => '/nid', 'keyword' => 'type']]),
+      'access' => $handler->accessDenied('t'),
+      'instantiation' => $handler->instantiationFailed('t', new \RuntimeException('no plugin')),
+      'invalid' => $handler->invalidTool('t', 'Not a tool.'),
+      'execution' => $handler->executionFailed('t', new \RuntimeException('boom')),
+    ];
+
+    foreach ($results as $kind => $result) {
+      $structured = $result->structuredContent;
+      $this->assertFalse($structured['success'], $kind);
+      $this->assertIsString($structured['message'] ?? NULL, $kind);
+      $this->assertNotSame('', $structured['message'], $kind);
+      // "error" stays for clients that read it.
+      $this->assertSame($structured['error'], $structured['message'], $kind);
+    }
   }
 
   public function testAccessDeniedReturnsErrorResult(): void {

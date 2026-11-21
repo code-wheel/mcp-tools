@@ -8,7 +8,7 @@ use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AuditLogger;
 use Drupal\mcp_tools_cron\Service\CronService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -24,12 +24,12 @@ use Drupal\tool\Tool\ToolOperation;
   operation: ToolOperation::Write,
   input_definitions: [],
   output_definitions: [
-    'success' => new ContextDefinition(
+    'success' => new OutputDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Success status'),
       description: new TranslatableMarkup('True if all cron jobs completed successfully.'),
     ),
-    'duration_seconds' => new ContextDefinition(
+    'duration_seconds' => new OutputDefinition(
       data_type: 'float',
       label: new TranslatableMarkup('Duration in seconds'),
       description: new TranslatableMarkup('Total execution time. High values may indicate performance issues.'),

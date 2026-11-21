@@ -7,7 +7,7 @@ namespace Drupal\mcp_tools_content\Plugin\tool\Tool;
 use Drupal\mcp_tools_content\Service\ContentService;
 use Drupal\mcp_tools_translate\Service\ContentTranslationService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -43,44 +43,44 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'nid' => new ContextDefinition(
+    'nid' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Node ID'),
       description: new TranslatableMarkup('The updated node ID.'),
     ),
-    'title' => new ContextDefinition(
+    'title' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Title'),
       description: new TranslatableMarkup('The title of the updated language version after the update.'),
     ),
-    'language' => new ContextDefinition(
+    'language' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Updated language'),
       description: new TranslatableMarkup('Language code of the language version that was updated.'),
     ),
-    'fields_updated' => new ContextDefinition(
+    'fields_updated' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Updated fields'),
       description: new TranslatableMarkup('Node fields changed by this call.'),
     ),
-    'paragraph_fields_updated' => new ContextDefinition(
+    'paragraph_fields_updated' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Updated paragraph fields'),
       description: new TranslatableMarkup('Number of paragraph field values changed by this call.'),
       required: FALSE,
     ),
-    'untouched_translatable_fields' => new ContextDefinition(
+    'untouched_translatable_fields' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Untouched translatable fields'),
-      description: new TranslatableMarkup('Translatable node fields NOT covered by this update (per-language updates only) — review them for language consistency.'),
+      description: new TranslatableMarkup('Translatable node fields NOT covered by this update (per-language updates only). Review them for language consistency.'),
       required: FALSE,
     ),
-    'revision_id' => new ContextDefinition(
+    'revision_id' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('New Revision ID'),
       description: new TranslatableMarkup('ID of the new revision created by this update.'),
     ),
-    'message' => new ContextDefinition(
+    'message' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
       description: new TranslatableMarkup('Human-readable success or error message naming the affected language.'),

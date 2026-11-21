@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_migration\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_migration\Service\MigrationService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -36,27 +36,27 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'content_type' => new ContextDefinition(
+    'content_type' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Content Type'),
       description: new TranslatableMarkup('The content type that was exported.'),
     ),
-    'exported_count' => new ContextDefinition(
+    'exported_count' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Exported Count'),
       description: new TranslatableMarkup('Number of items exported.'),
     ),
-    'fields' => new ContextDefinition(
+    'fields' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Fields'),
       description: new TranslatableMarkup('List of field names in the CSV columns.'),
     ),
-    'csv_data' => new ContextDefinition(
+    'csv_data' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('CSV Data'),
       description: new TranslatableMarkup('The exported data in CSV format.'),
     ),
-    'message' => new ContextDefinition(
+    'message' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Message'),
       description: new TranslatableMarkup('Result message.'),

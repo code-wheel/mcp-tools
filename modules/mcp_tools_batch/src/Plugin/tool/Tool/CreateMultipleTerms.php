@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_batch\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_batch\Service\BatchService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -36,47 +36,47 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'vocabulary' => new ContextDefinition(
+    'vocabulary' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Vocabulary'),
       description: new TranslatableMarkup('Vocabulary machine name where terms were created.'),
     ),
-    'total_requested' => new ContextDefinition(
+    'total_requested' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Requested'),
       description: new TranslatableMarkup('Number of terms requested for creation.'),
     ),
-    'created_count' => new ContextDefinition(
+    'created_count' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Created Count'),
       description: new TranslatableMarkup('Number of terms successfully created.'),
     ),
-    'skipped_count' => new ContextDefinition(
+    'skipped_count' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Skipped Count'),
       description: new TranslatableMarkup('Number of terms skipped (already exist with same name).'),
     ),
-    'error_count' => new ContextDefinition(
+    'error_count' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Error Count'),
       description: new TranslatableMarkup('Number of terms that failed to create.'),
     ),
-    'created' => new ContextDefinition(
+    'created' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Created Terms'),
       description: new TranslatableMarkup('Array of created terms with tid, name, and path.'),
     ),
-    'skipped' => new ContextDefinition(
+    'skipped' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Skipped Terms'),
       description: new TranslatableMarkup('Array of skipped terms with name and reason (duplicate).'),
     ),
-    'errors' => new ContextDefinition(
+    'errors' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Errors'),
       description: new TranslatableMarkup('Array of errors with name and error message for each failure.'),
     ),
-    'message' => new ContextDefinition(
+    'message' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
       description: new TranslatableMarkup('Summary of the batch term creation operation.'),

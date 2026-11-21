@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools\Plugin\tool\Tool;
 
 use Drupal\mcp_tools\Service\FileSystemService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -31,22 +31,22 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'total_files' => new ContextDefinition(
+    'total_files' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Managed Files'),
       description: new TranslatableMarkup('Total number of files in Drupal file management.'),
     ),
-    'returned' => new ContextDefinition(
+    'returned' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Files Returned'),
       description: new TranslatableMarkup('Number of files in this response (up to limit).'),
     ),
-    'by_mime_type' => new ContextDefinition(
+    'by_mime_type' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Files by MIME Type'),
       description: new TranslatableMarkup('File counts grouped by MIME type (e.g., image/jpeg, application/pdf).'),
     ),
-    'files' => new ContextDefinition(
+    'files' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('File List'),
       description: new TranslatableMarkup('Array of files with fid, filename, uri, filemime, filesize, status, and created. Use fid for media references.'),

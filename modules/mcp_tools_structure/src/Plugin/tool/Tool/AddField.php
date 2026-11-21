@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_structure\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_structure\Service\FieldService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -93,22 +93,22 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'field_name' => new ContextDefinition(
+    'field_name' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Field Name'),
       description: new TranslatableMarkup('Full field machine name (e.g., field_summary). Use this key in CreateContent fields parameter.'),
     ),
-    'entity_type' => new ContextDefinition(
+    'entity_type' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Entity Type'),
       description: new TranslatableMarkup('Entity type the field was added to (e.g., node).'),
     ),
-    'bundle' => new ContextDefinition(
+    'bundle' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Bundle'),
       description: new TranslatableMarkup('Bundle the field was added to (e.g., article).'),
     ),
-    'message' => new ContextDefinition(
+    'message' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
       description: new TranslatableMarkup('Success or error message.'),

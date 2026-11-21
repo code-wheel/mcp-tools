@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_structure\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_structure\Service\RoleService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -37,22 +37,22 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'role' => new ContextDefinition(
+    'role' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Role'),
       description: new TranslatableMarkup('The role that was modified.'),
     ),
-    'revoked' => new ContextDefinition(
+    'revoked' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Permissions Revoked'),
       description: new TranslatableMarkup('Permissions that were removed from the role.'),
     ),
-    'didnt_have' => new ContextDefinition(
+    'didnt_have' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Did Not Have'),
       description: new TranslatableMarkup('Permissions the role did not have (no action taken).'),
     ),
-    'message' => new ContextDefinition(
+    'message' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
       description: new TranslatableMarkup('Success or error message.'),

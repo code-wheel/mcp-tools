@@ -4,14 +4,16 @@ declare(strict_types=1);
 
 namespace Drupal\Tests\mcp_tools\Unit\Mcp;
 
-use Drupal\Core\Plugin\Context\ContextDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\mcp_tools\Mcp\ToolApiSchemaConverter;
 use Drupal\Tests\UnitTestCase;
 use Drupal\tool\Tool\ToolDefinition;
 use Drupal\tool\Tool\ToolOperation;
+use Drupal\tool\TypedData\InputDefinition;
 use Drupal\tool\TypedData\InputDefinitionInterface;
+use Drupal\tool\TypedData\ListInputDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 
 #[\PHPUnit\Framework\Attributes\CoversClass(\Drupal\mcp_tools\Mcp\ToolApiSchemaConverter::class)]
 #[\PHPUnit\Framework\Attributes\Group('mcp_tools')]
@@ -92,7 +94,6 @@ final class ToolApiSchemaConverterTest extends UnitTestCase {
       required: FALSE,
       description: 'Tags',
       constraints: [],
-      multiple: TRUE,
     );
 
     $meta = $this->mockInputDefinition(
@@ -200,6 +201,42 @@ final class ToolApiSchemaConverterTest extends UnitTestCase {
     $this->assertSame('{}', json_encode($properties['items']['items']));
   }
 
+  /**
+   * A real Tool API list input converts, with its item type.
+   *
+   * Other modules' tools (Tool Belt, for one) declare lists this way. The
+   * converter used to call a method the class does not have, which stopped
+   * the whole server from starting with --all-tools.
+   */
+  public function testListInputDefinitionDescribesItsItems(): void {
+    $converter = new ToolApiSchemaConverter();
+
+    $list = new ListInputDefinition(
+      label: $this->markup('Bundles'),
+      description: $this->markup('Bundle names to list.'),
+      required: TRUE,
+      constraints: [],
+      item_definition: new InputDefinition('string', $this->markup('Bundle'), $this->markup('A bundle name.')),
+    );
+
+    $definition = new ToolDefinition([
+      'id' => 'other_module:list_test',
+      'provider' => 'other_module',
+      'label' => $this->markup('List Test'),
+      'description' => $this->markup('Takes a list of strings'),
+      'operation' => ToolOperation::Read,
+      'destructive' => FALSE,
+      'input_definitions' => [
+        'bundles' => $list,
+      ],
+    ]);
+
+    $schema = $converter->toolDefinitionToInputSchema($definition);
+    $this->assertSame('array', $schema['properties']['bundles']['type']);
+    $this->assertSame('string', $schema['properties']['bundles']['items']['type']);
+    $this->assertSame(['bundles'], $schema['required']);
+  }
+
   public function testInputSchemaRejectsAdditionalProperties(): void {
     $converter = new ToolApiSchemaConverter();
 
@@ -256,9 +293,9 @@ final class ToolApiSchemaConverterTest extends UnitTestCase {
       'operation' => ToolOperation::Read,
       'destructive' => FALSE,
       'output_definitions' => [
-        'nid' => new ContextDefinition(data_type: 'integer', label: 'Node ID'),
-        'language' => new ContextDefinition(data_type: 'string', label: 'Language', required: FALSE),
-        'items' => new ContextDefinition(data_type: 'list', label: 'Items'),
+        'nid' => new OutputDefinition(data_type: 'integer', label: 'Node ID', description: 'The node ID.'),
+        'language' => new OutputDefinition(data_type: 'string', label: 'Language', description: 'The language code.', required: FALSE),
+        'items' => new OutputDefinition(data_type: 'list', label: 'Items', description: 'The items.'),
       ],
     ]);
 

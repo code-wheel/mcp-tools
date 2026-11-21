@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_ultimate_cron\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_ultimate_cron\Service\UltimateCronService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -22,12 +22,12 @@ use Drupal\tool\Tool\ToolOperation;
   operation: ToolOperation::Read,
   input_definitions: [],
   output_definitions: [
-    'jobs' => new ContextDefinition(
+    'jobs' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('List of Ultimate Cron jobs'),
       description: new TranslatableMarkup('Array of job objects with id, title, module, status, and last_run. Use id with GetJob for full details.'),
     ),
-    'count' => new ContextDefinition(
+    'count' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total number of jobs'),
       description: new TranslatableMarkup('Total count of Ultimate Cron jobs registered in the system.'),

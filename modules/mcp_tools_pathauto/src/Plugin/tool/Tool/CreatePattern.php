@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_pathauto\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_pathauto\Service\PathautoService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -54,32 +54,32 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'id' => new ContextDefinition(
+    'id' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Pattern ID'),
       description: new TranslatableMarkup('Machine name of the created pattern.'),
     ),
-    'label' => new ContextDefinition(
+    'label' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Label'),
       description: new TranslatableMarkup('Human-readable name of the pattern.'),
     ),
-    'pattern' => new ContextDefinition(
+    'pattern' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('URL Pattern'),
       description: new TranslatableMarkup('The token pattern for URL aliases.'),
     ),
-    'entity_type' => new ContextDefinition(
+    'entity_type' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Entity Type'),
       description: new TranslatableMarkup('Entity type this pattern applies to.'),
     ),
-    'bundle' => new ContextDefinition(
+    'bundle' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Bundle'),
       description: new TranslatableMarkup('Bundle restriction, if any.'),
     ),
-    'message' => new ContextDefinition(
+    'message' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
       description: new TranslatableMarkup('Success or error details.'),
@@ -115,7 +115,7 @@ class CreatePattern extends McpToolsToolBase {
     $label = $input['label'] ?? '';
     $pattern = $input['pattern'] ?? '';
     $entityType = $input['entity_type'] ?? '';
-    $bundle = $input['bundle'] ?? NULL;
+    $bundle = ($input['bundle'] ?? NULL) ?: NULL;
 
     if (empty($id)) {
       return ['success' => FALSE, 'error' => 'Pattern ID (machine name) is required.'];

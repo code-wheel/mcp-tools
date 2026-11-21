@@ -8,7 +8,8 @@ use CodeWheel\McpEvents\ToolExecutionFailedEvent;
 use CodeWheel\McpEvents\ToolExecutionStartedEvent;
 use CodeWheel\McpEvents\ToolExecutionSucceededEvent;
 use Drupal\mcp_tools_observability\EventSubscriber\ToolExecutionLogSubscriber;
-use Mcp\Types\CallToolResult;
+use Mcp\Schema\Content\TextContent;
+use Mcp\Schema\Result\CallToolResult;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
@@ -71,8 +72,7 @@ final class ToolExecutionLogSubscriberTest extends TestCase {
   }
 
   public function testOnSucceededLogsInfoMessage(): void {
-    $result = $this->createMock(CallToolResult::class);
-    $result->structuredContent = ['status' => 'ok'];
+    $result = new CallToolResult([new TextContent('ok')], FALSE, ['status' => 'ok']);
 
     $event = new ToolExecutionSucceededEvent(
       toolName: 'mcp_tools___get_status',
@@ -90,7 +90,8 @@ final class ToolExecutionLogSubscriberTest extends TestCase {
         $this->callback(function (array $context): bool {
           return $context['@tool'] === 'mcp_tools___get_status'
             && $context['@duration_ms'] === '42.50'
-            && $context['duration_ms'] === 42.5;
+            && $context['duration_ms'] === 42.5
+            && $context['structured'] === ['status' => 'ok'];
         })
       );
 

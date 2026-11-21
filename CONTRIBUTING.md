@@ -173,7 +173,7 @@ name: 'MCP Tools - Your Feature'
 type: module
 description: 'Manage your feature via MCP.'
 package: MCP Tools
-core_version_requirement: ^10.3 || ^11
+core_version_requirement: ^10.5 || ^11
 dependencies:
   - mcp_tools:mcp_tools
   # Add contrib dependencies if needed:

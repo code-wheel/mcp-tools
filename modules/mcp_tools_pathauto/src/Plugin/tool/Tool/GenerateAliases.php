@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_pathauto\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_pathauto\Service\PathautoService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -43,37 +43,37 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'entity_type' => new ContextDefinition(
+    'entity_type' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Entity Type'),
       description: new TranslatableMarkup('Entity type aliases were generated for.'),
     ),
-    'bundle' => new ContextDefinition(
+    'bundle' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Bundle'),
       description: new TranslatableMarkup('Bundle filtered on, or NULL if all bundles were processed.'),
     ),
-    'processed' => new ContextDefinition(
+    'processed' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Entities Processed'),
       description: new TranslatableMarkup('Total number of entities examined during generation.'),
     ),
-    'created' => new ContextDefinition(
+    'created' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Aliases Created'),
       description: new TranslatableMarkup('Number of new URL aliases created for entities that had none.'),
     ),
-    'updated' => new ContextDefinition(
+    'updated' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Aliases Updated'),
       description: new TranslatableMarkup('Number of existing aliases regenerated (only when update=true).'),
     ),
-    'skipped' => new ContextDefinition(
+    'skipped' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Skipped'),
       description: new TranslatableMarkup('Number of entities skipped (already have aliases when update=false, or no pattern configured).'),
     ),
-    'message' => new ContextDefinition(
+    'message' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
       description: new TranslatableMarkup('Human-readable summary of the alias generation results.'),
@@ -107,7 +107,7 @@ class GenerateAliases extends McpToolsToolBase {
    */
   protected function executeLegacy(array $input): array {
     $entityType = $input['entity_type'] ?? '';
-    $bundle = $input['bundle'] ?? NULL;
+    $bundle = ($input['bundle'] ?? NULL) ?: NULL;
     $update = $input['update'] ?? FALSE;
 
     if (empty($entityType)) {

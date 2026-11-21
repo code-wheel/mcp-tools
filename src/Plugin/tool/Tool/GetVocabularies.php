@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools\Plugin\tool\Tool;
 
 use Drupal\mcp_tools\Service\TaxonomyService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -22,12 +22,12 @@ use Drupal\tool\Tool\ToolOperation;
   operation: ToolOperation::Read,
   input_definitions: [],
   output_definitions: [
-    'total_vocabularies' => new ContextDefinition(
+    'total_vocabularies' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Vocabularies'),
       description: new TranslatableMarkup('Number of taxonomy vocabularies on the site.'),
     ),
-    'vocabularies' => new ContextDefinition(
+    'vocabularies' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Vocabularies'),
       description: new TranslatableMarkup('Array of vocabularies with vid (machine name), label, description, and term_count. Use vid with GetTerms or when creating entity references.'),

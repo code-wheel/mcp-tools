@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_media\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_media\Service\MediaService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -37,32 +37,32 @@ use Drupal\tool\TypedData\InputDefinition;
     'source_plugin' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Source Plugin'),
-      description: new TranslatableMarkup('Media source: "image", "file", "audio", "video", "oembed:video" (YouTube/Vimeo).'),
+      description: new TranslatableMarkup('Media source: "image", "file", "audio_file", "video_file", "oembed:video" (YouTube/Vimeo).'),
       required: TRUE,
     ),
   ],
   output_definitions: [
-    'id' => new ContextDefinition(
+    'id' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Media Type ID'),
       description: new TranslatableMarkup('Machine name of created type. Use as bundle in CreateMedia.'),
     ),
-    'label' => new ContextDefinition(
+    'label' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Label'),
       description: new TranslatableMarkup('Human-readable name of the media type.'),
     ),
-    'source_plugin' => new ContextDefinition(
+    'source_plugin' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Source Plugin'),
       description: new TranslatableMarkup('The media source plugin in use.'),
     ),
-    'source_field' => new ContextDefinition(
+    'source_field' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Source Field'),
       description: new TranslatableMarkup('Auto-created field for source data (e.g., field_media_image).'),
     ),
-    'message' => new ContextDefinition(
+    'message' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
       description: new TranslatableMarkup('Success confirmation or error details.'),

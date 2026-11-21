@@ -8,7 +8,7 @@ use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AuditLogger;
 use Drupal\mcp_tools_ultimate_cron\Service\UltimateCronService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -32,32 +32,32 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'success' => new ContextDefinition(
+    'success' => new OutputDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Success status'),
       description: new TranslatableMarkup('TRUE if the job was enabled successfully, FALSE if an error occurred.'),
     ),
-    'message' => new ContextDefinition(
+    'message' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result message'),
       description: new TranslatableMarkup('Human-readable confirmation of the job status change.'),
     ),
-    'id' => new ContextDefinition(
+    'id' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Job ID'),
       description: new TranslatableMarkup('Machine name of the enabled job.'),
     ),
-    'title' => new ContextDefinition(
+    'title' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Job Title'),
       description: new TranslatableMarkup('Human-readable title of the job.'),
     ),
-    'status' => new ContextDefinition(
+    'status' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('New status'),
       description: new TranslatableMarkup('Current job status: "enabled". Job will now run according to its schedule.'),
     ),
-    'changed' => new ContextDefinition(
+    'changed' => new OutputDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Whether status was changed'),
       description: new TranslatableMarkup('TRUE if the job was actually enabled, FALSE if it was already enabled.'),

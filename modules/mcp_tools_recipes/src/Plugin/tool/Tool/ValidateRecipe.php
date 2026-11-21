@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_recipes\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_recipes\Service\RecipesService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -30,27 +30,27 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'recipe' => new ContextDefinition(
+    'recipe' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Recipe Name'),
       description: new TranslatableMarkup('Name of the validated recipe.'),
     ),
-    'valid' => new ContextDefinition(
+    'valid' => new OutputDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Is Valid'),
       description: new TranslatableMarkup('Whether the recipe passed validation.'),
     ),
-    'errors' => new ContextDefinition(
+    'errors' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Errors'),
       description: new TranslatableMarkup('List of validation errors.'),
     ),
-    'warnings' => new ContextDefinition(
+    'warnings' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Warnings'),
       description: new TranslatableMarkup('List of validation warnings.'),
     ),
-    'message' => new ContextDefinition(
+    'message' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
       description: new TranslatableMarkup('Summary of validation results.'),

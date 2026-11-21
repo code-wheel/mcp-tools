@@ -529,7 +529,6 @@ class RedirectService {
       'destination' => $destination ? $destination->toString() : '',
       'status_code' => $redirect->getStatusCode(),
       'language' => $redirect->language()->getId(),
-      'count' => (int) $redirect->getCount(),
       'created' => $redirect->getCreated() ? date('Y-m-d H:i:s', (int) $redirect->getCreated()) : NULL,
     ];
   }

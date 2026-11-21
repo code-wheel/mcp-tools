@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools_translate\Plugin\tool\Tool;
 
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\mcp_tools_translate\Service\ContentTranslationService;
@@ -19,7 +19,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 #[Tool(
   id: 'mcp_translate_content',
   label: new TranslatableMarkup('Translate Content'),
-  description: new TranslatableMarkup('Create a linked translation for a node and its paragraphs using the Content Translation API. Call GetTranslatableContent first to get the source text. You MUST provide a translated value for EVERY field and paragraph it returns (include a field unchanged if it is identical in the target language, e.g. a proper name or number). Translate the whole article as one coherent document, not field by field. Incomplete payloads are REJECTED and nothing is saved — the error lists the missing keys; on rejection, re-translate the entire article, not just the gaps.'),
+  description: new TranslatableMarkup('Create a linked translation for a node and its paragraphs using the Content Translation API. Call GetTranslatableContent first to get the source text. You MUST provide a translated value for EVERY field and paragraph it returns (include a field unchanged if it is identical in the target language, e.g. a proper name or number). Translate the whole article as one coherent document, not field by field. Incomplete payloads are REJECTED and nothing is saved. The error lists the missing keys; on rejection, re-translate the entire article, not just the gaps.'),
   operation: ToolOperation::Write,
   input_definitions: [
     'nid' => new InputDefinition(
@@ -42,33 +42,40 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
     ),
   ],
   output_definitions: [
-    'nid' => new ContextDefinition(
+    'nid' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Node ID'),
+      description: new TranslatableMarkup('ID of the translated node.'),
     ),
-    'language' => new ContextDefinition(
+    'language' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Language'),
+      description: new TranslatableMarkup('Language code of the new translation.'),
     ),
-    'title' => new ContextDefinition(
+    'title' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Translated Title'),
+      description: new TranslatableMarkup('Title of the new translation.'),
     ),
-    'url' => new ContextDefinition(
+    'url' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Translated Node URL'),
+      description: new TranslatableMarkup('Path of the translated node.'),
     ),
-    'fields_translated' => new ContextDefinition(
+    'fields_translated' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Node Fields Translated Count'),
+      description: new TranslatableMarkup('Number of node fields translated.'),
     ),
-    'paragraphs_translated' => new ContextDefinition(
+    'paragraphs_translated' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Paragraphs Translated Count'),
+      description: new TranslatableMarkup('Number of paragraphs translated.'),
     ),
-    'message' => new ContextDefinition(
+    'message' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
+      description: new TranslatableMarkup('Confirmation message.'),
     ),
   ],
 )]

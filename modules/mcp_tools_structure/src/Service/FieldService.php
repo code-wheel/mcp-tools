@@ -154,11 +154,21 @@ class FieldService {
 
     foreach (self::FIELD_TYPE_DEFAULTS as $alias => $config) {
       $definition = $this->fieldTypeManager->getDefinition($config['type'], FALSE);
+      // A type whose module is not enabled cannot be added, so it is not
+      // offered: list fields need Options, dates need Datetime, and so on.
+      if (!$definition) {
+        continue;
+      }
+      // Core describes some field types with a list of lines.
+      $description = $definition['description'] ?? '';
+      if (is_array($description)) {
+        $description = implode(' ', array_map('strval', $description));
+      }
       $types[] = [
         'id' => $alias,
         'drupal_type' => $config['type'],
-        'label' => $definition ? (string) $definition['label'] : $alias,
-        'description' => $definition ? (string) ($definition['description'] ?? '') : '',
+        'label' => (string) $definition['label'],
+        'description' => (string) $description,
       ];
     }
 
@@ -224,8 +234,16 @@ class FieldService {
     if (!isset(self::FIELD_TYPE_DEFAULTS[$fieldType])) {
       return [
         'success' => FALSE,
-        'error' => "Unknown field type '$fieldType'. Use getFieldTypes() to see available types.",
-        'available_types' => array_keys(self::FIELD_TYPE_DEFAULTS),
+        'error' => "Unknown field type '$fieldType'. Use mcp_structure_list_field_types to see available types.",
+        'available_types' => array_column($this->getFieldTypes()['types'], 'id'),
+      ];
+    }
+
+    if (!$this->fieldTypeManager->hasDefinition(self::FIELD_TYPE_DEFAULTS[$fieldType]['type'])) {
+      return [
+        'success' => FALSE,
+        'error' => "Field type '$fieldType' is not available on this site: the module that provides it is not enabled. Use mcp_structure_list_field_types to see available types.",
+        'available_types' => array_column($this->getFieldTypes()['types'], 'id'),
       ];
     }
 
@@ -497,11 +515,16 @@ class FieldService {
       return $values;
     }
 
-    // Convert to key => label where key is sanitized label.
+    // Convert to key => label. A number is its own key, which is what a
+    // list of numbers needs. A text gets a key made from the label.
     $result = [];
     foreach ($values as $value) {
-      $key = strtolower(preg_replace('/[^a-z0-9]+/i', '_', $value));
-      $result[$key] = $value;
+      if (is_int($value) || is_float($value)) {
+        $result[$value] = (string) $value;
+        continue;
+      }
+      $key = strtolower(preg_replace('/[^a-z0-9]+/i', '_', (string) $value));
+      $result[$key] = (string) $value;
     }
     return $result;
   }

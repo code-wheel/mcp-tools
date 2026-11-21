@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_batch\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_batch\Service\BatchService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -30,32 +30,32 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'total_requested' => new ContextDefinition(
+    'total_requested' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Requested'),
       description: new TranslatableMarkup('Number of items requested for update.'),
     ),
-    'updated_count' => new ContextDefinition(
+    'updated_count' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Updated Count'),
       description: new TranslatableMarkup('Number of items successfully updated.'),
     ),
-    'error_count' => new ContextDefinition(
+    'error_count' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Error Count'),
       description: new TranslatableMarkup('Number of items that failed to update.'),
     ),
-    'updated' => new ContextDefinition(
+    'updated' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Updated Items'),
       description: new TranslatableMarkup('Array of updated items with nid, title, and changed_fields list.'),
     ),
-    'errors' => new ContextDefinition(
+    'errors' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Errors'),
       description: new TranslatableMarkup('Array of errors with nid and error message for each failure.'),
     ),
-    'message' => new ContextDefinition(
+    'message' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
       description: new TranslatableMarkup('Summary of the batch update operation.'),

@@ -15,6 +15,7 @@ use Drupal\Tests\user\Traits\UserCreationTrait;
 /**
  * Tests the delete safety guard and per-language delete of ContentService.
  */
+#[\PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses]
 #[\PHPUnit\Framework\Attributes\CoversClass(ContentService::class)]
 #[\PHPUnit\Framework\Attributes\Group('mcp_tools_content')]
 class ContentServiceLanguageTest extends KernelTestBase {
@@ -117,6 +118,10 @@ class ContentServiceLanguageTest extends KernelTestBase {
 
     $this->assertFalse($result['success']);
     $this->assertStringContainsString('Refused', $result['error']);
+    // Clients that render messages as HTML drop anything in angle brackets,
+    // so a placeholder written that way reaches the model as an empty string.
+    $this->assertDoesNotMatchRegularExpression('/<[a-z_]+>/', $result['error']);
+    $this->assertStringContainsString('language', $result['error']);
     $this->assertStringContainsString('en, it', $result['error']);
     $this->assertStringContainsString('confirm_delete_all', $result['error']);
     $this->assertNotNull($this->reload($nid), 'Nothing was deleted.');
@@ -237,6 +242,27 @@ class ContentServiceLanguageTest extends KernelTestBase {
     $this->assertStringContainsString('field_bogus', $result['error']);
     $this->assertStringContainsString('Nothing was updated', $result['error']);
     $this->assertSame('EN title', $this->reload($nid)->getTitle());
+  }
+
+  /**
+   * Unknown fields in a create are rejected, and nothing is created.
+   *
+   * The node dropped a field it does not have without a word, so the call
+   * reported success for a value that was never stored.
+   */
+  public function testCreateUnknownFieldRejected(): void {
+    $before = count($this->container->get('entity_type.manager')->getStorage('node')->loadMultiple());
+
+    $result = $this->contentService->createContent('article', 'should not be created', ['field_bogus' => 'x']);
+
+    $this->assertFalse($result['success']);
+    $this->assertStringContainsString('field_bogus', $result['error']);
+    $this->assertStringContainsString('Nothing was created', $result['error']);
+    $this->assertCount($before, $this->container->get('entity_type.manager')->getStorage('node')->loadMultiple());
+
+    // A field the node has is still accepted.
+    $result = $this->contentService->createContent('article', 'Created', ['status' => 1]);
+    $this->assertTrue($result['success'], (string) ($result['error'] ?? ''));
   }
 
   /**

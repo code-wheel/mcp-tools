@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Drupal\Tests\mcp_tools\Unit\Mcp;
 
+use Drupal\Core\Session\AccountInterface;
+use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Mcp\Resource\CoreResourceProvider;
 use Drupal\mcp_tools\Service\ConfigAnalysisService;
 use Drupal\mcp_tools\Service\SiteBlueprintService;
@@ -32,11 +34,21 @@ final class CoreResourceProviderTest extends TestCase {
     $this->siteBlueprintService = $this->createMock(SiteBlueprintService::class);
     $this->configAnalysisService = $this->createMock(ConfigAnalysisService::class);
 
+    // The access rule has kernel tests of its own
+    // (ResourceTemplatesKernelTest); here the user is allowed.
+    $accessManager = $this->createMock(AccessManager::class);
+    $accessManager->method('canRead')->willReturn(TRUE);
+    $currentUser = $this->createMock(AccountInterface::class);
+    $currentUser->method('hasPermission')->willReturn(TRUE);
+
     $this->provider = new CoreResourceProvider(
       $this->siteHealthService,
       $this->systemStatusService,
       $this->siteBlueprintService,
       $this->configAnalysisService,
+      NULL,
+      $accessManager,
+      $currentUser,
     );
   }
 

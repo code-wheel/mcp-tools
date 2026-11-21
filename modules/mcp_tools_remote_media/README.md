@@ -32,8 +32,8 @@ drush cr
 
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
-| `url` | string | yes | — | http/https URL of the remote image |
-| `name` | string | yes | — | Human-readable name for the media entity |
+| `url` | string | yes | - | http/https URL of the remote image |
+| `name` | string | yes | - | Human-readable name for the media entity |
 | `bundle` | string | no | `image` | Media type machine name. Use `mcp_list_media_types` to list available types |
 | `directory` | string | no | `public://mcp-uploads` | Drupal stream wrapper destination path |
 | `create_media` | boolean | no | `true` | If false, saves only the managed file (no media entity) |
@@ -132,12 +132,12 @@ needed beyond having the module enabled.
 ## Gotchas
 
 **Module not visible on the MCP Tools status page**
-(`/admin/config/services/mcp-tools/status`) — this is expected. That page
+(`/admin/config/services/mcp-tools/status`). This is expected. That page
 maintains a hardcoded list of known sub-modules in `StatusController.php`.
 Custom modules do not appear there; it is cosmetic only and has no effect on
 whether the tool is discovered or exposed.
 
-**Tool not visible in Claude Desktop after enabling the module** — two
+**Tool not visible in Claude Desktop after enabling the module**: two
 possible causes:
 
 1. Cache not cleared: run `drush cr` after enabling.

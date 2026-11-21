@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_blocks\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_blocks\Service\BlockService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -31,27 +31,27 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'block_id' => new ContextDefinition(
+    'block_id' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Block ID'),
       description: new TranslatableMarkup('ID of the removed block placement.'),
     ),
-    'plugin_id' => new ContextDefinition(
+    'plugin_id' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Plugin ID'),
       description: new TranslatableMarkup('Block plugin that was removed. Plugin itself is not deleted.'),
     ),
-    'region' => new ContextDefinition(
+    'region' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Region'),
       description: new TranslatableMarkup('Region the block was removed from.'),
     ),
-    'theme' => new ContextDefinition(
+    'theme' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Theme'),
       description: new TranslatableMarkup('Theme the block was removed from.'),
     ),
-    'message' => new ContextDefinition(
+    'message' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
       description: new TranslatableMarkup('Success confirmation. Block can be placed again with PlaceBlock.'),

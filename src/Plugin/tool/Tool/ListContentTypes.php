@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools\Plugin\tool\Tool;
 
 use Drupal\mcp_tools\Service\ContentAnalysisService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -22,12 +22,12 @@ use Drupal\tool\Tool\ToolOperation;
   operation: ToolOperation::Read,
   input_definitions: [],
   output_definitions: [
-    'total_types' => new ContextDefinition(
+    'total_types' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Content Types'),
       description: new TranslatableMarkup('Number of content types defined on the site.'),
     ),
-    'types' => new ContextDefinition(
+    'types' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Content Types'),
       description: new TranslatableMarkup('Array of content types with id (machine name), label, description, and fields. Use the id when creating content.'),

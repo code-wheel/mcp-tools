@@ -8,7 +8,7 @@ use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AuditLogger;
 use Drupal\mcp_tools_search_api\Service\SearchApiService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -33,17 +33,17 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'success' => new ContextDefinition(
+    'success' => new OutputDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Success status'),
       description: new TranslatableMarkup('TRUE if the index was cleared successfully, FALSE if an error occurred.'),
     ),
-    'message' => new ContextDefinition(
+    'message' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result message'),
       description: new TranslatableMarkup('Human-readable confirmation. WARNING: All indexed data is removed and must be reindexed.'),
     ),
-    'items_to_reindex' => new ContextDefinition(
+    'items_to_reindex' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Items that need to be reindexed'),
       description: new TranslatableMarkup('Number of items now pending reindexing. Use IndexItems to rebuild the index.'),

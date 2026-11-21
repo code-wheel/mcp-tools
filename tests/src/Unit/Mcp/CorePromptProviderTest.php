@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Drupal\Tests\mcp_tools\Unit\Mcp;
 
+use Drupal\Core\Session\AccountInterface;
+use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Mcp\Prompt\CorePromptProvider;
 use Drupal\mcp_tools\Service\SiteHealthService;
 use Drupal\mcp_tools\Service\SystemStatusService;
@@ -28,9 +30,18 @@ final class CorePromptProviderTest extends TestCase {
     $this->siteHealthService = $this->createMock(SiteHealthService::class);
     $this->systemStatusService = $this->createMock(SystemStatusService::class);
 
+    // The access rule has kernel tests of its own
+    // (ResourceTemplatesKernelTest); here the user is allowed.
+    $accessManager = $this->createMock(AccessManager::class);
+    $accessManager->method('canRead')->willReturn(TRUE);
+    $currentUser = $this->createMock(AccountInterface::class);
+    $currentUser->method('hasPermission')->willReturn(TRUE);
+
     $this->provider = new CorePromptProvider(
       $this->siteHealthService,
       $this->systemStatusService,
+      $accessManager,
+      $currentUser,
     );
   }
 

@@ -12,8 +12,12 @@ use CodeWheel\McpEvents\ToolExecutionStartedEvent;
 use CodeWheel\McpEvents\ToolExecutionSucceededEvent;
 use Drupal\mcp_tools\Mcp\Error\DefaultToolErrorHandler;
 use Drupal\mcp_tools\Mcp\Error\ToolErrorHandlerInterface;
+use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\McpClientBridge;
+use Drupal\mcp_tools\Service\McpToolCallContext;
+use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Tool\ToolInterface;
+use Drupal\tool\Tool\ToolOperation;
 use Drupal\tool\TypedData\InputDefinitionInterface;
 use Drupal\tool\TypedData\ListInputDefinition;
 use Drupal\tool\TypedData\MapInputDefinition;
@@ -51,6 +55,8 @@ class ToolApiCallToolHandler implements RequestHandlerInterface {
     private readonly ?ToolErrorHandlerInterface $errorHandler = NULL,
     private readonly ?EventDispatcherInterface $eventDispatcher = NULL,
     private readonly ?McpClientBridge $clientBridge = NULL,
+    private readonly ?AccessManager $accessManager = NULL,
+    private readonly ?McpToolCallContext $toolCallContext = NULL,
   ) {}
 
   /**
@@ -62,14 +68,69 @@ class ToolApiCallToolHandler implements RequestHandlerInterface {
 
   /**
    * {@inheritdoc}
+   *
+   * The call runs in a Fiber of its own, so Drupal's Fiber suspensions do
+   * not reach the SDK. See FiberIsolation.
    */
   public function handle(Request $request, SessionInterface $session): Response|Error {
+    return FiberIsolation::run(function () use ($request, $session): Response|Error {
+      // The call starts like a new request before anything is checked, so
+      // the access check reads the settings as they are now. A tool's own
+      // enter() inside this one resets nothing a second time.
+      $this->toolCallContext?->enter();
+      try {
+        return $this->doHandle($request, $session);
+      }
+      finally {
+        $this->toolCallContext?->leave();
+      }
+    });
+  }
+
+  /**
+   * Converts the JSON objects in tool arguments to arrays.
+   *
+   * @param mixed $value
+   *   The arguments, or a value inside them.
+   * @param bool $keepEmptyObjects
+   *   Leave an empty object as it is, so it still reads as an object.
+   *
+   * @return mixed
+   *   The same value with \stdClass objects turned into arrays.
+   */
+  private static function objectsToArrays(mixed $value, bool $keepEmptyObjects = FALSE): mixed {
+    if ($value instanceof \stdClass) {
+      $properties = get_object_vars($value);
+      if ($properties === [] && $keepEmptyObjects) {
+        return $value;
+      }
+      $value = $properties;
+    }
+    if (is_array($value)) {
+      foreach ($value as $key => $item) {
+        $value[$key] = self::objectsToArrays($item, $keepEmptyObjects);
+      }
+    }
+    return $value;
+  }
+
+  /**
+   * Handles a tools/call request.
+   */
+  private function doHandle(Request $request, SessionInterface $session): Response|Error {
     assert($request instanceof CallToolRequest);
 
     $startedAt = microtime(TRUE);
     $requestId = $request->getId();
     $toolName = $request->name;
-    $arguments = $request->arguments ?? [];
+    // Up to mcp/sdk 0.9 the SDK decoded every JSON object in the arguments
+    // to a PHP array. From 0.10 it keeps nested objects as \stdClass, so
+    // that {} and [] stay apart. Tool API inputs and the tools work with
+    // arrays, so that is what they get. The input check below gets a copy
+    // that keeps empty objects: an empty PHP array would read as a JSON
+    // list and be refused for an input that is a map.
+    $rawArguments = $request->arguments ?? [];
+    $arguments = self::objectsToArrays($rawArguments);
     $sanitizedArguments = $this->sanitizeArguments($arguments);
 
     $pluginId = $this->mcpNameToPluginId($toolName);
@@ -97,7 +158,7 @@ class ToolApiCallToolHandler implements RequestHandlerInterface {
     $toolErrorHandler = $this->errorHandler ?? new DefaultToolErrorHandler($this->logger);
     $validator = $this->inputValidator ?? new ToolInputValidator(new ToolApiSchemaConverter(), $this->logger);
     $inputDefinitions = $definition->getInputDefinitions();
-    $normalizedArguments = $this->normalizeArgumentsForValidation($inputDefinitions, $arguments);
+    $normalizedArguments = $this->normalizeArgumentsForValidation($inputDefinitions, self::objectsToArrays($rawArguments, TRUE));
     // Tools without declared inputs must still reject stray arguments —
     // their schema declares additionalProperties: false too.
     if (!empty($inputDefinitions) || !empty($normalizedArguments)) {
@@ -205,7 +266,7 @@ class ToolApiCallToolHandler implements RequestHandlerInterface {
     }
 
     // Check access.
-    if (!$tool->access()) {
+    if (!$this->scopesAllow($tool) || !$tool->access()) {
       $result = $toolErrorHandler->accessDenied($toolName);
       $this->dispatchEvent(new ToolExecutionFailedEvent(
         $toolName,
@@ -229,13 +290,17 @@ class ToolApiCallToolHandler implements RequestHandlerInterface {
         $message = $result->isSuccess() ? 'Success.' : 'Tool execution failed.';
       }
 
+      // A failed tool has no outputs. Its declared outputs are optional, so
+      // reading them would not throw but return NULL for each one.
       $output = [];
       $toolOutput = NULL;
-      try {
-        $toolOutput = $tool->getOutputValues();
-      }
-      catch (\Throwable) {
-        $toolOutput = NULL;
+      if ($result->isSuccess()) {
+        try {
+          $toolOutput = $tool->getOutputValues();
+        }
+        catch (\Throwable) {
+          $toolOutput = NULL;
+        }
       }
 
       if (!empty($toolOutput)) {
@@ -246,6 +311,9 @@ class ToolApiCallToolHandler implements RequestHandlerInterface {
       }
 
       $output = $this->normalizeValue($output);
+      if (is_array($output)) {
+        $output = self::emptyMapsAsObjects($output, $tool->getOutputDefinitions());
+      }
 
       $structured = [
         'success' => $result->isSuccess(),
@@ -319,7 +387,9 @@ class ToolApiCallToolHandler implements RequestHandlerInterface {
       }
 
       if ($definition instanceof ListInputDefinition && is_array($argument)) {
-        $itemDefinition = $definition->getDataDefinition()->getItemDefinition();
+        // getItemDefinition() is on the list definition itself in every
+        // Tool API version we support (beta9 to beta12).
+        $itemDefinition = $definition->getItemDefinition();
         if ($itemDefinition instanceof InputDefinitionInterface) {
           foreach ($argument as $key => $value) {
             $argument[$key] = $this->upcastArgument($value, $itemDefinition);
@@ -381,6 +451,51 @@ class ToolApiCallToolHandler implements RequestHandlerInterface {
     }
 
     return $value;
+  }
+
+  /**
+   * Applies scopes and site modes to a tool of another provider.
+   *
+   * MCP Tools' own tools check these in their access check. A Tool API tool
+   * of another module knows nothing of them, and with "all tools" on the
+   * server runs it too: a read-only key could run another module's write
+   * tool. See AccessManager::allowsForeignToolOperation() for the rule.
+   */
+  private function scopesAllow(ToolInterface $tool): bool {
+    if ($this->accessManager === NULL || $tool instanceof McpToolsToolBase) {
+      return TRUE;
+    }
+
+    $definition = $tool->getPluginDefinition();
+    $operation = $definition instanceof ToolDefinition ? $definition->getOperation() : NULL;
+
+    return $this->accessManager->allowsForeignToolOperation(($operation ?? ToolOperation::Transform)->value);
+  }
+
+  /**
+   * Sends an empty map as {} and not as [].
+   *
+   * PHP has one empty array for both; JSON does not. A client that checks
+   * the result against the outputSchema rejects [] for an output declared
+   * as a map, and the model gets a schema error in place of the result.
+   *
+   * @param array<string, mixed> $output
+   *   The output values, keyed by output name.
+   * @param array<string, object> $definitions
+   *   The tool's output definitions.
+   *
+   * @return array<string, mixed>
+   *   The same values, empty maps as objects.
+   */
+  private static function emptyMapsAsObjects(array $output, array $definitions): array {
+    foreach ($definitions as $name => $definition) {
+      if (($output[$name] ?? NULL) === []
+        && method_exists($definition, 'getDataType')
+        && (string) $definition->getDataType() === 'map') {
+        $output[$name] = new \stdClass();
+      }
+    }
+    return $output;
   }
 
   /**
@@ -463,6 +578,19 @@ class ToolApiCallToolHandler implements RequestHandlerInterface {
       return $arguments;
     }
 
+    // Ask only a session that may run the tool. The question used to come
+    // before the access check, so the user of a read-only session was asked
+    // to confirm a deletion that was then refused.
+    try {
+      $tool = $this->toolManager->createInstance($pluginId);
+      if (!$this->scopesAllow($tool) || !$tool->access()) {
+        return $arguments;
+      }
+    }
+    catch (\Throwable) {
+      return $arguments;
+    }
+
     $message = strtr($confirmation['message'], ['@nid' => (string) ($arguments['nid'] ?? '?')]);
     try {
       $result = $gateway->elicit($message, new ElicitationSchema(
@@ -486,7 +614,7 @@ class ToolApiCallToolHandler implements RequestHandlerInterface {
       return $arguments;
     }
 
-    $text = 'Deletion declined by the user — nothing was deleted.';
+    $text = 'Deletion declined by the user. Nothing was deleted.';
     return new Response($requestId, new CallToolResult(
       [new TextContent($text)],
       FALSE,

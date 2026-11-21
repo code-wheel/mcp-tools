@@ -7,7 +7,7 @@ namespace Drupal\mcp_tools_templates\Plugin\tool\Tool;
 use Drupal\mcp_tools\Trait\WriteAccessTrait;
 use Drupal\mcp_tools_templates\Service\TemplateService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -43,27 +43,27 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'template' => new ContextDefinition(
+    'template' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Template ID'),
       description: new TranslatableMarkup('The template that was applied.'),
     ),
-    'created' => new ContextDefinition(
+    'created' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Created Components'),
       description: new TranslatableMarkup('List of components that were created.'),
     ),
-    'skipped' => new ContextDefinition(
+    'skipped' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Skipped Components'),
       description: new TranslatableMarkup('List of components that were skipped (already exist).'),
     ),
-    'errors' => new ContextDefinition(
+    'errors' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Errors'),
       description: new TranslatableMarkup('Any errors that occurred during application.'),
     ),
-    'message' => new ContextDefinition(
+    'message' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
       description: new TranslatableMarkup('Summary message about the operation.'),

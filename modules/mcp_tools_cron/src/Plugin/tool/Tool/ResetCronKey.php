@@ -8,7 +8,7 @@ use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AuditLogger;
 use Drupal\mcp_tools_cron\Service\CronService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -25,12 +25,12 @@ use Drupal\tool\Tool\ToolOperation;
   destructive: TRUE,
   input_definitions: [],
   output_definitions: [
-    'success' => new ContextDefinition(
+    'success' => new OutputDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Success status'),
       description: new TranslatableMarkup('True if new key was generated successfully.'),
     ),
-    'new_key' => new ContextDefinition(
+    'new_key' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('New cron key'),
       description: new TranslatableMarkup('New cron key. Update any external cron triggers with this value.'),

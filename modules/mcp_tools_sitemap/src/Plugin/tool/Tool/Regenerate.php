@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_sitemap\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_sitemap\Service\SitemapService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -31,17 +31,17 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'variant' => new ContextDefinition(
+    'variant' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Regenerated Variant'),
       description: new TranslatableMarkup('The variant ID that was regenerated, or "all" if all variants were processed.'),
     ),
-    'queue_status' => new ContextDefinition(
+    'queue_status' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Queue Status'),
       description: new TranslatableMarkup('Queue information: items_queued, estimated_time. Generation happens via cron. Use GetStatus to check progress.'),
     ),
-    'message' => new ContextDefinition(
+    'message' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
       description: new TranslatableMarkup('Human-readable confirmation. Note: regeneration is queued and completes during cron runs.'),

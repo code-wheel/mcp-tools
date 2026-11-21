@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_metatag\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_metatag\Service\MetatagService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -42,27 +42,27 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'entity_type' => new ContextDefinition(
+    'entity_type' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Entity Type'),
       description: new TranslatableMarkup('The entity type updated.'),
     ),
-    'entity_id' => new ContextDefinition(
+    'entity_id' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Entity ID'),
       description: new TranslatableMarkup('The entity ID updated.'),
     ),
-    'entity_label' => new ContextDefinition(
+    'entity_label' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Entity Label'),
       description: new TranslatableMarkup('Title or name of the updated entity.'),
     ),
-    'tags_updated' => new ContextDefinition(
+    'tags_updated' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Tags Updated'),
       description: new TranslatableMarkup('List of metatag keys that were set or modified. Use GetEntityMetatags to verify the changes.'),
     ),
-    'message' => new ContextDefinition(
+    'message' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
       description: new TranslatableMarkup('Human-readable confirmation of the metatag update.'),

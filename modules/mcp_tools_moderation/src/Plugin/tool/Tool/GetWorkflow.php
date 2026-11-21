@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_moderation\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_moderation\Service\ModerationService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -30,27 +30,27 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'id' => new ContextDefinition(
+    'id' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Workflow ID'),
       description: new TranslatableMarkup('Machine name of the workflow.'),
     ),
-    'label' => new ContextDefinition(
+    'label' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Workflow Label'),
       description: new TranslatableMarkup('Human-readable name of the workflow.'),
     ),
-    'states' => new ContextDefinition(
+    'states' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('States'),
       description: new TranslatableMarkup('Available states with id, label, and whether it is published. Use state id with SetModerationState.'),
     ),
-    'transitions' => new ContextDefinition(
+    'transitions' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Transitions'),
       description: new TranslatableMarkup('Available transitions showing which state changes are permitted.'),
     ),
-    'entity_types' => new ContextDefinition(
+    'entity_types' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Entity Types'),
       description: new TranslatableMarkup('Entity types and bundles using this workflow.'),

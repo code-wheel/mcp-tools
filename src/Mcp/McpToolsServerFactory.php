@@ -8,13 +8,16 @@ use Drupal\Component\Plugin\PluginManagerInterface;
 use Drupal\mcp_tools\Mcp\Resource\ResourceRegistry;
 use Drupal\mcp_tools\Mcp\Prompt\PromptRegistry;
 use Drupal\mcp_tools\Mcp\Error\ToolErrorHandlerInterface;
+use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\McpClientBridge;
+use Drupal\mcp_tools\Service\McpToolCallContext;
 use Drupal\tool\Tool\ToolDefinition;
 use Mcp\Schema\Annotations;
+use Mcp\Schema\ServerCapabilities;
 use Mcp\Schema\ToolAnnotations;
-use Mcp\Server;
 use Mcp\Server\Builder;
 use Mcp\Server\Session\SessionStoreInterface;
+use Mcp\Server\Wire\CachePolicy;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Log\LoggerInterface;
 
@@ -22,6 +25,11 @@ use Psr\Log\LoggerInterface;
  * Builds an MCP Server instance that exposes Drupal Tool API tools.
  */
 class McpToolsServerFactory {
+
+  /**
+   * How long a client may keep a list result, in milliseconds.
+   */
+  public const LIST_TTL_MS = 300000;
 
   public function __construct(
     private readonly PluginManagerInterface $toolManager,
@@ -32,6 +40,8 @@ class McpToolsServerFactory {
     private readonly ?PromptRegistry $promptRegistry = NULL,
     private readonly ?ToolErrorHandlerInterface $toolErrorHandler = NULL,
     private readonly ?McpClientBridge $clientBridge = NULL,
+    private readonly ?AccessManager $accessManager = NULL,
+    private readonly ?McpToolCallContext $toolCallContext = NULL,
   ) {}
 
   /**
@@ -57,7 +67,7 @@ class McpToolsServerFactory {
    * @param bool $enablePrompts
    *   When TRUE, register MCP prompts.
    *
-   * @return \Mcp\Server
+   * @return \Mcp\Server|\Mcp\Server\Server
    *   MCP server instance.
    */
   public function create(
@@ -70,11 +80,13 @@ class McpToolsServerFactory {
     bool $gatewayMode = FALSE,
     bool $enableResources = TRUE,
     bool $enablePrompts = TRUE,
-  ): Server {
-    $builder = Server::builder()
+  ): object {
+    $builder = Sdk::serverClass()::builder()
       ->setServerInfo($serverName, $serverVersion)
       ->setPaginationLimit($paginationLimit)
-      ->setLogger($this->logger)
+      // The SDK logs every registration at debug level, ~56 records per
+      // request; only its warnings and errors belong in the site's logs.
+      ->setLogger(new MinimumLevelLogger($this->logger))
       ->setEventDispatcher($this->eventDispatcher);
 
     if ($sessionStore) {
@@ -96,12 +108,13 @@ class McpToolsServerFactory {
       }
     }
 
-    if ($enableResources) {
-      $this->addResources($builder);
+    $resourceCount = $enableResources ? $this->addResources($builder) : 0;
+    $promptCount = $enablePrompts ? $this->addPrompts($builder) : 0;
+    $this->declareCapabilities($builder, $resourceCount > 0, $promptCount > 0);
+    if (method_exists($builder, 'setInstructions')) {
+      $builder->setInstructions(self::instructions($gatewayMode));
     }
-    if ($enablePrompts) {
-      $this->addPrompts($builder);
-    }
+    $this->declareCachePolicy($builder);
 
     if ($gatewayMode) {
       $gateway = new ToolApiGateway(
@@ -112,6 +125,8 @@ class McpToolsServerFactory {
         'mcp_tools',
         $this->toolErrorHandler,
         $this->eventDispatcher,
+        $this->accessManager,
+        $this->toolCallContext,
       );
 
       foreach ($gateway->getGatewayTools() as $tool) {
@@ -137,6 +152,8 @@ class McpToolsServerFactory {
       $this->toolErrorHandler,
       $this->eventDispatcher,
       $this->clientBridge,
+      $this->accessManager,
+      $this->toolCallContext,
     ));
 
     $definitions = $this->toolManager->getDefinitions();
@@ -154,7 +171,7 @@ class McpToolsServerFactory {
       $annotations = ToolAnnotations::fromArray($annotationsData);
 
       $outputSchema = self::builderSupportsOutputSchema()
-        ? $this->schemaConverter->toolDefinitionToOutputSchema($definition)
+        ? $this->schemaConverter->toolDefinitionToOutputSchema($definition, (string) $pluginId)
         : NULL;
 
       if ($outputSchema !== NULL) {
@@ -208,10 +225,11 @@ class McpToolsServerFactory {
   /**
    * Registers resources and templates with the server builder.
    */
-  private function addResources(Builder $builder): void {
+  private function addResources(Builder $builder): int {
     if ($this->resourceRegistry === NULL) {
-      return;
+      return 0;
     }
+    $count = 0;
 
     $resources = $this->resourceRegistry->getResources();
     $seen = [];
@@ -243,6 +261,7 @@ class McpToolsServerFactory {
         icons: $resource['icons'] ?? NULL,
         meta: $resource['meta'] ?? NULL,
       );
+      $count++;
     }
 
     $templates = $this->resourceRegistry->getResourceTemplates();
@@ -273,16 +292,20 @@ class McpToolsServerFactory {
         annotations: $annotations,
         meta: $template['meta'] ?? NULL,
       );
+      $count++;
     }
+
+    return $count;
   }
 
   /**
    * Registers prompts with the server builder.
    */
-  private function addPrompts(Builder $builder): void {
+  private function addPrompts(Builder $builder): int {
     if ($this->promptRegistry === NULL) {
-      return;
+      return 0;
     }
+    $count = 0;
 
     $prompts = $this->promptRegistry->getPrompts();
     $seen = [];
@@ -308,7 +331,74 @@ class McpToolsServerFactory {
         icons: $prompt['icons'] ?? NULL,
         meta: $prompt['meta'] ?? NULL,
       );
+      $count++;
     }
+
+    return $count;
+  }
+
+  /**
+   * Tells clients what this server really does.
+   *
+   * Left alone, the SDK advertises logging, completions, resource
+   * subscriptions and list-changed notifications. None of them is
+   * implemented here, and a client that believes the claim waits for
+   * messages that never come.
+   */
+  private function declareCapabilities(Builder $builder, bool $hasResources, bool $hasPrompts): void {
+    if (!method_exists($builder, 'setCapabilities') || !class_exists(ServerCapabilities::class)) {
+      return;
+    }
+    $builder->setCapabilities(new ServerCapabilities(
+      tools: TRUE,
+      toolsListChanged: FALSE,
+      resources: $hasResources,
+      resourcesSubscribe: FALSE,
+      resourcesListChanged: FALSE,
+      prompts: $hasPrompts,
+      promptsListChanged: FALSE,
+      logging: FALSE,
+      completions: FALSE,
+    ));
+  }
+
+  /**
+   * Says how long clients may keep the lists (2026-07-28 revision).
+   *
+   * That revision puts a lifetime on every list and read result. Without a
+   * policy the SDK answers "stale at once", so a client asks for the tool
+   * list again before every use. The lists here only change when modules or
+   * settings change: five minutes is safe. They are for the asking client
+   * alone, never for a shared cache. Resource contents are live site data
+   * and stay uncached.
+   */
+  private function declareCachePolicy(Builder $builder): void {
+    if (!method_exists($builder, 'setCachePolicy') || !class_exists(CachePolicy::class)) {
+      return;
+    }
+    $policy = CachePolicy::none();
+    foreach (['tools/list', 'prompts/list', 'resources/list', 'resources/templates/list'] as $method) {
+      $policy = $policy->withMethod($method, self::LIST_TTL_MS);
+    }
+    $builder->setCachePolicy($policy);
+  }
+
+  /**
+   * The server's note to the client's model on how to use it.
+   *
+   * Clients may put this in the system prompt, and some load only this and
+   * the tool names at first, so it stays short and says how to find things.
+   */
+  public static function instructions(bool $gatewayMode): string {
+    $text = 'Tools for administering this Drupal site: content, structure (content types, fields, taxonomy, roles), menus, views, media, blocks, users, config, cache and site health. Which tools exist depends on the modules the site enabled. '
+      . 'Tools that only read are safe to call. Tools that write change the live site and need the write scope; if a call is denied, tell the user which scope or permission is missing. Deleting asks for an explicit confirm flag: read the refusal, it says what would be removed. '
+      . 'Look up IDs and machine names with a list, get or search tool before you write. When a call fails, the error names the parameter and the problem: fix that and retry.';
+    if ($gatewayMode) {
+      $text .= ' This server runs in gateway mode: find a tool with ' . ToolApiGateway::DISCOVER_TOOL
+        . ' (pass a query), read its inputs with ' . ToolApiGateway::GET_INFO_TOOL
+        . ', then run it with ' . ToolApiGateway::EXECUTE_TOOL . '.';
+    }
+    return $text;
   }
 
   /**

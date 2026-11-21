@@ -401,6 +401,17 @@ final class ParagraphsServiceTest extends UnitTestCase {
     $this->assertSame('Red', $result['red']);
   }
 
+  /**
+   * A list of numbers keeps its numbers as keys. It used to be a crash.
+   */
+  public function testFormatAllowedValuesWithNumbers(): void {
+    $service = $this->createService();
+
+    $method = new \ReflectionMethod($service, 'formatAllowedValues');
+
+    $this->assertSame([1 => '1', 2 => '2', 5 => '5'], $method->invoke($service, [1, 2, 5]));
+  }
+
   public function testGetFieldsForBundleFiltersBaseFields(): void {
     // Create fresh entityFieldManager mock for this specific test.
     $entityFieldManager = $this->createMock(EntityFieldManagerInterface::class);

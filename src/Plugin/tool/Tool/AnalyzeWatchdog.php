@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools\Plugin\tool\Tool;
 
 use Drupal\mcp_tools\Service\WatchdogAnalyzer;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -45,12 +45,12 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'mode' => new ContextDefinition(
+    'mode' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Analysis Mode Used'),
       description: new TranslatableMarkup('The analysis mode that was used: summary, errors, or recent.'),
     ),
-    'data' => new ContextDefinition(
+    'data' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Analysis Results'),
       description: new TranslatableMarkup('For summary: counts by type/severity. For errors/recent: array of log entries with wid, type, severity, message, timestamp, and user.'),

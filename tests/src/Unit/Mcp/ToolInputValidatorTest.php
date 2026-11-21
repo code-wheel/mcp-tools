@@ -91,6 +91,10 @@ final class ToolInputValidatorTest extends UnitTestCase {
 
     $this->assertFalse($result['valid']);
     $this->assertNotEmpty($result['errors']);
+    // The message names the missing property, with no unfilled blanks.
+    $message = (string) $result['errors'][0]['message'];
+    $this->assertStringContainsString('name', $message);
+    $this->assertStringNotContainsString('{', $message);
   }
 
   public function testValidateReturnsErrorsForWrongType(): void {
@@ -110,6 +114,18 @@ final class ToolInputValidatorTest extends UnitTestCase {
 
     $this->assertFalse($result['valid']);
     $this->assertNotEmpty($result['errors']);
+    // The error for the property says what was sent and what is expected.
+    $typeErrors = array_values(array_filter(
+      $result['errors'],
+      static fn(array $error): bool => ($error['keyword'] ?? '') === 'type',
+    ));
+    $this->assertCount(1, $typeErrors);
+    $this->assertSame('count', $typeErrors[0]['path']);
+    $this->assertStringContainsString('string', (string) $typeErrors[0]['message']);
+    $this->assertStringContainsString('integer', (string) $typeErrors[0]['message']);
+    foreach ($result['errors'] as $error) {
+      $this->assertStringNotContainsString('{', (string) $error['message']);
+    }
   }
 
   public function testValidateReturnsErrorsForConstraintViolation(): void {
@@ -259,6 +275,31 @@ final class ToolInputValidatorTest extends UnitTestCase {
     $this->assertNotEmpty($result['errors']);
   }
 
+  public function testValidatePassesWhenAllOptionalAndNoArgumentsProvided(): void {
+    $definition = $this->createMockDefinition();
+
+    // Simulates a tool like mcp_tools_list_available where all inputs are
+    // optional (e.g. include_descriptions: boolean). Calling it without any
+    // arguments sent an empty PHP array [] which json_encode() encodes as "[]"
+    // (JSON array), not "{}" (JSON object). Opis then fails {"type": "object"}
+    // validation. Fix: cast arguments to (object) before normalizing.
+    $this->schemaConverter->method('toolDefinitionToInputSchema')
+      ->willReturn([
+        'type' => 'object',
+        'properties' => [
+          'include_descriptions' => ['type' => 'boolean'],
+          'category' => ['type' => 'string'],
+        ],
+        'required' => [],
+      ]);
+
+    $validator = $this->createValidator();
+    $result = $validator->validate($definition, []);
+
+    $this->assertTrue($result['valid']);
+    $this->assertEmpty($result['errors']);
+  }
+
   public function testValidateReturnsValidForEmptyPropertiesSchema(): void {
     $definition = $this->createMockDefinition();
 
@@ -403,6 +444,9 @@ final class ToolInputValidatorTest extends UnitTestCase {
     $this->assertNotEmpty($additionalPropertyErrors);
     $message = (string) reset($additionalPropertyErrors)['message'];
     $this->assertStringContainsString('allowed parameters: nid, language', $message);
+    // The unknown parameter itself is named.
+    $this->assertStringContainsString('langauge', $message);
+    $this->assertStringNotContainsString('{', $message);
   }
 
 }

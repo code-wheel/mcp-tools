@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_layout_builder\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_layout_builder\Service\LayoutBuilderService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -44,27 +44,27 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'entity_type' => new ContextDefinition(
+    'entity_type' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Entity Type'),
       description: new TranslatableMarkup('The entity type configured.'),
     ),
-    'bundle' => new ContextDefinition(
+    'bundle' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Bundle'),
       description: new TranslatableMarkup('The bundle configured.'),
     ),
-    'removed_block_uuid' => new ContextDefinition(
+    'removed_block_uuid' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Removed Block UUID'),
       description: new TranslatableMarkup('UUID of the block that was removed.'),
     ),
-    'section_delta' => new ContextDefinition(
+    'section_delta' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Section Delta'),
       description: new TranslatableMarkup('Section the block was removed from.'),
     ),
-    'message' => new ContextDefinition(
+    'message' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
       description: new TranslatableMarkup('Success or error details.'),

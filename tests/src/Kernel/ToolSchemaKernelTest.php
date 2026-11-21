@@ -13,6 +13,7 @@ use Drupal\tool\Tool\ToolManager;
  * Ensures all core tool definitions can be converted to MCP schemas.
  *
  */
+#[\PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses]
 #[\PHPUnit\Framework\Attributes\Group('mcp_tools')]
 final class ToolSchemaKernelTest extends KernelTestBase {
 

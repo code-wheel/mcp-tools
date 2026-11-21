@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_ultimate_cron\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_ultimate_cron\Service\UltimateCronService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -37,27 +37,27 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'job_id' => new ContextDefinition(
+    'job_id' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Job ID'),
       description: new TranslatableMarkup('Machine name of the job whose logs were retrieved.'),
     ),
-    'job_title' => new ContextDefinition(
+    'job_title' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Job Title'),
       description: new TranslatableMarkup('Human-readable title of the job.'),
     ),
-    'logs' => new ContextDefinition(
+    'logs' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Log entries'),
       description: new TranslatableMarkup('Array of log entries with timestamp, duration, status, and message. Most recent first.'),
     ),
-    'count' => new ContextDefinition(
+    'count' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Number of entries returned'),
       description: new TranslatableMarkup('Actual number of log entries returned (may be less than limit).'),
     ),
-    'limit' => new ContextDefinition(
+    'limit' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Limit applied'),
       description: new TranslatableMarkup('Maximum entries that were requested. Increase to see more history.'),

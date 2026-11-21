@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_image_styles\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_image_styles\Service\ImageStyleService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -22,12 +22,12 @@ use Drupal\tool\Tool\ToolOperation;
   operation: ToolOperation::Read,
   input_definitions: [],
   output_definitions: [
-    'total' => new ContextDefinition(
+    'total' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total image styles'),
       description: new TranslatableMarkup('Number of image styles configured in the system.'),
     ),
-    'styles' => new ContextDefinition(
+    'styles' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Image styles with effects'),
       description: new TranslatableMarkup('Array of styles with id, label, and effects. Use id with GetImageStyle or DeleteImageStyle.'),

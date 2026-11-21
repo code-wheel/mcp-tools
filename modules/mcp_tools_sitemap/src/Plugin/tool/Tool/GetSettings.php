@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_sitemap\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_sitemap\Service\SitemapService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -30,22 +30,22 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'variant' => new ContextDefinition(
+    'variant' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Variant ID'),
       description: new TranslatableMarkup('The sitemap variant ID (e.g., "default"). Use with UpdateSettings or Regenerate.'),
     ),
-    'label' => new ContextDefinition(
+    'label' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Variant Label'),
       description: new TranslatableMarkup('Human-readable name for this sitemap variant.'),
     ),
-    'global_settings' => new ContextDefinition(
+    'global_settings' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Global Settings'),
       description: new TranslatableMarkup('Global sitemap settings: max_links, cron_generate, base_url, and other configuration. Use UpdateSettings to modify.'),
     ),
-    'entity_types' => new ContextDefinition(
+    'entity_types' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Entity Type Settings'),
       description: new TranslatableMarkup('Per-entity-type settings with bundle configurations. Keys are entity type IDs. Use GetEntitySettings for detailed bundle info.'),

@@ -78,6 +78,29 @@ class ClientConfigGeneratorTest extends UnitTestCase {
   }
 
   /**
+   * Drush is named where Composer put it, not under the web root.
+   *
+   * A site built from drupal/recommended-project keeps vendor/ beside web/.
+   * The config named web/vendor/bin/drush, which does not exist there.
+   */
+  public function testBareMetalConfigNamesDrushInTheRealVendorFolder(): void {
+    $config = $this->generator->buildConfig('/var/www/project/web', FALSE, FALSE, 'read,write', '1', '/var/www/project/vendor');
+
+    $server = $config['mcpServers']['drupal'];
+    $this->assertSame('/var/www/project/vendor/bin/drush', $server['command']);
+    $this->assertSame('/var/www/project/web', $server['cwd']);
+  }
+
+  /**
+   * The project folder is the one that holds vendor/, whatever the layout.
+   */
+  public function testProjectRootWhenTheWebRootIsTheProject(): void {
+    $config = $this->generator->buildConfig('/var/www/html', TRUE, FALSE, 'read,write', '1', '/var/www/html/vendor');
+
+    $this->assertSame('/var/www/html', $config['mcpServers']['drupal']['cwd']);
+  }
+
+  /**
    * Tests custom scope option.
    */
   public function testCustomScope(): void {

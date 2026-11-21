@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_media\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_media\Service\MediaService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -42,27 +42,27 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'mid' => new ContextDefinition(
+    'mid' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Media ID'),
       description: new TranslatableMarkup('Media entity ID. Use in content entity reference fields with {"target_id": mid}.'),
     ),
-    'uuid' => new ContextDefinition(
+    'uuid' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('UUID'),
       description: new TranslatableMarkup('Universally unique identifier for the media entity.'),
     ),
-    'name' => new ContextDefinition(
+    'name' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Name'),
       description: new TranslatableMarkup('The media name as created.'),
     ),
-    'bundle' => new ContextDefinition(
+    'bundle' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Bundle'),
       description: new TranslatableMarkup('Media type of the created entity.'),
     ),
-    'message' => new ContextDefinition(
+    'message' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
       description: new TranslatableMarkup('Success confirmation or error details.'),

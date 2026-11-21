@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_moderation\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_moderation\Service\ModerationService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -44,32 +44,32 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'entity_type' => new ContextDefinition(
+    'entity_type' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Entity Type'),
       description: new TranslatableMarkup('The entity type queried.'),
     ),
-    'entity_id' => new ContextDefinition(
+    'entity_id' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Entity ID'),
       description: new TranslatableMarkup('The entity ID queried.'),
     ),
-    'label' => new ContextDefinition(
+    'label' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Entity Label'),
       description: new TranslatableMarkup('Current title/label of the entity.'),
     ),
-    'workflow_id' => new ContextDefinition(
+    'workflow_id' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Workflow ID'),
       description: new TranslatableMarkup('Workflow governing this entity.'),
     ),
-    'total_revisions' => new ContextDefinition(
+    'total_revisions' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Revisions'),
       description: new TranslatableMarkup('Number of revisions returned.'),
     ),
-    'revisions' => new ContextDefinition(
+    'revisions' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Revisions'),
       description: new TranslatableMarkup('Array of revisions with id, state, author, message, and timestamp.'),

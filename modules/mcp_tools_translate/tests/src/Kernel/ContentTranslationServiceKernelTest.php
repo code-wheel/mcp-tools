@@ -8,14 +8,17 @@ use Drupal\field\Entity\FieldConfig;
 use Drupal\field\Entity\FieldStorageConfig;
 use Drupal\KernelTests\KernelTestBase;
 use Drupal\language\Entity\ConfigurableLanguage;
+use Drupal\mcp_tools\Mcp\ToolApiSchemaConverter;
 use Drupal\node\Entity\Node;
 use Drupal\node\Entity\NodeType;
 use Drupal\node\NodeInterface;
 use Drupal\Tests\user\Traits\UserCreationTrait;
+use Drupal\tool\Tool\ToolDefinition;
 
 /**
  * Kernel tests for the translation service on plain nodes (no paragraphs).
  */
+#[\PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses]
 #[\PHPUnit\Framework\Attributes\Group('mcp_tools_translate')]
 class ContentTranslationServiceKernelTest extends KernelTestBase {
 
@@ -234,6 +237,38 @@ class ContentTranslationServiceKernelTest extends KernelTestBase {
     $this->assertSame('fr', $values['language']);
     $this->assertSame('FR via plugin', $this->reload($nid)->getTranslation('fr')->getTitle());
     $this->assertSame('EN title', $this->reload($nid)->getTitle());
+  }
+
+  /**
+   * The mcp_get_translatable_content plugin returns valid outputs.
+   *
+   * Tool API validates every output against its declaration, and the MCP
+   * output schema is built from the same declarations, so the language list
+   * in existing_translations must be declared as a list.
+   */
+  public function testGetTranslatableContentPluginOutputs(): void {
+    $node = $this->createSourceNode();
+    $nid = (int) $node->id();
+    $this->translationService->translateContent($nid, 'fr', [
+      'title' => 'FR titre',
+      'field_body' => 'FR corps',
+    ]);
+
+    $manager = $this->container->get('plugin.manager.tool');
+    $tool = $manager->createInstance('mcp_get_translatable_content');
+    $tool->setInputValue('nid', $nid);
+    $tool->execute();
+
+    $result = $tool->getResult();
+    $this->assertTrue($result->isSuccess(), (string) $result->getMessage());
+    $existing = $tool->getOutputValues()['existing_translations'];
+    $this->assertTrue(array_is_list($existing));
+    $this->assertEqualsCanonicalizing(['en', 'fr'], $existing);
+
+    $definition = $manager->getDefinition('mcp_get_translatable_content');
+    $this->assertInstanceOf(ToolDefinition::class, $definition);
+    $schema = (new ToolApiSchemaConverter())->toolDefinitionToOutputSchema($definition);
+    $this->assertSame(['array', 'null'], $schema['properties']['data']['properties']['existing_translations']['type']);
   }
 
   /**

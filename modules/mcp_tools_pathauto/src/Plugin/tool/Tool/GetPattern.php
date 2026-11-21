@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_pathauto\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_pathauto\Service\PathautoService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -30,37 +30,37 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'id' => new ContextDefinition(
+    'id' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Pattern ID'),
       description: new TranslatableMarkup('Machine name of the pattern.'),
     ),
-    'label' => new ContextDefinition(
+    'label' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Label'),
       description: new TranslatableMarkup('Human-readable name of the pattern.'),
     ),
-    'pattern' => new ContextDefinition(
+    'pattern' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('URL Pattern'),
       description: new TranslatableMarkup('Token pattern for URL aliases (e.g., "[node:title]" or "blog/[node:created:custom:Y]/[node:title]").'),
     ),
-    'entity_type' => new ContextDefinition(
+    'entity_type' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Entity Type'),
       description: new TranslatableMarkup('Entity type this pattern applies to.'),
     ),
-    'bundles' => new ContextDefinition(
+    'bundles' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Bundles'),
       description: new TranslatableMarkup('Content types/bundles this pattern applies to. Empty means all bundles.'),
     ),
-    'weight' => new ContextDefinition(
+    'weight' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Weight'),
       description: new TranslatableMarkup('Priority weight. Lower values are applied first.'),
     ),
-    'status' => new ContextDefinition(
+    'status' => new OutputDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Enabled'),
       description: new TranslatableMarkup('Whether this pattern is active.'),

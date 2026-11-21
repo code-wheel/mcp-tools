@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_config\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_config\Service\ConfigManagementService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -22,22 +22,22 @@ use Drupal\tool\Tool\ToolOperation;
   operation: ToolOperation::Read,
   input_definitions: [],
   output_definitions: [
-    'has_changes' => new ContextDefinition(
+    'has_changes' => new OutputDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Has Changes'),
       description: new TranslatableMarkup('Whether there are differences between active and sync storage.'),
     ),
-    'total_changes' => new ContextDefinition(
+    'total_changes' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Changes'),
       description: new TranslatableMarkup('Total number of configuration differences.'),
     ),
-    'summary' => new ContextDefinition(
+    'summary' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Summary'),
       description: new TranslatableMarkup('Count of changes by type (new, modified, deleted).'),
     ),
-    'changes' => new ContextDefinition(
+    'changes' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Changes'),
       description: new TranslatableMarkup('Configuration changes grouped by operation type.'),

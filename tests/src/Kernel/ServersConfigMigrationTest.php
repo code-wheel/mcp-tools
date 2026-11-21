@@ -9,6 +9,7 @@ use Drupal\KernelTests\KernelTestBase;
 /**
  * Kernel tests for the mcp_tools.servers config migration (#3613059).
  */
+#[\PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses]
 #[\PHPUnit\Framework\Attributes\Group('mcp_tools')]
 class ServersConfigMigrationTest extends KernelTestBase {
 

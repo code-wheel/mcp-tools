@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_media\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_media\Service\MediaService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -22,17 +22,17 @@ use Drupal\tool\Tool\ToolOperation;
   operation: ToolOperation::Read,
   input_definitions: [],
   output_definitions: [
-    'types' => new ContextDefinition(
+    'types' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Media Types'),
       description: new TranslatableMarkup('Array of media types with id, label, source_plugin, and source_field. Use id as bundle in CreateMedia.'),
     ),
-    'count' => new ContextDefinition(
+    'count' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Count'),
       description: new TranslatableMarkup('Total number of media types available.'),
     ),
-    'message' => new ContextDefinition(
+    'message' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
       description: new TranslatableMarkup('Success confirmation.'),

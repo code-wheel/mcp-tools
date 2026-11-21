@@ -7,7 +7,7 @@
 
 declare(strict_types=1);
 
-use Mcp\Server;
+use Drupal\mcp_tools\Mcp\Sdk;
 
 /**
  * Implements hook_requirements().
@@ -16,11 +16,11 @@ function mcp_tools_remote_requirements(string $phase): array {
   $requirements = [];
 
   if (in_array($phase, ['install', 'runtime'], TRUE)) {
-    if (!class_exists(Server::class)) {
+    if (Sdk::serverClass() === NULL) {
       $requirements['mcp_tools_remote_sdk'] = [
         'title' => t('MCP SDK (mcp/sdk)'),
         'value' => t('Missing'),
-        'description' => t('The MCP Tools Remote Server module requires the Model Context Protocol PHP SDK. Run: <code>composer require mcp/sdk:^0.2</code>.'),
+        'description' => t('The MCP Tools Remote Server module requires the Model Context Protocol PHP SDK. Run: <code>@command</code>.', ['@command' => Sdk::INSTALL_COMMAND]),
         'severity' => REQUIREMENT_ERROR,
       ];
     }

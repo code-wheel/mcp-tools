@@ -10,6 +10,26 @@ declare(strict_types=1);
 use Drupal\Core\Routing\RouteMatchInterface;
 
 /**
+ * Implements hook_tool_info_alter().
+ *
+ * MCP Tools results set only the outputs that apply and backfill the rest
+ * with NULL, and the outputSchema they advertise allows null for every
+ * output. Tool API 1.0.0-beta10 and later fail a result whose required
+ * outputs are unset, so every MCP Tools output is declared optional here.
+ * Values that are set are still validated against their type.
+ */
+function mcp_tools_tool_info_alter(array &$definitions): void {
+  foreach ($definitions as $definition) {
+    if (!is_object($definition) || !method_exists($definition, 'getOutputDefinitions') || !str_starts_with((string) $definition->getProvider(), 'mcp_tools')) {
+      continue;
+    }
+    foreach ($definition->getOutputDefinitions() as $output) {
+      $output->setRequired(FALSE);
+    }
+  }
+}
+
+/**
  * Implements hook_help().
  */
 function mcp_tools_help($route_name, RouteMatchInterface $route_match) {

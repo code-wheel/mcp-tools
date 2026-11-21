@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_redirect\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_redirect\Service\RedirectService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -31,17 +31,17 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'id' => new ContextDefinition(
+    'id' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Deleted Redirect ID'),
       description: new TranslatableMarkup('The numeric ID of the redirect that was deleted. This ID is no longer valid for other redirect tools.'),
     ),
-    'deleted_redirect' => new ContextDefinition(
+    'deleted_redirect' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Deleted Redirect Details'),
       description: new TranslatableMarkup('Snapshot of the redirect data before deletion, including source, destination, and status_code. Useful for confirmation or undo operations via CreateRedirect.'),
     ),
-    'message' => new ContextDefinition(
+    'message' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
       description: new TranslatableMarkup('Human-readable confirmation message describing the deletion result.'),

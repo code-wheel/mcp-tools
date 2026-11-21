@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Drupal\mcp_tools_scheduler\Service;
 
 use Drupal\Component\Datetime\TimeInterface;
+use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\Config\Entity\ThirdPartySettingsInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\mcp_tools\Service\AccessManager;
@@ -24,7 +26,31 @@ class SchedulerService {
     protected AccessManager $accessManager,
     protected AuditLogger $auditLogger,
     protected TimeInterface $time,
+    protected ?ConfigFactoryInterface $configFactory = NULL,
   ) {}
+
+  /**
+   * Whether Scheduler acts on this node's content type.
+   *
+   * Scheduler adds publish_on and unpublish_on to every node, so having the
+   * field says nothing. It only publishes or unpublishes content types that
+   * have the feature switched on, and ignores a date set on any other.
+   *
+   * @param object $node
+   *   The node.
+   * @param string $process
+   *   Either "publish" or "unpublish".
+   */
+  protected function schedulingEnabled(object $node, string $process): bool {
+    if (!$node->hasField($process . '_on')) {
+      return FALSE;
+    }
+    $default = (bool) $this->configFactory?->get('scheduler.settings')->get('default_' . $process . '_enable');
+    $type = $this->entityTypeManager->getStorage('node_type')->load($node->bundle());
+    return $type instanceof ThirdPartySettingsInterface
+      ? (bool) $type->getThirdPartySetting('scheduler', $process . '_enable', $default)
+      : $default;
+  }
 
   /**
    * Get scheduled content.
@@ -160,7 +186,7 @@ class SchedulerService {
       ];
     }
 
-    if (!$node->hasField('publish_on')) {
+    if (!$this->schedulingEnabled($node, 'publish')) {
       return [
         'success' => FALSE,
         'error' => "Content type '{$node->bundle()}' is not configured for scheduling. Enable scheduling for this content type in the Scheduler settings.",
@@ -233,7 +259,7 @@ class SchedulerService {
       ];
     }
 
-    if (!$node->hasField('unpublish_on')) {
+    if (!$this->schedulingEnabled($node, 'unpublish')) {
       return [
         'success' => FALSE,
         'error' => "Content type '{$node->bundle()}' is not configured for scheduling. Enable scheduling for this content type in the Scheduler settings.",
@@ -408,7 +434,7 @@ class SchedulerService {
         ];
       }
 
-      $schedulingEnabled = $node->hasField('publish_on') || $node->hasField('unpublish_on');
+      $schedulingEnabled = $this->schedulingEnabled($node, 'publish') || $this->schedulingEnabled($node, 'unpublish');
 
       return [
         'success' => TRUE,

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools_translate\Plugin\tool\Tool;
 
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\mcp_tools_translate\Service\ContentTranslationService;
@@ -19,7 +19,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 #[Tool(
   id: 'mcp_get_translatable_content',
   label: new TranslatableMarkup('Get Translatable Content'),
-  description: new TranslatableMarkup('Extract all translatable text fields from a node and its paragraphs. Returns structured content ready for translation. Read ALL returned fields and paragraphs and translate the article as ONE coherent document — consistent terminology, tone and cross-references throughout; never translate fields in isolation. "reading_order" gives the document sequence (node fields, then paragraphs with nested children). Use before TranslateContent to know which fields to translate.'),
+  description: new TranslatableMarkup('Extract all translatable text fields from a node and its paragraphs. Returns structured content ready for translation. Read ALL returned fields and paragraphs and translate the article as ONE coherent document: consistent terminology, tone and cross-references throughout; never translate fields in isolation. "reading_order" gives the document sequence (node fields, then paragraphs with nested children). Use before TranslateContent to know which fields to translate.'),
   operation: ToolOperation::Read,
   input_definitions: [
     'nid' => new InputDefinition(
@@ -30,34 +30,40 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
     ),
   ],
   output_definitions: [
-    'nid' => new ContextDefinition(
+    'nid' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Node ID'),
+      description: new TranslatableMarkup('ID of the node.'),
     ),
-    'title' => new ContextDefinition(
+    'title' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Title'),
+      description: new TranslatableMarkup('Title of the node in its source language.'),
     ),
-    'source_language' => new ContextDefinition(
+    'source_language' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Source Language Code'),
+      description: new TranslatableMarkup('Language code the node was created in.'),
     ),
-    'existing_translations' => new ContextDefinition(
-      data_type: 'string',
+    'existing_translations' => new OutputDefinition(
+      data_type: 'list',
       label: new TranslatableMarkup('Existing Translation Languages'),
+      description: new TranslatableMarkup('Language codes the node exists in, including the source language.'),
     ),
-    'reading_order' => new ContextDefinition(
+    'reading_order' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Reading Order'),
       description: 'Ordered outline of the article: node field names then paragraphs (with nested children) in document order. Translate following this sequence so the result reads as one coherent document.',
     ),
-    'fields' => new ContextDefinition(
+    'fields' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Translatable Node Fields'),
+      description: new TranslatableMarkup('Translatable text fields of the node, keyed by field name.'),
     ),
-    'paragraphs' => new ContextDefinition(
+    'paragraphs' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Translatable Paragraph Fields'),
+      description: new TranslatableMarkup("Translatable text fields of the node's paragraphs, keyed by paragraph."),
     ),
   ],
 )]

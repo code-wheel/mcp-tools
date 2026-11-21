@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_pathauto\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_pathauto\Service\PathautoService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -30,17 +30,17 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'total' => new ContextDefinition(
+    'total' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Patterns'),
       description: new TranslatableMarkup('Number of patterns found.'),
     ),
-    'patterns' => new ContextDefinition(
+    'patterns' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Pattern List'),
       description: new TranslatableMarkup('Array of patterns with id, label, pattern, entity_type, and bundles. Use id with GetPattern.'),
     ),
-    'filter' => new ContextDefinition(
+    'filter' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Applied Filter'),
       description: new TranslatableMarkup('Entity type filter that was applied, if any.'),
@@ -72,7 +72,7 @@ class ListPatterns extends McpToolsToolBase {
    * {@inheritdoc}
    */
   protected function executeLegacy(array $input): array {
-    $entityType = $input['entity_type'] ?? NULL;
+    $entityType = ($input['entity_type'] ?? NULL) ?: NULL;
 
     return $this->pathautoService->listPatterns($entityType);
   }

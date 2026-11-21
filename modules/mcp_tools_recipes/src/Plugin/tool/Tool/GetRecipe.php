@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_recipes\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_recipes\Service\RecipesService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -30,47 +30,47 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'name' => new ContextDefinition(
+    'name' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Recipe Name'),
       description: new TranslatableMarkup('Machine name of the recipe.'),
     ),
-    'label' => new ContextDefinition(
+    'label' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Recipe Label'),
       description: new TranslatableMarkup('Human-readable name of the recipe.'),
     ),
-    'description' => new ContextDefinition(
+    'description' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Description'),
       description: new TranslatableMarkup('Recipe description.'),
     ),
-    'type' => new ContextDefinition(
+    'type' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Type'),
       description: new TranslatableMarkup('Recipe type (e.g., Site, Theme).'),
     ),
-    'path' => new ContextDefinition(
+    'path' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Path'),
       description: new TranslatableMarkup('Filesystem path to the recipe.'),
     ),
-    'install' => new ContextDefinition(
+    'install' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Modules to Install'),
       description: new TranslatableMarkup('List of modules that will be installed.'),
     ),
-    'config' => new ContextDefinition(
+    'config' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Configuration'),
       description: new TranslatableMarkup('Configuration imports and actions.'),
     ),
-    'recipes' => new ContextDefinition(
+    'recipes' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Recipe Dependencies'),
       description: new TranslatableMarkup('Other recipes this recipe depends on.'),
     ),
-    'files' => new ContextDefinition(
+    'files' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Recipe Files'),
       description: new TranslatableMarkup('List of files in the recipe directory.'),

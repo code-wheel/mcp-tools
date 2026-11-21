@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools_jsonapi\Plugin\tool\Tool;
 
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\mcp_tools_jsonapi\Service\JsonApiService;
@@ -42,32 +42,32 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
     ),
   ],
   output_definitions: [
-    'entity_type' => new ContextDefinition(
+    'entity_type' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Entity Type'),
       description: new TranslatableMarkup('The entity type ID.'),
     ),
-    'bundle' => new ContextDefinition(
+    'bundle' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Bundle'),
       description: new TranslatableMarkup('The entity bundle.'),
     ),
-    'id' => new ContextDefinition(
+    'id' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Entity ID'),
       description: new TranslatableMarkup('The entity numeric ID.'),
     ),
-    'uuid' => new ContextDefinition(
+    'uuid' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('UUID'),
       description: new TranslatableMarkup('The entity UUID.'),
     ),
-    'label' => new ContextDefinition(
+    'label' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Label'),
       description: new TranslatableMarkup('The entity label/title.'),
     ),
-    'fields' => new ContextDefinition(
+    'fields' => new OutputDefinition(
       data_type: 'any',
       label: new TranslatableMarkup('Fields'),
       description: new TranslatableMarkup('Field values for the entity.'),
@@ -100,7 +100,7 @@ class GetEntity extends McpToolsToolBase {
   protected function executeLegacy(array $input): array {
     $entityType = $input['entity_type'] ?? '';
     $uuid = $input['uuid'] ?? '';
-    $bundle = $input['bundle'] ?? NULL;
+    $bundle = ($input['bundle'] ?? NULL) ?: NULL;
 
     if (empty($entityType) || empty($uuid)) {
       return ['success' => FALSE, 'error' => 'Both entity_type and uuid are required.'];

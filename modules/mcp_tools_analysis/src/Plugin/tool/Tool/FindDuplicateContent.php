@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_analysis\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_analysis\Service\AnalysisService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -42,37 +42,37 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'content_type' => new ContextDefinition(
+    'content_type' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Content Type'),
       description: new TranslatableMarkup('The content type that was analyzed.'),
     ),
-    'field_compared' => new ContextDefinition(
+    'field_compared' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Field Compared'),
       description: new TranslatableMarkup('The field used for similarity comparison.'),
     ),
-    'threshold' => new ContextDefinition(
+    'threshold' => new OutputDefinition(
       data_type: 'float',
       label: new TranslatableMarkup('Threshold Used'),
       description: new TranslatableMarkup('Similarity threshold that was applied (0.1-1.0).'),
     ),
-    'items_analyzed' => new ContextDefinition(
+    'items_analyzed' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Items Analyzed'),
       description: new TranslatableMarkup('Total number of items compared.'),
     ),
-    'duplicates' => new ContextDefinition(
+    'duplicates' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Potential Duplicates'),
       description: new TranslatableMarkup('Pairs of similar content with similarity percentage'),
     ),
-    'duplicate_count' => new ContextDefinition(
+    'duplicate_count' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Duplicate Count'),
       description: new TranslatableMarkup('Number of potential duplicate pairs found.'),
     ),
-    'suggestions' => new ContextDefinition(
+    'suggestions' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Suggestions'),
       description: new TranslatableMarkup('Recommendations for handling duplicates.'),

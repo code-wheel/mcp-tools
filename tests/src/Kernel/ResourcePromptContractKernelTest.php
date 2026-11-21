@@ -12,6 +12,7 @@ use Drupal\mcp_tools\Mcp\Resource\ResourceRegistry;
  * Contract tests for MCP resources and prompts.
  *
  */
+#[\PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses]
 #[\PHPUnit\Framework\Attributes\Group('mcp_tools')]
 final class ResourcePromptContractKernelTest extends KernelTestBase {
 

@@ -157,9 +157,11 @@ class ContentTranslationService {
   /**
    * Create a linked translation for a node and its paragraphs.
    *
-   * Node translation triggers layout_paragraphs to duplicate referenced
-   * paragraphs for the target language. After saving the node translation,
-   * the duplicate paragraphs are updated with translated field values.
+   * When the paragraph reference field is translatable, Layout Paragraphs
+   * duplicates the referenced paragraphs for the target language as the
+   * node translation is created, and the duplicates get the translated
+   * values. Otherwise the paragraphs are shared by all languages and get a
+   * translation of their own.
    *
    * @return array
    *   Legacy MCP result.
@@ -214,7 +216,7 @@ class ContentTranslationService {
         ),
         'missing' => $missing,
         'hint' => 'Re-translate the COMPLETE article as one coherent document (all fields '
-          . 'together) and resubmit — do not translate only the missing fields in isolation.',
+          . 'together) and resubmit. Do not translate only the missing fields in isolation.',
       ];
     }
 
@@ -365,7 +367,7 @@ class ContentTranslationService {
       return [
         'success' => FALSE,
         'error' => sprintf(
-          "Cannot update the '%s' translation of node %d — %s. Nothing was updated.",
+          "Cannot update the '%s' translation of node %d: %s. Nothing was updated.",
           $langcode,
           $nid,
           implode('; ', $parts),
@@ -411,7 +413,13 @@ class ContentTranslationService {
 
       $paragraphFieldsUpdated = 0;
       foreach ($paragraphUpdates as $pid => $fieldValues) {
-        $this->applyParagraphTranslation($pidMap[(string) $pid], $fieldValues);
+        $target = $pidMap[(string) $pid];
+        // A shared paragraph without a $langcode translation gets one;
+        // writing onto the paragraph itself would overwrite the source text.
+        if ((string) $target->id() === (string) $pid && $target->language()->getId() !== $langcode) {
+          $target = $this->sharedParagraphTranslation($target, $langcode) ?? $target;
+        }
+        $this->applyParagraphTranslation($target, $fieldValues);
         $paragraphFieldsUpdated += count($fieldValues);
       }
 
@@ -741,6 +749,16 @@ class ContentTranslationService {
         }
         $originalPid = $sourceMap[$refField][$delta];
 
+        // Unless something duplicated the paragraphs for the new language
+        // (Layout Paragraphs does when the reference field is translatable),
+        // the translation still references the source paragraph itself.
+        // That paragraph gets a $langcode translation: writing the values
+        // straight onto it would overwrite the source text.
+        if ((string) $duplicate->id() === $originalPid) {
+          $count += $this->translateSharedParagraph($duplicate, $paragraphTranslations, $langcode);
+          continue;
+        }
+
         if (isset($paragraphTranslations[$originalPid])) {
           $this->applyParagraphTranslation(
             $duplicate,
@@ -797,6 +815,70 @@ class ContentTranslationService {
       $paragraph->set($fieldName, $normalized);
     }
     $paragraph->save();
+  }
+
+  /**
+   * Translate a paragraph that all languages of the node share.
+   *
+   * Adds the $langcode translation to the paragraph and to its child
+   * paragraphs, and applies the translated values to it.
+   *
+   * @param \Drupal\paragraphs\ParagraphInterface $paragraph
+   *   The shared paragraph.
+   * @param array<string, array<string, mixed>> $translations
+   *   Translated field values keyed by paragraph ID.
+   * @param string $langcode
+   *   Target language code.
+   *
+   * @return int
+   *   Number of paragraphs that received translated values.
+   */
+  protected function translateSharedParagraph(ParagraphInterface $paragraph, array $translations, string $langcode): int {
+    $count = 0;
+    $source = $paragraph->getUntranslated();
+    $pid = (string) $source->id();
+    $target = $this->sharedParagraphTranslation($source, $langcode);
+    if ($target !== NULL) {
+      if (isset($translations[$pid])) {
+        $this->applyParagraphTranslation($target, $translations[$pid]);
+        $count++;
+      }
+      else {
+        $target->save();
+      }
+    }
+    foreach ($this->getChildParagraphs($source) as $child) {
+      $count += $this->translateSharedParagraph($child, $translations, $langcode);
+    }
+    return $count;
+  }
+
+  /**
+   * Get, or add, the $langcode translation of a shared paragraph.
+   *
+   * @param \Drupal\paragraphs\ParagraphInterface $paragraph
+   *   The shared paragraph.
+   * @param string $langcode
+   *   Target language code.
+   *
+   * @return \Drupal\paragraphs\ParagraphInterface|null
+   *   The translation, not saved yet when it was just added, or NULL when
+   *   the paragraph type is not translatable.
+   */
+  protected function sharedParagraphTranslation(ParagraphInterface $paragraph, string $langcode): ?ParagraphInterface {
+    if ($paragraph->hasTranslation($langcode)) {
+      return $paragraph->getTranslation($langcode);
+    }
+    if (!$paragraph->isTranslatable()) {
+      return NULL;
+    }
+    // Start from the source values, as the Paragraphs widgets do.
+    $source = $paragraph->getUntranslated();
+    $translation = $source->addTranslation($langcode, $source->toArray());
+    if ($translation->hasField('content_translation_source')) {
+      $translation->set('content_translation_source', $source->language()->getId());
+    }
+    return $translation;
   }
 
   /**

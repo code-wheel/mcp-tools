@@ -10,9 +10,9 @@ Batteries-included MCP tools for AI assistants working with Drupal sites.
 
 | Drupal Version | PHP Version | Status | Notes |
 |----------------|-------------|--------|-------|
-| **10.3.x** | 8.3 | ✅ Tested | Minimum supported version |
-| **11.x** | 8.4 | ✅ Tested | Drupal 11 requires PHP 8.4+ |
-| **12.x** | 8.4 | ☑️ Declared | Compatible; no Drupal 12 release to test against yet |
+| **10.5+** | 8.3 | ✅ Tested on 10.6 | Minimum: Tool API 1.0.0-beta9 and later need Drupal 10.5 |
+| **11.x** | 8.4 | ✅ Tested on 11.4 | |
+| **12.x** | 8.4 | Not yet | Needs a Tool API release that supports Drupal 12 |
 
 **PHP Support:** 8.3, 8.4
 
@@ -20,11 +20,11 @@ CI runs tests against all supported Drupal versions on every push.
 
 ## Overview
 
-MCP Tools provides curated, high-value tools that solve real problems—not generic CRUD. Inspired by [Sentry MCP](https://docs.sentry.io/product/sentry-mcp/).
+MCP Tools provides curated, high-value tools that solve real problems, not generic CRUD. Inspired by [Sentry MCP](https://docs.sentry.io/product/sentry-mcp/).
 
-**Current:** 227 tools total (27 read-only + 200 write/analysis operations across 36 tool submodules)
+**Current:** 227 tools total: 25 read-only tools in the base module and 202 more in 32 optional submodules
 
-**Drupal AI ecosystem:** The optional `mcp_tools_ai` submodule exposes these tools to [Drupal AI](https://www.drupal.org/project/ai) / [AI Agents](https://www.drupal.org/project/ai_agents) as native Function Calls — so in-site AI agents can use the same library MCP clients use. Curated read-only by default; see `modules/mcp_tools_ai/README.md`.
+**Drupal AI ecosystem:** The optional `mcp_tools_ai` submodule exposes these tools to [Drupal AI](https://www.drupal.org/project/ai) / [AI Agents](https://www.drupal.org/project/ai_agents) as native Function Calls, so in-site AI agents can use the same library MCP clients use. Curated read-only by default; see `modules/mcp_tools_ai/README.md`.
 
 **Resources:** MCP Tools now exposes read-only resources (e.g., `drupal://site/status`, `drupal://site/snapshot`) for lightweight site context, including blueprint + config drift summary.
 **Prompts:** MCP Tools now exposes prompts (e.g., `mcp_tools/site-brief`) for reusable analysis instructions.
@@ -64,17 +64,17 @@ AI:   Creates content type, fields, vocabularies, role, and permissions
 
 ## Requirements
 
-- Drupal 10.3+, 11, or 12
+- Drupal 10.5+ or 11 (Drupal 12 once Tool API supports it)
 - PHP 8.3+
-- [Tool API](https://www.drupal.org/project/tool) module
-- `mcp/sdk` 0.2.2–0.6 (resolved automatically; supports coexistence with modules that require newer SDK releases)
+- [Tool API](https://www.drupal.org/project/tool) module, 1.0.0-beta9 or later
+- `mcp/sdk` 0.2.2 to 0.7.1, 0.9 or 0.10 (resolved automatically). 0.8 is skipped: it has a security advisory. From 0.9 the server also speaks the 2026-07-28 revision of MCP. Next to MCP Server 2.0.0-beta7 and later, Composer picks 0.9, which is what MCP Server requires.
 
 ### MCP Transports (choose one, or none)
 
-- **Recommended (local dev):** `mcp_tools_stdio` — runs an MCP server over STDIO via Drush.
-- **Experimental (remote HTTP):** `mcp_tools_remote` — exposes an HTTP endpoint with API key authentication.
-- **Alternative (MCP Server 2.x):** [MCP Server](https://www.drupal.org/project/mcp_server) + [MCP Server Tool Bridge](https://www.drupal.org/project/mcp_server_tool_bridge) serve this tool library through mcp_server's own transports — every exposed tool is selected per-site via the bridge's config entities, and MCP Tools' scope and permission checks still apply. Validated end-to-end against mcp_server 2.0 (see CHANGELOG). MCP Tools coexists with MCP Server 2.x in the same site.
-- **MCP Server 1.x bridge:** `mcp_tools_mcp_server` — the 1.x sync bridge (requires `drupal/mcp_server < 2.0`). It is not being ported to 2.x while the MCP Server Tool Bridge covers that path; it stays available for 1.x sites and as a fallback, and a weekly CI job verifies our tools keep working through the 2.x bridge.
+- **Recommended (local dev):** `mcp_tools_stdio` runs an MCP server over STDIO via Drush.
+- **Experimental (remote HTTP):** `mcp_tools_remote` exposes an HTTP endpoint with API key authentication.
+- **Alternative (MCP Server 2.x):** [MCP Server](https://www.drupal.org/project/mcp_server) + [MCP Server Tool Bridge](https://www.drupal.org/project/mcp_server_tool_bridge) serve this tool library through mcp_server's own transports. Every exposed tool is selected per-site via the bridge's config entities, and MCP Tools' scope and permission checks still apply. Validated end-to-end against mcp_server 2.0 (see CHANGELOG). MCP Tools coexists with MCP Server 2.x in the same site.
+- **MCP Server 1.x bridge:** `mcp_tools_mcp_server` is the 1.x sync bridge (requires `drupal/mcp_server < 2.0`). It is not being ported to 2.x while the MCP Server Tool Bridge covers that path; it stays available for 1.x sites and as a fallback, and a weekly CI job verifies our tools keep working through the 2.x bridge.
 - **None (library-only):** every tool is a plain [Tool API](https://www.drupal.org/project/tool) plugin, so you can enable the base module plus tool submodules with no transport at all and consume the tools from ECA, AI Agents (via `mcp_tools_ai`), custom code, or another MCP runtime.
 
 ## Installation
@@ -100,9 +100,9 @@ drush mcp-tools:serve --uid=1 --gateway
 ```
 
 Gateway tools:
-- `mcp_tools/discover-tools`
-- `mcp_tools/get-tool-info`
-- `mcp_tools/execute-tool`
+- `mcp_tools_discover_tools`
+- `mcp_tools_get_tool_info`
+- `mcp_tools_execute_tool`
 
 ### Remote MCP (HTTP) setup (experimental)
 
@@ -130,10 +130,11 @@ Enable the optional `mcp_tools_observability` submodule to log execution events 
 
 ## Docs
 
-- `mcp_tools/docs/QUICKSTART.md` — 5-minute onboarding
-- `mcp_tools/docs/TROUBLESHOOTING.md` — Common errors and fixes
-- `mcp_tools/docs/CLIENT_INTEGRATIONS.md` — MCP client configs (STDIO + HTTP)
-- `mcp_tools/docs/USE_CASES.md` — Real-world workflows
+- `mcp_tools/docs/QUICKSTART.md`: 5-minute onboarding
+- `mcp_tools/docs/TROUBLESHOOTING.md`: Common errors and fixes
+- `mcp_tools/docs/CLIENT_INTEGRATIONS.md`: MCP client configs (STDIO + HTTP)
+- `mcp_tools/docs/USE_CASES.md`: Real-world workflows
+- `mcp_tools/docs/TOOL_EXAMPLES.md`: Real calls with arguments for the tools of each submodule, as run before every release
 
 ## Architecture: Granular Submodules
 
@@ -199,7 +200,7 @@ drush en mcp_tools_media          # Media management
 drush en mcp_tools_webform        # Webform integration
 drush en mcp_tools_theme          # Theme settings
 drush en mcp_tools_layout_builder # Layout Builder
-drush en mcp_tools_recipes        # Drupal Recipes (10.3+)
+drush en mcp_tools_recipes        # Drupal Recipes
 drush en mcp_tools_config         # Configuration management
 drush en mcp_tools_paragraphs     # Paragraphs integration
 drush en mcp_tools_moderation     # Content Moderation workflows
@@ -287,7 +288,7 @@ servers:
     # permission_callback: 'my_module.server_access:check'
 ```
 
-Scopes are always limited by `access.allowed_scopes`. When no trusted override is present, `access.default_scopes` are used.
+Scopes from an API key, a header, a query parameter or the environment are limited by `access.allowed_scopes`. `--scope` on the command line and the scopes of a server profile are used as given. When nothing sets scopes, `access.default_scopes` are used.
 
 Set `transports` to limit which entrypoints (HTTP/STDIO) can run a profile; leave empty or omit to allow all transports.
 Set `component_public_only` to expose only components explicitly marked as public.
@@ -354,7 +355,7 @@ Available scopes:
 |------|-------------|
 | `mcp_tools_list_available` | List all available MCP tools by category or search |
 
-## Write Submodules (200 tools across 32 submodules)
+## Write Submodules (202 tools across 32 submodules)
 
 Enable submodules for the capabilities you need. Each submodule's tools are listed in its own `README.md`.
 
@@ -371,7 +372,7 @@ Enable submodules for the capabilities you need. Each submodule's tools are list
 | `mcp_tools_webform` | 7 | Webform management and submissions (requires `webform`) |
 | `mcp_tools_theme` | 8 | Theme settings, enable/disable |
 | `mcp_tools_layout_builder` | 9 | Layout sections, blocks, plugins (requires `layout_builder`) |
-| `mcp_tools_recipes` | 6 | Drupal Recipes — apply requires `admin` scope (10.3+) |
+| `mcp_tools_recipes` | 6 | Drupal Recipes. Apply requires `admin` scope |
 | `mcp_tools_config` | 5 | Configuration diff, export, MCP change tracking, preview |
 | `mcp_tools_paragraphs` | 6 | Paragraph types and fields (requires `paragraphs`) |
 | `mcp_tools_moderation` | 6 | Content moderation workflows (requires `content_moderation`) |
@@ -501,7 +502,7 @@ cd mcp_tools
 
 ## Usage
 
-### Local (STDIO via Drush) — recommended
+### Local (STDIO via Drush, recommended)
 
 ```bash
 # Enable the transport.
@@ -515,7 +516,7 @@ MCP_SCOPE=read,write drush mcp-tools:serve --uid=1
 # or: drush mcp-tools:serve --uid=1 --scope=read,write
 ```
 
-### Remote (HTTP) — experimental
+### Remote (HTTP, experimental)
 
 ```bash
 # Enable the transport.
@@ -543,9 +544,6 @@ drush mcp:server-info --server=default --tools --resources --prompts
 
 # Smoke-test server configuration and dependencies.
 drush mcp:server-smoke --server=default
-
-# Validate component registry definitions.
-drush mcp:components-validate
 
 # Scaffold a component module.
 drush mcp:scaffold --machine-name=my_module --name="My MCP Module"

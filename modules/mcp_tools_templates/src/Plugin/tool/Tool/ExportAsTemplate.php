@@ -7,7 +7,7 @@ namespace Drupal\mcp_tools_templates\Plugin\tool\Tool;
 use Drupal\mcp_tools\Trait\WriteAccessTrait;
 use Drupal\mcp_tools_templates\Service\TemplateService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -49,17 +49,17 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'template' => new ContextDefinition(
+    'template' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Template Definition'),
       description: new TranslatableMarkup('The exported template definition that can be used to recreate these components.'),
     ),
-    'errors' => new ContextDefinition(
+    'errors' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Errors'),
       description: new TranslatableMarkup('Any warnings or errors during export.'),
     ),
-    'message' => new ContextDefinition(
+    'message' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
       description: new TranslatableMarkup('Summary message about the export.'),

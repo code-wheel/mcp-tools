@@ -160,7 +160,7 @@ class ParagraphsService {
         'id' => $type->id(),
         'label' => $type->label(),
         'description' => $type->getDescription() ?? '',
-        'icon_uuid' => $type->getIconFile()?->uuid(),
+        'icon_uuid' => ($type->getIconFile() ?: NULL)?->uuid(),
         'field_count' => count($fields),
         'fields' => array_map(fn($f) => [
           'name' => $f['name'],
@@ -208,7 +208,7 @@ class ParagraphsService {
         'id' => $paragraphType->id(),
         'label' => $paragraphType->label(),
         'description' => $paragraphType->getDescription() ?? '',
-        'icon_uuid' => $paragraphType->getIconFile()?->uuid(),
+        'icon_uuid' => ($paragraphType->getIconFile() ?: NULL)?->uuid(),
         'fields' => $fields,
         'admin_path' => "/admin/structure/paragraphs_type/$id",
       ],
@@ -713,11 +713,16 @@ class ParagraphsService {
       return $values;
     }
 
-    // Convert to key => label where key is sanitized label.
+    // Convert to key => label. A number is its own key, which is what a
+    // list of numbers needs. A text gets a key made from the label.
     $result = [];
     foreach ($values as $value) {
-      $key = strtolower(preg_replace('/[^a-z0-9]+/i', '_', $value));
-      $result[$key] = $value;
+      if (is_int($value) || is_float($value)) {
+        $result[$value] = (string) $value;
+        continue;
+      }
+      $key = strtolower(preg_replace('/[^a-z0-9]+/i', '_', (string) $value));
+      $result[$key] = (string) $value;
     }
     return $result;
   }

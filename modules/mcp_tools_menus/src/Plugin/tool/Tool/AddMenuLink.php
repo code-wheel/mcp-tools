@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_menus\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_menus\Service\MenuManagementService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -66,32 +66,32 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'id' => new ContextDefinition(
+    'id' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Link ID'),
       description: new TranslatableMarkup('Menu link content entity ID. Use with UpdateMenuLink or DeleteMenuLink.'),
     ),
-    'uuid' => new ContextDefinition(
+    'uuid' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('UUID'),
       description: new TranslatableMarkup('Universally unique identifier for config export/import.'),
     ),
-    'title' => new ContextDefinition(
+    'title' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Title'),
       description: new TranslatableMarkup('The link text as created.'),
     ),
-    'menu' => new ContextDefinition(
+    'menu' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Menu'),
       description: new TranslatableMarkup('Menu machine name where link was added.'),
     ),
-    'plugin_id' => new ContextDefinition(
+    'plugin_id' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Plugin ID'),
       description: new TranslatableMarkup('Internal plugin ID (menu_link_content:UUID). Use as parent value to nest links under this one.'),
     ),
-    'message' => new ContextDefinition(
+    'message' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
       description: new TranslatableMarkup('Success confirmation or error details.'),

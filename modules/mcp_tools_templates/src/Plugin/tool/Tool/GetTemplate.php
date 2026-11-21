@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_templates\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_templates\Service\TemplateService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -30,32 +30,32 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'id' => new ContextDefinition(
+    'id' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Template ID'),
       description: new TranslatableMarkup('The template identifier.'),
     ),
-    'label' => new ContextDefinition(
+    'label' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Label'),
       description: new TranslatableMarkup('Human-readable template name.'),
     ),
-    'description' => new ContextDefinition(
+    'description' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Description'),
       description: new TranslatableMarkup('What this template provides.'),
     ),
-    'category' => new ContextDefinition(
+    'category' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Category'),
       description: new TranslatableMarkup('Template category (Content, Corporate, Technical).'),
     ),
-    'components' => new ContextDefinition(
+    'components' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Components'),
       description: new TranslatableMarkup('Detailed component definitions (content_types, vocabularies, roles, views, etc.).'),
     ),
-    'component_summary' => new ContextDefinition(
+    'component_summary' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Component Summary'),
       description: new TranslatableMarkup('Summary counts of components by type.'),

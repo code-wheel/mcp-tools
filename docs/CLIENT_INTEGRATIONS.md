@@ -50,7 +50,7 @@ built-in transports:
 ```bash
 composer require 'drupal/mcp_server:^2.0@alpha'
 # The Tool Bridge has no tagged release yet and its composer package
-# currently ships no code — clone the 1.x branch instead:
+# currently ships no code, so clone the 1.x branch instead:
 git clone https://git.drupalcode.org/project/mcp_server_tool_bridge.git \
   web/modules/contrib/mcp_server_tool_bridge
 drush en mcp_server mcp_server_tool_bridge
@@ -58,7 +58,7 @@ drush en mcp_server mcp_server_tool_bridge
 
 1. Grant the `access mcp server` permission to the role your MCP client
    authenticates as.
-2. Expose tools at `/admin/config/services/mcp-server/tools` — one
+2. Expose tools at `/admin/config/services/mcp-server/tools`: one
    config entity per MCP Tools tool you want available (the form
    autocompletes Tool API tool names). Nothing is exposed by default.
 3. Point your MCP client at mcp_server's `/_mcp` endpoint.

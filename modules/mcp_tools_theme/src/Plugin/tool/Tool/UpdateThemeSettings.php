@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_theme\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_theme\Service\ThemeService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -36,17 +36,17 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'theme' => new ContextDefinition(
+    'theme' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Theme'),
       description: new TranslatableMarkup('Machine name of the theme whose settings were updated.'),
     ),
-    'updated_keys' => new ContextDefinition(
+    'updated_keys' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Updated Keys'),
       description: new TranslatableMarkup('List of setting keys that were modified (e.g., ["logo", "favicon"]). Use GetThemeSettings to verify changes.'),
     ),
-    'message' => new ContextDefinition(
+    'message' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
       description: new TranslatableMarkup('Human-readable confirmation of which settings were updated.'),

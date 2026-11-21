@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_media\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_media\Service\MediaService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -42,32 +42,32 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'fid' => new ContextDefinition(
+    'fid' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('File ID'),
       description: new TranslatableMarkup('File entity ID. Use as source_field_value in CreateMedia for image/file types.'),
     ),
-    'uuid' => new ContextDefinition(
+    'uuid' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('UUID'),
       description: new TranslatableMarkup('Universally unique identifier for the file entity.'),
     ),
-    'filename' => new ContextDefinition(
+    'filename' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Filename'),
       description: new TranslatableMarkup('Actual filename (may differ if sanitized or deduplicated).'),
     ),
-    'uri' => new ContextDefinition(
+    'uri' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('URI'),
       description: new TranslatableMarkup('Drupal file URI (e.g., public://mcp-uploads/photo.jpg).'),
     ),
-    'url' => new ContextDefinition(
+    'url' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('URL'),
       description: new TranslatableMarkup('Public URL for the uploaded file.'),
     ),
-    'message' => new ContextDefinition(
+    'message' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
       description: new TranslatableMarkup('Success confirmation or error details.'),

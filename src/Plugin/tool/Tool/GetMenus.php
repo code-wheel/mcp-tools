@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools\Plugin\tool\Tool;
 
 use Drupal\mcp_tools\Service\MenuService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -22,12 +22,12 @@ use Drupal\tool\Tool\ToolOperation;
   operation: ToolOperation::Read,
   input_definitions: [],
   output_definitions: [
-    'total_menus' => new ContextDefinition(
+    'total_menus' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Menus'),
       description: new TranslatableMarkup('Number of menus on the site.'),
     ),
-    'menus' => new ContextDefinition(
+    'menus' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Menus'),
       description: new TranslatableMarkup('Array of menus with id (machine name), label, description, and link_count. Use id with GetMenuTree or AddMenuLink.'),

@@ -28,6 +28,8 @@ final class PerformanceAnalyzerTest extends UnitTestCase {
   protected function setUp(): void {
     parent::setUp();
     $this->database = $this->createMock(Connection::class);
+    // The table size query is MySQL's and only runs there.
+    $this->database->method('databaseType')->willReturn('mysql');
     $this->configFactory = $this->createMock(ConfigFactoryInterface::class);
     $this->moduleHandler = $this->createMock(ModuleHandlerInterface::class);
 
@@ -36,6 +38,27 @@ final class PerformanceAnalyzerTest extends UnitTestCase {
       $this->configFactory,
       $this->moduleHandler,
     );
+  }
+
+  /**
+   * On other databases the MySQL table size query is not sent.
+   */
+  public function testTableSizesAreOnlyReadOnMysql(): void {
+    $performanceConfig = $this->createMock(ImmutableConfig::class);
+    $performanceConfig->method('get')->willReturn(NULL);
+    $this->configFactory->method('get')->with('system.performance')->willReturn($performanceConfig);
+    $this->moduleHandler->method('moduleExists')->willReturn(FALSE);
+
+    $database = $this->createMock(Connection::class);
+    $database->method('databaseType')->willReturn('pgsql');
+    $database->expects($this->never())->method('query');
+
+    $analyzer = new PerformanceAnalyzer($database, $this->configFactory, $this->moduleHandler);
+    $result = $analyzer->analyzePerformance();
+
+    $this->assertTrue($result['success']);
+    $this->assertSame([], $result['data']['database']['largest_tables']);
+    $this->assertSame('Table sizes are only read on MySQL and MariaDB.', $result['data']['database']['note']);
   }
 
   public function testAnalyzePerformanceReturnsCacheSettings(): void {

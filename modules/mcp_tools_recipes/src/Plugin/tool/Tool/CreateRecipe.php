@@ -7,7 +7,7 @@ namespace Drupal\mcp_tools_recipes\Plugin\tool\Tool;
 use Drupal\mcp_tools\Trait\WriteAccessTrait;
 use Drupal\mcp_tools_recipes\Service\RecipesService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -67,17 +67,17 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'name' => new ContextDefinition(
+    'name' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Recipe Name'),
       description: new TranslatableMarkup('Machine name of the created recipe.'),
     ),
-    'path' => new ContextDefinition(
+    'path' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Recipe Path'),
       description: new TranslatableMarkup('Filesystem path to the created recipe.'),
     ),
-    'message' => new ContextDefinition(
+    'message' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
       description: new TranslatableMarkup('Status message about the operation.'),

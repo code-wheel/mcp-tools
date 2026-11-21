@@ -82,9 +82,9 @@ Send the API key via:
 
 For clients with limited tool capacity, enable Gateway mode to expose only 3 meta-tools:
 
-- `mcp_tools/discover-tools` - List available tools
-- `mcp_tools/get-tool-info` - Get tool details
-- `mcp_tools/execute-tool` - Execute any tool by name
+- `mcp_tools_discover_tools` - List available tools
+- `mcp_tools_get_tool_info` - Get tool details
+- `mcp_tools_execute_tool` - Execute any tool by name
 
 This reduces the initial tool list but still allows access to all tools.
 

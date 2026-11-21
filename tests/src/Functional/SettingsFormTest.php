@@ -10,6 +10,7 @@ use Drupal\Tests\BrowserTestBase;
  * Tests the MCP Tools settings form.
  *
  */
+#[\PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses]
 #[\PHPUnit\Framework\Attributes\Group('mcp_tools')]
 class SettingsFormTest extends BrowserTestBase {
 

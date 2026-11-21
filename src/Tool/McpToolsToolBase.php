@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools\Tool;
 
+use Drupal\Component\Render\FormattableMarkup;
 use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Access\AccessResultInterface;
 use Drupal\Core\Session\AccountInterface;
@@ -67,9 +68,7 @@ abstract class McpToolsToolBase extends ToolBase {
         $legacy = $this->executeLegacy($values);
       }
       catch (\Throwable $e) {
-        return ExecutableResult::failure(new TranslatableMarkup('Tool execution failed: @message', [
-          '@message' => $e->getMessage(),
-        ]));
+        return ExecutableResult::failure(self::resultMessage('Tool execution failed: ' . $e->getMessage()));
       }
 
       $success = (bool) ($legacy['success'] ?? FALSE);
@@ -94,14 +93,15 @@ abstract class McpToolsToolBase extends ToolBase {
         // getOutput() lazily initializes them but getOutputValue() does not —
         // which breaks external consumers such as mcp_server_tool_bridge
         // after the tool has already executed.
+        // A declared output the result returns at its top level (e.g.
+        // "success" and "message") is taken from there.
         foreach (array_keys($this->getOutputDefinitions()) as $outputName) {
           if (!array_key_exists($outputName, $context)) {
-            $context[$outputName] = NULL;
+            $context[$outputName] = $legacy[$outputName] ?? NULL;
           }
         }
 
-        // phpcs:ignore Drupal.Semantics.FunctionT.NotLiteralString
-        return ExecutableResult::success(new TranslatableMarkup($message), $context);
+        return ExecutableResult::success(self::resultMessage($message), $this->inDeclaredTypes($context));
       }
 
       $error = $legacy['error'] ?? $legacy['message'] ?? 'Tool execution failed.';
@@ -109,12 +109,53 @@ abstract class McpToolsToolBase extends ToolBase {
         $error = 'Tool execution failed.';
       }
 
-      // phpcs:ignore Drupal.Semantics.FunctionT.NotLiteralString
-      return ExecutableResult::failure(new TranslatableMarkup($error));
+      return ExecutableResult::failure(self::resultMessage($error));
     }
     finally {
       $this->toolCallContext?->leave();
     }
+  }
+
+  /**
+   * Returns scalar outputs in the type their definition declares.
+   *
+   * Drupal hands out entity and revision IDs as strings when an entity was
+   * loaded and as integers right after it was created. An output declared
+   * "integer" has to be an integer either way: Tool API accepts "7", but a
+   * client that checks the result against the outputSchema does not, and
+   * mcp/sdk from 0.9 rejects such a result after the tool has already run.
+   * Only conversions that cannot lose anything are made. Everything else is
+   * left as it is, for Tool API's validation to report.
+   *
+   * @param array<string, mixed> $context
+   *   The output values, keyed by output name.
+   *
+   * @return array<string, mixed>
+   *   The same values, scalars converted where their declared type asks.
+   */
+  private function inDeclaredTypes(array $context): array {
+    foreach ($this->getOutputDefinitions() as $name => $definition) {
+      $value = $context[$name] ?? NULL;
+      if ($value === NULL) {
+        continue;
+      }
+      $type = (string) $definition->getDataType();
+      if ($type === 'integer' && is_string($value) && (string) (int) $value === $value) {
+        $context[$name] = (int) $value;
+      }
+      elseif ($type === 'float' && is_string($value) && is_numeric($value)) {
+        $context[$name] = (float) $value;
+      }
+      elseif ($type === 'string' && (is_int($value) || is_float($value) || $value instanceof \Stringable)) {
+        $context[$name] = (string) $value;
+      }
+      elseif ($type === 'boolean' && in_array($value, [0, 1, '0', '1'], TRUE)) {
+        // Drupal often stores a yes or no as 0 or 1: core's maintenance mode
+        // form does.
+        $context[$name] = (bool) $value;
+      }
+    }
+    return $context;
   }
 
   /**
@@ -212,6 +253,24 @@ abstract class McpToolsToolBase extends ToolBase {
       // Everything else is treated as configuration changes.
       default => AccessManager::WRITE_KIND_CONFIG,
     };
+  }
+
+  /**
+   * Wraps a message built at run time for an ExecutableResult.
+   *
+   * The message carries IDs and exception text, so it must not be the source
+   * string: the locale module would record every message as a string to
+   * translate. It is passed as a placeholder instead, as markup so that it is
+   * not escaped: the rendered text is the message as built.
+   *
+   * @param string $message
+   *   The message.
+   *
+   * @return \Drupal\Core\StringTranslation\TranslatableMarkup
+   *   The message for the result.
+   */
+  private static function resultMessage(string $message): TranslatableMarkup {
+    return new TranslatableMarkup('@message', ['@message' => new FormattableMarkup($message, [])]);
   }
 
 }

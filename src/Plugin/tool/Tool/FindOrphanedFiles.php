@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools\Plugin\tool\Tool;
 
 use Drupal\mcp_tools\Service\FileSystemService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -31,22 +31,22 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'total_orphaned' => new ContextDefinition(
+    'total_orphaned' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Orphaned Files'),
       description: new TranslatableMarkup('Number of files found without entity references.'),
     ),
-    'total_size_bytes' => new ContextDefinition(
+    'total_size_bytes' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Size (bytes)'),
       description: new TranslatableMarkup('Combined size of orphaned files in bytes.'),
     ),
-    'total_size_human' => new ContextDefinition(
+    'total_size_human' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Total Size (human readable)'),
       description: new TranslatableMarkup('Combined size formatted (e.g., "15.2 MB").'),
     ),
-    'files' => new ContextDefinition(
+    'files' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Orphaned Files'),
       description: new TranslatableMarkup('Array of orphaned files with fid, filename, uri, filemime, filesize, and created. These may be safe to delete.'),

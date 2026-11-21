@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_config\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_config\Service\ConfigManagementService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -30,22 +30,22 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'exported' => new ContextDefinition(
+    'exported' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Exported Count'),
       description: new TranslatableMarkup('Number of configuration objects exported.'),
     ),
-    'deleted_from_sync' => new ContextDefinition(
+    'deleted_from_sync' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Deleted from Sync'),
       description: new TranslatableMarkup('Number of configuration objects deleted from sync.'),
     ),
-    'changes_resolved' => new ContextDefinition(
+    'changes_resolved' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Changes Resolved'),
       description: new TranslatableMarkup('Number of changes that were resolved by export.'),
     ),
-    'message' => new ContextDefinition(
+    'message' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Message'),
       description: new TranslatableMarkup('Result message.'),

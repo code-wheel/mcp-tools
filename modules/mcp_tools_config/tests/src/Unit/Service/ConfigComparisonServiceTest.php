@@ -30,19 +30,6 @@ final class ConfigComparisonServiceTest extends UnitTestCase {
     );
   }
 
-  /**
-   * Tests getConfigChanges error handling.
-   *
-   * Note: Full getConfigChanges testing requires kernel tests due to
-   * StorageComparer's internal dependencies on CachedStorage.
-   */
-  public function testGetConfigChangesHandlesExceptionGracefully(): void {
-    // StorageComparer cannot be tested in unit tests because it internally
-    // creates CachedStorage wrappers that require real StorageInterface
-    // implementations (not mocks). Use kernel tests for this functionality.
-    $this->markTestSkipped('StorageComparer requires kernel tests due to CachedStorage dependencies.');
-  }
-
   public function testDiffConfigReturnsErrorForNonexistent(): void {
     $this->activeStorage->method('read')->with('nonexistent')->willReturn(FALSE);
     $this->syncStorage->method('read')->with('nonexistent')->willReturn(FALSE);

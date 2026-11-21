@@ -6,6 +6,7 @@ namespace Drupal\mcp_tools\Service;
 
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Extension\ModuleHandlerInterface;
+use Drupal\Core\Render\RendererInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\system\SystemManager;
 
@@ -32,6 +33,7 @@ class SystemStatusService {
   public function __construct(
     protected ModuleHandlerInterface $moduleHandler,
     protected Connection $database,
+    protected ?RendererInterface $renderer = NULL,
   ) {}
 
   /**
@@ -61,6 +63,18 @@ class SystemStatusService {
       }
     }
 
+    // Drupal 11.2 moved runtime checks to hook_runtime_requirements(), and
+    // core's own checks went there: without this call the report has no
+    // core entry at all on Drupal 11.2 and later. Older cores have no
+    // implementations. Then the alter hooks, as the status report page runs
+    // them (SystemManager::listRequirements()).
+    $runtimeRequirements = $this->moduleHandler->invokeAll('runtime_requirements');
+    if (is_array($runtimeRequirements)) {
+      $requirements = array_merge($requirements, $runtimeRequirements);
+    }
+    $this->moduleHandler->alter('requirements', $requirements);
+    $this->moduleHandler->alter('runtime_requirements', $requirements);
+
     $items = [];
     $summary = [
       'info' => 0,
@@ -71,6 +85,12 @@ class SystemStatusService {
 
     foreach ($requirements as $key => $requirement) {
       $severity = $requirement['severity'] ?? (defined('REQUIREMENT_INFO') ? REQUIREMENT_INFO : -1);
+      // Since Drupal 11.2 a requirement may give its severity as the
+      // RequirementSeverity enum instead of an integer; Drupal 12 only has
+      // the enum. Its values are the same integers.
+      if ($severity instanceof \BackedEnum) {
+        $severity = $severity->value;
+      }
       $severityLabel = self::SEVERITY_LABELS[$severity] ?? 'unknown';
 
       $summary[$severityLabel] = ($summary[$severityLabel] ?? 0) + 1;
@@ -82,9 +102,9 @@ class SystemStatusService {
 
       $items[] = [
         'key' => $key,
-        'title' => (string) ($requirement['title'] ?? $key),
-        'value' => isset($requirement['value']) ? strip_tags((string) $requirement['value']) : NULL,
-        'description' => isset($requirement['description']) ? strip_tags((string) $requirement['description']) : NULL,
+        'title' => $this->plainText($requirement['title'] ?? NULL) ?? (string) $key,
+        'value' => $this->plainText($requirement['value'] ?? NULL),
+        'description' => $this->plainText($requirement['description'] ?? NULL),
         'severity' => $severityLabel,
       ];
     }
@@ -148,6 +168,31 @@ class SystemStatusService {
     }
 
     return $info;
+  }
+
+  /**
+   * Turns a requirement's title, value or description into plain text.
+   *
+   * Modules give these as strings, markup objects or render arrays (Drupal
+   * 10's update status is one). Casting a render array to a string gave the
+   * text "Array" and a PHP warning.
+   */
+  private function plainText(mixed $value): ?string {
+    if ($value === NULL) {
+      return NULL;
+    }
+    if (is_array($value)) {
+      if ($this->renderer === NULL) {
+        return NULL;
+      }
+      try {
+        $value = $this->renderer->renderInIsolation($value);
+      }
+      catch (\Throwable) {
+        return NULL;
+      }
+    }
+    return trim(strip_tags((string) $value));
   }
 
 }

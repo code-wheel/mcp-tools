@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_structure\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_structure\Service\ContentTypeService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -30,42 +30,42 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'id' => new ContextDefinition(
+    'id' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Content Type ID'),
       description: new TranslatableMarkup('Machine name of the content type.'),
     ),
-    'label' => new ContextDefinition(
+    'label' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Label'),
       description: new TranslatableMarkup('Human-readable name of the content type.'),
     ),
-    'description' => new ContextDefinition(
+    'description' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Description'),
       description: new TranslatableMarkup('Description of the content type purpose.'),
     ),
-    'fields' => new ContextDefinition(
+    'fields' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Fields'),
       description: new TranslatableMarkup('Array of field definitions with name, label, type, required, cardinality, and type-specific settings (target_type, allowed_values, max_length). Use field names when creating content.'),
     ),
-    'field_count' => new ContextDefinition(
+    'field_count' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Field Count'),
       description: new TranslatableMarkup('Number of configurable fields on this content type.'),
     ),
-    'new_revision' => new ContextDefinition(
+    'new_revision' => new OutputDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('New Revision'),
       description: new TranslatableMarkup('Whether new revisions are created by default.'),
     ),
-    'admin_path' => new ContextDefinition(
+    'admin_path' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Admin Path'),
       description: new TranslatableMarkup('Path to manage this content type in admin UI.'),
     ),
-    'add_content_path' => new ContextDefinition(
+    'add_content_path' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Add Content Path'),
       description: new TranslatableMarkup('Path to create new content of this type.'),

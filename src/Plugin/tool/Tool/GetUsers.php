@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools\Plugin\tool\Tool;
 
 use Drupal\mcp_tools\Service\UserAnalysisService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -37,22 +37,22 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'total_users' => new ContextDefinition(
+    'total_users' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Users'),
       description: new TranslatableMarkup('Total number of user accounts on the site.'),
     ),
-    'active_users' => new ContextDefinition(
+    'active_users' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Active Users'),
       description: new TranslatableMarkup('Number of non-blocked user accounts.'),
     ),
-    'blocked_users' => new ContextDefinition(
+    'blocked_users' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Blocked Users'),
       description: new TranslatableMarkup('Number of blocked user accounts.'),
     ),
-    'users' => new ContextDefinition(
+    'users' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('User List'),
       description: new TranslatableMarkup('Array of users with uid, name, mail, status (1=active, 0=blocked), roles, created, and last_access. Use uid to update/block users.'),
@@ -85,7 +85,7 @@ class GetUsers extends McpToolsToolBase {
    */
   protected function executeLegacy(array $input): array {
     $limit = min($input['limit'] ?? 50, 100);
-    $role = $input['role'] ?? NULL;
+    $role = ($input['role'] ?? NULL) ?: NULL;
 
     return [
       'success' => TRUE,

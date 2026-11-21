@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools\Commands;
 
-use Mcp\Server;
+use Composer\Autoload\ClassLoader;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Extension\ModuleExtensionList;
@@ -12,6 +12,7 @@ use Drupal\Core\Extension\ModuleInstallerInterface;
 use Drupal\mcp_tools\Mcp\McpToolsServerFactory;
 use Drupal\mcp_tools\Mcp\Prompt\PromptRegistry;
 use Drupal\mcp_tools\Mcp\Resource\ResourceRegistry;
+use Drupal\mcp_tools\Mcp\Sdk;
 use Drupal\mcp_tools\Mcp\ServerConfigRepository;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\ClientConfigGenerator;
@@ -465,8 +466,8 @@ class McpToolsCommands extends DrushCommands {
 
     $issues = [];
 
-    if (!class_exists(Server::class)) {
-      $issues[] = 'Missing dependency: mcp/sdk (composer require mcp/sdk:^0.2).';
+    if (Sdk::serverClass() === NULL) {
+      $issues[] = 'Missing dependency: mcp/sdk (' . Sdk::INSTALL_COMMAND . ').';
     }
 
     if (!$this->moduleHandler->moduleExists('tool')) {
@@ -698,8 +699,12 @@ class McpToolsCommands extends DrushCommands {
     $isDdev = (bool) getenv('IS_DDEV_PROJECT');
     $isLando = (bool) getenv('LANDO');
 
+    // Where Composer installed drush. On a site built from
+    // drupal/recommended-project that is beside the web root, not inside it.
+    $vendorDir = dirname((string) (new \ReflectionClass(ClassLoader::class))->getFileName(), 2);
+
     $generator = new ClientConfigGenerator();
-    $config = $generator->buildConfig($drupalRoot, $isDdev, $isLando, $scope, $uid);
+    $config = $generator->buildConfig($drupalRoot, $isDdev, $isLando, $scope, $uid, $vendorDir);
 
     // JSON to stdout (pipeable to file).
     $this->output()->write(json_encode($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");

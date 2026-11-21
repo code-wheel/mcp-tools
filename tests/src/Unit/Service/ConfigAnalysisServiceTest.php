@@ -184,18 +184,4 @@ class ConfigAnalysisServiceTest extends UnitTestCase {
     $this->assertTrue($result['overridden'][0]['has_overrides']);
   }
 
-  /**
-   * Tests getConfigStatus error handling.
-   *
-   * Note: Full getConfigStatus testing requires kernel tests due to
-   * StorageComparer's internal dependencies on CachedStorage.
-   */
-  public function testGetConfigStatusReturnsErrorOnException(): void {
-    // StorageComparer cannot be tested in unit tests because it internally
-    // creates CachedStorage wrappers that require real StorageInterface
-    // implementations (not mocks). Use kernel tests for this functionality.
-    $this->markTestSkipped('StorageComparer requires kernel tests due to CachedStorage dependencies.');
-  }
-
 }
-

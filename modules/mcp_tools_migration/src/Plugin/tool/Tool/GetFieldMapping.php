@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_migration\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_migration\Service\MigrationService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -30,22 +30,22 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'content_type' => new ContextDefinition(
+    'content_type' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Content Type'),
       description: new TranslatableMarkup('The content type machine name.'),
     ),
-    'label' => new ContextDefinition(
+    'label' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Label'),
       description: new TranslatableMarkup('The human-readable content type label.'),
     ),
-    'required' => new ContextDefinition(
+    'required' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Required Fields'),
       description: new TranslatableMarkup('Required fields with label, type, and description.'),
     ),
-    'optional' => new ContextDefinition(
+    'optional' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Optional Fields'),
       description: new TranslatableMarkup('Optional fields with label, type, and description.'),

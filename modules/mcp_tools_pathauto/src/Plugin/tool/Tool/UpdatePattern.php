@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_pathauto\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_pathauto\Service\PathautoService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -55,32 +55,32 @@ use Drupal\tool\TypedData\InputDefinition;
     'bundle' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Bundle'),
-      description: new TranslatableMarkup('Bundle to restrict the pattern to (null to remove restriction).'),
+      description: new TranslatableMarkup('Bundle to restrict the pattern to. An empty string removes the restriction.'),
       required: FALSE,
     ),
   ],
   output_definitions: [
-    'id' => new ContextDefinition(
+    'id' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Pattern ID'),
       description: new TranslatableMarkup('Machine name of the updated pattern.'),
     ),
-    'label' => new ContextDefinition(
+    'label' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Label'),
       description: new TranslatableMarkup('Current label of the pattern.'),
     ),
-    'pattern' => new ContextDefinition(
+    'pattern' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('URL Pattern'),
       description: new TranslatableMarkup('Current URL alias pattern.'),
     ),
-    'updated_fields' => new ContextDefinition(
+    'updated_fields' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Updated Fields'),
       description: new TranslatableMarkup('List of fields that were changed.'),
     ),
-    'message' => new ContextDefinition(
+    'message' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
       description: new TranslatableMarkup('Success or error details.'),

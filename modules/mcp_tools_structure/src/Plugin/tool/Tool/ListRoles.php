@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_structure\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_structure\Service\RoleService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -22,12 +22,12 @@ use Drupal\tool\Tool\ToolOperation;
   operation: ToolOperation::Read,
   input_definitions: [],
   output_definitions: [
-    'roles' => new ContextDefinition(
+    'roles' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Roles'),
       description: new TranslatableMarkup('Array of roles with id, label, weight, is_admin, permission_count, and user_count. Use id with GetRolePermissions or GrantPermissions.'),
     ),
-    'total' => new ContextDefinition(
+    'total' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Roles'),
       description: new TranslatableMarkup('Total number of roles in the system.'),

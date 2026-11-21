@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_entity_clone\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_entity_clone\Service\EntityCloneService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -36,37 +36,37 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'entity_type' => new ContextDefinition(
+    'entity_type' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Entity Type'),
       description: new TranslatableMarkup('The entity type queried.'),
     ),
-    'bundle' => new ContextDefinition(
+    'bundle' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Bundle'),
       description: new TranslatableMarkup('The bundle/content type queried.'),
     ),
-    'settings' => new ContextDefinition(
+    'settings' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Clone Settings'),
       description: new TranslatableMarkup('Clone configuration: title_pattern, clone_references, exclude_fields, and status settings.'),
     ),
-    'reference_fields' => new ContextDefinition(
+    'reference_fields' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Reference Fields'),
       description: new TranslatableMarkup('List of entity reference fields that can be cloned or preserved. Used to determine deep clone behavior.'),
     ),
-    'paragraph_fields' => new ContextDefinition(
+    'paragraph_fields' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Paragraph Fields'),
       description: new TranslatableMarkup('List of paragraph reference fields. Paragraphs are typically deep-cloned automatically.'),
     ),
-    'has_paragraphs' => new ContextDefinition(
+    'has_paragraphs' => new OutputDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Has Paragraphs'),
       description: new TranslatableMarkup('TRUE if this bundle contains paragraph fields. Important for understanding clone behavior.'),
     ),
-    'message' => new ContextDefinition(
+    'message' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
       description: new TranslatableMarkup('Human-readable summary of clone settings.'),

@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_analysis\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_analysis\Service\AnalysisService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -36,42 +36,42 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'entity_type' => new ContextDefinition(
+    'entity_type' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Entity Type'),
       description: new TranslatableMarkup('The entity type that was checked.'),
     ),
-    'entity_id' => new ContextDefinition(
+    'entity_id' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Entity ID'),
       description: new TranslatableMarkup('The entity ID that was checked.'),
     ),
-    'title' => new ContextDefinition(
+    'title' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Title'),
       description: new TranslatableMarkup('Entity title for reference.'),
     ),
-    'issues' => new ContextDefinition(
+    'issues' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Accessibility Issues'),
       description: new TranslatableMarkup('Issues found with type, severity, WCAG reference, and message'),
     ),
-    'error_count' => new ContextDefinition(
+    'error_count' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Error Count'),
       description: new TranslatableMarkup('WCAG errors that must be fixed for compliance.'),
     ),
-    'warning_count' => new ContextDefinition(
+    'warning_count' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Warning Count'),
       description: new TranslatableMarkup('Potential issues that should be reviewed.'),
     ),
-    'info_count' => new ContextDefinition(
+    'info_count' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Info Count'),
       description: new TranslatableMarkup('Informational notices for best practices.'),
     ),
-    'suggestions' => new ContextDefinition(
+    'suggestions' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Suggestions'),
       description: new TranslatableMarkup('Specific fixes to resolve accessibility issues.'),

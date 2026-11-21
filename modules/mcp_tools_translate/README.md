@@ -1,11 +1,11 @@
-# MCP Tools — Translate
+# MCP Tools - Translate
 
 Create linked content translations for Drupal nodes and paragraphs via
 the Model Context Protocol (MCP). Designed for AI agents (Claude Code,
 Claude Desktop, or any MCP client) that translate articles remotely
 through the Drupal HTTP endpoint.
 
-## Quick start — no Drupal needed
+## Quick start (no Drupal needed)
 
 You do **not** need Drupal, DDEV, or PHP installed locally. Claude
 connects directly to the remote Drupal MCP endpoint over HTTP. Choose
@@ -20,17 +20,17 @@ have Upsun SSH access:
 upsun ssh -e main -- "drush mcp-tools:remote-key-create --label='Your Name' --scopes=read,write"
 ```
 
-Save the key — it is shown only once.
+Save the key. It is shown only once.
 
 ### Available environments
 
 | Environment | URL | Env var |
 |---|---|---|
-| Production | `https://tcs-preview.ch/_mcp_tools` | `TCS_MCP_PRODUCTION_KEY` |
-| Main | `https://main.tcs-preview.ch/_mcp_tools` | `TCS_MCP_MAIN_KEY` |
-| Staging | `https://staging.tcs-preview.ch/_mcp_tools` | `TCS_MCP_STAGING_KEY` |
+| Production | `https://example.com/_mcp_tools` | `MCP_PRODUCTION_KEY` |
+| Main | `https://main.example.com/_mcp_tools` | `MCP_MAIN_KEY` |
+| Staging | `https://staging.example.com/_mcp_tools` | `MCP_STAGING_KEY` |
 
-API keys are per-environment — a key from main will not work on
+API keys are per-environment: a key from main will not work on
 production.
 
 ---
@@ -43,7 +43,7 @@ Add the key to your shell profile (`~/.zshrc`, `~/.bashrc`, or
 equivalent):
 
 ```bash
-export TCS_MCP_MAIN_KEY="mcp_tools.xxxxx.xxxxxxxxxxxxxxx"
+export MCP_MAIN_KEY="mcp_tools.xxxxx.xxxxxxxxxxxxxxx"
 ```
 
 **3. Verify `.mcp.json`**
@@ -52,16 +52,16 @@ The repo ships an `.mcp.json` that is already configured. Confirm it
 contains the `headers` block:
 
 ```json
-"tcs-main": {
+"drupal-main": {
   "type": "http",
-  "url": "https://main.tcs-preview.ch/_mcp_tools",
+  "url": "https://main.example.com/_mcp_tools",
   "headers": {
-    "Authorization": "Bearer ${TCS_MCP_MAIN_KEY}"
+    "Authorization": "Bearer ${MCP_MAIN_KEY}"
   }
 }
 ```
 
-Claude Code expands `${TCS_MCP_MAIN_KEY}` from your environment at
+Claude Code expands `${MCP_MAIN_KEY}` from your environment at
 startup.
 
 **4. Restart Claude Code and translate**
@@ -80,19 +80,19 @@ claude            # launch in the project directory
 Open PowerShell **as Administrator** and set it permanently:
 
 ```powershell
-[Environment]::SetEnvironmentVariable("TCS_MCP_MAIN_KEY", "mcp_tools.xxxxx.xxxxxxxxxxxxxxx", "User")
+[Environment]::SetEnvironmentVariable("MCP_MAIN_KEY", "mcp_tools.xxxxx.xxxxxxxxxxxxxxx", "User")
 ```
 
 Or set it for the current session only:
 
 ```powershell
-$env:TCS_MCP_MAIN_KEY = "mcp_tools.xxxxx.xxxxxxxxxxxxxxx"
+$env:MCP_MAIN_KEY = "mcp_tools.xxxxx.xxxxxxxxxxxxxxx"
 ```
 
 **3. Verify `.mcp.json`**
 
 The repo ships an `.mcp.json` that is already configured (same as
-Option A). Claude Code on Windows expands `${TCS_MCP_MAIN_KEY}` from
+Option A). Claude Code on Windows expands `${MCP_MAIN_KEY}` from
 your environment variables the same way.
 
 **4. Restart Claude Code and translate**
@@ -107,7 +107,7 @@ claude   # launch in the project directory
 
 ### Option C: Claude Desktop on Windows (no terminal needed)
 
-Claude Desktop connects to the MCP endpoint directly — no git clone,
+Claude Desktop connects to the MCP endpoint directly: no git clone,
 no terminal, no CLI tools required.
 
 **2. Open the Claude Desktop config file**
@@ -128,9 +128,9 @@ with the key from step 1:
 ```json
 {
   "mcpServers": {
-    "tcs-main": {
+    "drupal-main": {
       "type": "http",
-      "url": "https://main.tcs-preview.ch/_mcp_tools",
+      "url": "https://main.example.com/_mcp_tools",
       "headers": {
         "Authorization": "Bearer YOUR_API_KEY"
       }
@@ -145,7 +145,7 @@ table above and a key created on that environment.
 **4. Restart Claude Desktop and translate**
 
 Fully quit Claude Desktop (system tray → Quit), then reopen it. The
-`tcs-main` server should appear in the MCP tools list.
+`drupal-main` server should appear in the MCP tools list.
 
 ---
 
@@ -187,7 +187,7 @@ permission. Check at `/admin/people/permissions#module-mcp_tools_translate`.
 ddev drush mcp-tools:remote-key-create --label="Editor Name" --scopes=read,write
 ```
 
-Save the key — it is shown only once. Keys are managed at
+Save the key. It is shown only once. Keys are managed at
 `/admin/config/services/mcp-tools/api-keys`.
 
 ### 4. Configure the MCP connection
@@ -199,9 +199,9 @@ Add the server to your MCP client configuration.
 ```json
 {
   "mcpServers": {
-    "tcs-drupal": {
+    "drupal-local": {
       "type": "http",
-      "url": "https://tcs-ch-drupal.ddev.site:8443/_mcp_tools"
+      "url": "https://my-site.ddev.site:8443/_mcp_tools"
     }
   }
 }
@@ -212,8 +212,8 @@ Add the server to your MCP client configuration.
 ```json
 {
   "mcpServers": {
-    "tcs-drupal": {
-      "url": "https://tcs-ch-drupal.ddev.site:8443/_mcp_tools",
+    "drupal-local": {
+      "url": "https://my-site.ddev.site:8443/_mcp_tools",
       "headers": {
         "Authorization": "Bearer YOUR_API_KEY"
       }
@@ -226,10 +226,10 @@ Add the server to your MCP client configuration.
 
 | Environment | URL |
 |---|---|
-| Production | `https://tcs-preview.ch/_mcp_tools` |
-| Main | `https://main.tcs-preview.ch/_mcp_tools` |
-| Staging | `https://staging.tcs-preview.ch/_mcp_tools` |
-| Local DDEV | `https://tcs-ch-drupal.ddev.site:8443/_mcp_tools` |
+| Production | `https://example.com/_mcp_tools` |
+| Main | `https://main.example.com/_mcp_tools` |
+| Staging | `https://staging.example.com/_mcp_tools` |
+| Local DDEV | `https://my-site.ddev.site:8443/_mcp_tools` |
 
 ## Available tools
 
@@ -286,7 +286,7 @@ translated as one coherent document rather than field by field.
   "fields": {
     "title": { "type": "string", "value": "Roadside Assistance in Switzerland", "format": null },
     "field_description": { "type": "text_long", "value": "<p>Article description...</p>", "format": "content_format" },
-    "field_meta_title": { "type": "string", "value": "Roadside Assistance | TCS", "format": null }
+    "field_meta_title": { "type": "string", "value": "Roadside Assistance | Example", "format": null }
   },
   "paragraphs": {
     "1234": {
@@ -325,7 +325,7 @@ Requires `write` scope on the API key.
 {
   "title": "Assistance routière en Suisse",
   "field_description": "<p>Description traduite...</p>",
-  "field_meta_title": "Assistance routière | TCS",
+  "field_meta_title": "Assistance routière | Example",
   "paragraphs": {
     "1234": {
       "field_text": "<p>Contenu du paragraphe traduit...</p>",
@@ -492,7 +492,7 @@ mcp_tools_translate tools
 ## Supported content
 
 - All node types with translatable text fields
-- Nested paragraphs (recursive — child paragraphs are translated before parents)
+- Nested paragraphs (recursive: child paragraphs are translated before parents)
 - Paragraph reference fields: `field_paragraphs`, `field_summary_key_facts`
 - Field types: `string`, `string_long`, `text_long`, `text_with_summary`, `text`
 
@@ -505,7 +505,7 @@ The deploy hook in `drush/platformsh_deploy_drupal.sh` calls
 1. Create the `mcp_service` user (if it doesn't exist)
 2. Assign the `mcp_operator` role
 3. Set the `mcp_tools_remote` UID to the service user
-4. Create a default API key (first deploy only — save the output)
+4. Create a default API key (first deploy only, save the output)
 
 ### Per-environment config (settings.upsun.php)
 
@@ -518,36 +518,36 @@ On Upsun, `settings.upsun.php` overrides the config for production safety:
 | `trust_scopes_via_header` | `false` | `false` |
 | `trust_scopes_via_query` | `false` | `false` |
 | `audit_logging` | `true` | `true` |
-| `server_name` | `TCS MCP Tools (Local)` | `TCS MCP Tools (Main/Staging/Production)` |
+| `server_name` | `MCP Tools (Local)` | `MCP Tools (Main/Staging/Production)` |
 
 ### Endpoints
 
 | Environment | URL |
 |---|---|
-| Production | `https://tcs-preview.ch/_mcp_tools` |
-| Main | `https://main.tcs-preview.ch/_mcp_tools` |
-| Staging | `https://staging.tcs-preview.ch/_mcp_tools` |
-| Local DDEV | `https://tcs-ch-drupal.ddev.site:8443/_mcp_tools` |
+| Production | `https://example.com/_mcp_tools` |
+| Main | `https://main.example.com/_mcp_tools` |
+| Staging | `https://staging.example.com/_mcp_tools` |
+| Local DDEV | `https://my-site.ddev.site:8443/_mcp_tools` |
 
 ### First deploy checklist
 
 After the first deploy to a new environment:
 
 1. Check the deploy log for the generated API key
-2. Store the key securely — it is shown only once
+2. Store the key securely. It is shown only once
 3. Create additional keys as needed:
    `upsun ssh -- drush mcp-tools:remote-key-create --label="Editor" --scopes=read,write`
 4. Verify the endpoint responds:
-   `curl -s https://main.tcs-preview.ch/_mcp_tools -H "Authorization: Bearer <KEY>" -d '...'`
+   `curl -s https://main.example.com/_mcp_tools -H "Authorization: Bearer <KEY>" -d '...'`
 
 ## Security
 
-- API keys are scoped (`read` / `write`) — translation requires `write`
+- API keys are scoped (`read` / `write`). Translation requires `write`
 - The `mcp_operator` role must have `mcp_tools use translation` permission
 - All write operations are audit-logged (`mcp_tools.audit_logger`)
 - `AccessManager` intersects API key scopes with module-level `allowed_scopes`
-- `uid` is set per key — translations are attributed to the API key owner
-- On Upsun, scope trust vectors (env/header/query) are disabled — only API keys
+- `uid` is set per key, so translations are attributed to the API key owner
+- On Upsun, scope trust vectors (env/header/query) are disabled. Only API keys
   determine scopes
 
 ## Troubleshooting
@@ -562,7 +562,7 @@ The tool creates new translations only. Use `mcp_update_content` (from
 
 **String field truncated:**
 String fields are auto-truncated to their configured `max_length`. The
-tool does not error — it silently truncates. Keep translations concise.
+tool does not error. It silently truncates. Keep translations concise.
 
 **Tool not visible in tools/list:**
 The endpoint paginates at 50 tools. Use the `cursor` parameter to page

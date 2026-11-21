@@ -48,4 +48,4 @@ Tests `RemoteImageService` image-specific logic and orchestration:
 
 ---
 
-**Total: 36 tests** — no database or Drupal installation required.
+**Total: 36 tests.** No database or Drupal installation required.

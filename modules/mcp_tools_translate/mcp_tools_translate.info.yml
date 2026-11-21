@@ -1,8 +1,8 @@
 name: 'MCP Tools - Translate'
 type: module
-description: 'Translation tools: read translatable fields and create or update linked translations for nodes — and their paragraphs when the paragraphs module is installed.'
+description: 'Translation tools: read translatable fields and create or update linked translations for nodes, and their paragraphs when the paragraphs module is installed.'
 package: AI
-core_version_requirement: ^10.3 || ^11 || ^12
+core_version_requirement: ^10.5 || ^11
 lifecycle: experimental
 
 # paragraphs is a soft dependency: all tools work on plain nodes without it;

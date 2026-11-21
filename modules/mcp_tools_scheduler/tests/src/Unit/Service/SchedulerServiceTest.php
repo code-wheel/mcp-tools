@@ -59,16 +59,8 @@ final class SchedulerServiceTest extends UnitTestCase {
     $time = $this->createMock(TimeInterface::class);
     $time->method('getCurrentTime')->willReturn(2000000000);
 
-    $node = $this->createNodeMock(1, 'Test', 'article', TRUE, TRUE);
-
-    $storage = $this->createMock(EntityStorageInterface::class);
-    $storage->method('load')->with(1)->willReturn($node);
-
-    $entityTypeManager = $this->createMock(EntityTypeManagerInterface::class);
-    $entityTypeManager->method('getStorage')->with('node')->willReturn($storage);
-
     $service = $this->createService([
-      'entity_type_manager' => $entityTypeManager,
+      'entity_type_manager' => $this->entityTypeManagerFor(scheduling: TRUE),
       'access_manager' => $accessManager,
       'time' => $time,
     ]);
@@ -76,6 +68,53 @@ final class SchedulerServiceTest extends UnitTestCase {
 
     $this->assertFalse($result['success']);
     $this->assertStringContainsString('future', $result['error']);
+  }
+
+  /**
+   * A content type with scheduling switched off is refused.
+   *
+   * Scheduler adds its date fields to every node and only acts on content
+   * types that have the feature on. The tool looked at the field alone, so
+   * it reported "scheduled" for content Scheduler would never publish.
+   */
+  public function testSchedulePublishRefusesAContentTypeWithSchedulingOff(): void {
+    $accessManager = $this->createMock(AccessManager::class);
+    $accessManager->method('canWrite')->willReturn(TRUE);
+    $time = $this->createMock(TimeInterface::class);
+    $time->method('getCurrentTime')->willReturn(1000000000);
+
+    $service = $this->createService([
+      'entity_type_manager' => $this->entityTypeManagerFor(scheduling: FALSE),
+      'access_manager' => $accessManager,
+      'time' => $time,
+    ]);
+    $result = $service->schedulePublish('node', 1, 2000000000);
+
+    $this->assertFalse($result['success']);
+    $this->assertStringContainsString('not configured for scheduling', $result['error']);
+  }
+
+  /**
+   * An entity type manager with node 1, of a type with scheduling on or off.
+   */
+  private function entityTypeManagerFor(bool $scheduling): EntityTypeManagerInterface {
+    $node = $this->createNodeMock(1, 'Test', 'article', TRUE, TRUE);
+    $node->expects($this->never())->method('save');
+    $nodes = $this->createMock(EntityStorageInterface::class);
+    $nodes->method('load')->with(1)->willReturn($node);
+
+    $type = $this->createMock(\Drupal\node\NodeTypeInterface::class);
+    // Any other module or setting name gets FALSE, so asking for the wrong
+    // one fails the test that expects scheduling to be on.
+    $type->method('getThirdPartySetting')->willReturnCallback(
+      static fn(string $module, string $key): bool => $module === 'scheduler' && $key === 'publish_enable' && $scheduling,
+    );
+    $types = $this->createMock(EntityStorageInterface::class);
+    $types->method('load')->with('article')->willReturn($type);
+
+    $entityTypeManager = $this->createMock(EntityTypeManagerInterface::class);
+    $entityTypeManager->method('getStorage')->willReturnMap([['node', $nodes], ['node_type', $types]]);
+    return $entityTypeManager;
   }
 
   public function testSchedulePublishNodeNotFound(): void {
@@ -143,7 +182,7 @@ final class SchedulerServiceTest extends UnitTestCase {
   }
 
   private function createNodeMock(int $id, string $title, string $bundle, bool $hasPublishOn, bool $hasUnpublishOn): object {
-    $node = $this->createMock(\Drupal\Core\Entity\ContentEntityInterface::class);
+    $node = $this->createMock(\Drupal\node\NodeInterface::class);
     $node->method('id')->willReturn($id);
     $node->method('getTitle')->willReturn($title);
     $node->method('bundle')->willReturn($bundle);

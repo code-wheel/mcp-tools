@@ -37,6 +37,7 @@ services:
   # Tool Call Context (used for MCP-scoped side effects like config tracking).
   mcp_tools.tool_call_context:
     class: Drupal\mcp_tools\Service\McpToolCallContext
+    arguments: ['@state', '@config.factory', '@entity.memory_cache', '@cache_tags.invalidator.checksum', '@?cache.access_policy_memory', '@entity_field.manager']
 
   # Site Health Services
   mcp_tools.site_health:
@@ -73,6 +74,7 @@ services:
     arguments:
       - '@module_handler'
       - '@database'
+      - '@renderer'
 
   # MCP Resources
   mcp_tools.resource_registry:
@@ -88,6 +90,9 @@ services:
       - '@mcp_tools.site_blueprint'
       - '@mcp_tools.config_analysis'
       - '@entity_type.manager'
+      - '@mcp_tools.access_manager'
+      - '@current_user'
+      - '@mcp_tools.tool_call_context'
     tags:
       - { name: mcp_tools.resource_provider }
 
@@ -102,6 +107,9 @@ services:
     arguments:
       - '@mcp_tools.site_health'
       - '@mcp_tools.system_status'
+      - '@mcp_tools.access_manager'
+      - '@current_user'
+      - '@mcp_tools.tool_call_context'
     tags:
       - { name: mcp_tools.prompt_provider }
 
@@ -184,5 +192,11 @@ services:
     arguments:
       - '@logger.channel.mcp_tools'
 
+  # Kept across container rebuilds. The server arms this one object for each
+  # call. A tool that clears all caches rebuilds the container inside the
+  # long-running STDIO server, and tools created after that would get a new,
+  # unarmed bridge: no progress updates, no sampling.
   mcp_tools.client_bridge:
     class: Drupal\mcp_tools\Service\McpClientBridge
+    tags:
+      - { name: persist }

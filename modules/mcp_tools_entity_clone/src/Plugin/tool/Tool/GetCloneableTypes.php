@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_entity_clone\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_entity_clone\Service\EntityCloneService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -22,12 +22,12 @@ use Drupal\tool\Tool\ToolOperation;
   operation: ToolOperation::Read,
   input_definitions: [],
   output_definitions: [
-    'types' => new ContextDefinition(
+    'types' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Cloneable Entity Types'),
       description: new TranslatableMarkup('Array of entity types with their bundles. Use entity_type and bundle with GetCloneSettings for details or CloneEntity to clone.'),
     ),
-    'total' => new ContextDefinition(
+    'total' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Types'),
       description: new TranslatableMarkup('Total number of entity types that support cloning.'),

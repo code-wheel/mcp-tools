@@ -5,9 +5,13 @@ declare(strict_types=1);
 namespace Drupal\mcp_tools\Mcp\Resource;
 
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Session\AccountInterface;
+use Drupal\mcp_tools\Mcp\FiberIsolation;
+use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\ConfigAnalysisService;
 use Drupal\mcp_tools\Service\SiteBlueprintService;
 use Drupal\mcp_tools\Service\SiteHealthService;
+use Drupal\mcp_tools\Service\McpToolCallContext;
 use Drupal\mcp_tools\Service\SystemStatusService;
 
 /**
@@ -21,7 +25,42 @@ class CoreResourceProvider implements ResourceProviderInterface {
     private readonly SiteBlueprintService $siteBlueprintService,
     private readonly ConfigAnalysisService $configAnalysisService,
     private readonly ?EntityTypeManagerInterface $entityTypeManager = NULL,
+    private readonly ?AccessManager $accessManager = NULL,
+    private readonly ?AccountInterface $currentUser = NULL,
+    private readonly ?McpToolCallContext $toolCallContext = NULL,
   ) {}
+
+  /**
+   * Runs a read the way a tool call runs: starting like a new request.
+   *
+   * In the long-running STDIO server, what one read loaded stays in this
+   * process's memory. Without this, a change another process made did not
+   * show until some tool call happened to reset it.
+   */
+  private function fresh(callable $read): mixed {
+    $this->toolCallContext?->enter();
+    try {
+      return $read();
+    }
+    finally {
+      $this->toolCallContext?->leave();
+    }
+  }
+
+  /**
+   * Whether the current user may read what a tool category covers.
+   *
+   * A resource shows the same data as the tools of its category, so it
+   * answers to the same rule: the read scope and the category's permission.
+   * Without the services to check, the answer is no.
+   */
+  private function mayRead(string $category): bool {
+    if ($this->accessManager === NULL || $this->currentUser === NULL) {
+      return FALSE;
+    }
+    return $this->accessManager->canRead()
+      && $this->currentUser->hasPermission('mcp_tools use ' . $category);
+  }
 
   /**
    * {@inheritdoc}
@@ -33,21 +72,21 @@ class CoreResourceProvider implements ResourceProviderInterface {
         'name' => 'site-status',
         'description' => 'Basic site health summary, versions, cron, and module counts.',
         'mimeType' => 'application/json',
-        'handler' => fn() => $this->getSiteStatus(),
+        'handler' => fn() => FiberIsolation::run(fn() => $this->fresh(fn() => $this->getSiteStatus())),
       ],
       [
         'uri' => 'drupal://site/snapshot',
         'name' => 'site-snapshot',
         'description' => 'Concise site overview for MCP context windows.',
         'mimeType' => 'application/json',
-        'handler' => fn() => $this->getSiteSnapshot(),
+        'handler' => fn() => FiberIsolation::run(fn() => $this->fresh(fn() => $this->getSiteSnapshot())),
       ],
       [
         'uri' => 'drupal://system/requirements',
         'name' => 'system-requirements',
         'description' => 'Runtime requirements report from all installed modules.',
         'mimeType' => 'application/json',
-        'handler' => fn() => $this->getSystemRequirements(),
+        'handler' => fn() => FiberIsolation::run(fn() => $this->fresh(fn() => $this->getSystemRequirements())),
       ],
     ];
   }
@@ -62,14 +101,14 @@ class CoreResourceProvider implements ResourceProviderInterface {
         'name' => 'node-summary',
         'description' => 'Read-only summary of a node: metadata, publication status, languages, and text field values.',
         'mimeType' => 'application/json',
-        'handler' => fn(string $nid): array => $this->readNode($nid),
+        'handler' => fn(string $nid): array => FiberIsolation::run(fn() => $this->fresh(fn() => $this->readNode($nid))),
       ],
       [
         'uriTemplate' => 'drupal://config/{name}',
         'name' => 'config-object',
         'description' => 'A configuration object by name. Sensitive keys are redacted unless output.include_sensitive is enabled.',
         'mimeType' => 'application/json',
-        'handler' => fn(string $name): array => $this->readConfig($name),
+        'handler' => fn(string $name): array => FiberIsolation::run(fn() => $this->fresh(fn() => $this->readConfig($name))),
       ],
     ];
   }
@@ -84,6 +123,9 @@ class CoreResourceProvider implements ResourceProviderInterface {
    *   Node summary, or an error entry.
    */
   public function readNode(string $nid): array {
+    if (!$this->mayRead('content')) {
+      return ['error' => 'Access denied.'];
+    }
     if ($this->entityTypeManager === NULL) {
       return ['error' => 'Entity type manager unavailable.'];
     }
@@ -131,6 +173,9 @@ class CoreResourceProvider implements ResourceProviderInterface {
    *   The configuration data with sensitive keys redacted by default.
    */
   public function readConfig(string $name): array {
+    if (!$this->mayRead('config')) {
+      return ['error' => 'Access denied.'];
+    }
     return $this->configAnalysisService->getConfig($name);
   }
 
@@ -141,6 +186,9 @@ class CoreResourceProvider implements ResourceProviderInterface {
    *   Site status summary.
    */
   public function getSiteStatus(): array {
+    if (!$this->mayRead('site_health')) {
+      return ['error' => 'Access denied.'];
+    }
     return $this->siteHealthService->getSiteStatus();
   }
 
@@ -151,10 +199,26 @@ class CoreResourceProvider implements ResourceProviderInterface {
    *   Site snapshot.
    */
   public function getSiteSnapshot(): array {
+    if (!$this->mayRead('site_health')) {
+      return ['error' => 'Access denied.'];
+    }
     $status = $this->siteHealthService->getSiteStatus();
     $requirements = $this->systemStatusService->getRequirements(TRUE);
-    $blueprint = $this->siteBlueprintService->getBlueprint();
-    $configStatus = $this->configAnalysisService->getConfigStatus();
+
+    // The blueprint and the config changes show what the structure, users
+    // and config tools show, so they answer to those permissions. The site
+    // health permission alone gets the site health part.
+    $blueprint = ['note' => 'Needs the permission "mcp_tools use structure".'];
+    if ($this->mayRead('structure')) {
+      $blueprint = $this->siteBlueprintService->getBlueprint();
+      if (!$this->mayRead('users')) {
+        unset($blueprint['roles']);
+      }
+    }
+    $configDrift = ['note' => 'Needs the permission "mcp_tools use config".'];
+    if ($this->mayRead('config')) {
+      $configDrift = $this->summarizeConfigDrift($this->configAnalysisService->getConfigStatus());
+    }
 
     return [
       'site' => [
@@ -175,7 +239,7 @@ class CoreResourceProvider implements ResourceProviderInterface {
         'has_warnings' => (bool) ($requirements['has_warnings'] ?? FALSE),
         'total_checks' => (int) ($requirements['total_checks'] ?? 0),
       ],
-      'config_drift' => $this->summarizeConfigDrift($configStatus),
+      'config_drift' => $configDrift,
     ];
   }
 
@@ -230,6 +294,9 @@ class CoreResourceProvider implements ResourceProviderInterface {
    *   Requirements report.
    */
   public function getSystemRequirements(): array {
+    if (!$this->mayRead('site_health')) {
+      return ['error' => 'Access denied.'];
+    }
     return $this->systemStatusService->getRequirements();
   }
 

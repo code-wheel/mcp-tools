@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_cron\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_cron\Service\CronService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -22,17 +22,17 @@ use Drupal\tool\Tool\ToolOperation;
   operation: ToolOperation::Read,
   input_definitions: [],
   output_definitions: [
-    'last_run' => new ContextDefinition(
+    'last_run' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Last cron run time'),
       description: new TranslatableMarkup('ISO 8601 timestamp of last successful cron run.'),
     ),
-    'is_overdue' => new ContextDefinition(
+    'is_overdue' => new OutputDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Is cron overdue'),
       description: new TranslatableMarkup('True if cron has not run within threshold. Consider running RunCron.'),
     ),
-    'jobs' => new ContextDefinition(
+    'jobs' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Registered cron jobs'),
       description: new TranslatableMarkup('Array of modules with cron implementations and their last run times.'),

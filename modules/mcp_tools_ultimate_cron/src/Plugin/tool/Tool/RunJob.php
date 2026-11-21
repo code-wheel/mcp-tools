@@ -8,7 +8,7 @@ use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AuditLogger;
 use Drupal\mcp_tools_ultimate_cron\Service\UltimateCronService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -32,32 +32,32 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'success' => new ContextDefinition(
+    'success' => new OutputDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Success status'),
       description: new TranslatableMarkup('TRUE if the job completed successfully, FALSE if it failed or could not be run.'),
     ),
-    'message' => new ContextDefinition(
+    'message' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result message'),
       description: new TranslatableMarkup('Human-readable summary of the job execution result.'),
     ),
-    'id' => new ContextDefinition(
+    'id' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Job ID'),
       description: new TranslatableMarkup('Machine name of the executed job.'),
     ),
-    'title' => new ContextDefinition(
+    'title' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Job Title'),
       description: new TranslatableMarkup('Human-readable title of the job.'),
     ),
-    'duration_seconds' => new ContextDefinition(
+    'duration_seconds' => new OutputDefinition(
       data_type: 'float',
       label: new TranslatableMarkup('Duration in seconds'),
       description: new TranslatableMarkup('How long the job took to execute. Useful for performance monitoring.'),
     ),
-    'executed_at' => new ContextDefinition(
+    'executed_at' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Execution timestamp'),
       description: new TranslatableMarkup('ISO 8601 timestamp when the job was executed.'),

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Drupal\mcp_tools\Mcp;
 
 use Drupal\tool\Tool\ToolDefinition;
+use Opis\JsonSchema\Errors\ErrorFormatter;
 use Opis\JsonSchema\Errors\ValidationError;
 use Opis\JsonSchema\Validator;
 use Psr\Log\LoggerInterface;
@@ -47,7 +48,10 @@ class ToolInputValidator {
       return ['valid' => TRUE, 'errors' => []];
     }
 
-    $data = $this->normalizeForValidation($arguments);
+    // Cast to object before normalizing: an empty PHP array encodes to "[]"
+    // (JSON array), which fails validation against {"type": "object"}. Tools
+    // with only optional inputs are legitimately called with no arguments.
+    $data = $this->normalizeForValidation((object) $arguments);
 
     $result = $this->validator->validate($data, $schemaObject);
     if ($result->isValid()) {
@@ -137,7 +141,9 @@ class ToolInputValidator {
     }
 
     return [
-      'message' => $error->message(),
+      // message() is a template such as "The required properties
+      // ({missing}) are missing". The formatter fills in the values.
+      'message' => (new ErrorFormatter())->formatErrorMessage($error),
       'keyword' => $error->keyword(),
       'path' => $pathString !== '' ? $pathString : NULL,
     ];

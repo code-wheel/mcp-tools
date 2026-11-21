@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_recipes\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_recipes\Service\RecipesService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -22,17 +22,17 @@ use Drupal\tool\Tool\ToolOperation;
   operation: ToolOperation::Read,
   input_definitions: [],
   output_definitions: [
-    'recipes' => new ContextDefinition(
+    'recipes' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Available Recipes'),
       description: new TranslatableMarkup('List of available recipes with name, label, description, type, source, and path.'),
     ),
-    'count' => new ContextDefinition(
+    'count' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Recipe Count'),
       description: new TranslatableMarkup('Total number of available recipes.'),
     ),
-    'sources' => new ContextDefinition(
+    'sources' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Recipe Sources'),
       description: new TranslatableMarkup('List of directories where recipes were found.'),

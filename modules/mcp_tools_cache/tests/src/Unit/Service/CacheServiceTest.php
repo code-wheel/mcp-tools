@@ -15,20 +15,10 @@ if (!function_exists(__NAMESPACE__ . '\drupal_flush_all_caches')) {
   }
 }
 
-/**
- * Test stub for _drupal_flush_css_js().
- *
- * @internal
- */
-if (!function_exists(__NAMESPACE__ . '\_drupal_flush_css_js')) {
-  function _drupal_flush_css_js(): void {
-    $GLOBALS['mcp_tools_cache_test_css_js_flushed'] = TRUE;
-  }
-}
-
 namespace Drupal\Tests\mcp_tools_cache\Unit\Service;
 
 use Drupal\Core\Asset\AssetCollectionOptimizerInterface;
+use Drupal\Core\Asset\AssetQueryStringInterface;
 use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Core\Cache\CacheFactoryInterface;
 use Drupal\Core\Cache\CacheTagsInvalidatorInterface;
@@ -66,10 +56,14 @@ final class CacheServiceTest extends UnitTestCase {
     $this->jsOptimizer = $this->createMock(AssetCollectionOptimizerInterface::class);
     $this->kernel = $this->createMock(DrupalKernelInterface::class);
     $this->menuLinkManager = $this->createMock(MenuLinkManagerInterface::class);
-    // Create a mock that implements ContainerInterface with getServiceIds.
-    // Since getServiceIds is not on ContainerInterface, we use an anonymous class.
+    // A container stand-in. Core lists the cache bin services in the
+    // "cache_bins" parameter (service name => bin name).
     $this->container = new class implements ContainerInterface {
       public array $serviceIds = [];
+
+      public array $parameters = [];
+
+      public array $services = [];
 
       public function getServiceIds(): array {
         return $this->serviceIds;
@@ -78,7 +72,7 @@ final class CacheServiceTest extends UnitTestCase {
       public function set(string $id, ?object $service): void {}
 
       public function get(string $id, int $invalidBehavior = self::EXCEPTION_ON_INVALID_REFERENCE): ?object {
-        return NULL;
+        return $this->services[$id] ?? NULL;
       }
 
       public function has(string $id): bool {
@@ -90,11 +84,11 @@ final class CacheServiceTest extends UnitTestCase {
       }
 
       public function getParameter(string $name): \UnitEnum|array|string|int|float|bool|null {
-        return NULL;
+        return $this->parameters[$name] ?? NULL;
       }
 
       public function hasParameter(string $name): bool {
-        return FALSE;
+        return isset($this->parameters[$name]);
       }
 
       public function setParameter(string $name, mixed $value): void {}
@@ -179,11 +173,17 @@ final class CacheServiceTest extends UnitTestCase {
       };
     });
 
-    // Configure container to return service IDs including custom cache bin.
+    // The container as core builds it: bins in the "cache_bins" parameter,
+    // next to services that start with "cache." but are not bins.
     $this->container->serviceIds = [
       'cache.default',
       'cache.custom',
       'cache.backend.database',
+      'cache.backend.memory',
+    ];
+    $this->container->parameters['cache_bins'] = [
+      'cache.default' => 'default',
+      'cache.custom' => 'custom',
     ];
 
     // Configure cache factory.
@@ -194,7 +194,11 @@ final class CacheServiceTest extends UnitTestCase {
 
     $status = $service->getCacheStatus();
     $this->assertTrue($status['success']);
-    $this->assertGreaterThanOrEqual(10, $status['data']['total_bins']);
+    // The ten core bins plus the custom one, and no backend factories.
+    $this->assertSame(11, $status['data']['total_bins']);
+    $listed = array_column($status['data']['bins'], 'bin');
+    $this->assertContains('custom', $listed);
+    $this->assertNotContains('backend.memory', $listed);
     $this->assertSame(7, $status['data']['cache_tags_table_size']);
   }
 
@@ -214,6 +218,11 @@ final class CacheServiceTest extends UnitTestCase {
     $this->themeRegistry->expects($this->once())->method('reset');
     $this->cssOptimizer->expects($this->once())->method('deleteAll');
     $this->jsOptimizer->expects($this->once())->method('deleteAll');
+    // The query string service is asked for, not a core function: Drupal 11
+    // removed the function. CacheRebuildKernelTest runs the real thing.
+    $queryString = $this->createMock(AssetQueryStringInterface::class);
+    $queryString->expects($this->once())->method('reset');
+    $this->container->services['asset.query_string'] = $queryString;
 
     $service = $this->createService($database);
 
@@ -226,7 +235,6 @@ final class CacheServiceTest extends UnitTestCase {
 
     $theme = $service->rebuild('theme');
     $this->assertTrue($theme['success']);
-    $this->assertTrue((bool) ($GLOBALS['mcp_tools_cache_test_css_js_flushed'] ?? FALSE));
   }
 
   public function testInvalidateTagsRequiresAtLeastOneTag(): void {

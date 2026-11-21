@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_moderation\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_moderation\Service\ModerationService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -37,27 +37,27 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'entity_type' => new ContextDefinition(
+    'entity_type' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Entity Type'),
       description: new TranslatableMarkup('The entity type queried.'),
     ),
-    'entity_id' => new ContextDefinition(
+    'entity_id' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Entity ID'),
       description: new TranslatableMarkup('The entity ID queried.'),
     ),
-    'label' => new ContextDefinition(
+    'label' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Entity Label'),
       description: new TranslatableMarkup('Title/label of the entity.'),
     ),
-    'current_state' => new ContextDefinition(
+    'current_state' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Current State'),
       description: new TranslatableMarkup('Current moderation state with id, label, and published status.'),
     ),
-    'available_transitions' => new ContextDefinition(
+    'available_transitions' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Available Transitions'),
       description: new TranslatableMarkup('States the entity can transition to. Use state id with SetModerationState.'),

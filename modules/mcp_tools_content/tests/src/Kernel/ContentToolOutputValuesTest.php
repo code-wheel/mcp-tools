@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Drupal\Tests\mcp_tools_content\Kernel;
 
 use Drupal\KernelTests\KernelTestBase;
+use Drupal\Tests\mcp_tools\Traits\DeclaredOutputTypesTrait;
 use Drupal\node\Entity\Node;
 use Drupal\node\Entity\NodeType;
 use Drupal\Tests\user\Traits\UserCreationTrait;
@@ -17,8 +18,11 @@ use Drupal\Tests\user\Traits\UserCreationTrait;
  * (e.g. mcp_server_tool_bridge) after the tool had already executed.
  * McpToolsToolBase backfills unset declared outputs with NULL.
  */
+#[\PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses]
 #[\PHPUnit\Framework\Attributes\Group('mcp_tools_content')]
 class ContentToolOutputValuesTest extends KernelTestBase {
+
+  use DeclaredOutputTypesTrait;
 
   use UserCreationTrait;
 
@@ -76,6 +80,7 @@ class ContentToolOutputValuesTest extends KernelTestBase {
 
     $result = $tool->getResult();
     $this->assertTrue($result->isSuccess(), (string) $result->getMessage());
+    $this->assertOutputsHaveDeclaredTypes($tool, (string) $tool->getPluginId());
 
     $values = $tool->getOutputValues();
     $this->assertNull($values['language'], 'The single-translation output is NULL on a full delete.');
@@ -97,6 +102,7 @@ class ContentToolOutputValuesTest extends KernelTestBase {
 
     $result = $tool->getResult();
     $this->assertTrue($result->isSuccess(), (string) $result->getMessage());
+    $this->assertOutputsHaveDeclaredTypes($tool, (string) $tool->getPluginId());
 
     $values = $tool->getOutputValues();
     $this->assertSame('After', $values['title']);

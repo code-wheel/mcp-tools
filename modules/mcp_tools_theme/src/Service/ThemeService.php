@@ -7,6 +7,7 @@ namespace Drupal\mcp_tools_theme\Service;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Extension\ThemeExtensionList;
 use Drupal\Core\Extension\ThemeHandlerInterface;
+use Drupal\Core\Extension\ThemeInstallerInterface;
 use Drupal\Core\Theme\ThemeManagerInterface;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AuditLogger;
@@ -23,6 +24,7 @@ class ThemeService {
     protected ThemeExtensionList $themeExtensionList,
     protected AccessManager $accessManager,
     protected AuditLogger $auditLogger,
+    protected ThemeInstallerInterface $themeInstaller,
   ) {}
 
   /**
@@ -387,7 +389,7 @@ class ThemeService {
     }
 
     try {
-      $this->themeHandler->install([$theme]);
+      $this->themeInstaller->install([$theme]);
 
       $this->auditLogger->logSuccess('enable_theme', 'theme', $theme, []);
 
@@ -471,7 +473,7 @@ class ThemeService {
 
     try {
       $themeLabel = $installedThemes[$theme]->info['name'] ?? $theme;
-      $this->themeHandler->uninstall([$theme]);
+      $this->themeInstaller->uninstall([$theme]);
 
       $this->auditLogger->logSuccess('disable_theme', 'theme', $theme, []);
 

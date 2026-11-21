@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_webform\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_webform\Service\WebformService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -31,22 +31,22 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'sid' => new ContextDefinition(
+    'sid' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Deleted Submission ID'),
       description: new TranslatableMarkup('The submission ID that was deleted. This ID is no longer valid.'),
     ),
-    'webform_id' => new ContextDefinition(
+    'webform_id' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Webform ID'),
       description: new TranslatableMarkup('Machine name of the webform the submission belonged to.'),
     ),
-    'webform_title' => new ContextDefinition(
+    'webform_title' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Webform Title'),
       description: new TranslatableMarkup('Title of the webform for confirmation.'),
     ),
-    'message' => new ContextDefinition(
+    'message' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
       description: new TranslatableMarkup('Human-readable confirmation of the deletion. WARNING: This cannot be undone.'),

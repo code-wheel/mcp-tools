@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_search_api\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_search_api\Service\SearchApiService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -22,12 +22,12 @@ use Drupal\tool\Tool\ToolOperation;
   operation: ToolOperation::Read,
   input_definitions: [],
   output_definitions: [
-    'total' => new ContextDefinition(
+    'total' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total indexes'),
       description: new TranslatableMarkup('Total number of search indexes configured in the system.'),
     ),
-    'indexes' => new ContextDefinition(
+    'indexes' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('List of search indexes'),
       description: new TranslatableMarkup('Array of index objects with id, label, server, status, and indexing progress. Use id with GetIndex for full details.'),

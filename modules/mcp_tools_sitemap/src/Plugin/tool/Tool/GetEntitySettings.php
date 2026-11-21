@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_sitemap\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_sitemap\Service\SitemapService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -36,22 +36,22 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'entity_type' => new ContextDefinition(
+    'entity_type' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Entity Type'),
       description: new TranslatableMarkup('The entity type ID that was queried (e.g., "node", "taxonomy_term").'),
     ),
-    'bundle' => new ContextDefinition(
+    'bundle' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Bundle'),
       description: new TranslatableMarkup('The specific bundle queried, or NULL if all bundles were requested.'),
     ),
-    'settings' => new ContextDefinition(
+    'settings' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Sitemap Settings'),
       description: new TranslatableMarkup('Sitemap settings for the bundle: index (bool), priority (0.0-1.0), changefreq, include_images. Use SetEntitySettings to modify.'),
     ),
-    'bundles' => new ContextDefinition(
+    'bundles' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('All Bundle Settings'),
       description: new TranslatableMarkup('When no bundle specified, returns all bundle settings for the entity type. Keys are bundle IDs, values are settings objects.'),

@@ -4,6 +4,341 @@ All notable changes to the MCP Tools module will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.0.0-beta19] - 2026-11-20
+
+### Security
+
+- **A default Composer install is clean again**
+  ([#3613061](https://git.drupalcode.org/project/mcp_tools/-/work_items/3613061)).
+  Three things kept the module on packages with advisories, and recent
+  Composer versions refuse to install those by default:
+  - mcp/sdk was capped at 0.6, and code-wheel/mcp-tool-gateway 1.2.0
+    pinned exactly 0.6.0. CVE-2026-53965 affects 0.5.0 up to 0.7.0. It is
+    in the SDK's client code, which this module does not use. mcp/sdk
+    0.7.1, 0.9 and 0.10 are now allowed and the gateway is required at
+    ^1.2.1.
+  - enshrined/svg-sanitize was capped at 0.22.0, which has three
+    advisories (CVE-2026-107379, CVE-2026-107380, CVE-2026-107381). 1.x is
+    now allowed. It sanitizes SVGs fetched by `mcp_tools_remote_media`.
+  - mcp/sdk 0.8 has an advisory of its own (fixed in 0.9.0), so it is
+    skipped.
+
+  A fresh install resolves to mcp/sdk 0.10.0 and svg-sanitize 1.1.1, and
+  `composer audit` reports nothing. Run `composer update drupal/mcp_tools -W`.
+- **`mcp_tools_ai` ran tools without the access check.** The bridge to
+  Drupal AI called the tool directly, and neither Drupal AI nor Tool API
+  checks access at that point. A user who could reach an AI assistant or
+  agent with these tools could run the exposed ones (read tools by default)
+  without the tool's `mcp_tools use ...` permission. The bridge now checks
+  access first and refuses with no data.
+- **Resources and the site brief prompt had no access check.** Only tools
+  were gated. `drupal://site/status`, `drupal://site/snapshot`,
+  `drupal://system/requirements`, `drupal://config/{name}`,
+  `drupal://node/{nid}` and the `mcp_tools/site-brief` prompt now need the
+  read scope and the permission of the matching tool category
+  (`site_health`, `config`, `content`). In the snapshot, the content
+  types, role names and changed config names need the `structure`, `users`
+  and `config` permissions.
+- **Other modules' tools skipped scopes, read-only mode and config-only
+  mode.** With "all tools" on (`--all-tools`, or `include_all_tools` in a
+  server profile) the server also runs Tool API tools of other providers.
+  Those three checks sat in MCP Tools' own tool base class, so such a tool
+  ran without them: on a site with Tool Belt, a session with
+  `--scope=read` could create a node. The server now applies the same
+  rule to them, by the operation a tool declares. `mcp_tools_ai` had the
+  same gap and has the same fix. "All tools" is off by default.
+- **Three tools that change the site were declared as read
+  operations:** `mcp_block_user`, `mcp_activate_user` and
+  `mcp_layout_allow_custom`. The server told clients they change nothing,
+  and some clients run such tools without asking. Config-only mode did
+  not stop the two user tools: with that mode on, a session with the
+  write scope could still block or activate an account. A read-only
+  session was refused all along, by a second check. All three are write
+  operations now.
+
+### Added
+
+- **The 2026-07-28 revision of MCP**, with mcp/sdk 0.9 or 0.10. That revision has
+  no handshake and no sessions: every request stands alone. The same
+  `drush mcp-tools:serve` command and the same HTTP URL now answer both
+  kinds of client:
+  - `server/discover` tells a client what the server supports.
+  - Lists say how long a client may keep them: five minutes, and only
+    for the client that asked.
+  - The delete confirmation comes back as an "input required" result, and
+    the client answers on a retry of the call.
+  - Progress for bulk calls arrives with the call's own response.
+  - Over HTTP no session is created, and API key scopes apply to each
+    request.
+
+  Clients on the older revisions keep working as before. The server still
+  runs on mcp/sdk 0.6 and 0.7.1, where it speaks the older revisions only.
+- **MCP Tools installs next to MCP Server 2.0.0-beta7 and later**, which
+  require mcp/sdk 0.9.
+- **mcp/sdk 0.10.** It renames the SDK's server class, keeps nested JSON
+  objects in tool arguments as objects, and fails a request when Drupal
+  suspends its Fiber. All three are handled; the module runs on 0.6, 0.7.1,
+  0.9 and 0.10 from one code base.
+- **Browser-based clients on an allowed origin keep working on mcp/sdk
+  0.9.** That SDK version compares the `Origin` header with a list of its
+  own; the `allowed_origins` setting keeps deciding.
+
+### Fixed
+
+- **Tools that failed on every call, or on every real site.** Their unit
+  tests mocked the Drupal classes and stopped at the refusals. Each now
+  runs for real in a test:
+  - `mcp_theme_enable` and `mcp_theme_disable` called methods the theme
+    handler lost in Drupal 9.
+  - `mcp_add_view_display` called a method the view executable does not
+    have. The title and page size it sets are now used by Views.
+  - `mcp_redirect_create`, `_get`, `_find`, `_list` and `_update` failed as
+    soon as one redirect existed, and a create failed after it had saved
+    the redirect. They asked the redirect for a hit count it does not
+    keep. `count` is gone from the output of `mcp_redirect_get`.
+  - `mcp_pathauto_create` failed for a pattern limited to one bundle,
+    `mcp_pathauto_update` saved a pattern Pathauto could not read, and the
+    bundles of patterns made in Pathauto's own form were listed wrong. A
+    pattern for one bundle now gets weight -5, as in Pathauto's form.
+  - `mcp_moderation_get_content_by_state` failed on every site with a
+    workflow. Content now counts under the state of its newest revision.
+  - `mcp_layout_add_block` and `mcp_layout_remove_block` failed on
+    Drupal 10: they called a method that is only public from Drupal 11.
+  - `mcp_cache_rebuild` failed for the type `theme` on Drupal 11: it
+    called a function that Drupal 11 removed. The other three types
+    worked.
+  - `mcp_create_view` and `mcp_create_content_list_view` made views that
+    were not what was asked for. The sort values the tools document
+    (`newest`, `oldest`, `title`, `changed`) were not understood, so
+    every view sorted newest first. A view of taxonomy terms failed on
+    its first query. A field of the content type, such as `body`, gave a
+    view that could not be shown. All of these work now. A sort or a
+    field the view cannot have is refused, and nothing is created. The
+    `show_title` input of the content list did nothing: the title now
+    leads the list as a link, or is left out when it is switched off.
+  - `mcp_structure_add_field` and `mcp_paragraphs_add_field` crashed on a
+    list of numbers (`allowed_values: [1, 2]`).
+  - `mcp_structure_list_field_types` offered field types the site cannot
+    create because their module is off, such as list fields without
+    Options. It now lists the types the site has, and adding another is
+    refused with that reason.
+  - `mcp_create_media_type` told clients to pass `audio` or `video`.
+    Drupal calls these sources `audio_file` and `video_file`, so both
+    failed. The description names the real ones, and the short names
+    are accepted too.
+- **`mcp_scheduler_publish` and `mcp_scheduler_unpublish` answered
+  "scheduled" for content Scheduler would never touch.** Scheduler only
+  acts on content types that have scheduling switched on. Both tools now
+  refuse the others, and `mcp_scheduler_get_schedule` reports
+  `scheduling_enabled` truthfully.
+- **The batch tools answered "success" when every item failed.** The six
+  batch tools and `mcp_redirect_import` listed the errors inside a result
+  that said success. A batch in which nothing could be done is now a
+  failure that names the first error. A batch in which some items worked
+  is still a success with its errors listed.
+- **A user was asked to confirm a deletion that was then refused.** With a
+  client that can ask its user, `mcp_delete_content` put the question
+  before the access check. A session that may not delete is now refused
+  without a question.
+- **`mcp_create_content` dropped unknown fields without a word** and
+  reported success. It now names them and creates nothing, as
+  `mcp_update_content` already did.
+- **In a long STDIO session a field added elsewhere was unknown.** The
+  server kept the field list of a content type as first read. A field an
+  admin added in the UI did not show, and a value sent for it was
+  dropped. Field lists are now read fresh on each call.
+- **`mcp_analysis_performance` returned empty table names on MySQL 8**,
+  with a PHP warning for each row. MariaDB was not affected.
+- **`drush mcp-tools:client-config` named a drush that does not exist** on
+  a site built from `drupal/recommended-project`: it looked for `vendor`
+  inside the web root. A client given that config could not start the
+  server.
+- **Saving the remote endpoint's settings form removed the execution
+  user**, and the form could not enable the endpoint: it always answered
+  "An execution user is required". Sites set up with drush were not
+  affected until someone saved the form. "Use site admin (uid 1)" is now
+  ticked only when uid 1 is the user in use.
+- **Clients built on the official JS SDK did not get our error
+  messages.** That client checks every result against the tool's
+  `outputSchema`, error results included, and replaces a result that does
+  not match with "Structured content does not match the tool's output
+  schema". Three kinds of result failed the check. Error results (bad
+  input, access denied, exceptions) had `error` but not the `message` the
+  schema requires; they carry both now. `mcp_tools_get_site_status`
+  returned `maintenance_mode` as 0 or 1 once core's maintenance form had
+  been saved. An empty map went out as `[]` (`mcp_tools_get_files` on a
+  site with no files); it goes out as `{}`.
+- **System status had no core checks on Drupal 11.2 and later.** Drupal
+  11.2 moved its runtime checks to `hook_runtime_requirements()`, which
+  the service did not call. On a Drupal 11.4 test site
+  `mcp_tools_get_system_status` reported 1 check and no errors where the
+  status report page had 29 checks and 2 errors. The requirements and
+  snapshot resources and the site brief prompt read the same data.
+- **`drush mcp-tools:serve --server=<profile>` ignored the profile's
+  `gateway_mode` and `include_all_tools`.** The shipped staging and
+  production profiles turn gateway mode on; the server started with the
+  full tool list.
+- **In a long STDIO session, changes made elsewhere took too long to
+  show.** A mode switched on in the settings took effect one call late.
+  A permission removed from the user's role stayed in force until the
+  server was restarted. A node read as a resource stayed as it was until
+  some tool call reset it. All three are read fresh on the next call.
+- **Progress updates and sampling stopped after `mcp_cache_clear_all`** in
+  a STDIO session.
+- **Gateway discovery pointed at `get-tool-info`**, a tool name that no
+  longer exists.
+- **`mcp_translate_content` could overwrite the source text of
+  paragraphs.** It assumed each language has its own copy of the node's
+  paragraphs, as Layout Paragraphs makes when the paragraph field is
+  translatable. In the usual Paragraphs setup the languages share the
+  paragraphs, and the translated text was written over the source text
+  with no translation created. `mcp_update_content` with `language` did the
+  same to a shared paragraph that had no translation yet. Shared
+  paragraphs now get their own translation. Sites with per-language copies
+  are not affected. **If you used these tools on shared paragraphs since
+  1.0.0-beta16, check the source text of those paragraphs.**
+- **`mcp_paragraphs_list_types` and `mcp_paragraphs_get_type` failed** for
+  every paragraph type without an icon.
+- **Tools failed on Tool API 1.0.0-beta10 and later.** Tool API now checks
+  every result against the tool's declared outputs and fails the call when
+  a required output is missing. MCP Tools results only fill the outputs
+  that apply, so tools like `mcp_cache_clear_all`,
+  `mcp_tools_check_cron_status` and `mcp_cron_get_status` failed after they
+  had already run. All MCP Tools outputs are now optional, as the
+  advertised outputSchema already said; values that are set are still
+  type-checked.
+- **`mcp_get_translatable_content` failed on every call** with Tool API
+  1.0.0-beta10 and later: `existing_translations` was declared as a string
+  but is a list
+  ([#3613068](https://git.drupalcode.org/project/mcp_tools/-/work_items/3613068),
+  patch by julien).
+- **`mcp_metatag_set_entity` reported success but saved nothing.** It
+  picked Metatag's read-only computed `metatag` field and stored the tags in
+  the wrong shape. It now finds the metatag field by type and stores the
+  tags the way Metatag does
+  ([#3613060](https://git.drupalcode.org/project/mcp_tools/-/work_items/3613060),
+  fix by longwave).
+- **The SDK filled the site logs.** It logged every registered tool,
+  resource and prompt at debug level on each request (177 watchdog rows
+  for one short session on the reporter's site). The SDK now only logs
+  warnings and above. On Drupal 11 it also logged a warning on most HTTP
+  tool calls, because Drupal pauses and resumes work in a way the SDK did
+  not expect; those are gone too
+  ([#3613065](https://git.drupalcode.org/project/mcp_tools/-/work_items/3613065),
+  patch by julien).
+- **Tool messages showed up as strings to translate.** Every distinct
+  result message was stored in `locales_source`. Messages now use one fixed
+  source string; clients get the same text as before
+  ([#3613064](https://git.drupalcode.org/project/mcp_tools/-/work_items/3613064),
+  patch by julien).
+- **Stale State in the STDIO server.** `drush mcp-tools:serve` kept the
+  State values from its first read, so `check_cron_status` reported cron
+  runs from hours ago. Each tool call now starts from fresh State
+  ([#3613067](https://git.drupalcode.org/project/mcp_tools/-/work_items/3613067)).
+- **The STDIO server lost its scopes after `mcp_cache_clear_all`.** That
+  tool rebuilds Drupal's container inside the running server, which
+  replaced the service holding the session's scopes. A session started
+  with `--scope=read,write` then refused every later write until it was
+  restarted.
+- **Calling another module's tool with a list argument crashed** in
+  `--all-tools` mode, the same way listing such tools did.
+- **Stale config and content in the STDIO server.** The same long-running
+  process also kept config objects, loaded entities and cache tag counts
+  from its first read. A site name or a node title changed by an editor
+  stayed stale until the client restarted the server. Each tool call now
+  starts from fresh copies; the caches all requests share are left alone.
+- **`--all-tools` stopped the server from starting** when another module's
+  tool declared a list input (Tool Belt does). MCP Tools can now serve
+  other modules' Tool API tools next to its own.
+- **Validation errors had unfilled blanks**, such as "The required
+  properties ({missing}) are missing". They now name the property and the
+  problem: "nid: The data (string) must match the type: integer".
+- **Gateway mode rejected a tool call with an empty `arguments` object**,
+  which is what most clients send for a tool with no inputs.
+- **Write tools could report failure after they had worked.**
+  `mcp_update_content` returned `revision_id` as a string where it declares
+  an integer, and `mcp_create_content` could do the same with `nid`. A
+  client that checks results against the tool's output schema rejects
+  that, and so does mcp/sdk 0.9: through MCP Server 2.0.0-beta7 an update
+  changed the node and then answered "Invalid structured output". Tools
+  now return scalar outputs in the type they declare.
+- **`mcp_tools_get_site_status` reported 0 installed modules** on every
+  site.
+- **System status printed "Array"** for status report entries that
+  modules give as render arrays (Drupal 10's update status is one), with a
+  PHP warning each time. They are rendered to plain text now. This also
+  covers the `drupal://system/requirements` and `drupal://site/snapshot`
+  resources and the site brief prompt.
+- **`mcp_cache_get_status` listed cache backends as cache bins**
+  ("backend.memory", "backend.apcu" and so on) and failed on SQLite. It
+  lists the site's real cache bins now.
+- **`mcp_analysis_performance` failed on every database but MySQL and
+  MariaDB.** Its table size query is MySQL's. Other databases now get the
+  rest of the analysis and a note that table sizes are not read there.
+  Tested on SQLite and PostgreSQL 16.
+- **Error text from an exception reached MCP clients HTML-escaped**
+  (`&quot;` for a quote). It arrives as thrown now.
+- **The module files said Drupal `^10.3 || ^11 || ^12`.** Tool API, which
+  this module needs, supports `^10.5 || ^11`, so that is what they say now.
+  Composer already enforced it. Drupal 12 follows when Tool API supports it.
+- **The "mcp/sdk is missing" messages told you to install mcp/sdk 0.2**,
+  the oldest line. They name the current one.
+- **`mcp_tools_get_system_status` failed** when any module reported a
+  requirement's severity as the `RequirementSeverity` enum that Drupal 11.2
+  added. Drupal 12 only has the enum. The `drupal://system/requirements`
+  resource and the site brief prompt use the same code.
+- **The server advertised features it does not have** (logging,
+  completions, resource subscriptions, list-changed notifications). It now
+  declares tools, plus resources and prompts when it has any.
+- Two refusal messages told the caller to pass `language: '<code>'`.
+  Clients that render messages as HTML dropped the tag. They now spell it
+  out.
+- **`mcp_structure_scaffold_content_type` always failed** with a
+  TypeError (MR !6 by ggerard).
+- **Tools whose inputs are all optional rejected a call with no
+  arguments** (MR !7 by ggerard).
+- The field type list returned "Array" as the description of some field
+  types.
+- **An empty string for an optional filter matched nothing.** Clients
+  often send `""` instead of leaving a field out; `content_type`, `bundle`,
+  `role`, `theme`, `prefix` and similar filters now treat it as "no filter"
+  (MR !5 by ggerard).
+- **`mcp_tools_sitemap` was uninstallable with simple_sitemap >= 4.2**:
+  the service depended on the removed `simple_sitemap.manager`
+  (SitemapManager) API. Ported to the current API: SimpleSitemap config
+  entities for variants, the entity manager for bundle settings, the
+  queue worker for queue status, and `setSitemaps()->rebuildQueue()->
+  generate()` for regeneration.
+
+### Changed
+
+- **The three gateway tools have new names:** `mcp_tools_discover_tools`,
+  `mcp_tools_get_tool_info` and `mcp_tools_execute_tool`. The old names
+  (`mcp_tools/discover-tools` and so on) contained a slash, which the MCP
+  tool naming rule does not allow. Update any client setting or prompt
+  that names them.
+- **The server now sends instructions** with `initialize`: what the tools
+  cover, how scopes and delete confirmation work, and how to use gateway
+  mode. Some clients load only this and the tool names at first.
+- **Requires Tool API 1.0.0-beta9 or later, and so Drupal 10.5 or
+  later.** Tool outputs are declared with Tool API's `OutputDefinition`
+  instead of core's `ContextDefinition`, which is deprecated in tool
+  1.0.0-beta9 and removed in 1.0.0-rc1. With every submodule enabled this
+  removes one deprecation notice for each of the 963 outputs on every
+  plugin cache rebuild
+  ([#3613062](https://git.drupalcode.org/project/mcp_tools/-/work_items/3613062)).
+- **Converted tool schemas are cached persistently** (keyed by plugin
+  ID, cleared on `drush cr`). The stateless HTTP transport rebuilds the
+  server per request; caching cuts the schema-conversion portion of that
+  build from ~700 ms to ~5 ms at ~190 tools, also speeding STDIO boot.
+- Gateway responses use compact JSON (~30% smaller).
+- **Gateway discovery without a query returns a compact overview**:
+  provider groups with counts and example tool names (~460 tokens)
+  instead of the full catalog (~5,700 tokens at 32 tools), with a hint
+  to query. Query-scoped discovery gains a `limit` parameter (default
+  25, max 100) and reports `total_matches` with a truncation hint.
+  Matching now also covers the provider name.
+
 ## [1.0.0-beta18] - 2026-07-24
 
 ### Added
@@ -20,7 +355,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   a progressToken to a tool call, the batch tools (create/update/delete
   multiple) stream per-item MCP progress notifications. Implemented via a
   new request-scoped `mcp_tools.client_bridge` service the call handler
-  arms during execution — services report progress unconditionally and it
+  arms during execution. Services report progress unconditionally and it
   no-ops outside an MCP request (cron, drush, other Tool API runtimes).
 
 ## [1.0.0-beta17] - 2026-07-24
@@ -30,7 +365,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Native user confirmation for destructive deletes (elicitation).** When
   the MCP client supports elicitation, a bare `mcp_delete_content` call asks
   the actual human through the client's own UI instead of returning the
-  refusal round-trip — accept proceeds as a confirmed full delete, decline
+  refusal round-trip: accept proceeds as a confirmed full delete, decline
   cancels cleanly. Clients without the capability keep the beta15
   refusal-based guardrail unchanged. Requires mcp/sdk >= 0.6 and a
   streaming transport.
@@ -45,12 +380,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- **`mcp_tools_translate` submodule** — content translation workflows
+- **`mcp_tools_translate` submodule**: content translation workflows
   ([#3611087](https://www.drupal.org/project/mcp_tools/issues/3611087),
   patch by julien). Three tools: `mcp_get_translatable_content` (all
   translatable text from a node and its paragraphs, in reading order),
   `mcp_get_translation_status`, and `mcp_translate_content` (creates a
-  complete linked translation — incomplete payloads are rejected before
+  complete linked translation; incomplete payloads are rejected before
   anything is saved). `mcp_update_content` with `language` now updates a
   single existing translation, including a `paragraphs` map keyed by
   source paragraph ID; non-translatable (shared) fields and unknown
@@ -65,14 +400,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
-- **`mcp_tools_paragraphs` fataled on paragraphs >= 1.18** — the service
+- **`mcp_tools_paragraphs` fataled on paragraphs >= 1.18**: the service
   called `ParagraphsType::getIconUuid()`, which current paragraphs
   releases do not provide. Now uses `getIconFile()?->uuid()`.
 
 - **Tools with conditional outputs broke external Tool API consumers.**
   Declared outputs a result did not populate (e.g. `language` on a full-node
   delete, the translate-only outputs on `mcp_update_content`) made Tool
-  API's `getOutputValues()` throw after the tool had already executed —
+  API's `getOutputValues()` throw after the tool had already executed,
   surfacing as an error response from
   [mcp_server_tool_bridge](https://www.drupal.org/project/mcp_server_tool_bridge)
   even though the operation succeeded. `McpToolsToolBase` now backfills
@@ -98,7 +433,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   patch by julien). All generated tool schemas declare
   `additionalProperties: false`, and validation errors list the allowed
   parameters. Previously an undeclared key passed validation and was silently
-  dropped — a `mcp_delete_content {nid, language}` call fell through to a
+  dropped: a `mcp_delete_content {nid, language}` call fell through to a
   destructive full-node delete instead of failing loudly. The same policy
   now covers tools with no declared inputs (stray arguments are rejected
   rather than skipped past validation) and the gateway meta-tools
@@ -130,7 +465,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   header"** ([#3611083](https://www.drupal.org/project/mcp_tools/issues/3611083),
   based on julien's patch). mcp/sdk >= 0.3 enables DNS-rebinding protection
   with a localhost-only allowlist. Hostnames extracted from the configured
-  `allowed_origins` are now passed to the middleware — add your public
+  `allowed_origins` are now passed to the middleware. Add your public
   hostname or origin to the Origin allowlist in the remote settings.
 - **Audit logger TypeError on list values**
   ([#3612659](https://www.drupal.org/project/mcp_tools/issues/3612659)).
@@ -168,8 +503,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Note
 
-- Includes everything from the unreleased beta8–beta12 line: the `/_mcp_tools`
-  route-level access check (#3587523), mcp/sdk 0.3–0.6 support (#3589053),
+- Includes everything from the unreleased beta8 to beta12 line: the `/_mcp_tools`
+  route-level access check (#3587523), mcp/sdk 0.3 to 0.6 support (#3589053),
   Drupal 12 compatibility, and a fully restored CI/release pipeline.
 
 ## [1.0.0-beta4] - 2026-02-25

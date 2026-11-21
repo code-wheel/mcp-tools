@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_layout_builder\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_layout_builder\Service\LayoutBuilderService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -50,32 +50,32 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'entity_type' => new ContextDefinition(
+    'entity_type' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Entity Type'),
       description: new TranslatableMarkup('The entity type configured.'),
     ),
-    'bundle' => new ContextDefinition(
+    'bundle' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Bundle'),
       description: new TranslatableMarkup('The bundle configured.'),
     ),
-    'layout_id' => new ContextDefinition(
+    'layout_id' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Layout ID'),
       description: new TranslatableMarkup('Layout plugin used for this section.'),
     ),
-    'delta' => new ContextDefinition(
+    'delta' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Section Delta'),
       description: new TranslatableMarkup('Position of the added section. Use with AddBlock to add content.'),
     ),
-    'section_count' => new ContextDefinition(
+    'section_count' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Sections'),
       description: new TranslatableMarkup('Total number of sections in the layout.'),
     ),
-    'message' => new ContextDefinition(
+    'message' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
       description: new TranslatableMarkup('Success or error details.'),

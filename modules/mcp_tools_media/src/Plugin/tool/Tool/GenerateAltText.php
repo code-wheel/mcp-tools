@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_media\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_media\Service\MediaService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -37,17 +37,17 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'mid' => new ContextDefinition(
+    'mid' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Media ID'),
       description: new TranslatableMarkup('The updated media entity ID.'),
     ),
-    'alt' => new ContextDefinition(
+    'alt' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Alt Text'),
       description: new TranslatableMarkup('The generated alt text that was stored.'),
     ),
-    'message' => new ContextDefinition(
+    'message' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
       description: new TranslatableMarkup('Success confirmation.'),

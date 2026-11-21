@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_users\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_users\Service\UserService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -36,37 +36,37 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'uid' => new ContextDefinition(
+    'uid' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('User ID'),
       description: new TranslatableMarkup('The updated user ID.'),
     ),
-    'username' => new ContextDefinition(
+    'username' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Username'),
       description: new TranslatableMarkup('The username.'),
     ),
-    'email' => new ContextDefinition(
+    'email' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Email'),
       description: new TranslatableMarkup('Current email address after update.'),
     ),
-    'status' => new ContextDefinition(
+    'status' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Status'),
       description: new TranslatableMarkup('Current status: "active" or "blocked".'),
     ),
-    'roles' => new ContextDefinition(
+    'roles' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Roles'),
       description: new TranslatableMarkup('Current roles after update.'),
     ),
-    'changed_fields' => new ContextDefinition(
+    'changed_fields' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Changed Fields'),
       description: new TranslatableMarkup('List of fields that were actually modified.'),
     ),
-    'message' => new ContextDefinition(
+    'message' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
       description: new TranslatableMarkup('Success or error message.'),

@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_config\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_config\Service\ConfigManagementService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -22,22 +22,22 @@ use Drupal\tool\Tool\ToolOperation;
   operation: ToolOperation::Read,
   input_definitions: [],
   output_definitions: [
-    'total' => new ContextDefinition(
+    'total' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Changes'),
       description: new TranslatableMarkup('Total number of configuration changes tracked via MCP.'),
     ),
-    'by_operation' => new ContextDefinition(
+    'by_operation' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('By Operation'),
       description: new TranslatableMarkup('Changes grouped by operation type.'),
     ),
-    'changes' => new ContextDefinition(
+    'changes' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Changes'),
       description: new TranslatableMarkup('List of all tracked configuration changes.'),
     ),
-    'message' => new ContextDefinition(
+    'message' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Message'),
       description: new TranslatableMarkup('Summary message.'),

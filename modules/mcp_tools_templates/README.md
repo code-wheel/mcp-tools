@@ -15,7 +15,7 @@ Site configuration templates for MCP Tools. Apply pre-built templates for common
 ## Requirements
 
 - mcp_tools (base module)
-- Drupal 10.3+
+- Drupal 10.5+
 - `admin` scope required for apply and export operations
 
 ## Installation

@@ -7,7 +7,7 @@ namespace Drupal\mcp_tools_structure\Plugin\tool\Tool;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\mcp_tools_structure\Service\TaxonomyManagementService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -49,32 +49,32 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'vocabulary' => new ContextDefinition(
+    'vocabulary' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Vocabulary'),
       description: new TranslatableMarkup('Machine name of the created vocabulary.'),
     ),
-    'label' => new ContextDefinition(
+    'label' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Label'),
       description: new TranslatableMarkup('Human-readable name of the vocabulary.'),
     ),
-    'terms_created' => new ContextDefinition(
+    'terms_created' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Terms Created'),
       description: new TranslatableMarkup('List of terms that were created with their IDs.'),
     ),
-    'term_count' => new ContextDefinition(
+    'term_count' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Term Count'),
       description: new TranslatableMarkup('Number of terms created.'),
     ),
-    'admin_path' => new ContextDefinition(
+    'admin_path' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Admin Path'),
       description: new TranslatableMarkup('Path to manage the vocabulary in admin UI.'),
     ),
-    'message' => new ContextDefinition(
+    'message' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
       description: new TranslatableMarkup('Summary of what was created.'),

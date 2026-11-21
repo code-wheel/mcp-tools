@@ -1,0 +1,7 @@
+name: 'MCP Tools write detector (test)'
+type: module
+description: 'Records every entity and config write made while a tool declared as a read operation runs. For tests.'
+package: Testing
+core_version_requirement: ^10.5 || ^11
+dependencies:
+  - mcp_tools:mcp_tools

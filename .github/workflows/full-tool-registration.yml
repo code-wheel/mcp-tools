@@ -1,6 +1,6 @@
 # =============================================================================
 # Full Tool Registration Workflow
-# Installs optional contrib dependencies and verifies all 223 tools register.
+# Installs optional contrib dependencies and verifies all 227 tools register.
 # Intended for scheduled/manual runs (not every PR) to keep CI fast and stable.
 # =============================================================================
 
@@ -13,7 +13,7 @@ on:
 
 jobs:
   all-tools-register:
-    name: Verify All 223 Tools Register
+    name: Verify All 227 Tools Register
     runs-on: ubuntu-latest
     services:
       mysql:
@@ -31,7 +31,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -45,13 +45,16 @@ jobs:
           composer config --global policy.advisories.block false
           composer create-project drupal/recommended-project:^10.3 drupal --no-interaction
           cd drupal
-          composer require drush/drush --no-interaction
-          composer require drupal/tool:1.0.0-beta2 mcp/sdk:^0.6 -W --no-interaction
-          composer require code-wheel/mcp-http-security:^1.0 code-wheel/mcp-error-codes:^1.3 code-wheel/mcp-events:^2.0 code-wheel/mcp-schema-builder:^1.1 code-wheel/mcp-tool-gateway:^1.2 enshrined/svg-sanitize:^0.22 -W --no-interaction
+          # consolidation/robo 5.2.1 to 5.2.3 (2026-11-12) call
+          # Application::addCommand(), which Symfony Console 6.4 (Drupal 10)
+          # lacks, so every drush command fatals. Remove once fixed upstream.
+          composer require drush/drush "consolidation/robo:<5.2.1" --no-interaction
+          composer require drupal/tool:^1.0.0-beta9 mcp/sdk:^0.10 -W --no-interaction
+          composer require code-wheel/mcp-http-security:^1.0 code-wheel/mcp-error-codes:^1.3 code-wheel/mcp-events:^2.0 code-wheel/mcp-schema-builder:^1.1 code-wheel/mcp-tool-gateway:^1.2.1 "enshrined/svg-sanitize:^0.22 || ^1.0" -W --no-interaction
 
           # Optional contrib dependencies for all submodules.
           composer require \
-            drupal/entity_clone \
+            drupal/entity_clone:^2@beta \
             drupal/metatag \
             drupal/paragraphs \
             drupal/pathauto \
@@ -59,7 +62,7 @@ jobs:
             drupal/scheduler \
             drupal/search_api \
             drupal/simple_sitemap \
-            drupal/ultimate_cron \
+            drupal/ultimate_cron:^2@beta \
             drupal/webform \
             --no-interaction
 
@@ -98,7 +101,7 @@ jobs:
                         mcp_tools_jsonapi mcp_tools_layout_builder mcp_tools_media mcp_tools_menus mcp_tools_metatag \
                         mcp_tools_migration mcp_tools_moderation mcp_tools_paragraphs mcp_tools_pathauto \
                         mcp_tools_recipes mcp_tools_redirect mcp_tools_scheduler mcp_tools_search_api \
-                        mcp_tools_sitemap mcp_tools_structure mcp_tools_templates mcp_tools_theme \
+                        mcp_tools_sitemap mcp_tools_structure mcp_tools_templates mcp_tools_theme mcp_tools_translate \
                         mcp_tools_ultimate_cron mcp_tools_users mcp_tools_views mcp_tools_webform \
                         mcp_tools_remote_media; do
             ./vendor/bin/drush en "$module" -y
@@ -111,11 +114,11 @@ jobs:
           MCP_TOOL_COUNT=$(./vendor/bin/drush eval '$defs = \Drupal::service("plugin.manager.tool")->getDefinitions(); $defs = array_filter($defs, static fn($def): bool => str_starts_with($def->getProvider(), "mcp_tools")); echo count($defs);')
           echo "Registered MCP Tools tools: $MCP_TOOL_COUNT"
 
-          if [ "$MCP_TOOL_COUNT" -ne 223 ]; then
-            echo "ERROR: Expected 223 MCP Tools tools, found $MCP_TOOL_COUNT"
+          if [ "$MCP_TOOL_COUNT" -ne 227 ]; then
+            echo "ERROR: Expected 227 MCP Tools tools, found $MCP_TOOL_COUNT"
             exit 1
           fi
-          echo "✓ All tools registered (223)"
+          echo "✓ All tools registered (227)"
 
       - name: Verify all tool schemas convert
         run: |
@@ -149,3 +152,31 @@ jobs:
           PHP
           )
           ./vendor/bin/drush eval "$PHP_CODE"
+
+      # The unit tests of these five submodules are left out of the other
+      # jobs, where their contrib classes are missing. This is the one job
+      # that has the classes, so it is the one place they can run.
+      - name: Unit tests that need the contrib modules
+        run: |
+          cd drupal
+          composer require --dev "drupal/core-dev:^10.3" phpspec/prophecy-phpunit:^2 -W --no-interaction
+          for module in mcp_tools_pathauto mcp_tools_scheduler mcp_tools_sitemap mcp_tools_ultimate_cron mcp_tools_search_api; do
+            ./vendor/bin/phpunit -c "$PWD/web/core/phpunit.xml.dist" "web/modules/contrib/mcp_tools/modules/$module/tests/src/Unit"
+          done
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: '20'
+
+      # Calls all 227 tools with real arguments through the STDIO server
+      # and the official JS SDK client. The script lives only in the dev
+      # repo; the public mirror strips scripts/ on sync.
+      - name: Call every tool for real
+        run: |
+          if [ -f scripts/mcp_tool_scenarios.mjs ]; then
+            npm install --no-save --no-package-lock @modelcontextprotocol/sdk zod
+            node scripts/mcp_tool_scenarios.mjs --drupal-root drupal
+          else
+            echo "scripts/ not present (public mirror), skipping"
+          fi

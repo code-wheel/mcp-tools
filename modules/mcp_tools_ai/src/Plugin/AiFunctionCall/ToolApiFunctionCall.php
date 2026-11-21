@@ -9,6 +9,10 @@ use Drupal\ai\Base\FunctionCallBase;
 use Drupal\ai\Service\FunctionCalling\ExecutableFunctionCallInterface;
 use Drupal\ai\Service\FunctionCalling\FunctionCallInterface;
 use Drupal\Component\Plugin\PluginManagerInterface;
+use Drupal\mcp_tools\Service\AccessManager;
+use Drupal\mcp_tools\Tool\McpToolsToolBase;
+use Drupal\tool\Tool\ToolDefinition;
+use Drupal\tool\Tool\ToolOperation;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -34,6 +38,11 @@ final class ToolApiFunctionCall extends FunctionCallBase implements ExecutableFu
   protected PluginManagerInterface $toolManager;
 
   /**
+   * The MCP Tools access manager.
+   */
+  protected ?AccessManager $accessManager = NULL;
+
+  /**
    * Captured readable output from the last execution.
    */
   protected string $output = '';
@@ -49,6 +58,7 @@ final class ToolApiFunctionCall extends FunctionCallBase implements ExecutableFu
       $container->get('ai.context_definition_normalizer'),
     );
     $instance->toolManager = $container->get('plugin.manager.tool');
+    $instance->accessManager = $container->get('mcp_tools.access_manager');
     return $instance;
   }
 
@@ -73,6 +83,26 @@ final class ToolApiFunctionCall extends FunctionCallBase implements ExecutableFu
         if ($value !== NULL) {
           $tool->setInputValue($name, $value);
         }
+      }
+
+      // Neither drupal/ai nor Tool API's execute() checks access, so the
+      // bridge does: the tool's permission, scope and policy checks all
+      // apply to the current user before anything runs.
+      // A tool of another provider does not know MCP Tools' scopes and
+      // read-only mode, so those are applied to it here.
+      $allowed = TRUE;
+      if (!$tool instanceof McpToolsToolBase && $this->accessManager !== NULL) {
+        $toolDefinition = $tool->getPluginDefinition();
+        $operation = $toolDefinition instanceof ToolDefinition ? $toolDefinition->getOperation() : NULL;
+        $allowed = $this->accessManager->allowsForeignToolOperation(($operation ?? ToolOperation::Transform)->value);
+      }
+      if (!$allowed || !$tool->access()) {
+        $this->output = json_encode([
+          'success' => FALSE,
+          'message' => 'Access denied.',
+          'data' => [],
+        ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) ?: '';
+        return;
       }
 
       // execute() returns the plugin; the result lives in getResult().

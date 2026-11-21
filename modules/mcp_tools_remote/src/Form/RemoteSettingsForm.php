@@ -90,7 +90,6 @@ class RemoteSettingsForm extends ConfigFormBase {
 
     // Load the current execution user for the autocomplete default.
     $uid = (int) ($config->get('uid') ?? 0);
-    $allowUid1 = (bool) $config->get('allow_uid1');
     $executionUser = NULL;
     if ($uid > 1) {
       $executionUser = $this->entityTypeManager->getStorage('user')->load($uid);
@@ -101,9 +100,13 @@ class RemoteSettingsForm extends ConfigFormBase {
       ->loadByProperties(['name' => 'mcp_executor']);
     $executorExists = !empty($existingExecutor);
 
+    // The values below are read as execution_user_wrapper > execution_user
+    // and > use_uid1. Without #tree Drupal files them at the top level, the
+    // form found neither, and every save set the user back to none.
     $form['execution_user_wrapper'] = [
       '#type' => 'fieldset',
       '#title' => $this->t('Execution User'),
+      '#tree' => TRUE,
     ];
 
     $form['execution_user_wrapper']['execution_user'] = [
@@ -125,7 +128,9 @@ class RemoteSettingsForm extends ConfigFormBase {
       '#type' => 'checkbox',
       '#title' => $this->t('Use site admin (uid 1)'),
       '#description' => $this->t('Run tools as the main admin account. For local/dev only; enables the uid 1 override.'),
-      '#default_value' => $uid === 1 || $allowUid1,
+      // Ticked only when uid 1 is the user in use. "uid 1 is allowed" with
+      // another user set must not switch the user to uid 1 on save.
+      '#default_value' => $uid === 1,
     ];
 
     if (!$executorExists) {

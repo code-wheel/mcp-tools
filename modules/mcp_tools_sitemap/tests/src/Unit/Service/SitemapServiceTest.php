@@ -5,13 +5,14 @@ declare(strict_types=1);
 namespace Drupal\Tests\mcp_tools_sitemap\Unit\Service;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
-use Drupal\Core\Config\ImmutableConfig;
+use Drupal\Core\Entity\EntityStorageInterface;
+use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AuditLogger;
 use Drupal\mcp_tools_sitemap\Service\SitemapService;
 use Drupal\simple_sitemap\Manager\Generator;
-use Drupal\simple_sitemap\Manager\SitemapManager;
+use Drupal\simple_sitemap\Queue\QueueWorker;
 use Drupal\Tests\UnitTestCase;
 
 #[\PHPUnit\Framework\Attributes\CoversClass(\Drupal\mcp_tools_sitemap\Service\SitemapService::class)]
@@ -23,24 +24,40 @@ final class SitemapServiceTest extends UnitTestCase {
       $overrides['entity_type_manager'] ?? $this->createMock(EntityTypeManagerInterface::class),
       $overrides['config_factory'] ?? $this->createMock(ConfigFactoryInterface::class),
       $overrides['generator'] ?? $this->createMock(Generator::class),
-      $overrides['sitemap_manager'] ?? $this->createMock(SitemapManager::class),
+      $overrides['queue_worker'] ?? $this->createMock(QueueWorker::class),
       $overrides['access_manager'] ?? $this->createMock(AccessManager::class),
       $overrides['audit_logger'] ?? $this->createMock(AuditLogger::class),
     );
   }
 
+  /**
+   * Builds an entity type manager whose simple_sitemap storage returns $map.
+   *
+   * @param array<string, object> $map
+   *   Sitemap entities keyed by id.
+   */
+  private function entityTypeManagerWithSitemaps(array $map): EntityTypeManagerInterface {
+    $storage = $this->createMock(EntityStorageInterface::class);
+    $storage->method('loadMultiple')->willReturn($map);
+    $storage->method('load')->willReturnCallback(fn($id) => $map[$id] ?? NULL);
+
+    $etm = $this->createMock(EntityTypeManagerInterface::class);
+    $etm->method('getStorage')->with('simple_sitemap')->willReturn($storage);
+    return $etm;
+  }
+
   public function testGetStatusReturnsAllSitemaps(): void {
-    $sitemap = $this->createSitemapMock('default', 'Default', TRUE, 100, 1);
+    $etm = $this->entityTypeManagerWithSitemaps([
+      'default' => $this->createSitemapMock('default', 'Default', TRUE, 100, 1),
+    ]);
 
-    $sitemapManager = $this->createMock(SitemapManager::class);
-    $sitemapManager->method('getSitemaps')->willReturn(['default' => $sitemap]);
-
-    $generator = $this->createMock(Generator::class);
-    $generator->method('getQueueStatus')->willReturn(['total' => 0, 'processed' => 0]);
+    $queue = $this->createMock(QueueWorker::class);
+    $queue->method('getInitialElementCount')->willReturn(0);
+    $queue->method('getQueuedElementCount')->willReturn(0);
 
     $service = $this->createService([
-      'sitemap_manager' => $sitemapManager,
-      'generator' => $generator,
+      'entity_type_manager' => $etm,
+      'queue_worker' => $queue,
     ]);
     $result = $service->getStatus();
 
@@ -51,12 +68,11 @@ final class SitemapServiceTest extends UnitTestCase {
   }
 
   public function testGetSitemapsListsAll(): void {
-    $sitemap = $this->createSitemapMock('default', 'Default', TRUE, 50, 1);
+    $etm = $this->entityTypeManagerWithSitemaps([
+      'default' => $this->createSitemapMock('default', 'Default', TRUE, 50, 1),
+    ]);
 
-    $sitemapManager = $this->createMock(SitemapManager::class);
-    $sitemapManager->method('getSitemaps')->willReturn(['default' => $sitemap]);
-
-    $service = $this->createService(['sitemap_manager' => $sitemapManager]);
+    $service = $this->createService(['entity_type_manager' => $etm]);
     $result = $service->getSitemaps();
 
     $this->assertTrue($result['success']);
@@ -66,10 +82,9 @@ final class SitemapServiceTest extends UnitTestCase {
   }
 
   public function testGetSettingsVariantNotFound(): void {
-    $sitemapManager = $this->createMock(SitemapManager::class);
-    $sitemapManager->method('getSitemap')->with('nonexistent')->willReturn(NULL);
-
-    $service = $this->createService(['sitemap_manager' => $sitemapManager]);
+    $service = $this->createService([
+      'entity_type_manager' => $this->entityTypeManagerWithSitemaps([]),
+    ]);
     $result = $service->getSettings('nonexistent');
 
     $this->assertFalse($result['success']);
@@ -108,12 +123,9 @@ final class SitemapServiceTest extends UnitTestCase {
     $accessManager = $this->createMock(AccessManager::class);
     $accessManager->method('canWrite')->willReturn(TRUE);
 
-    $sitemapManager = $this->createMock(SitemapManager::class);
-    $sitemapManager->method('getSitemap')->with('missing')->willReturn(NULL);
-
     $service = $this->createService([
       'access_manager' => $accessManager,
-      'sitemap_manager' => $sitemapManager,
+      'entity_type_manager' => $this->entityTypeManagerWithSitemaps([]),
     ]);
     $result = $service->regenerate('missing');
 
@@ -122,12 +134,11 @@ final class SitemapServiceTest extends UnitTestCase {
   }
 
   public function testGetEntitySettingsUnknownEntityType(): void {
-    $generator = $this->createMock(Generator::class);
-    $generator->method('getBundleSettings')->willReturn([
-      'node' => ['article' => ['index' => TRUE]],
+    $service = $this->createService([
+      'generator' => $this->generatorWithBundleSettings([
+        'default' => ['node' => ['article' => ['index' => TRUE]]],
+      ]),
     ]);
-
-    $service = $this->createService(['generator' => $generator]);
     $result = $service->getEntitySettings('taxonomy_term');
 
     $this->assertFalse($result['success']);
@@ -141,7 +152,7 @@ final class SitemapServiceTest extends UnitTestCase {
 
     $entityTypeManager = $this->createMock(EntityTypeManagerInterface::class);
     $entityTypeManager->method('getDefinition')->with('node', FALSE)->willReturn(
-      $this->createMock(\Drupal\Core\Entity\EntityTypeInterface::class)
+      $this->createMock(EntityTypeInterface::class)
     );
 
     $service = $this->createService([
@@ -160,7 +171,7 @@ final class SitemapServiceTest extends UnitTestCase {
 
     $entityTypeManager = $this->createMock(EntityTypeManagerInterface::class);
     $entityTypeManager->method('getDefinition')->with('node', FALSE)->willReturn(
-      $this->createMock(\Drupal\Core\Entity\EntityTypeInterface::class)
+      $this->createMock(EntityTypeInterface::class)
     );
 
     $service = $this->createService([
@@ -173,14 +184,24 @@ final class SitemapServiceTest extends UnitTestCase {
     $this->assertStringContainsString('Invalid changefreq', $result['error']);
   }
 
-  private function createSitemapMock(string $id, string $label, bool $enabled, int $linkCount, int $chunkCount): object {
-    $type = new \stdClass();
-    $type->id = fn() => 'default_hreflang';
-    $type->label = fn() => 'Default hreflang';
+  /**
+   * Builds a Generator whose entityManager()->getAllBundleSettings() is stubbed.
+   *
+   * @param array<string, mixed> $allSettings
+   *   The getAllBundleSettings() return value (keyed by variant).
+   */
+  private function generatorWithBundleSettings(array $allSettings): Generator {
+    $entityManager = $this->createMock(\Drupal\simple_sitemap\Manager\EntityManager::class);
+    $entityManager->method('setSitemaps')->willReturnSelf();
+    $entityManager->method('getAllBundleSettings')->willReturn($allSettings);
 
-    $sitemap = $this->createMock(\stdClass::class);
-    // Use a real anonymous class to control behavior.
-    $sitemap = new class($id, $label, $enabled, $linkCount, $chunkCount) {
+    $generator = $this->createMock(Generator::class);
+    $generator->method('entityManager')->willReturn($entityManager);
+    return $generator;
+  }
+
+  private function createSitemapMock(string $id, string $label, bool $enabled, int $linkCount, int $chunkCount): object {
+    return new class($id, $label, $enabled, $linkCount, $chunkCount) {
 
       public function __construct(
         private string $id,
@@ -202,8 +223,8 @@ final class SitemapServiceTest extends UnitTestCase {
         return $this->enabled;
       }
 
-      public function getStatus(): string {
-        return 'published';
+      public function contentStatus(): int {
+        return 1;
       }
 
       public function getLinkCount(): int {
@@ -214,8 +235,8 @@ final class SitemapServiceTest extends UnitTestCase {
         return $this->chunkCount;
       }
 
-      public function getContent(): array {
-        return ['<?xml version="1.0"?>'];
+      public function hasIndex(): bool {
+        return FALSE;
       }
 
       public function getType(): object {
@@ -233,8 +254,6 @@ final class SitemapServiceTest extends UnitTestCase {
       }
 
     };
-
-    return $sitemap;
   }
 
 }

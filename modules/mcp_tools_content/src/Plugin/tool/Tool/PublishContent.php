@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_content\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_content\Service\ContentService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -36,22 +36,22 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'nid' => new ContextDefinition(
+    'nid' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Node ID'),
       description: new TranslatableMarkup('The node ID that was modified.'),
     ),
-    'status' => new ContextDefinition(
+    'status' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('New Status'),
       description: new TranslatableMarkup('New publish status: "published" or "unpublished".'),
     ),
-    'changed' => new ContextDefinition(
+    'changed' => new OutputDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Status Changed'),
       description: new TranslatableMarkup('True if status was actually changed, false if it was already in the requested state.'),
     ),
-    'message' => new ContextDefinition(
+    'message' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
       description: new TranslatableMarkup('Human-readable result message.'),

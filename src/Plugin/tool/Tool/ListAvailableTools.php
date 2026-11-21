@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Drupal\mcp_tools\Plugin\tool\Tool;
 
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -44,17 +44,17 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'total_tools' => new ContextDefinition(
+    'total_tools' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Tools'),
       description: new TranslatableMarkup('Number of tools matching the filters.'),
     ),
-    'categories' => new ContextDefinition(
+    'categories' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Categories'),
       description: new TranslatableMarkup('Tool counts by category. Use category names to filter further.'),
     ),
-    'tools' => new ContextDefinition(
+    'tools' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Tools'),
       description: new TranslatableMarkup('Array of tools with id, label, category, and description. Use id to call the tool.'),
@@ -85,6 +85,8 @@ class ListAvailableTools extends McpToolsToolBase {
    */
   protected function executeLegacy(array $input): array {
     $category = $input['category'] ?? NULL;
+    // Treat "all" or "" as no filter — common LLM shorthands for "everything".
+    $category = ($category === 'all' || $category === '') ? NULL : $category;
     $search = $input['search'] ?? NULL;
     $includeDescriptions = $input['include_descriptions'] ?? TRUE;
 

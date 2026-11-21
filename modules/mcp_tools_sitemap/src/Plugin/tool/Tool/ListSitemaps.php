@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_sitemap\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_sitemap\Service\SitemapService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -22,12 +22,12 @@ use Drupal\tool\Tool\ToolOperation;
   operation: ToolOperation::Read,
   input_definitions: [],
   output_definitions: [
-    'total' => new ContextDefinition(
+    'total' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Sitemaps'),
       description: new TranslatableMarkup('Total number of sitemap variants configured in the system.'),
     ),
-    'sitemaps' => new ContextDefinition(
+    'sitemaps' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Sitemap Variants'),
       description: new TranslatableMarkup('Array of sitemap variant objects with id, label, enabled status, URL, and link count. Use variant ID with GetSettings or Regenerate.'),

@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_moderation\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_moderation\Service\ModerationService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -43,32 +43,32 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'workflow_id' => new ContextDefinition(
+    'workflow_id' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Workflow ID'),
       description: new TranslatableMarkup('The workflow queried.'),
     ),
-    'workflow_label' => new ContextDefinition(
+    'workflow_label' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Workflow Label'),
       description: new TranslatableMarkup('Human-readable workflow name.'),
     ),
-    'state' => new ContextDefinition(
+    'state' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('State'),
       description: new TranslatableMarkup('The state filter applied.'),
     ),
-    'state_label' => new ContextDefinition(
+    'state_label' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('State Label'),
       description: new TranslatableMarkup('Human-readable state name.'),
     ),
-    'total' => new ContextDefinition(
+    'total' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Content'),
       description: new TranslatableMarkup('Number of content items in this state.'),
     ),
-    'content' => new ContextDefinition(
+    'content' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Content'),
       description: new TranslatableMarkup('Array of entities with id, type, bundle, label, and changed date.'),

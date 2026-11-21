@@ -7,7 +7,7 @@ namespace Drupal\mcp_tools_content\Plugin\tool\Tool;
 use Drupal\mcp_tools_content\Service\ContentService;
 use Drupal\mcp_tools_translate\Service\ContentTranslationAccess;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -44,33 +44,33 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'nid' => new ContextDefinition(
+    'nid' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Node ID'),
       description: new TranslatableMarkup('The affected node ID.'),
     ),
-    'title' => new ContextDefinition(
+    'title' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Title'),
       description: new TranslatableMarkup('The title of the affected node.'),
     ),
-    'language' => new ContextDefinition(
+    'language' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Deleted language'),
       description: new TranslatableMarkup('Language code of the deleted translation (single-translation delete only).'),
       required: FALSE,
     ),
-    'languages_deleted' => new ContextDefinition(
+    'languages_deleted' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Deleted languages'),
       description: new TranslatableMarkup('All language codes removed by this call.'),
     ),
-    'remaining_languages' => new ContextDefinition(
+    'remaining_languages' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Remaining languages'),
       description: new TranslatableMarkup('Language codes still present on the node after the call.'),
     ),
-    'message' => new ContextDefinition(
+    'message' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
       description: new TranslatableMarkup('Confirmation message naming the affected language version(s).'),

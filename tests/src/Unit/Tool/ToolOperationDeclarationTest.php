@@ -22,10 +22,17 @@ final class ToolOperationDeclarationTest extends UnitTestCase {
     $toolFiles = $this->findToolPluginFiles($moduleRoot);
     $this->assertNotEmpty($toolFiles, 'Expected to find Tool API plugin files.');
 
+    // Every tool class has to start with a word from one of these two lists.
+    // A word in neither list used to mean the tool was not checked at all:
+    // BlockUser, ActivateUser and AllowCustomLayouts were declared as read
+    // operations for that reason.
     $writePrefixes = [
+      'Activate',
       'Add',
+      'Allow',
       'Apply',
       'Assign',
+      'Block',
       'Cancel',
       'Clear',
       'Clone',
@@ -35,11 +42,14 @@ final class ToolOperationDeclarationTest extends UnitTestCase {
       'Disable',
       'Enable',
       'Export',
+      'Fetch',
+      'Generate',
       'Grant',
       'Import',
       'Index',
       'Invalidate',
       'Place',
+      'Publish',
       'Rebuild',
       'Regenerate',
       'Reindex',
@@ -47,8 +57,10 @@ final class ToolOperationDeclarationTest extends UnitTestCase {
       'Reset',
       'Revoke',
       'Run',
+      'Scaffold',
       'Schedule',
       'Set',
+      'Translate',
       'Update',
       'Upload',
     ];
@@ -56,8 +68,15 @@ final class ToolOperationDeclarationTest extends UnitTestCase {
     $readPrefixes = [
       'Analyze',
       'Check',
+      'ContentAudit',
+      'Discover',
+      'Find',
       'Get',
       'List',
+      'Preview',
+      'Search',
+      'SecurityAudit',
+      'Validate',
     ];
 
     $writeLikeOperations = ['Write', 'Trigger', 'Delete'];
@@ -81,19 +100,23 @@ final class ToolOperationDeclarationTest extends UnitTestCase {
         $this->assertContains($operation, $writeLikeOperations, "Destructive tools must be Write/Trigger: {$path}");
       }
 
+      $classified = FALSE;
       foreach ($writePrefixes as $prefix) {
         if (str_starts_with($className, $prefix)) {
           $this->assertContains($operation, $writeLikeOperations, "Write-intent tool must be Write/Trigger: {$path}");
+          $classified = TRUE;
           break;
         }
       }
 
       foreach ($readPrefixes as $prefix) {
-        if (str_starts_with($className, $prefix)) {
+        if (!$classified && str_starts_with($className, $prefix)) {
           $this->assertNotContains($operation, $writeLikeOperations, "Read-intent tool must not be Write/Trigger: {$path}");
+          $classified = TRUE;
           break;
         }
       }
+      $this->assertTrue($classified, "No rule says whether {$className} reads or writes. Add its first word to a list in this test: {$path}");
 
       if ($operation === 'Read') {
         $this->assertFalse(
@@ -139,7 +162,8 @@ final class ToolOperationDeclarationTest extends UnitTestCase {
         continue;
       }
 
-      if (!str_contains($path, '/src/Plugin/tool/Tool/')) {
+      // Tools of test modules are fixtures, not tools this project ships.
+      if (!str_contains($path, '/src/Plugin/tool/Tool/') || str_contains($path, '/tests/modules/')) {
         continue;
       }
 

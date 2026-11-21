@@ -1,0 +1,31 @@
+<?php
+
+/**
+ * @file
+ * Tells the write detector about every entity write.
+ */
+
+declare(strict_types=1);
+
+use Drupal\Core\Entity\EntityInterface;
+
+/**
+ * Implements hook_entity_insert().
+ */
+function mcp_tools_write_detector_test_entity_insert(EntityInterface $entity): void {
+  \Drupal::service('mcp_tools_write_detector_test.detector')->wrote('created ' . $entity->getEntityTypeId() . ' ' . $entity->id());
+}
+
+/**
+ * Implements hook_entity_update().
+ */
+function mcp_tools_write_detector_test_entity_update(EntityInterface $entity): void {
+  \Drupal::service('mcp_tools_write_detector_test.detector')->wrote('changed ' . $entity->getEntityTypeId() . ' ' . $entity->id());
+}
+
+/**
+ * Implements hook_entity_delete().
+ */
+function mcp_tools_write_detector_test_entity_delete(EntityInterface $entity): void {
+  \Drupal::service('mcp_tools_write_detector_test.detector')->wrote('deleted ' . $entity->getEntityTypeId() . ' ' . $entity->id());
+}

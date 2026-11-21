@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools\Plugin\tool\Tool;
 
 use Drupal\mcp_tools\Service\SiteHealthService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -22,37 +22,37 @@ use Drupal\tool\Tool\ToolOperation;
   operation: ToolOperation::Read,
   input_definitions: [],
   output_definitions: [
-    'drupal_version' => new ContextDefinition(
+    'drupal_version' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Drupal Version'),
       description: new TranslatableMarkup('Drupal core version (e.g., "10.2.3").'),
     ),
-    'php_version' => new ContextDefinition(
+    'php_version' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('PHP Version'),
       description: new TranslatableMarkup('PHP version running the site (e.g., "8.2.10").'),
     ),
-    'database' => new ContextDefinition(
+    'database' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Database Information'),
       description: new TranslatableMarkup('Database driver, version, and connection details.'),
     ),
-    'site_name' => new ContextDefinition(
+    'site_name' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Site Name'),
       description: new TranslatableMarkup('Configured site name from system.site config.'),
     ),
-    'modules' => new ContextDefinition(
+    'modules' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Module Summary'),
       description: new TranslatableMarkup('Counts of enabled/disabled modules by type (core, contrib, custom).'),
     ),
-    'cron' => new ContextDefinition(
+    'cron' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Cron Status'),
       description: new TranslatableMarkup('Last cron run timestamp and status.'),
     ),
-    'maintenance_mode' => new ContextDefinition(
+    'maintenance_mode' => new OutputDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Maintenance Mode'),
       description: new TranslatableMarkup('True if site is in maintenance mode.'),

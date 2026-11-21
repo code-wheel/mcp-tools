@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_ultimate_cron\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_ultimate_cron\Service\UltimateCronService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -30,37 +30,37 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'id' => new ContextDefinition(
+    'id' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Job ID'),
       description: new TranslatableMarkup('Machine name of the cron job. Use with RunJob, EnableJob, or DisableJob.'),
     ),
-    'title' => new ContextDefinition(
+    'title' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Job Title'),
       description: new TranslatableMarkup('Human-readable title of the cron job.'),
     ),
-    'module' => new ContextDefinition(
+    'module' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Module'),
       description: new TranslatableMarkup('Module that provides this cron job.'),
     ),
-    'status' => new ContextDefinition(
+    'status' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Status (enabled/disabled)'),
       description: new TranslatableMarkup('Current status: "enabled" (will run on schedule) or "disabled". Use EnableJob/DisableJob to change.'),
     ),
-    'is_locked' => new ContextDefinition(
+    'is_locked' => new OutputDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Is Locked'),
       description: new TranslatableMarkup('TRUE if the job is currently running and locked. Cannot run concurrently.'),
     ),
-    'scheduler' => new ContextDefinition(
+    'scheduler' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Scheduler Configuration'),
       description: new TranslatableMarkup('Scheduler settings: cron expression or rules defining when the job runs.'),
     ),
-    'last_run' => new ContextDefinition(
+    'last_run' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Last Run Information'),
       description: new TranslatableMarkup('Last execution info: timestamp, duration, success status. Use GetJobLogs for full history.'),

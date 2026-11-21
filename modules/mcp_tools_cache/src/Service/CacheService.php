@@ -220,7 +220,9 @@ class CacheService {
           $this->themeRegistry->reset();
           $this->cssOptimizer->deleteAll();
           $this->jsOptimizer->deleteAll();
-          _drupal_flush_css_js();
+          // Browsers get a new query string for CSS and JS. Drupal 11 has no
+          // _drupal_flush_css_js() any more; this service is what it called.
+          $this->container->get('asset.query_string')->reset();
           break;
 
         case 'container':
@@ -257,13 +259,13 @@ class CacheService {
   protected function getAvailableBins(): array {
     $bins = self::CORE_BINS;
 
-    // Add any additional bins from contrib modules.
-    foreach ($this->container->getServiceIds() as $id) {
-      if (str_starts_with($id, 'cache.') && $id !== 'cache.backend.database') {
-        $bin = substr($id, 6);
-        if (!in_array($bin, $bins)) {
-          $bins[] = $bin;
-        }
+    // Add the bins that modules define. Core keeps the list of cache bin
+    // services in a container parameter. Going by service names instead
+    // also picked up the backend factories (cache.backend.memory and so on).
+    $services = $this->container->hasParameter('cache_bins') ? (array) $this->container->getParameter('cache_bins') : [];
+    foreach ($services as $bin) {
+      if (!in_array($bin, $bins, TRUE)) {
+        $bins[] = $bin;
       }
     }
 

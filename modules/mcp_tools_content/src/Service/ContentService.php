@@ -49,6 +49,22 @@ class ContentService {
 
     $fieldDefinitions = $this->entityFieldManager->getFieldDefinitions('node', $type);
 
+    // Fail loudly on unknown keys, as updateContent() does: a node drops a
+    // field it does not have without a word, and the call would report
+    // success for a value that was never stored.
+    $unknown = [];
+    foreach (array_keys($fields) as $fieldName) {
+      if (!isset($fieldDefinitions[$this->resolveFieldName((string) $fieldName, $fieldDefinitions)])) {
+        $unknown[] = (string) $fieldName;
+      }
+    }
+    if (!empty($unknown)) {
+      return [
+        'success' => FALSE,
+        'error' => sprintf("Unknown field(s) on content type '%s': %s. Nothing was created.", $type, implode(', ', $unknown)),
+      ];
+    }
+
     try {
       $nodeData = [
         'type' => $type,
@@ -136,7 +152,7 @@ class ContentService {
       return [
         'success' => FALSE,
         'error' => "The 'paragraphs' map is only supported for per-language updates."
-          . " Pass language: '<code>' to update a translation's paragraphs, or set the"
+          . " Pass language (a language code such as 'fr') to update a translation's paragraphs, or set the"
           . ' paragraph reference field itself (e.g. field_paragraphs) to replace the'
           . ' composition in the source language.',
       ];
@@ -290,7 +306,7 @@ class ContentService {
         'success' => FALSE,
         'error' => sprintf(
           "Refused: node %d ('%s') has %d language version(s): %s. Deleting the node removes ALL of them."
-          . " Pass confirm_delete_all: true to delete everything, or language: '<code>' to delete a single translation.",
+          . " Pass confirm_delete_all: true to delete everything, or language with one of those codes to delete a single translation.",
           $nid,
           $node->getTitle(),
           count($languages),

@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_theme\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_theme\Service\ThemeService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -30,22 +30,22 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'theme' => new ContextDefinition(
+    'theme' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Theme'),
       description: new TranslatableMarkup('Machine name of the new default frontend theme. Use GetThemeSettings to configure it.'),
     ),
-    'previous_default' => new ContextDefinition(
+    'previous_default' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Previous Default'),
       description: new TranslatableMarkup('Machine name of the previous default theme, useful for reverting if needed.'),
     ),
-    'message' => new ContextDefinition(
+    'message' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
       description: new TranslatableMarkup('Human-readable confirmation of the default theme change.'),
     ),
-    'changed' => new ContextDefinition(
+    'changed' => new OutputDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Changed'),
       description: new TranslatableMarkup('TRUE if the default theme was changed, FALSE if the theme was already the default.'),

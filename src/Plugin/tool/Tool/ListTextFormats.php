@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools\Plugin\tool\Tool;
 
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -22,17 +22,17 @@ use Drupal\tool\Tool\ToolOperation;
   operation: ToolOperation::Read,
   input_definitions: [],
   output_definitions: [
-    'formats' => new ContextDefinition(
+    'formats' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Text Formats'),
       description: new TranslatableMarkup('Array of text formats with id, label, and roles that can use them.'),
     ),
-    'total' => new ContextDefinition(
+    'total' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total'),
       description: new TranslatableMarkup('Total number of text formats available.'),
     ),
-    'default_format' => new ContextDefinition(
+    'default_format' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Default Format'),
       description: new TranslatableMarkup('The default text format ID for anonymous users.'),

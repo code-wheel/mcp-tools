@@ -10,6 +10,7 @@ use Drupal\mcp_tools\Mcp\ToolApiSchemaConverter;
 use Drupal\mcp_tools\Mcp\ToolInputValidator;
 use Drupal\node\Entity\Node;
 use Drupal\node\Entity\NodeType;
+use Drupal\Tests\mcp_tools\Traits\SdkSuspensionTrait;
 use Drupal\Tests\user\Traits\UserCreationTrait;
 use Mcp\Schema\JsonRpc\Response;
 use Mcp\Schema\Request\CallToolRequest;
@@ -25,9 +26,11 @@ use Symfony\Component\Uid\Uuid;
  * elicitation-capable client suspends with an ElicitRequest; the resumed
  * answer decides whether the delete proceeds.
  */
+#[\PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses]
 #[\PHPUnit\Framework\Attributes\Group('mcp_tools_content')]
 class ElicitationConfirmationKernelTest extends KernelTestBase {
 
+  use SdkSuspensionTrait;
   use UserCreationTrait;
 
   /**
@@ -77,15 +80,16 @@ class ElicitationConfirmationKernelTest extends KernelTestBase {
    * those are resumed transparently — exactly what the SDK transport loop
    * does in production.
    *
-   * @return array|null
-   *   The SDK suspension payload, or NULL when the fiber finished first.
+   * @return object|null
+   *   The request the SDK wants the client to answer, or NULL when the
+   *   fiber finished first.
    */
-  protected function pumpToElicit(\Fiber $fiber): ?array {
+  protected function pumpToElicit(\Fiber $fiber): ?object {
     $value = $fiber->start();
-    while (!$fiber->isTerminated() && !(is_array($value) && ($value['type'] ?? '') === 'request')) {
+    while (!$fiber->isTerminated() && $this->suspendedRequest($value) === NULL) {
       $value = $fiber->resume();
     }
-    return $fiber->isTerminated() ? NULL : $value;
+    return $fiber->isTerminated() ? NULL : $this->suspendedRequest($value);
   }
 
   /**
@@ -141,10 +145,8 @@ class ElicitationConfirmationKernelTest extends KernelTestBase {
     $fiber = new \Fiber(static fn() => $handler->handle($request, $session));
     $suspended = $this->pumpToElicit($fiber);
 
-    $this->assertIsArray($suspended, 'The bare delete suspended to ask the client.');
-    $this->assertSame('request', $suspended['type']);
-    $this->assertInstanceOf(ElicitRequest::class, $suspended['request']);
-    $this->assertStringContainsString((string) $nid, $suspended['request']->message);
+    $this->assertInstanceOf(ElicitRequest::class, $suspended, 'The bare delete suspended to ask the client.');
+    $this->assertStringContainsString((string) $nid, $suspended->message);
 
     $response = $this->finish($fiber, new Response(1, ['action' => 'accept', 'content' => ['confirm' => TRUE]]));
 
@@ -170,7 +172,7 @@ class ElicitationConfirmationKernelTest extends KernelTestBase {
 
     $fiber = new \Fiber(static fn() => $handler->handle($request, $session));
     $suspended = $this->pumpToElicit($fiber);
-    $this->assertIsArray($suspended);
+    $this->assertInstanceOf(ElicitRequest::class, $suspended);
 
     $response = $this->finish($fiber, new Response(2, ['action' => 'decline']));
 
@@ -202,6 +204,35 @@ class ElicitationConfirmationKernelTest extends KernelTestBase {
     $response = $fiber->getReturn();
     $this->assertFalse($response->result->structuredContent['success']);
     $this->assertStringContainsString('confirm_delete_all', $response->result->structuredContent['message']);
+
+    $storage = $this->container->get('entity_type.manager')->getStorage('node');
+    $storage->resetCache([$nid]);
+    $this->assertNotNull($storage->load($nid));
+  }
+
+  /**
+   * A session that may not delete is refused, and its user is not asked.
+   *
+   * The question came before the access check, so a read-only session's
+   * user was asked to confirm a deletion that was then refused.
+   */
+  public function testNoQuestionWithoutWriteAccess(): void {
+    $node = Node::create(['type' => 'article', 'title' => 'Out of reach', 'langcode' => 'en']);
+    $node->save();
+    $nid = (int) $node->id();
+    $this->container->get('mcp_tools.access_manager')->setScopes(['read']);
+
+    $handler = $this->buildHandler();
+    $request = (new CallToolRequest('mcp_delete_content', ['nid' => $nid]))->withId(4);
+    $session = $this->buildSession(TRUE);
+
+    $fiber = new \Fiber(static fn() => $handler->handle($request, $session));
+    $suspended = $this->pumpToElicit($fiber);
+
+    $this->assertNull($suspended, 'The user was not asked.');
+    $response = $fiber->getReturn();
+    $this->assertTrue($response->result->isError);
+    $this->assertStringContainsString('Access denied', $response->result->structuredContent['message']);
 
     $storage = $this->container->get('entity_type.manager')->getStorage('node');
     $storage->resetCache([$nid]);

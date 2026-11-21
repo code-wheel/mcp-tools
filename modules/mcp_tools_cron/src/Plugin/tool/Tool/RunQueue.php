@@ -8,7 +8,7 @@ use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AuditLogger;
 use Drupal\mcp_tools_cron\Service\CronService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -39,17 +39,17 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'success' => new ContextDefinition(
+    'success' => new OutputDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Success status'),
       description: new TranslatableMarkup('True if queue processing completed without errors.'),
     ),
-    'processed' => new ContextDefinition(
+    'processed' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Items processed'),
       description: new TranslatableMarkup('Number of queue items processed in this run.'),
     ),
-    'remaining' => new ContextDefinition(
+    'remaining' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Items remaining'),
       description: new TranslatableMarkup('Items still in queue. Run again if > 0.'),

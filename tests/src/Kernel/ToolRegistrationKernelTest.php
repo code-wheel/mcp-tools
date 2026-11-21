@@ -14,6 +14,7 @@ use Drupal\tool\Tool\ToolManager;
  * Verifies Tool API registration and access gating for MCP Tools.
  *
  */
+#[\PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses]
 #[\PHPUnit\Framework\Attributes\Group('mcp_tools')]
 final class ToolRegistrationKernelTest extends KernelTestBase {
 

@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_image_styles\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_image_styles\Service\ImageStyleService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -30,17 +30,17 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'id' => new ContextDefinition(
+    'id' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Style ID'),
       description: new TranslatableMarkup('Machine name of the image style.'),
     ),
-    'label' => new ContextDefinition(
+    'label' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Style label'),
       description: new TranslatableMarkup('Human-readable name of the style.'),
     ),
-    'effects' => new ContextDefinition(
+    'effects' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Image effects'),
       description: new TranslatableMarkup('Array of effects with uuid, id, label, weight, and configuration. Use uuid with RemoveImageEffect.'),

@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_redirect\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_redirect\Service\RedirectService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -30,17 +30,17 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'found' => new ContextDefinition(
+    'found' => new OutputDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Redirect Found'),
       description: new TranslatableMarkup('TRUE if a redirect exists for the source path, FALSE otherwise. Check this before accessing redirect details.'),
     ),
-    'redirect' => new ContextDefinition(
+    'redirect' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Redirect Details'),
       description: new TranslatableMarkup('The matching redirect object with id, source, destination, status_code, and language. Use id with UpdateRedirect or DeleteRedirect tools. NULL if not found.'),
     ),
-    'message' => new ContextDefinition(
+    'message' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
       description: new TranslatableMarkup('Human-readable message describing the search result.'),

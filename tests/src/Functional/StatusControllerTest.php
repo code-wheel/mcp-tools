@@ -10,6 +10,7 @@ use Drupal\Tests\BrowserTestBase;
  * Tests the MCP Tools status controller.
  *
  */
+#[\PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses]
 #[\PHPUnit\Framework\Attributes\Group('mcp_tools')]
 class StatusControllerTest extends BrowserTestBase {
 

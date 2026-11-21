@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools_jsonapi\Plugin\tool\Tool;
 
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\mcp_tools_jsonapi\Service\JsonApiService;
@@ -54,27 +54,27 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
     ),
   ],
   output_definitions: [
-    'items' => new ContextDefinition(
+    'items' => new OutputDefinition(
       data_type: 'any',
       label: new TranslatableMarkup('Items'),
       description: new TranslatableMarkup('List of matching entities.'),
     ),
-    'total' => new ContextDefinition(
+    'total' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total'),
       description: new TranslatableMarkup('Total number of matching entities (before pagination).'),
     ),
-    'limit' => new ContextDefinition(
+    'limit' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Limit'),
       description: new TranslatableMarkup('Items per page used.'),
     ),
-    'offset' => new ContextDefinition(
+    'offset' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Offset'),
       description: new TranslatableMarkup('Current offset.'),
     ),
-    'has_more' => new ContextDefinition(
+    'has_more' => new OutputDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Has More'),
       description: new TranslatableMarkup('Whether more items exist beyond current page.'),
@@ -111,7 +111,7 @@ class ListEntities extends McpToolsToolBase {
       return ['success' => FALSE, 'error' => 'entity_type is required.'];
     }
 
-    $bundle = $input['bundle'] ?? NULL;
+    $bundle = ($input['bundle'] ?? NULL) ?: NULL;
     $filters = $input['filters'] ?? [];
     $limit = (int) ($input['limit'] ?? 25);
     $offset = (int) ($input['offset'] ?? 0);

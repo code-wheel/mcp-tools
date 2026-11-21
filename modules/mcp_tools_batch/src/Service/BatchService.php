@@ -137,18 +137,15 @@ class BatchService {
       'errors' => count($errors),
     ]);
 
-    return [
-      'success' => TRUE,
-      'data' => [
-        'content_type' => $contentType,
-        'total_requested' => count($items),
-        'created_count' => count($created),
-        'error_count' => count($errors),
-        'created' => $created,
-        'errors' => $errors,
-        'message' => sprintf('Batch create complete: %d created, %d errors.', count($created), count($errors)),
-      ],
-    ];
+    return $this->batchResult([
+      'content_type' => $contentType,
+      'total_requested' => count($items),
+      'created_count' => count($created),
+      'error_count' => count($errors),
+      'created' => $created,
+      'errors' => $errors,
+      'message' => sprintf('Batch create complete: %d created, %d errors.', count($created), count($errors)),
+    ]);
   }
 
   /**
@@ -262,17 +259,14 @@ class BatchService {
       'errors' => count($errors),
     ]);
 
-    return [
-      'success' => TRUE,
-      'data' => [
-        'total_requested' => count($updates),
-        'updated_count' => count($updated),
-        'error_count' => count($errors),
-        'updated' => $updated,
-        'errors' => $errors,
-        'message' => sprintf('Batch update complete: %d updated, %d errors.', count($updated), count($errors)),
-      ],
-    ];
+    return $this->batchResult([
+      'total_requested' => count($updates),
+      'updated_count' => count($updated),
+      'error_count' => count($errors),
+      'updated' => $updated,
+      'errors' => $errors,
+      'message' => sprintf('Batch update complete: %d updated, %d errors.', count($updated), count($errors)),
+    ]);
   }
 
   /**
@@ -358,24 +352,21 @@ class BatchService {
       'force' => $force,
     ]);
 
-    return [
-      'success' => TRUE,
-      'data' => [
-        'total_requested' => count($ids),
-        'deleted_count' => count($deleted),
-        'skipped_count' => count($skipped),
-        'error_count' => count($errors),
-        'deleted' => $deleted,
-        'skipped' => $skipped,
-        'errors' => $errors,
-        'message' => sprintf(
-          'Batch delete complete: %d deleted, %d skipped, %d errors.',
-          count($deleted),
-          count($skipped),
-          count($errors)
-        ),
-      ],
-    ];
+    return $this->batchResult([
+      'total_requested' => count($ids),
+      'deleted_count' => count($deleted),
+      'skipped_count' => count($skipped),
+      'error_count' => count($errors),
+      'deleted' => $deleted,
+      'skipped' => $skipped,
+      'errors' => $errors,
+      'message' => sprintf(
+        'Batch delete complete: %d deleted, %d skipped, %d errors.',
+        count($deleted),
+        count($skipped),
+        count($errors)
+      ),
+    ]);
   }
 
   /**
@@ -462,27 +453,24 @@ class BatchService {
       'errors' => count($errors),
     ]);
 
-    return [
-      'success' => TRUE,
-      'data' => [
-        'action' => $action,
-        'total_requested' => count($ids),
-        'processed_count' => count($processed),
-        'unchanged_count' => count($unchanged),
-        'error_count' => count($errors),
-        'processed' => $processed,
-        'unchanged' => $unchanged,
-        'errors' => $errors,
-        'message' => sprintf(
-          'Batch %s complete: %d %s, %d unchanged, %d errors.',
-          $publish ? 'publish' : 'unpublish',
-          count($processed),
-          $action,
-          count($unchanged),
-          count($errors)
-        ),
-      ],
-    ];
+    return $this->batchResult([
+      'action' => $action,
+      'total_requested' => count($ids),
+      'processed_count' => count($processed),
+      'unchanged_count' => count($unchanged),
+      'error_count' => count($errors),
+      'processed' => $processed,
+      'unchanged' => $unchanged,
+      'errors' => $errors,
+      'message' => sprintf(
+        'Batch %s complete: %d %s, %d unchanged, %d errors.',
+        $publish ? 'publish' : 'unpublish',
+        count($processed),
+        $action,
+        count($unchanged),
+        count($errors)
+      ),
+    ]);
   }
 
   /**
@@ -596,26 +584,23 @@ class BatchService {
       'errors' => count($errors),
     ]);
 
-    return [
-      'success' => TRUE,
-      'data' => [
-        'role' => $role,
-        'total_requested' => count($userIds),
-        'assigned_count' => count($assigned),
-        'already_had_count' => count($already_has),
-        'error_count' => count($errors),
-        'assigned' => $assigned,
-        'already_had' => $already_has,
-        'errors' => $errors,
-        'message' => sprintf(
-          "Batch role assignment complete: %d assigned '%s', %d already had role, %d errors.",
-          count($assigned),
-          $role,
-          count($already_has),
-          count($errors)
-        ),
-      ],
-    ];
+    return $this->batchResult([
+      'role' => $role,
+      'total_requested' => count($userIds),
+      'assigned_count' => count($assigned),
+      'already_had_count' => count($already_has),
+      'error_count' => count($errors),
+      'assigned' => $assigned,
+      'already_had' => $already_has,
+      'errors' => $errors,
+      'message' => sprintf(
+        "Batch role assignment complete: %d assigned '%s', %d already had role, %d errors.",
+        count($assigned),
+        $role,
+        count($already_has),
+        count($errors)
+      ),
+    ]);
   }
 
   /**
@@ -742,25 +727,22 @@ class BatchService {
       'errors' => count($errors),
     ]);
 
-    return [
-      'success' => TRUE,
-      'data' => [
-        'vocabulary' => $vocabulary,
-        'total_requested' => count($terms),
-        'created_count' => count($created),
-        'skipped_count' => count($skipped),
-        'error_count' => count($errors),
-        'created' => $created,
-        'skipped' => $skipped,
-        'errors' => $errors,
-        'message' => sprintf(
-          'Batch term creation complete: %d created, %d skipped, %d errors.',
-          count($created),
-          count($skipped),
-          count($errors)
-        ),
-      ],
-    ];
+    return $this->batchResult([
+      'vocabulary' => $vocabulary,
+      'total_requested' => count($terms),
+      'created_count' => count($created),
+      'skipped_count' => count($skipped),
+      'error_count' => count($errors),
+      'created' => $created,
+      'skipped' => $skipped,
+      'errors' => $errors,
+      'message' => sprintf(
+        'Batch term creation complete: %d created, %d skipped, %d errors.',
+        count($created),
+        count($skipped),
+        count($errors)
+      ),
+    ]);
   }
 
   /**
@@ -899,24 +881,21 @@ class BatchService {
       'errors' => count($errors),
     ]);
 
-    return [
-      'success' => TRUE,
-      'data' => [
-        'total_requested' => count($redirects),
-        'created_count' => count($created),
-        'skipped_count' => count($skipped),
-        'error_count' => count($errors),
-        'created' => $created,
-        'skipped' => $skipped,
-        'errors' => $errors,
-        'message' => sprintf(
-          'Batch redirect creation complete: %d created, %d skipped, %d errors.',
-          count($created),
-          count($skipped),
-          count($errors)
-        ),
-      ],
-    ];
+    return $this->batchResult([
+      'total_requested' => count($redirects),
+      'created_count' => count($created),
+      'skipped_count' => count($skipped),
+      'error_count' => count($errors),
+      'created' => $created,
+      'skipped' => $skipped,
+      'errors' => $errors,
+      'message' => sprintf(
+        'Batch redirect creation complete: %d created, %d skipped, %d errors.',
+        count($created),
+        count($skipped),
+        count($errors)
+      ),
+    ]);
   }
 
   /**
@@ -972,6 +951,33 @@ class BatchService {
     // For internal paths, use internal: scheme.
     $destination = '/' . ltrim($destination, '/');
     return 'internal:' . $destination;
+  }
+
+  /**
+   * Reports a batch in which every item failed as a failure.
+   *
+   * A batch used to answer "success" whatever happened, with the errors
+   * listed inside. When every item has an error, nothing was done and the
+   * call did not succeed. A batch in which some items worked stays a
+   * success, with its errors listed.
+   *
+   * @param array $data
+   *   The batch result: total_requested, error_count, errors and the rest.
+   *
+   * @return array
+   *   The tool result.
+   */
+  private function batchResult(array $data): array {
+    $total = (int) ($data['total_requested'] ?? 0);
+    $failed = (int) ($data['error_count'] ?? 0);
+    if ($failed > 0 && $failed >= $total) {
+      $first = $data['errors'][0]['error'] ?? 'unknown error';
+      return [
+        'success' => FALSE,
+        'error' => sprintf('None of the %d items could be processed. First error: %s', $total, $first),
+      ];
+    }
+    return ['success' => TRUE, 'data' => $data];
   }
 
 }

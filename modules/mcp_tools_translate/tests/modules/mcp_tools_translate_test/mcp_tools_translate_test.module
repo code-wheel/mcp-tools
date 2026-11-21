@@ -1,0 +1,35 @@
+<?php
+
+/**
+ * @file
+ * Test double for the paragraph duplication Layout Paragraphs performs.
+ */
+
+declare(strict_types=1);
+
+use Drupal\Core\Entity\FieldableEntityInterface;
+
+/**
+ * Implements hook_entity_translation_create().
+ *
+ * Like layout_paragraphs_entity_translation_create(): a new translation gets
+ * its own copies of the paragraphs in every translatable paragraph reference
+ * field, in the language of the translation.
+ */
+function mcp_tools_translate_test_entity_translation_create(FieldableEntityInterface $entity): void {
+  $langcode = $entity->language()->getId();
+  foreach ($entity->getFieldDefinitions() as $name => $definition) {
+    if ($definition->getType() !== 'entity_reference_revisions'
+      || !$definition->isTranslatable()
+      || $definition->getSetting('target_type') !== 'paragraph') {
+      continue;
+    }
+    $duplicates = [];
+    foreach ($entity->get($name)->referencedEntities() as $paragraph) {
+      $duplicate = $paragraph->createDuplicate();
+      $duplicate->set('langcode', $langcode);
+      $duplicates[] = $duplicate;
+    }
+    $entity->set($name, $duplicates);
+  }
+}

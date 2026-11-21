@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools_search_api\Plugin\tool\Tool;
 
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\mcp_tools_search_api\Service\SearchApiService;
@@ -54,17 +54,17 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
     ),
   ],
   output_definitions: [
-    'items' => new ContextDefinition(
+    'items' => new OutputDefinition(
       data_type: 'any',
       label: new TranslatableMarkup('Search Results'),
       description: new TranslatableMarkup('Array of matching items with entity info, relevance score, and excerpt.'),
     ),
-    'total' => new ContextDefinition(
+    'total' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Results'),
       description: new TranslatableMarkup('Total number of matching items (before pagination).'),
     ),
-    'has_more' => new ContextDefinition(
+    'has_more' => new OutputDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Has More'),
       description: new TranslatableMarkup('Whether more results exist beyond the current page.'),

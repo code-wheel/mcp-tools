@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_paragraphs\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_paragraphs\Service\ParagraphsService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -30,27 +30,27 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'id' => new ContextDefinition(
+    'id' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Paragraph Type ID'),
       description: new TranslatableMarkup('Machine name of the paragraph type. Use with AddParagraphField, DeleteParagraphType, etc.'),
     ),
-    'label' => new ContextDefinition(
+    'label' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Label'),
       description: new TranslatableMarkup('Human-readable name of the paragraph type.'),
     ),
-    'description' => new ContextDefinition(
+    'description' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Description'),
       description: new TranslatableMarkup('Description of when and how to use this paragraph type.'),
     ),
-    'fields' => new ContextDefinition(
+    'fields' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Fields'),
       description: new TranslatableMarkup('Array of field definitions with name, type, label, required, and cardinality. Use AddParagraphField to add more.'),
     ),
-    'admin_path' => new ContextDefinition(
+    'admin_path' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Admin Path'),
       description: new TranslatableMarkup('Path to manage this paragraph type in admin UI (e.g., "/admin/structure/paragraphs_type/text_block").'),

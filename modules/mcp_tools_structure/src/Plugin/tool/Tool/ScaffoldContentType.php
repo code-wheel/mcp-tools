@@ -7,7 +7,7 @@ namespace Drupal\mcp_tools_structure\Plugin\tool\Tool;
 use Drupal\mcp_tools_structure\Service\ContentTypeService;
 use Drupal\mcp_tools_structure\Service\FieldService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -56,32 +56,32 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'content_type' => new ContextDefinition(
+    'content_type' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Content Type'),
       description: new TranslatableMarkup('Machine name of the created content type.'),
     ),
-    'label' => new ContextDefinition(
+    'label' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Label'),
       description: new TranslatableMarkup('Human-readable name of the content type.'),
     ),
-    'fields_created' => new ContextDefinition(
+    'fields_created' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Fields Created'),
       description: new TranslatableMarkup('List of field machine names that were created.'),
     ),
-    'fields_failed' => new ContextDefinition(
+    'fields_failed' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Fields Failed'),
       description: new TranslatableMarkup('List of fields that failed to create with error messages.'),
     ),
-    'admin_path' => new ContextDefinition(
+    'admin_path' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Admin Path'),
       description: new TranslatableMarkup('Path to manage the content type in admin UI.'),
     ),
-    'message' => new ContextDefinition(
+    'message' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
       description: new TranslatableMarkup('Summary of what was created.'),
@@ -133,61 +133,39 @@ class ScaffoldContentType extends McpToolsToolBase {
       return ['success' => FALSE, 'error' => 'Label is required.'];
     }
 
-    // Step 1: Create the content type.
-    $typeResult = $this->contentTypeService->createContentType($id, $label, $description);
+    // Step 1: Create the content type, with core's body field if requested.
+    $typeResult = $this->contentTypeService->createContentType($id, $label, [
+      'description' => $description,
+      'create_body' => (bool) $includeBody,
+    ]);
     if (!($typeResult['success'] ?? FALSE)) {
       return $typeResult;
     }
 
-    $fieldsCreated = [];
+    $fieldsCreated = $includeBody ? ['body'] : [];
     $fieldsFailed = [];
 
-    // Step 2: Add body field if requested.
-    if ($includeBody) {
-      $bodyResult = $this->fieldService->addField('node', $id, 'body', 'text_with_summary', 'Body', FALSE, 1);
-      if ($bodyResult['success'] ?? FALSE) {
-        $fieldsCreated[] = 'body';
-      }
-      else {
-        $fieldsFailed[] = ['field' => 'body', 'error' => $bodyResult['error'] ?? 'Unknown error'];
-      }
-    }
-
-    // Step 3: Add custom fields.
+    // Step 2: Add custom fields.
     foreach ($fields as $field) {
       $fieldName = $field['name'] ?? '';
       $fieldType = $field['type'] ?? 'string';
       $fieldLabel = $field['label'] ?? ucfirst(str_replace('_', ' ', $fieldName));
-      $required = $field['required'] ?? FALSE;
-      $cardinality = $field['cardinality'] ?? 1;
 
       if (empty($fieldName)) {
         $fieldsFailed[] = ['field' => '(unnamed)', 'error' => 'Field name is required'];
         continue;
       }
 
-      // Build settings based on field type.
-      $settings = [];
-      if (isset($field['target_type'])) {
-        $settings['target_type'] = $field['target_type'];
-      }
-      if (isset($field['allowed_values'])) {
-        $settings['allowed_values'] = $field['allowed_values'];
-      }
-      if (isset($field['description'])) {
-        $settings['description'] = $field['description'];
-      }
+      // FieldService::addField() takes these as one $options array.
+      $options = array_intersect_key($field, array_flip([
+        'required',
+        'cardinality',
+        'description',
+        'target_type',
+        'allowed_values',
+      ]));
 
-      $fieldResult = $this->fieldService->addField(
-        'node',
-        $id,
-        $fieldName,
-        $fieldType,
-        $fieldLabel,
-        $required,
-        $cardinality,
-        $settings
-      );
+      $fieldResult = $this->fieldService->addField('node', $id, $fieldName, $fieldType, $fieldLabel, $options);
 
       if ($fieldResult['success'] ?? FALSE) {
         $fieldsCreated[] = $fieldName;

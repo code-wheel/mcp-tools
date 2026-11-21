@@ -13,6 +13,7 @@ use Drupal\Tests\user\Traits\UserCreationTrait;
 /**
  * Tests that a confirmed full delete is trash-aware.
  */
+#[\PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses]
 #[\PHPUnit\Framework\Attributes\CoversClass(ContentService::class)]
 #[\PHPUnit\Framework\Attributes\Group('mcp_tools_content')]
 class ContentServiceTrashDeleteTest extends KernelTestBase {

@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools\Plugin\tool\Tool;
 
 use Drupal\mcp_tools\Service\TaxonomyService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -44,22 +44,22 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'vocabulary' => new ContextDefinition(
+    'vocabulary' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Vocabulary ID'),
       description: new TranslatableMarkup('Machine name of the vocabulary queried.'),
     ),
-    'vocabulary_label' => new ContextDefinition(
+    'vocabulary_label' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Vocabulary Label'),
       description: new TranslatableMarkup('Human-readable name of the vocabulary.'),
     ),
-    'total' => new ContextDefinition(
+    'total' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Terms'),
       description: new TranslatableMarkup('Number of terms returned.'),
     ),
-    'terms' => new ContextDefinition(
+    'terms' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Terms'),
       description: new TranslatableMarkup('Array of terms with tid, name, description, weight, and parent. Use tid for entity reference fields.'),

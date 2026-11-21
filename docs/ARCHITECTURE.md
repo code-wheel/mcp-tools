@@ -12,7 +12,7 @@ MCP Tools provides a comprehensive set of tools for AI assistants to interact wi
 └─────────────────────────────┬───────────────────────────────────┘
                               │ MCP Protocol (official mcp/sdk)
 ┌─────────────────────────────▼───────────────────────────────────┐
-│         Frontends — all optional, enable any or none:            │
+│         Frontends - all optional, enable any or none:            │
 │   mcp_tools_stdio (Drush) │ mcp_tools_remote (HTTP) │            │
 │   drupal/mcp_server (via bridge) │ drupal/ai (mcp_tools_ai)      │
 └─────────────────────────────┬───────────────────────────────────┘
@@ -36,7 +36,7 @@ is a plain [Tool API](https://www.drupal.org/project/tool) plugin, so the
 library works with no MCP server at all ("library-only" installs): enable
 the base module plus the tool submodules you want and consume the tools
 from ECA, AI Agents (via `mcp_tools_ai`), custom code, or any other Tool
-API runtime. The kernel test suite runs in exactly this configuration —
+API runtime. The kernel test suite runs in exactly this configuration:
 base module and tool submodules with no transport enabled.
 
 ## Module Structure

@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_redirect\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_redirect\Service\RedirectService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -54,17 +54,17 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'redirect' => new ContextDefinition(
+    'redirect' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Updated Redirect'),
       description: new TranslatableMarkup('The updated redirect object with current values for id, source, destination, status_code, and language. Use with GetRedirect to verify changes.'),
     ),
-    'updated_fields' => new ContextDefinition(
+    'updated_fields' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Updated Fields'),
       description: new TranslatableMarkup('List of field names that were modified (e.g., ["source", "destination"]). Empty if no changes were made.'),
     ),
-    'message' => new ContextDefinition(
+    'message' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
       description: new TranslatableMarkup('Human-readable confirmation message describing what was updated.'),

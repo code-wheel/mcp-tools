@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_views\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_views\Service\ViewsService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -54,22 +54,22 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'view_id' => new ContextDefinition(
+    'view_id' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('View ID'),
       description: new TranslatableMarkup('Machine name of the view.'),
     ),
-    'display_id' => new ContextDefinition(
+    'display_id' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Display ID'),
       description: new TranslatableMarkup('ID of created display (page_1, block_1, feed_1, etc.). Use to configure or remove.'),
     ),
-    'display_type' => new ContextDefinition(
+    'display_type' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Display Type'),
       description: new TranslatableMarkup('Type of display created.'),
     ),
-    'message' => new ContextDefinition(
+    'message' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
       description: new TranslatableMarkup('Success confirmation or error details.'),

@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_metatag\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_metatag\Service\MetatagService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -36,27 +36,27 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'entity_type' => new ContextDefinition(
+    'entity_type' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Entity Type'),
       description: new TranslatableMarkup('The entity type queried (e.g., "node", "taxonomy_term").'),
     ),
-    'entity_id' => new ContextDefinition(
+    'entity_id' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Entity ID'),
       description: new TranslatableMarkup('The entity ID queried.'),
     ),
-    'entity_label' => new ContextDefinition(
+    'entity_label' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Entity Label'),
       description: new TranslatableMarkup('Title or name of the entity for identification.'),
     ),
-    'stored_tags' => new ContextDefinition(
+    'stored_tags' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Stored Metatags'),
       description: new TranslatableMarkup('Metatags explicitly set on this entity. Keys are tag names (e.g., "title", "description"). Use SetEntityMetatags to modify.'),
     ),
-    'computed_tags' => new ContextDefinition(
+    'computed_tags' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Computed Metatags'),
       description: new TranslatableMarkup('Final metatag values with tokens resolved and defaults applied. These appear in the HTML output.'),

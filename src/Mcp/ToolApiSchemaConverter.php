@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Drupal\mcp_tools\Mcp;
 
 use CodeWheel\McpSchemaBuilder\TypeMapper;
+use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\tool\Tool\ToolDefinition;
 use Drupal\tool\Tool\ToolOperation;
 use Drupal\tool\TypedData\InputDefinitionInterface;
@@ -15,6 +16,11 @@ use Drupal\tool\TypedData\MapInputDefinition;
  * Converts Tool API definitions into MCP-compatible JSON Schemas and hints.
  */
 class ToolApiSchemaConverter {
+
+  /**
+   * Persistent cache prefix for converted schemas.
+   */
+  private const CACHE_PREFIX = 'mcp_tools:schema:';
 
   /**
    * In-memory caches keyed by caller-provided IDs.
@@ -37,9 +43,52 @@ class ToolApiSchemaConverter {
 
   /**
    * Constructs a new ToolApiSchemaConverter.
+   *
+   * @param \Drupal\Core\Cache\CacheBackendInterface|null $cache
+   *   Optional persistent cache. When provided, converted schemas and
+   *   annotations survive across requests keyed by plugin ID — the
+   *   stateless HTTP transport otherwise reconverts every tool on every
+   *   call. Entries live in a bin cleared by `drush cr`, which is when
+   *   tool plugin definitions can change.
    */
-  public function __construct() {
+  public function __construct(private readonly ?CacheBackendInterface $cache = NULL) {
     $this->typeMapper = new TypeMapper();
+  }
+
+  /**
+   * Reads a converted value from the persistent cache, if available.
+   *
+   * @param string $kind
+   *   The conversion kind ('input', 'output', or 'annotations').
+   * @param string|null $cacheKey
+   *   The per-tool cache key (plugin ID), or NULL to skip caching.
+   *
+   * @return array<string, mixed>|null
+   *   The cached value, or NULL on miss.
+   */
+  private function cacheGet(string $kind, ?string $cacheKey): ?array {
+    if ($this->cache === NULL || $cacheKey === NULL) {
+      return NULL;
+    }
+    $item = $this->cache->get(self::CACHE_PREFIX . $kind . ':' . $cacheKey);
+    return $item ? $item->data : NULL;
+  }
+
+  /**
+   * Writes a converted value to the persistent cache, if available.
+   *
+   * @param string $kind
+   *   The conversion kind ('input', 'output', or 'annotations').
+   * @param string|null $cacheKey
+   *   The per-tool cache key (plugin ID), or NULL to skip caching.
+   * @param array<string, mixed> $data
+   *   The value to cache.
+   */
+  private function cacheSet(string $kind, ?string $cacheKey, array $data): void {
+    if ($this->cache === NULL || $cacheKey === NULL) {
+      return;
+    }
+    $this->cache->set(self::CACHE_PREFIX . $kind . ':' . $cacheKey, $data, CacheBackendInterface::CACHE_PERMANENT, ['mcp_tools_schemas']);
   }
 
   /**
@@ -57,11 +106,21 @@ class ToolApiSchemaConverter {
     if ($cacheKey !== NULL && isset($this->inputSchemaCache[$cacheKey])) {
       return $this->inputSchemaCache[$cacheKey];
     }
+    $cached = $this->cacheGet('input', $cacheKey);
+    if ($cached !== NULL) {
+      // stdClass properties survive the cache round-trip; the empty-object
+      // placeholder must be restored for correct JSON encoding.
+      if (($cached['properties'] ?? NULL) === []) {
+        $cached['properties'] = new \stdClass();
+      }
+      return $this->inputSchemaCache[$cacheKey] = $cached;
+    }
 
     $schema = $this->inputDefinitionsToSchema($definition->getInputDefinitions());
 
     if ($cacheKey !== NULL) {
       $this->inputSchemaCache[$cacheKey] = $schema;
+      $this->cacheSet('input', $cacheKey, $schema);
     }
 
     return $schema;
@@ -76,6 +135,10 @@ class ToolApiSchemaConverter {
   public function toolDefinitionToAnnotations(ToolDefinition $definition, ?string $cacheKey = NULL): array {
     if ($cacheKey !== NULL && isset($this->annotationCache[$cacheKey])) {
       return $this->annotationCache[$cacheKey];
+    }
+    $cached = $this->cacheGet('annotations', $cacheKey);
+    if ($cached !== NULL) {
+      return $this->annotationCache[$cacheKey] = $cached;
     }
 
     $operation = $definition->getOperation() ?? ToolOperation::Transform;
@@ -98,6 +161,7 @@ class ToolApiSchemaConverter {
 
     if ($cacheKey !== NULL) {
       $this->annotationCache[$cacheKey] = $annotations;
+      $this->cacheSet('annotations', $cacheKey, $annotations);
     }
 
     return $annotations;
@@ -181,7 +245,9 @@ class ToolApiSchemaConverter {
       $schema['type'] = 'array';
       $schema['items'] = new \stdClass();
       if ($definition instanceof ListInputDefinition) {
-        $itemDefinition = $definition->getDataDefinition()->getItemDefinition();
+        // getItemDefinition() is on the list definition itself in every
+        // Tool API version we support (beta9 to beta12).
+        $itemDefinition = $definition->getItemDefinition();
         if ($itemDefinition instanceof InputDefinitionInterface) {
           $schema['items'] = $this->inputDefinitionToSchema($itemDefinition);
         }
@@ -286,13 +352,22 @@ class ToolApiSchemaConverter {
    *
    * @param \Drupal\tool\Tool\ToolDefinition $definition
    *   The tool definition.
+   * @param string|null $cacheKey
+   *   Optional per-tool cache key (plugin ID) for persistent caching.
    *
    * @return array|null
    *   A JSON Schema array, or NULL when the tool declares no outputs.
    */
-  public function toolDefinitionToOutputSchema(ToolDefinition $definition): ?array {
+  public function toolDefinitionToOutputSchema(ToolDefinition $definition, ?string $cacheKey = NULL): ?array {
+    $cached = $this->cacheGet('output', $cacheKey);
+    if ($cached !== NULL) {
+      return $cached['schema'] ?? NULL;
+    }
+
     $outputDefinitions = $definition->getOutputDefinitions();
     if (empty($outputDefinitions)) {
+      // Cache the "no output schema" verdict too — it is a per-tool constant.
+      $this->cacheSet('output', $cacheKey, ['schema' => NULL]);
       return NULL;
     }
 
@@ -328,7 +403,7 @@ class ToolApiSchemaConverter {
       $properties[$name] = $property === [] ? new \stdClass() : $property;
     }
 
-    return [
+    $schema = [
       'type' => 'object',
       'properties' => [
         'success' => ['type' => 'boolean'],
@@ -342,6 +417,8 @@ class ToolApiSchemaConverter {
       ],
       'required' => ['success', 'message'],
     ];
+    $this->cacheSet('output', $cacheKey, ['schema' => $schema]);
+    return $schema;
   }
 
 }

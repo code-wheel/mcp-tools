@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools\Plugin\tool\Tool;
 
 use Drupal\mcp_tools\Service\SystemStatusService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -31,17 +31,17 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'requirements' => new ContextDefinition(
+    'requirements' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('System Requirements'),
       description: new TranslatableMarkup('Status report items keyed by module. Each has title, value, severity (0=ok, 1=info, 2=warning, 3=error), and description.'),
     ),
-    'php' => new ContextDefinition(
+    'php' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('PHP Information'),
       description: new TranslatableMarkup('PHP version, memory limit, max execution time, and loaded extensions.'),
     ),
-    'database' => new ContextDefinition(
+    'database' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Database Status'),
       description: new TranslatableMarkup('Database driver, version, host, and database name.'),

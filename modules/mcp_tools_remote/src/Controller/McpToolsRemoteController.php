@@ -4,22 +4,25 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools_remote\Controller;
 
-use Mcp\Server;
 use CodeWheel\McpSecurity\Validation\IpValidator;
 use CodeWheel\McpSecurity\Validation\OriginValidator;
+use Drupal\Core\Cache\CacheBackendInterface;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\DependencyInjection\ContainerInjectionInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Session\AccountSwitcherInterface;
 use Drupal\Component\Plugin\PluginManagerInterface;
 use Drupal\mcp_tools\Mcp\McpToolsServerFactory;
+use Drupal\mcp_tools\Mcp\MinimumLevelLogger;
 use Drupal\mcp_tools\Mcp\Error\ToolErrorHandlerInterface;
 use Drupal\mcp_tools\Mcp\Prompt\PromptRegistry;
 use Drupal\mcp_tools\Mcp\Resource\ResourceRegistry;
+use Drupal\mcp_tools\Mcp\Sdk;
 use Drupal\mcp_tools\Mcp\ServerConfigRepository;
 use Drupal\mcp_tools\Mcp\ToolApiSchemaConverter;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\McpClientBridge;
+use Drupal\mcp_tools\Service\McpToolCallContext;
 use Drupal\mcp_tools_remote\Service\ApiKeyManager;
 use GuzzleHttp\Psr7\HttpFactory;
 use Mcp\Server\Session\FileSessionStore;
@@ -57,6 +60,8 @@ final class McpToolsRemoteController implements ContainerInjectionInterface {
     private readonly EventDispatcherInterface $eventDispatcher,
     private readonly LoggerInterface $logger,
     private readonly ?McpClientBridge $clientBridge = NULL,
+    private readonly ?CacheBackendInterface $schemaCache = NULL,
+    private readonly ?McpToolCallContext $toolCallContext = NULL,
   ) {}
 
   /**
@@ -77,6 +82,8 @@ final class McpToolsRemoteController implements ContainerInjectionInterface {
       $container->get('event_dispatcher'),
       $container->get('logger.channel.mcp_tools_remote'),
       $container->get('mcp_tools.client_bridge'),
+      $container->get('cache.default'),
+      $container->get('mcp_tools.tool_call_context'),
     );
   }
 
@@ -95,7 +102,7 @@ final class McpToolsRemoteController implements ContainerInjectionInterface {
       return $securityCheck;
     }
 
-    if (!class_exists(Server::class)) {
+    if (Sdk::serverClass() === NULL) {
       return new Response('Missing dependency: mcp/sdk', 500);
     }
 
@@ -284,7 +291,10 @@ final class McpToolsRemoteController implements ContainerInjectionInterface {
    * Executes the MCP request via the transport.
    */
   private function executeRequest(Request $request, $remoteConfig, ?array $serverConfig): Response {
-    $schemaConverter = new ToolApiSchemaConverter();
+    // Persistent schema cache: the stateless HTTP transport rebuilds the
+    // server per request; caching converted schemas turns an O(tools)
+    // per-call cost into a one-time warm-up.
+    $schemaConverter = new ToolApiSchemaConverter($this->schemaCache);
     $serverFactory = new McpToolsServerFactory(
       $this->toolManager,
       $schemaConverter,
@@ -294,6 +304,8 @@ final class McpToolsRemoteController implements ContainerInjectionInterface {
       $this->promptRegistry,
       $this->toolErrorHandler,
       $this->clientBridge,
+      $this->accessManager,
+      $this->toolCallContext,
     );
 
     $serverParams = $this->resolveServerParams($remoteConfig, $serverConfig);
@@ -348,21 +360,54 @@ final class McpToolsRemoteController implements ContainerInjectionInterface {
         $psrRequest,
         $httpFactory,
         $httpFactory,
-        logger: $this->logger,
+        logger: new MinimumLevelLogger($this->logger),
       );
+    }
+
+    $dnsRebindArguments = [$this->dnsRebindAllowedHosts($remoteConfig)];
+    // Up to mcp/sdk 0.8 the middleware compared the Origin header's host
+    // with the host list above. From 0.9 it compares the whole Origin with
+    // a list of full origins (scheme, host, port) of its own. The
+    // allowed_origins setting holds host names and wildcards, not full
+    // origins, and performSecurityChecks() has already applied it to this
+    // request. So the SDK is told to leave Origin to that check; it still
+    // validates Host.
+    if (self::constructorAccepts(DnsRebindingProtectionMiddleware::class, 'allowedOrigins')) {
+      $dnsRebindArguments[] = ['*'];
+    }
+    $middleware = [
+      new CorsMiddleware(),
+      new DnsRebindingProtectionMiddleware(...$dnsRebindArguments),
+    ];
+    // Up to mcp/sdk 0.7 a custom list replaces the whole default stack, so
+    // the protocol version check has to be listed. From 0.8 the transport
+    // applies it on its own, and listing it again logs a warning on every
+    // request and rejects the newest protocol revision.
+    if (!method_exists(StreamableHttpTransport::class, 'handshakeMiddleware')) {
+      $middleware[] = new ProtocolVersionMiddleware();
     }
 
     return new StreamableHttpTransport(
       $psrRequest,
       $httpFactory,
       $httpFactory,
-      logger: $this->logger,
-      middleware: [
-        new CorsMiddleware(),
-        new DnsRebindingProtectionMiddleware($this->dnsRebindAllowedHosts($remoteConfig)),
-        new ProtocolVersionMiddleware(),
-      ],
+      logger: new MinimumLevelLogger($this->logger),
+      middleware: $middleware,
     );
+  }
+
+  /**
+   * Whether a class's constructor has a parameter of the given name.
+   *
+   * Lets one code base follow the SDK's constructors across versions.
+   */
+  private static function constructorAccepts(string $class, string $parameter): bool {
+    foreach ((new \ReflectionMethod($class, '__construct'))->getParameters() as $candidate) {
+      if ($candidate->getName() === $parameter) {
+        return TRUE;
+      }
+    }
+    return FALSE;
   }
 
   /**

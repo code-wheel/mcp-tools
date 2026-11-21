@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_batch\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_batch\Service\BatchService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -36,47 +36,47 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'role' => new ContextDefinition(
+    'role' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Role'),
       description: new TranslatableMarkup('Role machine name that was assigned.'),
     ),
-    'total_requested' => new ContextDefinition(
+    'total_requested' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Requested'),
       description: new TranslatableMarkup('Number of users requested for role assignment.'),
     ),
-    'assigned_count' => new ContextDefinition(
+    'assigned_count' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Assigned Count'),
       description: new TranslatableMarkup('Number of users who received the role.'),
     ),
-    'already_had_count' => new ContextDefinition(
+    'already_had_count' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Already Had Role Count'),
       description: new TranslatableMarkup('Number of users who already had the role.'),
     ),
-    'error_count' => new ContextDefinition(
+    'error_count' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Error Count'),
       description: new TranslatableMarkup('Number of users that failed to receive the role.'),
     ),
-    'assigned' => new ContextDefinition(
+    'assigned' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Assigned Users'),
       description: new TranslatableMarkup('Array of users with uid, username who received the role.'),
     ),
-    'already_had' => new ContextDefinition(
+    'already_had' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Users Who Already Had Role'),
       description: new TranslatableMarkup('Array of users with uid, username who already had the role.'),
     ),
-    'errors' => new ContextDefinition(
+    'errors' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Errors'),
       description: new TranslatableMarkup('Array of errors with uid and error message for each failure.'),
     ),
-    'message' => new ContextDefinition(
+    'message' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
       description: new TranslatableMarkup('Summary of the batch role assignment operation.'),

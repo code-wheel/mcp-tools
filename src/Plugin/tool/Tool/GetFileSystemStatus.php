@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools\Plugin\tool\Tool;
 
 use Drupal\mcp_tools\Service\FileSystemService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -22,12 +22,12 @@ use Drupal\tool\Tool\ToolOperation;
   operation: ToolOperation::Read,
   input_definitions: [],
   output_definitions: [
-    'directories' => new ContextDefinition(
+    'directories' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Directory Status'),
       description: new TranslatableMarkup('Status of key directories (public, private, temp) with path, exists, writable, and free_space.'),
     ),
-    'stream_wrappers' => new ContextDefinition(
+    'stream_wrappers' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Stream Wrappers'),
       description: new TranslatableMarkup('Available stream wrappers (e.g., public://, private://) with scheme, name, and description.'),

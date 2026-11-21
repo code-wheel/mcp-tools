@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools_translate\Plugin\tool\Tool;
 
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\mcp_tools_translate\Service\ContentTranslationService;
@@ -30,21 +30,25 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
     ),
   ],
   output_definitions: [
-    'nid' => new ContextDefinition(
+    'nid' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Node ID'),
+      description: new TranslatableMarkup('ID of the node.'),
     ),
-    'title' => new ContextDefinition(
+    'title' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Title'),
+      description: new TranslatableMarkup('Title of the node in its source language.'),
     ),
-    'source_language' => new ContextDefinition(
+    'source_language' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Source Language'),
+      description: new TranslatableMarkup('Language code the node was created in.'),
     ),
-    'languages' => new ContextDefinition(
+    'languages' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Per-Language Translation Status'),
+      description: new TranslatableMarkup('Translation status per enabled language, keyed by language code: its name, whether it is the source and whether a translation exists.'),
     ),
   ],
 )]

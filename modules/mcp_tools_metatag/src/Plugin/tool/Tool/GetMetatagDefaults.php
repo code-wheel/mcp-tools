@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_metatag\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_metatag\Service\MetatagService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -30,12 +30,12 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
-    'total' => new ContextDefinition(
+    'total' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Defaults'),
       description: new TranslatableMarkup('Total number of default configurations returned.'),
     ),
-    'defaults' => new ContextDefinition(
+    'defaults' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Metatag Defaults'),
       description: new TranslatableMarkup('Array of default configurations with id, label, entity_type, and tags. Tags can use tokens like [node:title].'),

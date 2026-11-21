@@ -24,6 +24,13 @@ class AccessManager implements AccessManagerInterface {
    */
   protected array $currentScopes = [];
 
+  /**
+   * Scopes fixed for this PHP process by the STDIO server, if any.
+   *
+   * @var string[]|null
+   */
+  private static ?array $processScopes = NULL;
+
   public function __construct(
     protected ConfigFactoryInterface $configFactory,
     protected AccountProxyInterface $currentUser,
@@ -46,6 +53,47 @@ class AccessManager implements AccessManagerInterface {
    */
   public function isConfigOnlyMode(): bool {
     return (bool) $this->configFactory->get('mcp_tools.settings')->get('access.config_only_mode');
+  }
+
+  /**
+   * Whether scopes and site modes allow a tool of another provider.
+   *
+   * MCP Tools' own tools check these in their access check, together with
+   * their category permission. A Tool API tool of another module knows
+   * nothing of them, so whoever runs it for an MCP client or an AI agent
+   * asks here first. The rule is the one MCP Tools' tools follow, by the
+   * operation the tool declares: trigger needs the admin scope, write the
+   * write scope, anything else the read scope, and writes stop in read-only
+   * mode. Config-only mode lets a write through only when every kind of
+   * write is allowed, since nothing says what such a tool writes.
+   *
+   * @param string $operation
+   *   The Tool API operation: read, explain, transform, write or trigger.
+   *
+   * @return bool
+   *   TRUE if the tool may run.
+   */
+  public function allowsForeignToolOperation(string $operation): bool {
+    $scope = match ($operation) {
+      'trigger' => self::SCOPE_ADMIN,
+      'write' => self::SCOPE_WRITE,
+      default => self::SCOPE_READ,
+    };
+    if (!$this->hasScope($scope)) {
+      return FALSE;
+    }
+    if ($scope === self::SCOPE_READ) {
+      return TRUE;
+    }
+    if ($this->isReadOnlyMode()) {
+      return FALSE;
+    }
+    foreach (self::ALL_WRITE_KINDS as $kind) {
+      if (!$this->isWriteKindAllowed($kind)) {
+        return FALSE;
+      }
+    }
+    return TRUE;
   }
 
   /**
@@ -194,6 +242,10 @@ class AccessManager implements AccessManagerInterface {
     if (!empty($this->currentScopes)) {
       return $this->currentScopes;
     }
+    if (!empty(self::$processScopes)) {
+      $this->currentScopes = self::$processScopes;
+      return $this->currentScopes;
+    }
 
     $config = $this->configFactory->get('mcp_tools.settings');
 
@@ -260,6 +312,27 @@ class AccessManager implements AccessManagerInterface {
    */
   public function setScopes(array $scopes): void {
     $this->currentScopes = array_intersect($scopes, self::ALL_SCOPES);
+  }
+
+  /**
+   * Fixes the scopes for the life of this PHP process.
+   *
+   * For the STDIO server only. It is one process for one client session, and
+   * a tool that clears all caches rebuilds the container inside it. That
+   * replaces this service, and the scopes set on the old instance are gone:
+   * the session fell back to the default scopes and refused every later
+   * write until it was restarted. Scopes set here outlive the rebuild.
+   *
+   * Never call this in a web request: PHP-FPM reuses a process for many
+   * requests, and the next one would inherit the scopes.
+   *
+   * @param string[]|null $scopes
+   *   The scopes, or NULL to clear them.
+   */
+  public static function setProcessScopes(?array $scopes): void {
+    self::$processScopes = $scopes === NULL
+      ? NULL
+      : array_values(array_intersect($scopes, self::ALL_SCOPES));
   }
 
   /**

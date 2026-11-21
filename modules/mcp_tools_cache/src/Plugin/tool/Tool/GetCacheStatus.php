@@ -6,7 +6,7 @@ namespace Drupal\mcp_tools_cache\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_cache\Service\CacheService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
@@ -22,12 +22,12 @@ use Drupal\tool\Tool\ToolOperation;
   operation: ToolOperation::Read,
   input_definitions: [],
   output_definitions: [
-    'total_bins' => new ContextDefinition(
+    'total_bins' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total cache bins'),
       description: new TranslatableMarkup('Number of cache bins in the system.'),
     ),
-    'bins' => new ContextDefinition(
+    'bins' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Cache bin details'),
       description: new TranslatableMarkup('Array of cache bins with name, backend class, and status. Use name with ClearCacheBin.'),
