@@ -45,7 +45,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'id' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Webform ID'),
-      description: new TranslatableMarkup('Machine name of the created webform. Use with GetWebform, UpdateWebform, or DeleteWebform.'),
+      description: new TranslatableMarkup('Machine name of the created webform. Use with mcp_get_webform, mcp_update_webform, or mcp_delete_webform.'),
     ),
     'title' => new OutputDefinition(
       data_type: 'string',
@@ -55,7 +55,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'status' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Status'),
-      description: new TranslatableMarkup('Webform status: "open" (accepting submissions) or "closed". Use UpdateWebform to change.'),
+      description: new TranslatableMarkup('Webform status: "open" (accepting submissions) or "closed". Use mcp_update_webform to change.'),
     ),
     'message' => new OutputDefinition(
       data_type: 'string',

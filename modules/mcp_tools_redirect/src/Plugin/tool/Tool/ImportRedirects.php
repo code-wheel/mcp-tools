@@ -19,7 +19,7 @@ use Drupal\tool\TypedData\InputDefinition;
 #[Tool(
   id: 'mcp_redirect_import',
   label: new TranslatableMarkup('Import Redirects'),
-  description: new TranslatableMarkup('Bulk import multiple URL redirects. This is a write operation.'),
+  description: new TranslatableMarkup('Bulk import multiple URL redirects.'),
   operation: ToolOperation::Write,
   destructive: TRUE,
   input_definitions: [
@@ -54,12 +54,12 @@ use Drupal\tool\TypedData\InputDefinition;
     'created' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Created Redirects'),
-      description: new TranslatableMarkup('Array of successfully created redirect objects with their assigned IDs. Use these IDs with GetRedirect or UpdateRedirect.'),
+      description: new TranslatableMarkup('Array of successfully created redirect objects with their assigned IDs. Use these IDs with mcp_redirect_get or mcp_redirect_update.'),
     ),
     'skipped' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Skipped Redirects'),
-      description: new TranslatableMarkup('Array of skipped redirects with reason. Typically skipped because a redirect already exists for the source. Use FindBySource to check existing.'),
+      description: new TranslatableMarkup('Array of skipped redirects with reason. Typically skipped because a redirect already exists for the source. Use mcp_redirect_find to check existing.'),
     ),
     'errors' => new OutputDefinition(
       data_type: 'list',

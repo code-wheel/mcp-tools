@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Drupal\Tests\mcp_tools_ai\Kernel;
 
 use Drupal\Core\Session\AnonymousUserSession;
+use Drupal\ai\OperationType\Chat\Tools\ToolsFunctionOutput;
 use Drupal\KernelTests\KernelTestBase;
 use Drupal\Tests\mcp_tools\Traits\ForeignToolTestTrait;
 use Drupal\Tests\user\Traits\UserCreationTrait;
@@ -224,6 +225,49 @@ final class AiFunctionCallBridgeTest extends KernelTestBase {
         $this->assertSame($id, $each['id']);
       }
     }
+  }
+
+  /**
+   * An argument the model got wrong is answered, and the agent goes on.
+   *
+   * Drupal AI reads a model's arguments into the function call before it
+   * runs it, and that step throws for a value it cannot read: a word where
+   * an object belongs, or JSON with a brace too many. Nothing caught it, so
+   * the whole agent run ended there (two tasks of a small model on
+   * 2026-11-21). The model has to be told, as for any other failed call.
+   */
+  public function testAnArgumentThatCannotBeReadIsAnsweredNotThrown(): void {
+    $this->enableModules(['node', 'field', 'text', 'filter', 'mcp_tools_content']);
+    $this->installConfig(['mcp_tools']);
+    $this->config('mcp_tools_ai.settings')->set('exposed_operations', ['read', 'explain', 'write'])->save();
+    $manager = $this->container->get('plugin.manager.ai.function_calls');
+    $manager->clearCachedDefinitions();
+    $this->setUpCurrentUser();
+
+    $definition = $manager->getDefinition('mcp_tools_tool:mcp_create_content');
+    $input = $manager->getFunctionCallFromFunctionName($definition['function_name'])->normalize();
+
+    $cases = [
+      'a word where an object belongs' => 'the body',
+      'JSON with a brace too many' => '{"body": {"value": "Hello"}}}',
+    ];
+    foreach ($cases as $case => $fields) {
+      // The way an agent gets there: from the model's call to our plugin.
+      $call = new ToolsFunctionOutput($input, 'call_1', ['type' => 'news', 'title' => 'Hello', 'fields' => $fields]);
+      $fc = $manager->convertToolResponseToObject($call);
+      $fc->execute();
+      $result = json_decode($fc->getReadableOutput(), TRUE);
+      $this->assertIsArray($result, $case . ': ' . $fc->getReadableOutput());
+      $this->assertFalse($result['success'], $case);
+      $this->assertStringContainsString('"fields"', $result['message'], $case);
+      $this->assertStringContainsString('Nothing was run', $result['message'], $case);
+    }
+
+    // A call with arguments that can be read is not held up by this.
+    $call = new ToolsFunctionOutput($input, 'call_2', ['type' => 'news', 'title' => 'Hello', 'fields' => ['body' => 'Hello']]);
+    $fc = $manager->convertToolResponseToObject($call);
+    $fc->execute();
+    $this->assertStringNotContainsString('Nothing was run', $fc->getReadableOutput());
   }
 
   /**

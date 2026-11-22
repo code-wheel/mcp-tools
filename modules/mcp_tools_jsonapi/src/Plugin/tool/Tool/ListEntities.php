@@ -19,7 +19,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 #[Tool(
   id: 'mcp_jsonapi_list_entities',
   label: new TranslatableMarkup('JSON:API List Entities'),
-  description: new TranslatableMarkup('List entities of a given type with optional filtering and pagination. Use DiscoverTypes to find available entity types.'),
+  description: new TranslatableMarkup('List entities of a given type with optional filtering and pagination. Use mcp_jsonapi_discover_types to find available entity types.'),
   operation: ToolOperation::Read,
   input_definitions: [
     'entity_type' => new InputDefinition(

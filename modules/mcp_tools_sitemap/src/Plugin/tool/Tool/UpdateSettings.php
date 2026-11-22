@@ -19,7 +19,7 @@ use Drupal\tool\TypedData\InputDefinition;
 #[Tool(
   id: 'mcp_sitemap_update_settings',
   label: new TranslatableMarkup('Update Sitemap Settings'),
-  description: new TranslatableMarkup('Update settings for a sitemap variant. This is a write operation.'),
+  description: new TranslatableMarkup('Update settings for a sitemap variant.'),
   operation: ToolOperation::Write,
   input_definitions: [
     'variant' => new InputDefinition(
@@ -44,7 +44,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'updated_settings' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Updated Settings'),
-      description: new TranslatableMarkup('The settings now in effect for this variant. Use Regenerate to rebuild the sitemap with new settings.'),
+      description: new TranslatableMarkup('The settings now in effect for this variant. Use mcp_sitemap_regenerate to rebuild the sitemap with new settings.'),
     ),
     'message' => new OutputDefinition(
       data_type: 'string',

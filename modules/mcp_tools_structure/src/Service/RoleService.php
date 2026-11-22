@@ -5,10 +5,13 @@ declare(strict_types=1);
 namespace Drupal\mcp_tools_structure\Service;
 
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Session\AccountInterface;
 use Drupal\mcp_tools\Service\AccessManager;
+use Drupal\mcp_tools\Service\AdminRoles;
 use Drupal\mcp_tools\Service\AuditLogger;
 use Drupal\user\Entity\Role;
 use Drupal\user\PermissionHandlerInterface;
+use Drupal\user\RoleInterface;
 
 /**
  * Service for managing roles and permissions.
@@ -57,6 +60,7 @@ class RoleService {
     protected PermissionHandlerInterface $permissionHandler,
     protected AccessManager $accessManager,
     protected AuditLogger $auditLogger,
+    protected ?AccountInterface $currentUser = NULL,
   ) {}
 
   /**
@@ -263,10 +267,14 @@ class RoleService {
         $role->save();
       }
 
-      $this->auditLogger->logSuccess('create_role', 'user_role', $id, [
+      [$trail, $note] = $this->restrictedTrail($validationResult['restricted']);
+      // With a permission for trusted roles only the line is one a person
+      // should look at.
+      $log = $trail === [] ? 'logSuccess' : 'logSensitive';
+      $this->auditLogger->$log('create_role', 'user_role', $id, [
         'label' => $label,
         'permissions' => $grantedPermissions,
-      ]);
+      ] + $trail);
 
       return [
         'success' => TRUE,
@@ -274,7 +282,7 @@ class RoleService {
           'id' => $id,
           'label' => $label,
           'permissions_granted' => $grantedPermissions,
-          'message' => "Role '$label' ($id) created successfully.",
+          'message' => "Role '$label' ($id) created successfully." . $note,
           'admin_path' => "/admin/people/roles/manage/$id",
         ],
       ];
@@ -310,6 +318,15 @@ class RoleService {
       return [
         'success' => FALSE,
         'error' => "Cannot delete core role '$id'.",
+      ];
+    }
+
+    // And of an administrator role, by its flag or by its name: with it
+    // go the rights of every administrator but user 1.
+    if (AdminRoles::isAdmin($this->entityTypeManager, $id)) {
+      return [
+        'success' => FALSE,
+        'error' => "Cannot delete the administrator role '$id' via MCP.",
       ];
     }
 
@@ -390,7 +407,7 @@ class RoleService {
     }
 
     // Validate permissions.
-    $validationResult = $this->validatePermissions($permissions);
+    $validationResult = $this->validatePermissions($permissions, $roleId);
     if (!$validationResult['valid']) {
       return [
         'success' => FALSE,
@@ -416,10 +433,12 @@ class RoleService {
         $role->save();
       }
 
-      $this->auditLogger->logSuccess('grant_permissions', 'user_role', $roleId, [
+      [$trail, $note] = $this->restrictedTrail(array_values(array_intersect($granted, $validationResult['restricted'])));
+      $log = $trail === [] ? 'logSuccess' : 'logSensitive';
+      $this->auditLogger->$log('grant_permissions', 'user_role', $roleId, [
         'granted' => $granted,
         'already_had' => $alreadyHad,
-      ]);
+      ] + $trail);
 
       return [
         'success' => TRUE,
@@ -427,7 +446,7 @@ class RoleService {
           'role' => $roleId,
           'granted' => $granted,
           'already_had' => $alreadyHad,
-          'message' => count($granted) . ' permission(s) granted to ' . $role->label() . '.',
+          'message' => count($granted) . ' permission(s) granted to ' . $role->label() . '.' . $note,
         ],
       ];
     }
@@ -518,14 +537,22 @@ class RoleService {
    *
    * @param array $permissions
    *   Permissions to validate.
+   * @param string|null $roleId
+   *   The role that would get them, when it is there already.
    *
    * @return array
-   *   ['valid' => bool, 'error' => string|null].
+   *   ['valid' => bool, 'error' => string|null, 'restricted' => string[]].
+   *   'restricted' names the permissions for trusted roles only that the
+   *   admin scope lets through, for the audit log.
    */
-  protected function validatePermissions(array $permissions): array {
+  protected function validatePermissions(array $permissions, ?string $roleId = NULL): array {
     $allPermissions = $this->permissionHandler->getPermissions();
     $invalid = [];
     $dangerous = [];
+    $needAdminScope = [];
+    $forEveryone = [];
+    $raisesTheCaller = [];
+    $restricted = [];
 
     foreach ($permissions as $permission) {
       if (!isset($allPermissions[$permission])) {
@@ -533,6 +560,33 @@ class RoleService {
       }
       elseif (in_array($permission, self::DANGEROUS_PERMISSIONS)) {
         $dangerous[] = $permission;
+      }
+      // MCP Tools' own permissions say which tools a user may call. A
+      // session must not widen that for its own role, or for any other.
+      elseif (str_starts_with((string) ($allPermissions[$permission]['provider'] ?? ''), 'mcp_tools')) {
+        $dangerous[] = $permission;
+      }
+      // What Drupal itself marks "give to trusted roles only", of every
+      // module, and not on the list above. The admin scope is the gate.
+      elseif (!empty($allPermissions[$permission]['restrict access'])) {
+        if (!$this->accessManager->hasScope(AccessManager::SCOPE_ADMIN)) {
+          $needAdminScope[] = $permission;
+        }
+        // Not for the two roles that are every visitor and every logged-in
+        // user.
+        elseif (in_array($roleId, [RoleInterface::ANONYMOUS_ID, RoleInterface::AUTHENTICATED_ID], TRUE)) {
+          $forEveryone[] = $permission;
+        }
+        // And a connection does not raise itself: not for a role its own
+        // user has, unless that user has the permission already.
+        elseif ($roleId !== NULL && $this->currentUser !== NULL
+          && in_array($roleId, $this->currentUser->getRoles(), TRUE)
+          && !$this->currentUser->hasPermission($permission)) {
+          $raisesTheCaller[] = $permission;
+        }
+        else {
+          $restricted[] = $permission;
+        }
       }
     }
 
@@ -543,14 +597,69 @@ class RoleService {
       ];
     }
 
+    $refused = [];
     if (!empty($dangerous)) {
-      return [
-        'valid' => FALSE,
-        'error' => 'Cannot grant dangerous permissions via MCP: ' . implode(', ', $dangerous),
-      ];
+      $refused[] = 'Cannot grant dangerous permissions via MCP: ' . implode(', ', $dangerous) . '. A person can grant them on the permissions page.';
+    }
+    if (!empty($needAdminScope)) {
+      $refused[] = 'Not granted, these are for trusted roles only and need the admin scope: ' . implode(', ', $needAdminScope) . '.';
+    }
+    if (!empty($forEveryone)) {
+      $refused[] = 'Not granted to the role "' . $roleId . '", which is every visitor or every logged-in user. These are for trusted roles only: ' . implode(', ', $forEveryone) . '.';
+    }
+    if (!empty($raisesTheCaller)) {
+      $refused[] = 'Not granted to the role "' . $roleId . '": the user this connection runs as has that role, and a connection does not raise itself. These are for trusted roles only: ' . implode(', ', $raisesTheCaller) . '. A person can grant them on the permissions page.';
+    }
+    if (!empty($refused)) {
+      return ['valid' => FALSE, 'error' => implode(' ', $refused)];
     }
 
-    return ['valid' => TRUE, 'error' => NULL];
+    return ['valid' => TRUE, 'error' => NULL, 'restricted' => $restricted];
+  }
+
+  /**
+   * The permissions of a call that need a yes from a person first.
+   *
+   * Those are the permissions for trusted roles only that the call would
+   * grant. A call that is refused anyway has none: nobody is asked to
+   * confirm what does not happen.
+   *
+   * @param array $permissions
+   *   The permissions the call names.
+   * @param string $roleId
+   *   The role that would get them.
+   * @param bool $newRole
+   *   Whether the call makes the role (TRUE) or adds to one (FALSE).
+   *
+   * @return string[]
+   *   Their names.
+   */
+  public function restrictedToGrant(array $permissions, string $roleId, bool $newRole): array {
+    $exists = $this->entityTypeManager->getStorage('user_role')->load($roleId) !== NULL;
+    if ($exists === $newRole) {
+      return [];
+    }
+    $validationResult = $this->validatePermissions($permissions, $newRole ? NULL : $roleId);
+    return $validationResult['valid'] ? $validationResult['restricted'] : [];
+  }
+
+  /**
+   * What a grant of permissions for trusted roles only adds to the trail.
+   *
+   * @param string[] $restricted
+   *   Those of the granted permissions that are for trusted roles only.
+   *
+   * @return array
+   *   The detail for the audit line, and the sentence for the answer.
+   */
+  protected function restrictedTrail(array $restricted): array {
+    if ($restricted === []) {
+      return [[], ''];
+    }
+    return [
+      ['restrict_access' => $restricted],
+      ' Drupal marks these for trusted roles only: ' . implode(', ', $restricted) . '. The audit log names them.',
+    ];
   }
 
 }

@@ -70,7 +70,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'submissions' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Submissions'),
-      description: new TranslatableMarkup('Array of submission objects with sid, created, remote_addr, and data. Use sid with DeleteSubmission to remove.'),
+      description: new TranslatableMarkup('Array of submission objects with sid, created, remote_addr, and data. Use sid with mcp_delete_webform_submission to remove.'),
     ),
   ],
 )]

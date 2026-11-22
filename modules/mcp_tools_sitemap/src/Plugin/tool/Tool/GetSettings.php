@@ -33,7 +33,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'variant' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Variant ID'),
-      description: new TranslatableMarkup('The sitemap variant ID (e.g., "default"). Use with UpdateSettings or Regenerate.'),
+      description: new TranslatableMarkup('The sitemap variant ID (e.g., "default"). Use with mcp_sitemap_update_settings or mcp_sitemap_regenerate.'),
     ),
     'label' => new OutputDefinition(
       data_type: 'string',
@@ -43,12 +43,12 @@ use Drupal\tool\TypedData\InputDefinition;
     'global_settings' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Global Settings'),
-      description: new TranslatableMarkup('Global sitemap settings: max_links, cron_generate, base_url, and other configuration. Use UpdateSettings to modify.'),
+      description: new TranslatableMarkup('Global sitemap settings: max_links, cron_generate, base_url, and other configuration. Use mcp_sitemap_update_settings to modify.'),
     ),
     'entity_types' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Entity Type Settings'),
-      description: new TranslatableMarkup('Per-entity-type settings with bundle configurations. Keys are entity type IDs. Use GetEntitySettings for detailed bundle info.'),
+      description: new TranslatableMarkup('Per-entity-type settings with bundle configurations. Keys are entity type IDs. Use mcp_sitemap_entity_settings for detailed bundle info.'),
     ),
   ],
 )]

@@ -19,7 +19,7 @@ use Drupal\tool\TypedData\InputDefinition;
 #[Tool(
   id: 'mcp_assign_user_roles',
   label: new TranslatableMarkup('Assign User Roles'),
-  description: new TranslatableMarkup("Assign roles to a user. The 'administrator' role is blocked."),
+  description: new TranslatableMarkup("Assign roles to a user. Administrator roles are blocked."),
   operation: ToolOperation::Write,
   input_definitions: [
     'uid' => new InputDefinition(
@@ -31,7 +31,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'roles' => new InputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Roles'),
-      description: new TranslatableMarkup('Array of role machine names to add. Use GetRoles to see available roles. "administrator" is blocked.'),
+      description: new TranslatableMarkup('Array of role machine names to add. Use mcp_tools_get_roles to see available roles. Administrator roles are blocked.'),
       required: TRUE,
     ),
   ],

@@ -30,7 +30,7 @@ use Drupal\tool\Tool\ToolOperation;
     'workflows' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Workflows'),
-      description: new TranslatableMarkup('Array of workflows with id, label, states, and transitions. Use id with GetWorkflow for details.'),
+      description: new TranslatableMarkup('Array of workflows with id, label, states, and transitions. Use id with mcp_moderation_get_workflow for details.'),
     ),
   ],
 )]

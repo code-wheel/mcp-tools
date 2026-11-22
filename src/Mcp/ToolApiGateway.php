@@ -85,6 +85,11 @@ class ToolApiGateway {
   }
 
   /**
+   * What a model is told after a tool name that does not exist.
+   */
+  public const FIND_HINT = ' Find tools with ' . self::DISCOVER_TOOL . '.';
+
+  /**
    * Words in a search that say nothing about the tool that is wanted.
    */
   private const SEARCH_FILLER_WORDS = ['the', 'and', 'for', 'with', 'all', 'any', 'tool', 'tools'];
@@ -135,7 +140,7 @@ class ToolApiGateway {
           return FiberIsolation::run(fn(): CallToolResult => $this->discoverTools($query, $limit));
         },
         'name' => self::DISCOVER_TOOL,
-        'description' => 'List available MCP Tools with optional filtering.',
+        'description' => 'Find tools by keyword. Each match comes with its description and the names of its inputs.',
         'annotations' => ToolAnnotations::fromArray([
           'title' => 'Discover Tools',
           'readOnlyHint' => TRUE,
@@ -237,7 +242,7 @@ class ToolApiGateway {
         'mode' => 'overview',
         'total' => count($allTools),
         'groups' => array_values($groups),
-        'hint' => 'Pass query (a keyword, tool name fragment, or provider from this list) to get matching tools with descriptions, then ' . self::GET_INFO_TOOL . ' for the input schema.',
+        'hint' => 'Pass query (a keyword, tool name fragment, or provider from this list) to get matching tools with descriptions and input names, then ' . self::GET_INFO_TOOL . ' for the full input schema.',
       ];
       // Three examples a group cannot show the one tool most first
       // questions need. Name it, when this session has it.
@@ -254,11 +259,14 @@ class ToolApiGateway {
     // ("node type" for a content type) finds nothing that way, so the
     // words are then tried one by one: the tools that have all of them,
     // and failing that the tools that have some, most words first.
-    $needle = strtolower($query);
-    $words = array_values(array_unique(array_filter(
+    // A plural finds what its singular finds: the tools are named
+    // ..._view and ..._content_type, and a model asks for "views" and
+    // "content types".
+    $needle = self::singular(strtolower($query));
+    $words = array_values(array_unique(array_map(self::singular(...), array_filter(
       preg_split('/[^a-z0-9_]+/', $needle) ?: [],
       static fn(string $word): bool => strlen($word) > 2 && !in_array($word, self::SEARCH_FILLER_WORDS, TRUE),
-    )));
+    ))));
     $byPhrase = [];
     $byWords = [];
     /** @var \CodeWheel\McpToolGateway\ToolInfo $toolInfo */
@@ -274,21 +282,26 @@ class ToolApiGateway {
       }
     }
 
+    // Best match first: a model often asks for ten and reads no further.
+    $best = static fn(array $tools): array => self::nameMatchesFirst($tools, $words);
     $match = NULL;
-    $found = $byPhrase;
+    $found = $best($byPhrase);
     if ($found === [] && $words !== []) {
       if (isset($byWords[count($words)])) {
-        $found = $byWords[count($words)];
+        $found = $best($byWords[count($words)]);
         $match = 'all words';
       }
       elseif ($byWords !== []) {
         krsort($byWords);
-        $found = array_merge(...array_values($byWords));
+        $found = array_merge(...array_map($best, array_values($byWords)));
         $match = 'some words';
       }
     }
 
-    $tools = array_map(static fn($toolInfo) => $toolInfo->toDiscoverySummary(), array_slice($found, 0, $limit));
+    $tools = array_map(
+      static fn($toolInfo) => $toolInfo->toDiscoverySummary() + ['inputs' => self::inputNames($toolInfo->inputSchema)],
+      array_slice($found, 0, $limit),
+    );
     $structured = [
       'success' => TRUE,
       'count' => count($tools),
@@ -312,12 +325,99 @@ class ToolApiGateway {
   }
 
   /**
+   * Puts the tools whose name has the search words first.
+   *
+   * A word in a tool's name says more than the same word somewhere in its
+   * description: "view" finds the config tool too ("View a specific
+   * configuration object"). A word counts when a word of the name starts
+   * with it, so "view" is in mcp_create_view and not in
+   * mcp_config_preview. The more of the words a name has the better, and
+   * a short name that is mostly those words comes before a long one. A
+   * word in the label counts half. Tools with the same score keep the
+   * order of the catalog.
+   *
+   * @param \CodeWheel\McpToolGateway\ToolInfo[] $tools
+   *   The tools that matched.
+   * @param string[] $words
+   *   The words of the search, in lower case.
+   *
+   * @return \CodeWheel\McpToolGateway\ToolInfo[]
+   *   The same tools, best match first.
+   */
+  private static function nameMatchesFirst(array $tools, array $words): array {
+    $split = static fn(string $text): array => array_values(array_diff(
+      preg_split('/[^a-z0-9]+/', strtolower($text)) ?: [],
+      ['', 'mcp', 'tools'],
+    ));
+    $has = static fn(array $parts, string $word): bool => array_filter($parts, static fn(string $part): bool => str_starts_with($part, $word)) !== [];
+    $scores = [];
+    foreach ($tools as $key => $toolInfo) {
+      $nameWords = $split((string) $toolInfo->name);
+      $labelWords = $split((string) $toolInfo->label);
+      $inName = count(array_filter($words, static fn(string $word): bool => $has($nameWords, $word)));
+      $inLabel = count(array_filter($words, static fn(string $word): bool => !$has($nameWords, $word) && $has($labelWords, $word)));
+      $scores[$key] = 2 * $inName + $inLabel + ($inName > 0 ? $inName / max(1, count($nameWords)) : 0);
+    }
+    $order = array_keys($tools);
+    usort($order, static fn(int $a, int $b): int => [$scores[$b], $a] <=> [$scores[$a], $b]);
+    return array_map(static fn(int $key) => $tools[$key], $order);
+  }
+
+  /**
+   * A search text without the plural ending of its last word.
+   *
+   * What is left is the start of both forms ("view" of "views", "vocabular"
+   * of "vocabulary" and "vocabularies"), and the search looks for it
+   * anywhere in a tool's texts. So the plural finds everything the
+   * singular finds. A word that only ends in s loses it too ("status"
+   * becomes "statu") and still finds itself. A short word is left alone:
+   * "news" would become "new" and find every "Create a new ...".
+   */
+  private static function singular(string $text): string {
+    if (!preg_match('/[a-z0-9]+$/', $text, $last) || strlen($last[0]) < 5) {
+      return $text;
+    }
+    $cut = match (TRUE) {
+      strlen($last[0]) > 6 && str_ends_with($last[0], 'ies') => 3,
+      (bool) preg_match('/(s|x|z|ch|sh)es$/', $last[0]) => 2,
+      str_ends_with($last[0], 's') && !str_ends_with($last[0], 'ss') => 1,
+      default => 0,
+    };
+    return $cut > 0 ? substr($text, 0, -$cut) : $text;
+  }
+
+  /**
+   * The names of a tool's inputs, the required ones apart.
+   *
+   * A model that has found a tool often calls it at once and guesses the
+   * names of the arguments ("title" where the tool takes "query"). The
+   * names in the search result cost a few tokens and save that call.
+   *
+   * @param array<string, mixed> $inputSchema
+   *   The tool's input schema.
+   *
+   * @return array{required: string[], optional: string[]}
+   *   The input names.
+   */
+  private static function inputNames(array $inputSchema): array {
+    $properties = $inputSchema['properties'] ?? [];
+    $names = is_array($properties) ? array_map('strval', array_keys($properties)) : [];
+    $required = array_values(array_intersect($names, (array) ($inputSchema['required'] ?? [])));
+    return ['required' => $required, 'optional' => array_values(array_diff($names, $required))];
+  }
+
+  /**
    * Returns schema and hints for a single tool.
    */
   public function getToolInfo(string $tool_name): CallToolResult {
     $toolInfo = $this->toolProvider->getTool($tool_name);
     if ($toolInfo === NULL) {
-      return $this->errorResult('Unknown tool: ' . $tool_name);
+      // A name a model made up: say which real names are close.
+      $closest = ToolNameSuggester::closest($tool_name, array_map(static fn($info): string => (string) $info->name, $this->toolProvider->getTools()));
+      return $this->errorResult(
+        'Unknown tool: ' . $tool_name . ($closest !== [] ? '. Did you mean ' . implode(', ', $closest) . '?' : '.') . self::FIND_HINT,
+        $closest !== [] ? ['did_you_mean' => $closest] : [],
+      );
     }
 
     $structured = [
@@ -340,6 +440,11 @@ class ToolApiGateway {
       return $this->errorResult('Arguments must be an object.', ['tool' => $tool_name]);
     }
 
+    // The gateway's own three tools are not behind this one.
+    if (in_array($tool_name, [self::DISCOVER_TOOL, self::GET_INFO_TOOL, self::EXECUTE_TOOL], TRUE)) {
+      return $this->errorResult($tool_name . ' is not run through ' . self::EXECUTE_TOOL . '. Call it by its own name.', ['tool' => $tool_name]);
+    }
+
     $request = (new CallToolRequest($tool_name, $arguments))->withId('mcp_tools_gateway');
     $response = $this->toolExecutor->handle($request, $context->getSession());
 
@@ -348,7 +453,13 @@ class ToolApiGateway {
     }
 
     if ($response instanceof Error) {
-      return $this->errorResult($response->message, [
+      // The handler has added the closest names to "Unknown tool". Here
+      // the model also has a tool to look for more.
+      $message = $response->message;
+      if ($response->code === Error::METHOD_NOT_FOUND) {
+        $message = rtrim($message, '.') . (str_ends_with($message, '?') ? '' : '.') . self::FIND_HINT;
+      }
+      return $this->errorResult($message, [
         'tool' => $tool_name,
         'code' => $response->code,
       ]);

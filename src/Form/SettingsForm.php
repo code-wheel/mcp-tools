@@ -129,7 +129,7 @@ class SettingsForm extends ConfigFormBase {
     $form['access']['allowed_scopes'] = [
       '#type' => 'checkboxes',
       '#title' => $this->t('Allowed scopes (maximum)'),
-      '#description' => $this->t('Maximum scopes that can ever be granted to an MCP connection. Any requested scopes (header/query/env) are intersected with this list. <strong>Recommended:</strong> do not allow "admin" unless strictly needed.'),
+      '#description' => $this->t('Maximum scopes that can ever be granted to an MCP connection. Any requested scopes (an API key, a header, the query, the environment, a server profile, or --scope on the command line) are intersected with this list. <strong>Recommended:</strong> do not allow "admin" unless strictly needed.'),
       '#options' => [
         'read' => $this->t('Read'),
         'write' => $this->t('Write'),
@@ -168,8 +168,8 @@ class SettingsForm extends ConfigFormBase {
 
     $form['access']['confirm_destructive_tools'] = [
       '#type' => 'checkbox',
-      '#title' => $this->t('Destructive tools of other modules need a confirmation'),
-      '#description' => $this->t('A tool of another module that declares itself destructive is run after the user of the client confirmed it, when the client can ask. Tick this to refuse such a tool for clients that cannot ask. Without it they get the tool run.'),
+      '#title' => $this->t('Strong calls need a confirmation'),
+      '#description' => $this->t('Three kinds of call are run after the user of the client confirmed them, when the client can ask: a tool that declares itself destructive, a grant of a permission for trusted roles only, and a recipe that was written through MCP and that no person has reviewed. Tick this to refuse such a call for clients that cannot ask. Without it they get it run, and the audit log says so.'),
       '#default_value' => $config->get('access.confirm_destructive_tools') ?? FALSE,
     ];
 

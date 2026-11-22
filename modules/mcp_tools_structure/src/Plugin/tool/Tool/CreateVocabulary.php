@@ -45,7 +45,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'id' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Vocabulary ID'),
-      description: new TranslatableMarkup('Machine name of the created vocabulary. Use with CreateTerm and AddField target_bundles.'),
+      description: new TranslatableMarkup('Machine name of the created vocabulary. Use with mcp_structure_create_term and mcp_structure_add_field target_bundles.'),
     ),
     'label' => new OutputDefinition(
       data_type: 'string',

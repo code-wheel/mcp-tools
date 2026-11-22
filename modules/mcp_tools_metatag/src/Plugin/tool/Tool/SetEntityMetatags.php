@@ -19,7 +19,7 @@ use Drupal\tool\TypedData\InputDefinition;
 #[Tool(
   id: 'mcp_metatag_set_entity',
   label: new TranslatableMarkup('Set Entity Metatags'),
-  description: new TranslatableMarkup('Set metatags on a specific entity (node, term, user, etc.). This is a write operation.'),
+  description: new TranslatableMarkup('Set metatags on a specific entity (node, term, user, etc.).'),
   operation: ToolOperation::Write,
   input_definitions: [
     'entity_type' => new InputDefinition(
@@ -60,7 +60,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'tags_updated' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Tags Updated'),
-      description: new TranslatableMarkup('List of metatag keys that were set or modified. Use GetEntityMetatags to verify the changes.'),
+      description: new TranslatableMarkup('List of metatag keys that were set or modified. Use mcp_metatag_get_entity to verify the changes.'),
     ),
     'message' => new OutputDefinition(
       data_type: 'string',

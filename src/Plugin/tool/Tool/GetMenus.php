@@ -30,7 +30,7 @@ use Drupal\tool\Tool\ToolOperation;
     'menus' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Menus'),
-      description: new TranslatableMarkup('Array of menus with id (machine name), label, description, and link_count. Use id with GetMenuTree or AddMenuLink.'),
+      description: new TranslatableMarkup('Array of menus with id (machine name), label, description, and link_count. Use id with mcp_tools_get_menu_tree or mcp_menus_add_menu_link.'),
     ),
   ],
 )]

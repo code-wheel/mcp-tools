@@ -26,7 +26,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'id' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Paragraph Type ID'),
-      description: new TranslatableMarkup('Machine name of the paragraph type to delete. Use ListParagraphTypes to see available types.'),
+      description: new TranslatableMarkup('Machine name of the paragraph type to delete. Use mcp_paragraphs_list_types to see available types.'),
       required: TRUE,
     ),
     'force' => new InputDefinition(
@@ -41,7 +41,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'id' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Deleted Paragraph Type ID'),
-      description: new TranslatableMarkup('Machine name of the deleted paragraph type. Use CreateParagraphType to recreate if needed.'),
+      description: new TranslatableMarkup('Machine name of the deleted paragraph type. Use mcp_paragraphs_create_type to recreate if needed.'),
     ),
     'message' => new OutputDefinition(
       data_type: 'string',

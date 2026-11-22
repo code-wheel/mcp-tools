@@ -50,19 +50,28 @@ whole list, which fits a small context:
 drush mcp-tools:serve --quiet --uid=1 --scope=read,write --gateway
 ```
 
-What we measured with this release: twelve site tasks, each checked on
-the site itself, with `gpt-oss:20b` under Ollama 0.40.17 on one graphics
-card (an RTX 5090).
+What we measured: twelve site tasks (make a content type, add a field,
+create and unpublish an item, a role, a user, a menu link, a view, a
+redirect and more), each checked on the site itself and not by what the
+model said. Everything ran with 1.0.0-beta20 under Ollama 0.40.17 on one
+graphics card (an RTX 5090), on 2026-11-21. The numbers are tasks done
+out of twelve, one number per run.
 
-- With a small test client of our own: all twelve in nine runs out of
-  ten, eleven in the tenth.
-- With Claude Code as the client: all twelve in five runs out of six,
-  eleven in the sixth.
+| Model | Our small test client | Claude Code as the client |
+|---|---|---|
+| `gpt-oss:20b` | 12 in nine runs of ten, 11 in one | 12 in five runs of six, 11 in one |
+| `qwen3.8:27b` | 12, 12, 12, 12 | 12, 12, 12 |
+| `qwen3.6:27b` | 12, 12, 12, 12 | 12, 12, 12 |
+| `muse-glimmer:30b` | 11, 11, 11, 12 | 10, 12, 12 |
+| `mimo-v2.6:9b` (q4_K_M) | 11, 11, 11, 12 | 12, 12, 12 |
 
-In both misses the model slipped, not the server: once it created an item
-unpublished, once it asked a question back and did nothing. A smaller
-model, `qwen3:8b`, did five or six of the twelve when we tried it with
-1.0.0-beta19, so the size of the model matters.
+Three or four runs are a small sample. Read the table as "these models
+can do it", not as a ranking. Where a task was missed, the model
+slipped: it created an item unpublished, asked a question back and did
+nothing, wrote a tool call out as text, or stopped with an empty answer.
+A smaller model, `qwen3:8b`,
+did five or six of the twelve when we tried it with 1.0.0-beta19, so
+size still matters below a point.
 
 Claude Code can be the client because Ollama speaks its message format.
 No cloud model is involved:
@@ -72,17 +81,36 @@ ANTHROPIC_BASE_URL=http://localhost:11434 ANTHROPIC_AUTH_TOKEN=ollama \
   claude --model gpt-oss:20b
 ```
 
-OpenCode, fast-agent and Goose also ran the tasks with a local model: 10
-or 11 of the twelve, in one run each with 1.0.0-beta19. We have not
-measured them with this release yet.
+Other clients, with `gpt-oss:20b`, three runs each, first with
+1.0.0-beta20 and then with 1.0.0-beta21: fast-agent did 11, 12, 11 and
+then 12, 12, 12. Goose did 9, 11, 12 and then 12, 12, 11. OpenCode did
+12, 12, 12 and then 12, 8, 12. In its bad run the model called our tools
+in a way OpenCode does not offer and then answered from guesses. That
+happens with either version, and three runs do not tell them apart. We
+drive each client from a script without a person at the keyboard, so
+your results by hand may differ.
+
+Inside the site, with Drupal AI and our `mcp_tools_ai` bridge
+(experimental): `gpt-oss:20b` did 11, 12 and 12 with 1.0.0-beta21, given
+the 72 tools of seven of our modules. All 227 do not fit a local model's
+context that way. The one miss was an error of Drupal AI itself, when
+the model called a function it had not been offered.
+
+1.0.0-beta21 answers a made-up tool name with the closest real ones,
+names each found tool's inputs and puts the best match first. With it
+`gpt-oss:20b` did the same twelve tasks in all ten runs with about a
+fifth fewer tool calls (41 a run, down from 52). With Claude Code as
+the client it did 12, 12 and 12. The other four models have not run on
+1.0.0-beta21 yet. The 1.0.0-beta21 runs on this page were made before
+its last security changes and were not repeated after them.
 
 Three things to know before you judge a model:
 
 - The Ollama version matters. The same model scored lower after an Ollama
-  upgrade, until this release made gateway mode more forgiving. Try your
+  upgrade, until 1.0.0-beta20 made gateway mode more forgiving. Try your
   own tasks.
 - A small model often calls a tool by the name it found, and not through
-  the run tool. From this release that works.
+  the run tool. From 1.0.0-beta20 that works.
 - `ollama ps` has to say "100% GPU". When ours ran on the processor after
   a reboot, its context was also down to 4,096 tokens, which is too small
   for any of this.

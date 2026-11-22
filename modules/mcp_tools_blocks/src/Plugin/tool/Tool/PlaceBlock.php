@@ -25,13 +25,13 @@ use Drupal\tool\TypedData\InputDefinition;
     'plugin_id' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Block Plugin ID'),
-      description: new TranslatableMarkup('Block plugin ID from ListAvailableBlocks (e.g., "system_branding_block", "views_block:frontpage-block_1").'),
+      description: new TranslatableMarkup('Block plugin ID from mcp_list_available_blocks (e.g., "system_branding_block", "views_block:frontpage-block_1").'),
       required: TRUE,
     ),
     'region' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Theme Region'),
-      description: new TranslatableMarkup('Region machine name from ListRegions (e.g., "sidebar_first", "content", "footer").'),
+      description: new TranslatableMarkup('Region machine name from mcp_list_regions (e.g., "sidebar_first", "content", "footer").'),
       required: TRUE,
     ),
     'theme' => new InputDefinition(
@@ -81,7 +81,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'block_id' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Block ID'),
-      description: new TranslatableMarkup('Config entity ID of the placed block. Use with ConfigureBlock or RemoveBlock.'),
+      description: new TranslatableMarkup('Config entity ID of the placed block. Use with mcp_configure_block or mcp_remove_block.'),
     ),
     'plugin_id' => new OutputDefinition(
       data_type: 'string',

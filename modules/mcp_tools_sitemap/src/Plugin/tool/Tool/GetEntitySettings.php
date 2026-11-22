@@ -49,7 +49,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'settings' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Sitemap Settings'),
-      description: new TranslatableMarkup('Sitemap settings for the bundle: index (bool), priority (0.0-1.0), changefreq, include_images. Use SetEntitySettings to modify.'),
+      description: new TranslatableMarkup('Sitemap settings for the bundle: index (bool), priority (0.0-1.0), changefreq, include_images. Use mcp_sitemap_set_entity to modify.'),
     ),
     'bundles' => new OutputDefinition(
       data_type: 'map',

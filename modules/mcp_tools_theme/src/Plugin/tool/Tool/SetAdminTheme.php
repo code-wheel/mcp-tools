@@ -33,7 +33,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'theme' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Theme'),
-      description: new TranslatableMarkup('Machine name of the new admin theme. Use GetThemeSettings to view its configuration.'),
+      description: new TranslatableMarkup('Machine name of the new admin theme. Use mcp_theme_get_settings to view its configuration.'),
     ),
     'previous_admin' => new OutputDefinition(
       data_type: 'string',

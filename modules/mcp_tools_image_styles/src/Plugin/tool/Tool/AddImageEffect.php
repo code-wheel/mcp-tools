@@ -52,7 +52,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'effect_uuid' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Effect UUID'),
-      description: new TranslatableMarkup('UUID of the added effect. Use with RemoveImageEffect to remove.'),
+      description: new TranslatableMarkup('UUID of the added effect. Use with mcp_image_styles_remove_effect to remove.'),
     ),
   ],
 )]

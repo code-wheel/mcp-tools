@@ -8,6 +8,7 @@ use Drupal\mcp_tools_structure\Service\RoleService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\mcp_tools\Tool\AsksFirstInterface;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
 use Drupal\tool\Tool\ToolOperation;
@@ -45,7 +46,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'id' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Role ID'),
-      description: new TranslatableMarkup('Machine name of the created role. Use with AssignUserRoles and GrantPermissions.'),
+      description: new TranslatableMarkup('Machine name of the created role. Use with mcp_assign_user_roles and mcp_structure_grant_permissions.'),
     ),
     'label' => new OutputDefinition(
       data_type: 'string',
@@ -64,7 +65,7 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
 )]
-class CreateRole extends McpToolsToolBase {
+class CreateRole extends McpToolsToolBase implements AsksFirstInterface {
 
   protected const MCP_CATEGORY = 'structure';
 
@@ -97,6 +98,27 @@ class CreateRole extends McpToolsToolBase {
     }
 
     return $this->roleService->createRole($id, $label, $input['permissions'] ?? []);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function reasonToAsk(array $arguments): ?string {
+    $role = $arguments['id'] ?? '';
+    $permissions = $arguments['permissions'] ?? [];
+    if (!is_string($role) || $role === '' || !is_array($permissions)) {
+      return NULL;
+    }
+    $restricted = $this->roleService->restrictedToGrant($permissions, $role, TRUE);
+    if ($restricted === []) {
+      return NULL;
+    }
+    return sprintf(
+      'The role "%s" would get %s that Drupal marks for trusted roles only: %s.',
+      $role,
+      count($restricted) === 1 ? 'a permission' : 'permissions',
+      implode(', ', $restricted),
+    );
   }
 
 }

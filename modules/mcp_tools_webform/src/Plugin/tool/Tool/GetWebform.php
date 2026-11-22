@@ -25,7 +25,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'id' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Webform ID'),
-      description: new TranslatableMarkup('Machine name of the webform to retrieve. Use ListWebforms to find available webforms.'),
+      description: new TranslatableMarkup('Machine name of the webform to retrieve. Use mcp_list_webforms to find available webforms.'),
       required: TRUE,
     ),
   ],
@@ -53,7 +53,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'elements' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Elements'),
-      description: new TranslatableMarkup('Form element definitions with #type, #title, #required, etc. Use with UpdateWebform to modify.'),
+      description: new TranslatableMarkup('Form element definitions with #type, #title, #required, etc. Use with mcp_update_webform to modify.'),
     ),
     'settings' => new OutputDefinition(
       data_type: 'map',

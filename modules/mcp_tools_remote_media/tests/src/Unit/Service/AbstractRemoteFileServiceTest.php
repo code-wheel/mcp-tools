@@ -170,6 +170,7 @@ class AbstractRemoteFileServiceTest extends UnitTestCase {
    *
    * @dataProvider invalidDirectoryProvider
    */
+  #[\PHPUnit\Framework\Attributes\DataProvider('invalidDirectoryProvider')]
   public function testValidateDirectoryRejectsInvalidPaths(string $directory): void {
     $stub = $this->buildServiceStub();
     $result = $stub->exposeValidateDirectory($directory);
@@ -242,6 +243,7 @@ class AbstractRemoteFileServiceTest extends UnitTestCase {
    *
    * @dataProvider privateIpUrlProvider
    */
+  #[\PHPUnit\Framework\Attributes\DataProvider('privateIpUrlProvider')]
   public function testValidateNotInternalUrlBlocksPrivateIps(string $url): void {
     $stub = $this->buildServiceStub();
     $result = $stub->exposeValidateNotInternalUrl($url);

@@ -19,13 +19,13 @@ use Drupal\tool\TypedData\InputDefinition;
 #[Tool(
   id: 'mcp_update_user',
   label: new TranslatableMarkup('Update User'),
-  description: new TranslatableMarkup("Update an existing user's email, status, or roles. Cannot modify uid 1."),
+  description: new TranslatableMarkup("Update an existing user's email, status, or roles. Cannot modify uid 1 or another administrator."),
   operation: ToolOperation::Write,
   input_definitions: [
     'uid' => new InputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('User ID'),
-      description: new TranslatableMarkup('User ID to update. Get from GetUsers or CreateUser. Cannot modify uid 1.'),
+      description: new TranslatableMarkup('User ID to update. Get from mcp_tools_get_users or mcp_create_user. Cannot modify uid 1.'),
       required: TRUE,
     ),
     'updates' => new InputDefinition(

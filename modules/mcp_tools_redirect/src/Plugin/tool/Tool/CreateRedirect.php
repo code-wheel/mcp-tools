@@ -19,7 +19,7 @@ use Drupal\tool\TypedData\InputDefinition;
 #[Tool(
   id: 'mcp_redirect_create',
   label: new TranslatableMarkup('Create Redirect'),
-  description: new TranslatableMarkup('Create a new URL redirect. This is a write operation.'),
+  description: new TranslatableMarkup('Create a new URL redirect.'),
   operation: ToolOperation::Write,
   input_definitions: [
     'source' => new InputDefinition(
@@ -51,7 +51,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'redirect' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Created Redirect'),
-      description: new TranslatableMarkup('The created redirect object containing id, source, destination, status_code, and language. Use id with GetRedirect, UpdateRedirect, or DeleteRedirect tools.'),
+      description: new TranslatableMarkup('The created redirect object containing id, source, destination, status_code, and language. Use id with mcp_redirect_get, mcp_redirect_update, or mcp_redirect_delete tools.'),
     ),
     'message' => new OutputDefinition(
       data_type: 'string',

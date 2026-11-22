@@ -52,7 +52,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'id' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Content Type ID'),
-      description: new TranslatableMarkup('Machine name of the created content type. Use with AddField and CreateContent.'),
+      description: new TranslatableMarkup('Machine name of the created content type. Use with mcp_structure_add_field and mcp_create_content.'),
     ),
     'label' => new OutputDefinition(
       data_type: 'string',

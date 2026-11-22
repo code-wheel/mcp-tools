@@ -30,7 +30,7 @@ use Drupal\tool\Tool\ToolOperation;
     'webforms' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Webforms'),
-      description: new TranslatableMarkup('Array of webform objects with id, title, status, and submission_count. Use id with GetWebform for full details.'),
+      description: new TranslatableMarkup('Array of webform objects with id, title, status, and submission_count. Use id with mcp_get_webform for full details.'),
     ),
   ],
 )]

@@ -30,7 +30,7 @@ use Drupal\tool\Tool\ToolOperation;
     'indexes' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('List of search indexes'),
-      description: new TranslatableMarkup('Array of index objects with id, label, server, status, and indexing progress. Use id with GetIndex for full details.'),
+      description: new TranslatableMarkup('Array of index objects with id, label, server, status, and indexing progress. Use id with mcp_search_api_get_index for full details.'),
     ),
   ],
 )]

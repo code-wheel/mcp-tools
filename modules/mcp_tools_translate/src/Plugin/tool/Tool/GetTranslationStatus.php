@@ -19,7 +19,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 #[Tool(
   id: 'mcp_get_translation_status',
   label: new TranslatableMarkup('Get Translation Status'),
-  description: new TranslatableMarkup('Check which languages a node is translated into and which are missing. Use to identify untranslated content before calling TranslateContent.'),
+  description: new TranslatableMarkup('Check which languages a node is translated into and which are missing. Use to identify untranslated content before calling mcp_translate_content.'),
   operation: ToolOperation::Read,
   input_definitions: [
     'nid' => new InputDefinition(

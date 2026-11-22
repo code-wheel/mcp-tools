@@ -41,7 +41,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'success' => new OutputDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Success status'),
-      description: new TranslatableMarkup('True if style was created. Add effects with AddImageEffect.'),
+      description: new TranslatableMarkup('True if style was created. Add effects with mcp_image_styles_add_effect.'),
     ),
     'message' => new OutputDefinition(
       data_type: 'string',

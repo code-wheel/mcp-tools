@@ -10,6 +10,7 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Language\LanguageManagerInterface;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AuditLogger;
+use Drupal\mcp_tools\Service\TextFormat;
 use Drupal\node\NodeInterface;
 use Drupal\paragraphs\ParagraphInterface;
 
@@ -1211,7 +1212,7 @@ class ContentTranslationService {
       }
       return [
         'value' => $value,
-        'format' => $format ?? 'basic_html',
+        'format' => TextFormat::resolve($this->entityTypeManager, $format),
       ];
     }
 

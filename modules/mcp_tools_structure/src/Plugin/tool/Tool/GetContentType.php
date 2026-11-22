@@ -25,7 +25,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'id' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Content Type ID'),
-      description: new TranslatableMarkup('Machine name of the content type (e.g., "article", "page"). Use ListContentTypes to see available types.'),
+      description: new TranslatableMarkup('Machine name of the content type (e.g., "article", "page"). Use mcp_structure_list_content_types to see available types.'),
       required: TRUE,
     ),
   ],

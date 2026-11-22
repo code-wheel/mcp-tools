@@ -93,6 +93,12 @@ drush mcp-tools:serve --uid=1
 
 Tip: Drush often boots as uid 0 (anonymous). For local development, use `--uid=1`. For shared environments, use a dedicated user with only the MCP Tools permissions you need.
 
+Pick what the connection may do with `--scope` (or the `MCP_SCOPE` environment variable):
+
+```bash
+drush mcp-tools:serve --uid=1 --scope=read,write
+```
+
 **Gateway mode (optional):** expose only the discover/info/execute tools to reduce tool list size.
 
 ```bash
@@ -106,6 +112,10 @@ Gateway tools:
 
 A tool that a model calls by its own name runs too, through the same
 checks. The list stays at these three.
+
+Gateway mode is also the way to use a model on your own machine: three
+tools fit a small context. [docs/CLIENT_INTEGRATIONS.md](docs/CLIENT_INTEGRATIONS.md)
+has what we measured with five local models and five clients.
 
 ### Remote MCP (HTTP) setup (experimental)
 
@@ -300,17 +310,27 @@ rules as MCP Tools' own: the scope their operation needs, read-only and
 config-only mode, the write limits when rate limiting is on, and a line
 in the audit log for each write that ran.
 
-A tool of another module that declares itself destructive is run after
-the user of the client said yes, when the client can ask its user (MCP
-elicitation). A no runs nothing. A client that cannot ask gets the tool
-run. To refuse it for such clients:
+Three kinds of call are run after the user of the client said yes, when
+the client can ask its user (MCP elicitation):
+
+- a tool that declares itself destructive, of MCP Tools or of another
+  module,
+- a grant of a permission that Drupal marks for trusted roles only,
+- a recipe that was written through MCP and that no person has reviewed.
+
+A no runs nothing. A client that cannot ask gets the call run, and the
+audit log has it, the last two as warnings. To refuse such a call for
+clients that cannot ask, tick "Strong calls need a confirmation" on the
+settings form, or:
 
 ```php
 $config['mcp_tools.settings']['access']['confirm_destructive_tools'] = TRUE;
 ```
 
-Of MCP Tools' own tools, two take a confirm flag, as before: deleting a
-piece of content with all its translations, and exporting configuration.
+Nobody is asked when a tool is called through MCP Server or through the
+Drupal AI bridge. Of MCP Tools' own tools, two also take a confirm flag,
+as before: deleting a piece of content with all its translations, and
+exporting configuration.
 
 ## Server Profiles (YAML-only)
 
@@ -334,14 +354,20 @@ servers:
     # permission_callback: 'my_module.server_access:check'
 ```
 
-Scopes from an API key, a header, a query parameter or the environment are limited by `access.allowed_scopes`. `--scope` on the command line and the scopes of a server profile are used as given. When nothing sets scopes, `access.default_scopes` are used.
+Scopes are limited by `access.allowed_scopes`, wherever they come from: an API key, a header, a query parameter, the environment, a server profile, or `--scope` on the command line. A new site allows `read` and `write`. When a session asks for more, the STDIO server says on stderr which scope it left out. When nothing sets scopes, `access.default_scopes` are used.
 
 Set `transports` to limit which entrypoints (HTTP/STDIO) can run a profile; leave empty or omit to allow all transports.
 
 Available scopes:
 - `read` - Read-only operations
 - `write` - Write operations
-- `admin` - Administrative operations
+- `admin` - Administrative operations: applying a recipe, also one the
+  agent wrote itself, and granting a permission that Drupal marks for
+  trusted roles only. Your client asks you before either of them, when
+  it can ask, and both are written to the audit log. To refuse them for
+  a client that cannot ask, tick "Strong calls need a confirmation" on
+  the settings form. Give this scope only to an agent you would let
+  change any config of the site.
 
 ## Read-Only Tools (25)
 
@@ -538,42 +564,14 @@ git commit -m "Export MCP-created configuration"
 
 ## Testing
 
-PHPUnit tests are included for all services:
-
 ```bash
 cd mcp_tools
 ../vendor/bin/phpunit
 ```
 
-## Usage
+[TESTING.md](TESTING.md) has the rest.
 
-### Local (STDIO via Drush, recommended)
-
-```bash
-# Enable the transport.
-drush en mcp_tools_stdio -y
-
-# Run the MCP server over STDIO (Claude Desktop, Claude Code, etc).
-drush mcp-tools:serve --uid=1
-
-# With specific scopes (local only)
-MCP_SCOPE=read,write drush mcp-tools:serve --uid=1
-# or: drush mcp-tools:serve --uid=1 --scope=read,write
-```
-
-### Remote (HTTP, experimental)
-
-```bash
-# Enable the transport.
-drush en mcp_tools_remote -y
-
-# Create a read-only API key (shown once).
-drush mcp-tools:remote-key-create --label="My Key" --scopes=read --ttl=86400
-```
-
-Configure your MCP client to use `/_mcp_tools` and send the key as `Authorization: Bearer …` or `X-MCP-Api-Key: …`.
-
-Configure the endpoint at `/admin/config/services/mcp-tools/remote` (use "uid 1" for development or create a dedicated mcp_executor account; consider IP and Origin/Host allowlists).
+## More commands
 
 ### CLI Helpers
 

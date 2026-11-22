@@ -33,7 +33,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'id' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Job ID'),
-      description: new TranslatableMarkup('Machine name of the cron job. Use with RunJob, EnableJob, or DisableJob.'),
+      description: new TranslatableMarkup('Machine name of the cron job. Use with mcp_ultimate_cron_run, mcp_ultimate_cron_enable, or mcp_ultimate_cron_disable.'),
     ),
     'title' => new OutputDefinition(
       data_type: 'string',
@@ -48,7 +48,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'status' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Status (enabled/disabled)'),
-      description: new TranslatableMarkup('Current status: "enabled" (will run on schedule) or "disabled". Use EnableJob/DisableJob to change.'),
+      description: new TranslatableMarkup('Current status: "enabled" (will run on schedule) or "disabled". Use mcp_ultimate_cron_enable/mcp_ultimate_cron_disable to change.'),
     ),
     'is_locked' => new OutputDefinition(
       data_type: 'boolean',
@@ -63,7 +63,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'last_run' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Last Run Information'),
-      description: new TranslatableMarkup('Last execution info: timestamp, duration, success status. Use GetJobLogs for full history.'),
+      description: new TranslatableMarkup('Last execution info: timestamp, duration, success status. Use mcp_ultimate_cron_logs for full history.'),
     ),
   ],
 )]

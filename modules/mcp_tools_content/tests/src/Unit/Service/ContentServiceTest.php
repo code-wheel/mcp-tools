@@ -242,6 +242,7 @@ class ContentServiceTest extends UnitTestCase {
    *
    * @dataProvider normalizeFieldValueProvider
    */
+  #[\PHPUnit\Framework\Attributes\DataProvider('normalizeFieldValueProvider')]
   public function testNormalizeFieldValueBehavior(string $fieldType, mixed $input, mixed $expectedPattern): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
 

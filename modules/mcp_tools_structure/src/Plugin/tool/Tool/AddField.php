@@ -96,7 +96,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'field_name' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Field Name'),
-      description: new TranslatableMarkup('Full field machine name (e.g., field_summary). Use this key in CreateContent fields parameter.'),
+      description: new TranslatableMarkup('Full field machine name (e.g., field_summary). Use this key in mcp_create_content fields parameter.'),
     ),
     'entity_type' => new OutputDefinition(
       data_type: 'string',

@@ -30,7 +30,7 @@ use Drupal\tool\Tool\ToolOperation;
     'bins' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Cache bin details'),
-      description: new TranslatableMarkup('Array of cache bins with name, backend class, and status. Use name with ClearCacheBin.'),
+      description: new TranslatableMarkup('Array of cache bins with name, backend class, and status. Use name with mcp_cache_clear_bin.'),
     ),
   ],
 )]

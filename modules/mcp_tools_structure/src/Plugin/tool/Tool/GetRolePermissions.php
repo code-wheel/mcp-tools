@@ -25,7 +25,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'id' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Role ID'),
-      description: new TranslatableMarkup('Machine name of the role (e.g., "editor", "authenticated"). Use ListRoles to see available roles.'),
+      description: new TranslatableMarkup('Machine name of the role (e.g., "editor", "authenticated"). Use mcp_structure_list_roles to see available roles.'),
       required: TRUE,
     ),
   ],
@@ -48,7 +48,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'permissions' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Permissions'),
-      description: new TranslatableMarkup('Flat list of permission machine names. Use with GrantPermissions/RevokePermissions.'),
+      description: new TranslatableMarkup('Flat list of permission machine names. Use with mcp_structure_grant_permissions/mcp_structure_revoke_permissions.'),
     ),
     'permissions_by_provider' => new OutputDefinition(
       data_type: 'map',

@@ -52,8 +52,10 @@ class AuditLogger implements AuditLoggerInterface {
    *   Additional details about the operation.
    * @param bool $success
    *   Whether the operation succeeded.
+   * @param bool $sensitive
+   *   Whether a person should look at it: see logSensitive().
    */
-  public function log(string $operation, string $entityType, string $entityId, array $details = [], bool $success = TRUE): void {
+  public function log(string $operation, string $entityType, string $entityId, array $details = [], bool $success = TRUE, bool $sensitive = FALSE): void {
     $config = $this->configFactory->get('mcp_tools.settings');
 
     // Check if audit logging is enabled (default TRUE for write operations).
@@ -102,17 +104,26 @@ class AuditLogger implements AuditLoggerInterface {
 
     $message = 'MCP[@cid] (@transport, client: @client, scopes: @scopes): @operation on @entity_type "@entity_id" by @user (uid: @uid)';
 
+    // The client's user was asked about this call and said yes.
+    $confirmed = $this->toolCallContext->wasConfirmedByUser();
+    if ($confirmed) {
+      $details['confirmed_by_user'] = TRUE;
+    }
+
     if (!empty($details)) {
       $safeDetails = $this->sanitizeDetails($details);
       $message .= ' | Details: @details';
       $context['@details'] = json_encode($safeDetails, JSON_UNESCAPED_SLASHES);
     }
 
-    if ($success) {
-      $this->logger->notice($message, $context);
+    if (!$success) {
+      $this->logger->error($message, $context);
+    }
+    elseif ($sensitive && !$confirmed) {
+      $this->logger->warning($message, $context);
     }
     else {
-      $this->logger->error($message, $context);
+      $this->logger->notice($message, $context);
     }
   }
 
@@ -153,6 +164,17 @@ class AuditLogger implements AuditLoggerInterface {
    */
   public function logSuccess(string $operation, string $entityType, string $entityId, array $details = []): void {
     $this->log($operation, $entityType, $entityId, $details, TRUE);
+  }
+
+  /**
+   * Logs something that worked and that a person should look at.
+   *
+   * It is written as a warning, so it stands out among the notices. When
+   * the client's user was asked about the call and said yes, a person has
+   * seen it already, and it is a notice like any other.
+   */
+  public function logSensitive(string $operation, string $entityType, string $entityId, array $details = []): void {
+    $this->log($operation, $entityType, $entityId, $details, TRUE, TRUE);
   }
 
   /**

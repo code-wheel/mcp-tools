@@ -12,6 +12,7 @@ use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AuditLogger;
+use Drupal\mcp_tools\Service\TextFormat;
 use Drupal\node\NodeInterface;
 use Drupal\paragraphs\ParagraphInterface;
 
@@ -95,6 +96,26 @@ class ContentService {
         'type' => $type,
       ]);
 
+      // Say which it is: "created successfully" read as "published" to a
+      // model, and without a status the item is a draft.
+      $message = $node->isPublished()
+        ? "Content '$title' created and published."
+        : "Content '$title' created as an unpublished draft. Publish it with mcp_publish_content.";
+      // And say when nothing but the title was given. A model that was
+      // asked for a body text sent none and reported it as set.
+      if ($fields === []) {
+        $unset = [];
+        foreach ($fieldDefinitions as $fieldName => $definition) {
+          if (!$definition->getFieldStorageDefinition()->isBaseField() && $node->get($fieldName)->isEmpty()) {
+            $unset[] = $fieldName;
+          }
+        }
+        if ($unset !== []) {
+          $message .= ' Only the title was set. This content type also has: ' . implode(', ', array_slice($unset, 0, 10))
+            . (count($unset) > 10 ? ' and ' . (count($unset) - 10) . ' more' : '') . '. Set them with mcp_update_content.';
+        }
+      }
+
       return [
         'success' => TRUE,
         'data' => [
@@ -104,7 +125,7 @@ class ContentService {
           'type' => $type,
           'status' => $node->isPublished() ? 'published' : 'draft',
           'url' => $node->toUrl()->toString(),
-          'message' => "Content '$title' created successfully.",
+          'message' => $message,
         ],
       ];
     }
@@ -515,7 +536,7 @@ class ContentService {
     $fieldType = $fieldDefinitions[$fieldName]->getType();
 
     return match ($fieldType) {
-      'text_long', 'text_with_summary' => is_array($value) ? $value : ['value' => $value, 'format' => 'basic_html'],
+      'text_long', 'text_with_summary' => TextFormat::fieldValue($this->entityTypeManager, $value),
       'entity_reference' => is_array($value) ? $value : ['target_id' => $value],
       'entity_reference_revisions' => $this->createReferencedEntities($value, $fieldDefinitions[$fieldName]),
       'image', 'file' => is_array($value) ? $value : ['target_id' => $value],

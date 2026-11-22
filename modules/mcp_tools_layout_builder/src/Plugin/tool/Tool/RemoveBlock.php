@@ -39,7 +39,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'block_uuid' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Block Component UUID'),
-      description: new TranslatableMarkup('UUID of the block to remove. Get from GetLayout or AddBlock output.'),
+      description: new TranslatableMarkup('UUID of the block to remove. Get from mcp_layout_get or mcp_layout_add_block output.'),
       required: TRUE,
     ),
   ],

@@ -84,7 +84,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'component_uuid' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Component UUID'),
-      description: new TranslatableMarkup('UUID of the block component. Use with RemoveBlock to remove.'),
+      description: new TranslatableMarkup('UUID of the block component. Use with mcp_layout_remove_block to remove.'),
     ),
     'message' => new OutputDefinition(
       data_type: 'string',

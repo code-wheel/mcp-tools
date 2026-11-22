@@ -45,7 +45,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'fid' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('File ID'),
-      description: new TranslatableMarkup('File entity ID. Use as source_field_value in CreateMedia for image/file types.'),
+      description: new TranslatableMarkup('File entity ID. Use as source_field_value in mcp_create_media for image/file types.'),
     ),
     'uuid' => new OutputDefinition(
       data_type: 'string',

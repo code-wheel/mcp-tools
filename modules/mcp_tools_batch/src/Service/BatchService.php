@@ -10,8 +10,11 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\mcp_tools\Service\AccessManager;
+use Drupal\mcp_tools\Service\AdminRoles;
 use Drupal\mcp_tools\Service\AuditLogger;
 use Drupal\mcp_tools\Service\McpClientBridge;
+use Drupal\mcp_tools\Service\OwnRoles;
+use Drupal\mcp_tools\Service\TextFormat;
 
 /**
  * Service for batch/bulk operations.
@@ -493,11 +496,13 @@ class BatchService {
       return ['success' => FALSE, 'error' => 'Role is required.'];
     }
 
-    // Block assigning administrator role.
-    if ($role === 'administrator') {
+    // Block assigning an administrator role: by its flag, and by its name
+    // as the user tools do. This used to refuse the name "administrator"
+    // and nothing else.
+    if (AdminRoles::isAdmin($this->entityTypeManager, $role)) {
       return [
         'success' => FALSE,
-        'error' => "The 'administrator' role cannot be assigned via MCP batch operations.",
+        'error' => "The role '$role' is an administrator role. It cannot be assigned via MCP batch operations.",
       ];
     }
 
@@ -525,6 +530,8 @@ class BatchService {
     $assigned = [];
     $already_has = [];
     $errors = [];
+    $me = (int) $this->currentUser->id();
+    $raisesMe = OwnRoles::raising($this->entityTypeManager, $this->currentUser, $me, [$role]) !== [];
 
     foreach ($userIds as $index => $uid) {
       // Skip uid 1 (super admin).
@@ -533,6 +540,16 @@ class BatchService {
           'index' => $index,
           'uid' => $uid,
           'error' => 'Cannot modify the super admin user (uid 1).',
+        ];
+        continue;
+      }
+
+      // Not more permissions for the user this connection runs as.
+      if ($raisesMe && (int) $uid === $me) {
+        $errors[] = [
+          'index' => $index,
+          'uid' => $uid,
+          'error' => 'A connection does not give its own user more permissions. A person can assign this role.',
         ];
         continue;
       }
@@ -692,7 +709,7 @@ class BatchService {
           'name' => $name,
           'description' => [
             'value' => $termData['description'] ?? '',
-            'format' => 'basic_html',
+            'format' => TextFormat::resolve($this->entityTypeManager),
           ],
           'weight' => $termData['weight'] ?? 0,
         ];
@@ -919,7 +936,7 @@ class BatchService {
     $fieldType = $fieldDefinitions[$fieldName]->getType();
 
     return match ($fieldType) {
-      'text_long', 'text_with_summary' => is_array($value) ? $value : ['value' => $value, 'format' => 'basic_html'],
+      'text_long', 'text_with_summary' => TextFormat::fieldValue($this->entityTypeManager, $value),
       'entity_reference' => is_array($value) ? $value : ['target_id' => $value],
       'image', 'file' => is_array($value) ? $value : ['target_id' => $value],
       'link' => is_array($value) ? $value : ['uri' => $value],

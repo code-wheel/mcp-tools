@@ -13,6 +13,8 @@ use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\Tests\UnitTestCase;
 use Drupal\tool\Tool\ToolDefinition;
 use Drupal\tool\Tool\ToolOperation;
+use Drupal\tool\TypedData\InputDefinition;
+use Mcp\Server\RequestContext;
 use Psr\Log\LoggerInterface;
 
 #[\PHPUnit\Framework\Attributes\CoversClass(\Drupal\mcp_tools\Mcp\ToolApiGateway::class)]
@@ -324,6 +326,154 @@ final class ToolApiGatewayTest extends UnitTestCase {
     $this->assertFalse($none->isError);
   }
 
+  /**
+   * A found tool comes with the names of its inputs.
+   *
+   * A model that has found a tool often calls it at once and guesses the
+   * names of the arguments: "title" where the search tool takes "query".
+   * In the runs of five local models that was half of all failed calls.
+   */
+  public function testDiscoverToolsNamesTheInputsOfEachTool(): void {
+    $search = new ToolDefinition([
+      'id' => 'mcp_tools_search_content',
+      'provider' => 'mcp_tools',
+      'label' => $this->markup('Search Content'),
+      'description' => $this->markup('Search for content by title text.'),
+      'operation' => ToolOperation::Read,
+      'destructive' => FALSE,
+      'input_definitions' => [
+        'query' => new InputDefinition('string', $this->markup('Query'), $this->markup('Text to search for.'), TRUE),
+        'limit' => new InputDefinition('integer', $this->markup('Limit'), $this->markup('How many to return.'), FALSE),
+      ],
+    ]);
+    $status = $this->createToolDefinition('mcp_tools_search_status', 'mcp_tools', 'Search Status', 'Takes no input.');
+    $this->toolManager->method('getDefinitions')->willReturn([
+      'mcp_tools_search_content' => $search,
+      'mcp_tools_search_status' => $status,
+    ]);
+
+    $tools = array_column($this->createGateway()->discoverTools('search')->structuredContent['tools'], NULL, 'name');
+
+    $this->assertSame(['required' => ['query'], 'optional' => ['limit']], $tools['mcp_tools_search_content']['inputs']);
+    $this->assertSame(['required' => [], 'optional' => []], $tools['mcp_tools_search_status']['inputs']);
+  }
+
+  /**
+   * One of the gateway's own tools, named in the run tool, is explained.
+   *
+   * A model asked the run tool to run the find tool. The answer was
+   * "Unknown tool", with the advice to use the tool it had just named.
+   */
+  public function testExecuteToolSaysAGatewayToolIsCalledDirectly(): void {
+    $this->toolManager->method('getDefinitions')->willReturn([]);
+    // The answer comes before the context is used, and the class is final.
+    $context = (new \ReflectionClass(RequestContext::class))->newInstanceWithoutConstructor();
+
+    foreach ([ToolApiGateway::DISCOVER_TOOL, ToolApiGateway::GET_INFO_TOOL, ToolApiGateway::EXECUTE_TOOL] as $name) {
+      $result = $this->createGateway()->executeTool($name, ['query' => 'content'], $context);
+
+      $this->assertTrue($result->isError);
+      $this->assertStringContainsString($name . ' is not run through ' . ToolApiGateway::EXECUTE_TOOL, $result->structuredContent['error']);
+      $this->assertStringNotContainsString('Unknown tool', $result->structuredContent['error']);
+    }
+  }
+
+  /**
+   * The tools whose name has the search words come first.
+   *
+   * Matches came in the order of the catalog. A model that asked for "view"
+   * with a limit of ten got the config tool first ("View a specific
+   * configuration object") and never saw the tool that makes a view of a
+   * content type. It asked for "content" and did not get the tool that
+   * creates content among forty-six matches.
+   */
+  public function testDiscoverToolsPutsNameMatchesFirst(): void {
+    $catalog = [
+      ['mcp_tools_get_config', 'Get Configuration', 'View a specific configuration object by name.'],
+      ['mcp_config_preview', 'Preview Config Changes', 'Show what an import would change.'],
+      ['mcp_analysis_security', 'Security Audit', 'Review permissions and exposed views of data.'],
+      ['mcp_batch_create_content', 'Batch Create Content', 'Create many content items at once.'],
+      ['mcp_structure_scaffold_content_type', 'Scaffold Content Type', 'Create a content type with fields.'],
+      ['mcp_create_content_list_view', 'Create Content List View', 'Create a view that lists content of one type.'],
+      ['mcp_create_view', 'Create View', 'Create a new view.'],
+      ['mcp_create_content', 'Create Content', 'Create a content item.'],
+      ['mcp_publish_content', 'Publish/Unpublish Content', 'Change the publish status of a content item.'],
+    ];
+    $definitions = [];
+    foreach ($catalog as [$id, $label, $description]) {
+      $definitions[$id] = $this->createToolDefinition($id, 'mcp_tools', $label, $description);
+    }
+    $this->toolManager->method('getDefinitions')->willReturn($definitions);
+    $gateway = $this->createGateway();
+    $names = static fn(string $query, int $limit): array => array_column($gateway->discoverTools($query, $limit)->structuredContent['tools'], 'name');
+
+    // A name that has the word beats a description that has it, and a
+    // short name that is mostly the word beats a long one.
+    $this->assertSame(['mcp_create_view', 'mcp_create_content_list_view'], $names('view', 2));
+    $this->assertSame('mcp_create_content', $names('content', 1)[0]);
+    // More words of the question in the name is better still.
+    $this->assertSame('mcp_create_content_list_view', $names('content view', 1)[0]);
+    $this->assertSame('mcp_structure_scaffold_content_type', $names('content type', 1)[0]);
+    // "view" is not in "preview", and a word in the label counts too.
+    $this->assertNotContains('mcp_config_preview', $names('view', 2));
+    $this->assertSame('mcp_publish_content', $names('unpublish', 1)[0]);
+    // Nothing is dropped: the description matches follow.
+    $this->assertSame(['mcp_create_view', 'mcp_create_content_list_view', 'mcp_tools_get_config', 'mcp_config_preview', 'mcp_analysis_security'], $names('view', 25));
+  }
+
+  /**
+   * A plural word finds what its singular finds.
+   *
+   * In the runs of 2026-11-21 a model asked for "views", "users" and
+   * "content types". The tools are named ..._view, ..._user and
+   * ..._content_type, so a plural found only the tools that happen to have
+   * it in a description, in catalog order.
+   */
+  public function testAPluralWordFindsWhatItsSingularFinds(): void {
+    $catalog = [
+      ['mcp_templates_apply', 'Apply Template', 'Apply a site template: content types, views and roles in one step.'],
+      ['mcp_create_view', 'Create View', 'Create a new view.'],
+      ['mcp_create_content_list_view', 'Create Content List View', 'Create a view that lists content of one type.'],
+      ['mcp_structure_create_content_type', 'Create Content Type', 'Create a new content type.'],
+      ['mcp_tools_list_content_types', 'List Content Types', 'List all content types.'],
+      ['mcp_pathauto_create', 'Create Pattern', 'Create a URL alias pattern.'],
+      ['mcp_tools_get_vocabularies', 'Get Vocabularies', 'List the taxonomy vocabularies.'],
+      ['mcp_structure_create_vocabulary', 'Create Vocabulary', 'Create a taxonomy vocabulary.'],
+      ['mcp_tools_get_site_status', 'Get Site Status', 'Get the status of the site.'],
+      ['mcp_tools_get_menu_tree', 'Get Menu Tree', 'Get the hierarchical structure of a specific menu.'],
+      ['mcp_tools_get_menus', 'Get Menus', 'List all menus.'],
+    ];
+    $definitions = [];
+    foreach ($catalog as [$id, $label, $description]) {
+      $definitions[$id] = $this->createToolDefinition($id, 'mcp_tools', $label, $description);
+    }
+    $this->toolManager->method('getDefinitions')->willReturn($definitions);
+    $gateway = $this->createGateway();
+    $names = static fn(string $query): array => array_column($gateway->discoverTools($query, 25)->structuredContent['tools'], 'name');
+
+    // A plural that ends in -us: on the real catalog "menus" did not find
+    // the menu tree tool, and the first version of this change left every
+    // word in -us alone for the sake of "status".
+    $this->assertSame(['mcp_tools_get_menus', 'mcp_tools_get_menu_tree'], $names('menus'));
+
+    // The tools that make a view come first, the one that only speaks of
+    // views after them.
+    $this->assertSame(['mcp_create_view', 'mcp_create_content_list_view', 'mcp_templates_apply'], $names('views'));
+    // The last word of a phrase.
+    $this->assertSame(['mcp_tools_list_content_types', 'mcp_structure_create_content_type', 'mcp_templates_apply'], $names('content types'));
+    // -ies and -es.
+    $this->assertSame(['mcp_tools_get_vocabularies', 'mcp_structure_create_vocabulary'], $names('vocabularies'));
+    $this->assertSame(['mcp_pathauto_create'], $names('aliases'));
+    // A word that only ends in s still finds itself, and a short one is
+    // left alone: "news" must not become "new" and find every "Create a
+    // new ...".
+    $this->assertSame(['mcp_tools_get_site_status'], $names('status'));
+    $this->assertSame([], $names('news'));
+    $this->assertNotContains('mcp_create_view', $names('site news'));
+    // A tool name as the question is still found as it is.
+    $this->assertSame(['mcp_tools_list_content_types'], $names('mcp_tools_list_content_types'));
+  }
+
   public function testDiscoverToolsQueryIsCaseInsensitive(): void {
     $definition = $this->createToolDefinition(
       'mcp_tools:test',
@@ -390,6 +540,26 @@ final class ToolApiGatewayTest extends UnitTestCase {
     $this->assertTrue($result->isError);
     $this->assertFalse($result->structuredContent['success']);
     $this->assertStringContainsString('Unknown tool', $result->structuredContent['error']);
+  }
+
+  /**
+   * A made-up name is answered with the closest names and where to look.
+   */
+  public function testGetToolInfoAnswersAMadeUpNameWithTheClosestNames(): void {
+    $this->toolManager->method('getDefinitions')->willReturn([
+      'mcp_tools_list_content_types' => $this->createToolDefinition('mcp_tools_list_content_types', 'mcp_tools', 'List Content Types', 'List the content types.'),
+      'mcp_cache:clear_all' => $this->createToolDefinition('mcp_cache:clear_all', 'mcp_tools_cache', 'Clear All Caches', 'Clear every cache.'),
+    ]);
+
+    $result = $this->createGateway()->getToolInfo('mcp_list_content_types');
+
+    $this->assertTrue($result->isError);
+    $this->assertSame(['mcp_tools_list_content_types'], $result->structuredContent['did_you_mean']);
+    $this->assertSame('Unknown tool: mcp_list_content_types. Did you mean mcp_tools_list_content_types? Find tools with mcp_tools_discover_tools.', $result->structuredContent['error']);
+
+    $none = $this->createGateway()->getToolInfo('zebra_crossing');
+    $this->assertSame('Unknown tool: zebra_crossing. Find tools with mcp_tools_discover_tools.', $none->structuredContent['error']);
+    $this->assertArrayNotHasKey('did_you_mean', $none->structuredContent);
   }
 
   public function testGetToolInfoReturnsToolDetails(): void {

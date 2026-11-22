@@ -25,7 +25,7 @@ use Drupal\tool\Tool\ToolOperation;
     'types' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Paragraph Types'),
-      description: new TranslatableMarkup('Array of paragraph type objects with id, label, description, and field count. Use id with GetParagraphType for full details.'),
+      description: new TranslatableMarkup('Array of paragraph type objects with id, label, description, and field count. Use id with mcp_paragraphs_get_type for full details.'),
     ),
     'total' => new OutputDefinition(
       data_type: 'integer',

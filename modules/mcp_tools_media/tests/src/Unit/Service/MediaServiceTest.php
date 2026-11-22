@@ -139,6 +139,7 @@ class MediaServiceTest extends UnitTestCase {
   /**
    * @dataProvider invalidDirectoryProvider
    */
+  #[\PHPUnit\Framework\Attributes\DataProvider('invalidDirectoryProvider')]
   public function testUploadFileInvalidDirectory(string $directory): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
 

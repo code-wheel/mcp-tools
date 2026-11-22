@@ -33,7 +33,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'id' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Redirect ID'),
-      description: new TranslatableMarkup('The unique numeric identifier for this redirect. Use with UpdateRedirect or DeleteRedirect tools.'),
+      description: new TranslatableMarkup('The unique numeric identifier for this redirect. Use with mcp_redirect_update or mcp_redirect_delete tools.'),
     ),
     'source' => new OutputDefinition(
       data_type: 'string',

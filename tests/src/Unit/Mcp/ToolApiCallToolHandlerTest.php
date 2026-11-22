@@ -54,6 +54,53 @@ final class ToolApiCallToolHandlerTest extends UnitTestCase {
     $this->assertStringContainsString('Unknown tool:', $result->message);
   }
 
+  /**
+   * A name that does not exist is answered with the closest real names.
+   *
+   * A local model made up "mcp_list_content_types" in most runs. "Unknown
+   * tool" alone sent it searching again. A tool of a provider this server
+   * does not serve is not offered.
+   */
+  public function testUnknownToolIsAnsweredWithTheClosestNames(): void {
+    $toolManager = $this->createMock(PluginManagerInterface::class);
+    $toolManager->method('getDefinitions')->willReturn([
+      'mcp_tools_list_content_types' => new ToolDefinition([
+        'id' => 'mcp_tools_list_content_types',
+        'provider' => 'mcp_tools',
+        'label' => new TranslatableMarkup('List Content Types'),
+        'description' => new TranslatableMarkup('List content types.'),
+        'operation' => ToolOperation::Read,
+      ]),
+      'other_list_content_types' => new ToolDefinition([
+        'id' => 'other_list_content_types',
+        'provider' => 'other',
+        'label' => new TranslatableMarkup('Other'),
+        'description' => new TranslatableMarkup('Another module.'),
+        'operation' => ToolOperation::Read,
+      ]),
+    ]);
+
+    $handler = new ToolApiCallToolHandler(
+      $toolManager,
+      new NullLogger(),
+      FALSE,
+      'mcp_tools',
+      new ToolInputValidator(new ToolApiSchemaConverter(), new NullLogger()),
+    );
+
+    $result = $handler->handle((new CallToolRequest('mcp_list_content_types', []))->withId(7), $this->createMock(SessionInterface::class));
+
+    $this->assertInstanceOf(Error::class, $result);
+    $this->assertSame(Error::METHOD_NOT_FOUND, $result->code);
+    $this->assertStringContainsString('Unknown tool: mcp_list_content_types.', $result->message);
+    $this->assertStringContainsString('Did you mean mcp_tools_list_content_types?', $result->message);
+    $this->assertStringNotContainsString('other_list_content_types', $result->message);
+
+    // Nothing close: the plain answer, as before.
+    $none = $handler->handle((new CallToolRequest('zebra_crossing', []))->withId(8), $this->createMock(SessionInterface::class));
+    $this->assertSame('Unknown tool: zebra_crossing', $none->message);
+  }
+
   public function testProviderIsFilteredWhenIncludeAllToolsFalse(): void {
     $toolManager = $this->createMock(PluginManagerInterface::class);
 

@@ -25,7 +25,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'role' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Role'),
-      description: new TranslatableMarkup('The machine name of the role to assign (e.g., "editor", "content_editor"). Note: "administrator" role cannot be assigned.'),
+      description: new TranslatableMarkup('The machine name of the role to assign (e.g., "editor", "content_editor"). An administrator role cannot be assigned.'),
       required: TRUE,
     ),
     'user_ids' => new InputDefinition(

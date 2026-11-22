@@ -9,6 +9,7 @@ use Drupal\mcp_tools_recipes\Service\RecipesService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\mcp_tools\Tool\AsksFirstInterface;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
 use Drupal\tool\Tool\ToolOperation;
@@ -48,7 +49,7 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
 )]
-class ApplyRecipe extends McpToolsToolBase {
+class ApplyRecipe extends McpToolsToolBase implements AsksFirstInterface {
 
   protected const MCP_CATEGORY = 'recipes';
 
@@ -90,6 +91,22 @@ class ApplyRecipe extends McpToolsToolBase {
     }
 
     return $this->recipesService->applyRecipe($recipeName);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function reasonToAsk(array $arguments): ?string {
+    $recipeName = $arguments['recipe_name'] ?? '';
+    $unreviewed = is_string($recipeName) && $recipeName !== '' ? $this->recipesService->unreviewedIn($recipeName) : [];
+    if ($unreviewed === []) {
+      return NULL;
+    }
+    return sprintf(
+      'The recipe "%s" would be applied. It was written through MCP and no person has reviewed it (%s). A recipe can change any config and grant any permission.',
+      $recipeName,
+      implode(', ', $unreviewed),
+    );
   }
 
 }

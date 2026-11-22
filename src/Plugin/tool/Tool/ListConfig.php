@@ -43,7 +43,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'names' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Configuration Names'),
-      description: new TranslatableMarkup('Array of configuration object names. Use with GetConfig to view values.'),
+      description: new TranslatableMarkup('Array of configuration object names. Use with mcp_tools_get_config to view values.'),
     ),
   ],
 )]

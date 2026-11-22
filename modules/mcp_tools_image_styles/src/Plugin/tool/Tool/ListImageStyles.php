@@ -30,7 +30,7 @@ use Drupal\tool\Tool\ToolOperation;
     'styles' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Image styles with effects'),
-      description: new TranslatableMarkup('Array of styles with id, label, and effects. Use id with GetImageStyle or DeleteImageStyle.'),
+      description: new TranslatableMarkup('Array of styles with id, label, and effects. Use id with mcp_image_styles_get or mcp_image_styles_delete.'),
     ),
   ],
 )]

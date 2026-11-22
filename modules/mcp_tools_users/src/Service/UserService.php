@@ -6,45 +6,23 @@ namespace Drupal\mcp_tools_users\Service;
 
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Password\PasswordGeneratorInterface;
+use Drupal\Core\Session\AccountInterface;
 use Drupal\mcp_tools\Service\AccessManager;
+use Drupal\mcp_tools\Service\AdminRoles;
 use Drupal\mcp_tools\Service\AuditLogger;
+use Drupal\mcp_tools\Service\OwnRoles;
 
 /**
  * Service for user management operations.
  */
 class UserService {
 
-  /**
-   * Roles that can NEVER be assigned via MCP.
-   *
-   * This is a security-critical list. These roles have elevated privileges
-   * that should only be assigned through direct admin action.
-   */
-  protected const BLOCKED_ROLES = [
-    'administrator',
-  // Common alternative name.
-    'admin',
-  ];
-
-  /**
-   * Role patterns that are blocked (case-insensitive regex).
-   *
-   * Prevents bypass attempts via similar role names.
-   */
-  protected const BLOCKED_ROLE_PATTERNS = [
-  // Anything starting with "admin".
-    '/^admin/i',
-  // Anything containing "administrator".
-    '/administrator/i',
-  // super_user, superadmin, etc.
-    '/^super/i',
-  ];
-
   public function __construct(
     protected EntityTypeManagerInterface $entityTypeManager,
     protected PasswordGeneratorInterface $passwordGenerator,
     protected AccessManager $accessManager,
     protected AuditLogger $auditLogger,
+    protected ?AccountInterface $currentUser = NULL,
   ) {}
 
   /**
@@ -175,6 +153,28 @@ class UserService {
       ];
     }
 
+    // Protect users with administrator role. A new e-mail address and a
+    // password reset is that account, and a status or a role taken away
+    // locks its owner out.
+    if ($this->userHasAdminRole($user)) {
+      return ['success' => FALSE, 'error' => 'Cannot modify users with administrator privileges via MCP.'];
+    }
+
+    // The e-mail address is "mail" in Drupal and "email" in this tool's
+    // early versions: both are taken. Anything else is refused, so a change
+    // that cannot be made is not reported as made.
+    if (isset($updates['mail']) && !isset($updates['email'])) {
+      $updates['email'] = $updates['mail'];
+    }
+    unset($updates['mail']);
+    $unknown = array_diff(array_keys($updates), ['email', 'status', 'roles']);
+    if ($unknown !== []) {
+      return [
+        'success' => FALSE,
+        'error' => 'Unknown field(s): ' . implode(', ', $unknown) . '. This tool changes mail, status and roles. Nothing was changed.',
+      ];
+    }
+
     try {
       $changedFields = [];
 
@@ -200,6 +200,15 @@ class UserService {
       if (isset($updates['roles'])) {
         $newRoles = $this->filterRoles($updates['roles']);
         $currentRoles = $user->getRoles(TRUE);
+
+        // Not more permissions for the user this connection runs as.
+        $raising = OwnRoles::raising($this->entityTypeManager, $this->currentUser, $uid, array_diff($newRoles, $currentRoles));
+        if ($raising !== []) {
+          return [
+            'success' => FALSE,
+            'error' => 'A connection does not give its own user more permissions: ' . implode(', ', $raising) . '. A person can assign these roles. Nothing was changed.',
+          ];
+        }
 
         // Remove roles not in the new list.
         foreach ($currentRoles as $role) {
@@ -334,6 +343,11 @@ class UserService {
       ];
     }
 
+    // An administrator that somebody blocked is not switched on again here.
+    if (!$user->isActive() && $this->userHasAdminRole($user)) {
+      return ['success' => FALSE, 'error' => 'Cannot activate users with administrator privileges via MCP.'];
+    }
+
     if ($user->isActive()) {
       return [
         'success' => TRUE,
@@ -400,15 +414,21 @@ class UserService {
     // Filter out 'administrator' role.
     $filteredRoles = $this->filterRoles($roles);
     $blockedRoles = array_diff($roles, $filteredRoles);
+    // And, for the user this connection runs as, a role that would give
+    // it a permission it does not have.
+    $raisingRoles = OwnRoles::raising($this->entityTypeManager, $this->currentUser, $uid, $filteredRoles);
+    $filteredRoles = array_values(array_diff($filteredRoles, $raisingRoles));
 
     try {
       $addedRoles = [];
       $existingRoles = $user->getRoles(TRUE);
 
+      $unknownRoles = [];
       foreach ($filteredRoles as $role) {
         // Verify role exists.
         $roleEntity = $this->entityTypeManager->getStorage('user_role')->load($role);
         if (!$roleEntity) {
+          $unknownRoles[] = $role;
           continue;
         }
 
@@ -436,9 +456,18 @@ class UserService {
         ],
       ];
 
+      // Say what was left out and why, in the message: a field that the
+      // tool does not declare never reaches the caller.
       if (!empty($blockedRoles)) {
         $result['data']['blocked_roles'] = $blockedRoles;
-        $result['data']['blocked_roles_note'] = "The 'administrator' role cannot be assigned via MCP.";
+        $result['data']['blocked_roles_note'] = 'An administrator role cannot be assigned via MCP.';
+        $result['data']['message'] .= ' Not assigned, because an administrator role cannot be assigned via MCP: ' . implode(', ', $blockedRoles) . '.';
+      }
+      if ($raisingRoles !== []) {
+        $result['data']['message'] .= ' Not assigned, because a connection does not give its own user more permissions: ' . implode(', ', $raisingRoles) . '. A person can assign them.';
+      }
+      if ($unknownRoles !== []) {
+        $result['data']['message'] .= ' Not assigned, because there is no such role: ' . implode(', ', $unknownRoles) . '. Use mcp_tools_get_roles to see the roles.';
       }
 
       return $result;
@@ -464,26 +493,7 @@ class UserService {
    *   Filtered array of roles with blocked roles removed.
    */
   protected function filterRoles(array $roles): array {
-    return array_filter($roles, function ($role) {
-      // Normalize to lowercase for comparison.
-      $roleLower = strtolower(trim($role));
-
-      // Check against explicit blocklist.
-      foreach (self::BLOCKED_ROLES as $blockedRole) {
-        if ($roleLower === strtolower($blockedRole)) {
-          return FALSE;
-        }
-      }
-
-      // Check against blocked patterns.
-      foreach (self::BLOCKED_ROLE_PATTERNS as $pattern) {
-        if (preg_match($pattern, $role)) {
-          return FALSE;
-        }
-      }
-
-      return TRUE;
-    });
+    return array_filter($roles, fn($role): bool => !AdminRoles::isAdmin($this->entityTypeManager, (string) $role));
   }
 
   /**

@@ -18,7 +18,7 @@ use Drupal\tool\Tool\ToolOperation;
 #[Tool(
   id: 'mcp_tools_get_site_status',
   label: new TranslatableMarkup('Get Site Status'),
-  description: new TranslatableMarkup('Get the status of the site: Drupal core version, PHP version, module counts, cron status and maintenance mode. A good first call.'),
+  description: new TranslatableMarkup('Get the status and health of the site: Drupal core version, PHP version, module counts, cron status and maintenance mode. A good first call.'),
   operation: ToolOperation::Read,
   input_definitions: [],
   output_definitions: [

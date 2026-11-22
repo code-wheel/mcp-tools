@@ -18,6 +18,7 @@ use Drupal\mcp_tools\Policy\ToolRefusal;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\McpClientBridge;
 use Drupal\mcp_tools\Service\McpToolCallContext;
+use Drupal\mcp_tools\Tool\AsksFirstInterface;
 use Drupal\tool\FailureCategory;
 use Drupal\tool\Tool\Invoker;
 use Drupal\tool\Tool\InvokerCapability;
@@ -168,12 +169,12 @@ class ToolApiCallToolHandler implements RequestHandlerInterface {
     $definition = $definitions[$pluginId] ?? NULL;
 
     if (!$definition instanceof ToolDefinition) {
-      return Error::forMethodNotFound("Unknown tool: {$toolName}", $request->getId());
+      return $this->unknownTool($toolName, $definitions, $request->getId());
     }
 
     $provider = $definition->getProvider() ?? '';
     if (!$this->includeAllTools && (!is_string($provider) || !str_starts_with($provider, $this->allowedProviderPrefix))) {
-      return Error::forMethodNotFound("Unknown tool: {$toolName}", $request->getId());
+      return $this->unknownTool($toolName, $definitions, $request->getId());
     }
 
     $this->dispatchEvent(new ToolExecutionStartedEvent(
@@ -388,6 +389,43 @@ class ToolApiCallToolHandler implements RequestHandlerInterface {
   }
 
   /**
+   * The answer to a tool name that does not exist: with the closest names.
+   *
+   * Only names this session is shown are offered: tools of the providers
+   * this server serves, which the session may call.
+   *
+   * @param string $toolName
+   *   The name that was used.
+   * @param array $definitions
+   *   All tool definitions, by plugin ID.
+   * @param string|int $requestId
+   *   The ID of the request.
+   */
+  private function unknownTool(string $toolName, array $definitions, string|int $requestId): Error {
+    $names = [];
+    foreach ($definitions as $pluginId => $definition) {
+      if (!$definition instanceof ToolDefinition) {
+        continue;
+      }
+      $provider = $definition->getProvider() ?? '';
+      if (!$this->includeAllTools && (!is_string($provider) || !str_starts_with($provider, $this->allowedProviderPrefix))) {
+        continue;
+      }
+      if ($this->accessManager !== NULL && !$this->accessManager->listsTool($definition)) {
+        continue;
+      }
+      $names[] = McpToolsServerFactory::pluginIdToMcpName((string) $pluginId);
+    }
+
+    $closest = ToolNameSuggester::closest($toolName, $names);
+    $message = "Unknown tool: {$toolName}";
+    if ($closest !== []) {
+      $message .= '. Did you mean ' . implode(', ', $closest) . '?';
+    }
+    return Error::forMethodNotFound($message, $requestId);
+  }
+
+  /**
    * Best-effort upcasting of input arguments based on input definition.
    */
   private function upcastArgument(mixed $argument, InputDefinitionInterface $definition): mixed {
@@ -466,14 +504,22 @@ class ToolApiCallToolHandler implements RequestHandlerInterface {
   }
 
   /**
-   * Asks the client's user before another provider's destructive tool runs.
+   * Asks the client's user before a call that needs a person's yes.
    *
-   * MCP Tools' own tools that destroy something take a confirm flag and
-   * refuse without it. A Tool API tool of another module has no such flag,
-   * so the server asks for it: a tool that declares itself destructive runs
-   * after the client's user said yes, where the client can ask. A client
-   * that cannot ask gets the tool run as before, unless the site insists on
-   * a confirmation (access.confirm_destructive_tools): then it is refused.
+   * Two kinds of call need one. A tool that declares itself destructive,
+   * of MCP Tools or of another module. And a tool of MCP Tools that says so
+   * for this call (AsksFirstInterface): granting a permission for trusted
+   * roles only, applying a recipe no person has read.
+   *
+   * This method was written to leave MCP Tools' own destructive tools out,
+   * "because they take a confirm flag". It named their base class without
+   * importing it, so it never left one out, and only one of them has such a
+   * flag. What it did is the safer rule, and is now what it says.
+   *
+   * Such a call runs after the client's user said yes, where the client can
+   * ask. A client that cannot ask gets it run as before, unless the site
+   * insists on a confirmation (access.confirm_destructive_tools): then it
+   * is refused.
    *
    * Tool API also calls a write tool destructive when it declares nothing.
    * Going by that, nearly every write would be asked about, so only what
@@ -491,13 +537,15 @@ class ToolApiCallToolHandler implements RequestHandlerInterface {
    * @return array<string, mixed>|\Mcp\Schema\JsonRpc\Response
    *   The arguments when the call may go on, or the answer that ends it.
    */
-  private function maybeConfirmForeignDestructiveTool(string $pluginId, array $arguments, SessionInterface $session, mixed $requestId): array|Response {
+  private function maybeAskFirst(string $pluginId, array $arguments, SessionInterface $session, mixed $requestId): array|Response {
     $definition = $this->toolManager->getDefinitions()[$pluginId] ?? NULL;
-    if (!$definition instanceof ToolDefinition || $definition->get('destructive') !== TRUE) {
+    if (!$definition instanceof ToolDefinition) {
       return $arguments;
     }
     $class = $definition->getClass();
-    if (is_string($class) && is_a($class, McpToolsToolBase::class, TRUE)) {
+    $asksItself = is_string($class) && is_a($class, AsksFirstInterface::class, TRUE);
+    $destructive = $definition->get('destructive') === TRUE;
+    if (!$asksItself && !$destructive) {
       return $arguments;
     }
 
@@ -516,15 +564,29 @@ class ToolApiCallToolHandler implements RequestHandlerInterface {
     }
 
     $toolName = McpToolsServerFactory::pluginIdToMcpName($pluginId);
-    if (!$canAsk) {
-      return $this->confirmationRefusal($requestId, $toolName, "The tool '$toolName' says it is destructive, and this site runs such a tool only after the user confirmed it. This client cannot ask its user, so the tool was not run.");
+    $reason = $asksItself ? $this->reasonToAsk($pluginId, $arguments) : NULL;
+    if ($reason === NULL && !$destructive) {
+      return $arguments;
+    }
+    if ($reason !== NULL) {
+      $message = $reason . ' Run it?';
+      $cannotAsk = $reason . ' This site runs such a call only after the user confirmed it. This client cannot ask its user, so nothing was run.';
+      $noAnswer = $reason . ' The user was asked to confirm and no answer came back, so nothing was run.';
+    }
+    else {
+      $message = sprintf('The tool "%s" (%s, from the module %s) says it is destructive. Run it?', (string) $definition->getLabel(), $toolName, (string) $definition->getProvider());
+      $shown = $this->sanitizeArguments($arguments);
+      if ($shown !== []) {
+        $message .= ' Arguments: ' . mb_substr((string) json_encode($shown, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE), 0, 600);
+      }
+      $cannotAsk = "The tool '$toolName' says it is destructive, and this site runs such a tool only after the user confirmed it. This client cannot ask its user, so the tool was not run.";
+      $noAnswer = "The tool '$toolName' says it is destructive. The user was asked to confirm and no answer came back, so the tool was not run.";
     }
 
-    $message = sprintf('The tool "%s" (%s, from the module %s) says it is destructive. Run it?', (string) $definition->getLabel(), $toolName, (string) $definition->getProvider());
-    $shown = $this->sanitizeArguments($arguments);
-    if ($shown !== []) {
-      $message .= ' Arguments: ' . mb_substr((string) json_encode($shown, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE), 0, 600);
+    if (!$canAsk) {
+      return $this->confirmationRefusal($requestId, $toolName, $cannotAsk);
     }
+
     try {
       $result = (new ClientGateway($session))->elicit($message, new ElicitationSchema(
         properties: [
@@ -539,10 +601,12 @@ class ToolApiCallToolHandler implements RequestHandlerInterface {
         '@plugin' => $pluginId,
         '@message' => $e->getMessage(),
       ]);
-      return $this->confirmationRefusal($requestId, $toolName, "The tool '$toolName' says it is destructive. The user was asked to confirm and no answer came back, so the tool was not run.");
+      return $this->confirmationRefusal($requestId, $toolName, $noAnswer);
     }
 
     if ($result->action === ElicitAction::Accept && !empty($result->content['confirm'])) {
+      // The audit lines of this call say that a person said yes.
+      $this->toolCallContext?->markConfirmedByUser();
       return $arguments;
     }
 
@@ -552,6 +616,24 @@ class ToolApiCallToolHandler implements RequestHandlerInterface {
       FALSE,
       ['success' => FALSE, 'message' => $text, 'data' => []],
     ));
+  }
+
+  /**
+   * Why one of our own tools wants a yes for this call, if it does.
+   */
+  private function reasonToAsk(string $pluginId, array $arguments): ?string {
+    try {
+      $tool = $this->toolManager->createInstance($pluginId);
+      return $tool instanceof AsksFirstInterface ? $tool->reasonToAsk($arguments) : NULL;
+    }
+    catch (\Throwable $e) {
+      // The call itself will say what is wrong with the tool.
+      $this->logger->warning('Could not ask @plugin whether it needs a confirmation: @message', [
+        '@plugin' => $pluginId,
+        '@message' => $e->getMessage(),
+      ]);
+      return NULL;
+    }
   }
 
   /**
@@ -683,7 +765,7 @@ class ToolApiCallToolHandler implements RequestHandlerInterface {
   private function maybeElicitDestructiveConfirmation(string $pluginId, array $arguments, SessionInterface $session, mixed $requestId): array|Response {
     $confirmation = self::CONFIRMATION_TOOLS[$pluginId] ?? NULL;
     if ($confirmation === NULL) {
-      return $this->maybeConfirmForeignDestructiveTool($pluginId, $arguments, $session, $requestId);
+      return $this->maybeAskFirst($pluginId, $arguments, $session, $requestId);
     }
     if (!empty($arguments[$confirmation['confirm_argument']])) {
       return $arguments;
@@ -729,6 +811,7 @@ class ToolApiCallToolHandler implements RequestHandlerInterface {
 
     if ($result->action === ElicitAction::Accept && !empty($result->content['confirm'])) {
       $arguments[$confirmation['confirm_argument']] = TRUE;
+      $this->toolCallContext?->markConfirmedByUser();
       return $arguments;
     }
 

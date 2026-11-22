@@ -45,7 +45,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'id' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Paragraph Type ID'),
-      description: new TranslatableMarkup('Machine name of the created paragraph type. Use with AddParagraphField to add fields.'),
+      description: new TranslatableMarkup('Machine name of the created paragraph type. Use with mcp_paragraphs_add_field to add fields.'),
     ),
     'label' => new OutputDefinition(
       data_type: 'string',

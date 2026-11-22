@@ -25,7 +25,7 @@ use Drupal\tool\Tool\ToolOperation;
     'vocabularies' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Vocabularies'),
-      description: new TranslatableMarkup('Array of vocabularies with id, label, description, and term_count. Use id with GetVocabulary to see terms or CreateTerm to add terms.'),
+      description: new TranslatableMarkup('Array of vocabularies with id, label, description, and term_count. Use id with mcp_structure_get_vocabulary to see terms or mcp_structure_create_term to add terms.'),
     ),
     'total' => new OutputDefinition(
       data_type: 'integer',

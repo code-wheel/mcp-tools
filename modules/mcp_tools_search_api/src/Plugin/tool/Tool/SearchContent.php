@@ -19,7 +19,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 #[Tool(
   id: 'mcp_search_api_search',
   label: new TranslatableMarkup('Search Content'),
-  description: new TranslatableMarkup('Search content using a Search API index. Returns matching items with relevance scores. Use ListIndexes to find available indexes.'),
+  description: new TranslatableMarkup('Search content using a Search API index. Returns matching items with relevance scores. Use mcp_search_api_list_indexes to find available indexes.'),
   operation: ToolOperation::Read,
   input_definitions: [
     'index' => new InputDefinition(

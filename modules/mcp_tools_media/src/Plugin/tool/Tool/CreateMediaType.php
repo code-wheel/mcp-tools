@@ -45,7 +45,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'id' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Media Type ID'),
-      description: new TranslatableMarkup('Machine name of created type. Use as bundle in CreateMedia.'),
+      description: new TranslatableMarkup('Machine name of created type. Use as bundle in mcp_create_media.'),
     ),
     'label' => new OutputDefinition(
       data_type: 'string',

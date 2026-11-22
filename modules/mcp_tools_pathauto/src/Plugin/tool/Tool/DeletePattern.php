@@ -19,7 +19,7 @@ use Drupal\tool\TypedData\InputDefinition;
 #[Tool(
   id: 'mcp_pathauto_delete',
   label: new TranslatableMarkup('Delete Pathauto Pattern'),
-  description: new TranslatableMarkup('Delete a URL alias pattern. This is a destructive write operation.'),
+  description: new TranslatableMarkup('Delete a URL alias pattern.'),
   operation: ToolOperation::Write,
   destructive: TRUE,
   input_definitions: [

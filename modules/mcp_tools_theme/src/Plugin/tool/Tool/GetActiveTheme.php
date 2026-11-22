@@ -30,17 +30,17 @@ use Drupal\tool\Tool\ToolOperation;
     'default_theme' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Default Theme'),
-      description: new TranslatableMarkup('Machine name of the default frontend theme. Use SetDefaultTheme to change.'),
+      description: new TranslatableMarkup('Machine name of the default frontend theme. Use mcp_theme_set_default to change.'),
     ),
     'admin_theme' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Admin Theme'),
-      description: new TranslatableMarkup('Machine name of the admin theme. Use SetAdminTheme to change.'),
+      description: new TranslatableMarkup('Machine name of the admin theme. Use mcp_theme_set_admin to change.'),
     ),
     'active_theme_info' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Active Theme Info'),
-      description: new TranslatableMarkup('Detailed info about active theme: label, version, base_theme, regions, and libraries. Use GetThemeSettings for configuration.'),
+      description: new TranslatableMarkup('Detailed info about active theme: label, version, base_theme, regions, and libraries. Use mcp_theme_get_settings for configuration.'),
     ),
   ],
 )]

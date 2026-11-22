@@ -35,7 +35,7 @@ use Drupal\tool\Tool\ToolOperation;
     'by_provider' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Permissions by Provider'),
-      description: new TranslatableMarkup('Permissions grouped by provider module. Each permission has id (machine name), title, and description. Use id with GrantPermissions.'),
+      description: new TranslatableMarkup('Permissions grouped by provider module. Each permission has id (machine name), title, and description. Use id with mcp_structure_grant_permissions.'),
     ),
   ],
 )]

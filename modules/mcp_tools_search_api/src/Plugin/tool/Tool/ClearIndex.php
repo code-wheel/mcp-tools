@@ -46,7 +46,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'items_to_reindex' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Items that need to be reindexed'),
-      description: new TranslatableMarkup('Number of items now pending reindexing. Use IndexItems to rebuild the index.'),
+      description: new TranslatableMarkup('Number of items now pending reindexing. Use mcp_search_api_index to rebuild the index.'),
     ),
   ],
 )]

@@ -51,7 +51,7 @@ final class McpToolsStdioCommands extends DrushCommands {
   #[CLI\Command(name: 'mcp-tools:serve', aliases: ['mcp-tools-server', 'mcp-tools:server'])]
   #[CLI\Usage(name: 'drush mcp-tools:serve', description: 'Start an MCP server over STDIO exposing Tool API tools')]
   #[CLI\Option(name: 'server', description: 'Server profile ID from mcp_tools.servers')]
-  #[CLI\Option(name: 'scope', description: 'Override scopes for this process (comma-separated: read,write,admin)')]
+  #[CLI\Option(name: 'scope', description: 'Scopes for this process (comma-separated: read,write,admin). Never more than the site allows (access.allowed_scopes).')]
   #[CLI\Option(name: 'uid', description: 'Drupal user ID to run tool execution as (defaults to Drush bootstrap user)')]
   #[CLI\Option(name: 'all-tools', description: 'Expose all Tool API tools (not only mcp_tools providers)')]
   #[CLI\Option(name: 'gateway', description: 'Expose gateway tools (discover/info/execute) instead of the full tool list')]
@@ -100,19 +100,30 @@ final class McpToolsStdioCommands extends DrushCommands {
       return;
     }
 
-    // Optionally override scopes for this process.
+    // Optionally override scopes for this process: --scope, or else the
+    // scopes of the server profile. Neither gets more than the site allows
+    // (access.allowed_scopes), as for every other way to ask for scopes.
+    $asked = [];
     if (!empty($options['scope']) && is_string($options['scope'])) {
-      $scopes = array_filter(array_map('trim', explode(',', $options['scope'])));
-      if (!empty($scopes)) {
-        $this->accessManager->setScopes($scopes);
-        // Also for the replacement of the access manager, should a tool
-        // rebuild the container during the session.
-        AccessManager::setProcessScopes($scopes);
-      }
+      $asked = array_filter(array_map('trim', explode(',', $options['scope'])));
     }
     elseif (!empty($serverConfig['scopes'])) {
-      $this->accessManager->setScopes((array) $serverConfig['scopes']);
-      AccessManager::setProcessScopes((array) $serverConfig['scopes']);
+      $asked = (array) $serverConfig['scopes'];
+    }
+    if (!empty($asked)) {
+      [$scopes, $dropped] = $this->accessManager->limitToAllowed($asked);
+      if ($dropped !== []) {
+        fwrite(\STDERR, sprintf(
+          "MCP Tools: this site does not allow the scope %s, so this session runs with: %s. To allow it, tick it under \"Allowed scopes\" on the MCP Tools settings form, or run: drush config:set mcp_tools.settings access.allowed_scopes '[%s]' --input-format=yaml -y\n",
+          implode(', ', $dropped),
+          implode(', ', $scopes),
+          implode(', ', array_unique(array_merge($scopes, $dropped))),
+        ));
+      }
+      $this->accessManager->setScopes($scopes);
+      // Also for the replacement of the access manager, should a tool
+      // rebuild the container during the session.
+      AccessManager::setProcessScopes($scopes);
     }
 
     // Either the command line or the server profile can turn these on. An

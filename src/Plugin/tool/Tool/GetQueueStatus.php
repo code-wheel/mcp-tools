@@ -40,7 +40,7 @@ use Drupal\tool\Tool\ToolOperation;
     'queues' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Queue Details'),
-      description: new TranslatableMarkup('Array of queues with name, title, item_count, and cron settings. Use name with RunQueue.'),
+      description: new TranslatableMarkup('Array of queues with name, title, item_count, and cron settings. Use name with mcp_cron_run_queue.'),
     ),
   ],
 )]

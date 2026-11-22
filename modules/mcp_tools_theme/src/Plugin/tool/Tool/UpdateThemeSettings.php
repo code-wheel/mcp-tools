@@ -44,7 +44,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'updated_keys' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Updated Keys'),
-      description: new TranslatableMarkup('List of setting keys that were modified (e.g., ["logo", "favicon"]). Use GetThemeSettings to verify changes.'),
+      description: new TranslatableMarkup('List of setting keys that were modified (e.g., ["logo", "favicon"]). Use mcp_theme_get_settings to verify changes.'),
     ),
     'message' => new OutputDefinition(
       data_type: 'string',

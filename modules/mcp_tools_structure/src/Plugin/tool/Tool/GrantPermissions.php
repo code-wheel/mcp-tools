@@ -8,6 +8,7 @@ use Drupal\mcp_tools_structure\Service\RoleService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\mcp_tools\Tool\AsksFirstInterface;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
 use Drupal\tool\Tool\ToolOperation;
@@ -19,19 +20,19 @@ use Drupal\tool\TypedData\InputDefinition;
 #[Tool(
   id: 'mcp_structure_grant_permissions',
   label: new TranslatableMarkup('Grant Permissions'),
-  description: new TranslatableMarkup('Grant permissions to a user role. Some dangerous permissions are blocked.'),
+  description: new TranslatableMarkup('Grant permissions to a user role. Permissions for trusted roles only need the admin scope. The permissions of MCP Tools itself are blocked.'),
   operation: ToolOperation::Write,
   input_definitions: [
     'role' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Role ID'),
-      description: new TranslatableMarkup('Role machine name. Use GetRoles to see available roles.'),
+      description: new TranslatableMarkup('Role machine name. Use mcp_tools_get_roles to see available roles.'),
       required: TRUE,
     ),
     'permissions' => new InputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Permissions'),
-      description: new TranslatableMarkup('Array of permission machine names. Use GetPermissions to see available permissions.'),
+      description: new TranslatableMarkup('Array of permission machine names. Use mcp_tools_get_permissions to see available permissions.'),
       required: TRUE,
     ),
   ],
@@ -58,7 +59,7 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
 )]
-class GrantPermissions extends McpToolsToolBase {
+class GrantPermissions extends McpToolsToolBase implements AsksFirstInterface {
 
   protected const MCP_CATEGORY = 'structure';
 
@@ -95,6 +96,27 @@ class GrantPermissions extends McpToolsToolBase {
     }
 
     return $this->roleService->grantPermissions($role, $permissions);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function reasonToAsk(array $arguments): ?string {
+    $role = $arguments['role'] ?? '';
+    $permissions = $arguments['permissions'] ?? [];
+    if (!is_string($role) || $role === '' || !is_array($permissions)) {
+      return NULL;
+    }
+    $restricted = $this->roleService->restrictedToGrant($permissions, $role, FALSE);
+    if ($restricted === []) {
+      return NULL;
+    }
+    return sprintf(
+      'The role "%s" would get %s that Drupal marks for trusted roles only: %s.',
+      $role,
+      count($restricted) === 1 ? 'a permission' : 'permissions',
+      implode(', ', $restricted),
+    );
   }
 
 }

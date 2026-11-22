@@ -38,7 +38,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'patterns' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Pattern List'),
-      description: new TranslatableMarkup('Array of patterns with id, label, pattern, entity_type, and bundles. Use id with GetPattern.'),
+      description: new TranslatableMarkup('Array of patterns with id, label, pattern, entity_type, and bundles. Use id with mcp_pathauto_get_pattern.'),
     ),
     'filter' => new OutputDefinition(
       data_type: 'map',

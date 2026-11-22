@@ -46,7 +46,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'id' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Job ID'),
-      description: new TranslatableMarkup('Machine name of the disabled job. Use EnableJob to re-enable.'),
+      description: new TranslatableMarkup('Machine name of the disabled job. Use mcp_ultimate_cron_enable to re-enable.'),
     ),
     'title' => new OutputDefinition(
       data_type: 'string',

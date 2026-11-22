@@ -25,7 +25,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'id' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Webform ID'),
-      description: new TranslatableMarkup('Machine name of the webform to update. Use ListWebforms to find available webforms.'),
+      description: new TranslatableMarkup('Machine name of the webform to update. Use mcp_list_webforms to find available webforms.'),
       required: TRUE,
     ),
     'title' => new InputDefinition(
@@ -49,7 +49,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'elements' => new InputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Elements definition'),
-      description: new TranslatableMarkup('Updated YAML-style element definitions. Replaces existing elements. Use GetWebform to see current elements.'),
+      description: new TranslatableMarkup('Updated YAML-style element definitions. Replaces existing elements. Use mcp_get_webform to see current elements.'),
       required: FALSE,
     ),
     'settings' => new InputDefinition(

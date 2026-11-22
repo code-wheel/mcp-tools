@@ -37,6 +37,8 @@ Common issues and fixes for MCP Tools.
 
 - Scopes are intersected across global settings, server profile scopes, and (for HTTP) API key scopes.
 - Use `mcp_tools.settings` and `mcp_tools.servers` to confirm allowed scopes.
+- The recipe tools or other admin tools are missing over STDIO: the site does not allow the `admin` scope. A new site allows `read` and `write`. From 1.0.0-beta21 `--scope` and a server profile get no more than that, and the command says so on stderr. Tick "admin" under "Allowed scopes" on the settings form, or run `drush config:set mcp_tools.settings access.allowed_scopes '[read, write, admin]' --input-format=yaml -y`.
+- The audit log is Drupal's log. Enable `dblog` or `syslog` to keep it. `dblog` trims old rows, so send the log off the server with `syslog` if you need it to last.
 
 ## Streamable HTTP session issues
 

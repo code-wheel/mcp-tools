@@ -19,7 +19,7 @@ use Drupal\tool\TypedData\InputDefinition;
 #[Tool(
   id: 'mcp_publish_content',
   label: new TranslatableMarkup('Publish/Unpublish Content'),
-  description: new TranslatableMarkup('Change publish status of content.'),
+  description: new TranslatableMarkup('Publish or unpublish a content item.'),
   operation: ToolOperation::Write,
   input_definitions: [
     'nid' => new InputDefinition(

@@ -19,7 +19,7 @@ use Drupal\tool\TypedData\InputDefinition;
 #[Tool(
   id: 'mcp_structure_delete_field',
   label: new TranslatableMarkup('Delete Field'),
-  description: new TranslatableMarkup('Delete a field from an entity bundle. Data will be lost!'),
+  description: new TranslatableMarkup('Delete a field from an entity bundle. The data in the field is lost.'),
   operation: ToolOperation::Write,
   destructive: TRUE,
   input_definitions: [

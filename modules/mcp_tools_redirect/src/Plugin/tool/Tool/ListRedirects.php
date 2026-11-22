@@ -54,7 +54,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'redirects' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Redirects'),
-      description: new TranslatableMarkup('Array of redirect objects, each containing id, source, destination, status_code, language and created. Use id with GetRedirect for one redirect.'),
+      description: new TranslatableMarkup('Array of redirect objects, each containing id, source, destination, status_code, language and created. Use id with mcp_redirect_get for one redirect.'),
     ),
   ],
 )]

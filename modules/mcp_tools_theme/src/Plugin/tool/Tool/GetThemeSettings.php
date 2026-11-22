@@ -38,7 +38,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'settings' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Theme Settings'),
-      description: new TranslatableMarkup('Theme-specific settings including features, colors, and custom options. Use UpdateThemeSettings to modify.'),
+      description: new TranslatableMarkup('Theme-specific settings including features, colors, and custom options. Use mcp_theme_update_settings to modify.'),
     ),
     'global_settings' => new OutputDefinition(
       data_type: 'map',
@@ -48,12 +48,12 @@ use Drupal\tool\TypedData\InputDefinition;
     'logo' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Logo Settings'),
-      description: new TranslatableMarkup('Logo configuration: use_default (bool), path (string). Modify via UpdateThemeSettings with logo key.'),
+      description: new TranslatableMarkup('Logo configuration: use_default (bool), path (string). Modify via mcp_theme_update_settings with logo key.'),
     ),
     'favicon' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Favicon Settings'),
-      description: new TranslatableMarkup('Favicon configuration: use_default (bool), path (string), mimetype. Modify via UpdateThemeSettings with favicon key.'),
+      description: new TranslatableMarkup('Favicon configuration: use_default (bool), path (string), mimetype. Modify via mcp_theme_update_settings with favicon key.'),
     ),
   ],
 )]

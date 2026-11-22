@@ -25,7 +25,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'view_id' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('View Machine Name'),
-      description: new TranslatableMarkup('ID of existing view to add display to. Get from CreateView or views listing.'),
+      description: new TranslatableMarkup('ID of existing view to add display to. Get from mcp_create_view or views listing.'),
       required: TRUE,
     ),
     'display_type' => new InputDefinition(

@@ -1,0 +1,25 @@
+<?php
+
+/**
+ * @file
+ * The status report line of MCP Tools Recipes, for Drupal before 11.3.
+ */
+
+declare(strict_types=1);
+
+use Drupal\Core\Hook\Attribute\LegacyRequirementsHook;
+use Drupal\mcp_tools_recipes\Hook\RecipesRequirements;
+
+/**
+ * Implements hook_requirements().
+ *
+ * Drupal 11.3 and later run RecipesRequirements::runtime() and leave this
+ * function alone.
+ */
+#[LegacyRequirementsHook]
+function mcp_tools_recipes_requirements(string $phase): array {
+  if ($phase !== 'runtime') {
+    return [];
+  }
+  return (new RecipesRequirements(\Drupal::service('mcp_tools_recipes.recipes')))->unreviewed(REQUIREMENT_WARNING);
+}

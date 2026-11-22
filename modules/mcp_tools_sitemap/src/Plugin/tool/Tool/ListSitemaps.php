@@ -30,7 +30,7 @@ use Drupal\tool\Tool\ToolOperation;
     'sitemaps' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Sitemap Variants'),
-      description: new TranslatableMarkup('Array of sitemap variant objects with id, label, enabled status, URL, and link count. Use variant ID with GetSettings or Regenerate.'),
+      description: new TranslatableMarkup('Array of sitemap variant objects with id, label, enabled status, URL, and link count. Use variant ID with mcp_sitemap_get_settings or mcp_sitemap_regenerate.'),
     ),
   ],
 )]

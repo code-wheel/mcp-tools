@@ -95,7 +95,7 @@ jobs:
       - name: Install MCP dependencies
         run: |
           cd drupal
-          composer require drupal/tool:^1.0.0-beta9 mcp/sdk:^0.10 code-wheel/mcp-http-security:^1.0 code-wheel/mcp-error-codes:^1.3 code-wheel/mcp-events:^2.0 code-wheel/mcp-schema-builder:^1.1 code-wheel/mcp-tool-gateway:^1.2.1 "enshrined/svg-sanitize:^0.22 || ^1.0" -W --no-interaction
+          composer require drupal/tool:^1.0.0-beta12 mcp/sdk:^0.10 code-wheel/mcp-http-security:^1.0 code-wheel/mcp-error-codes:^1.3 code-wheel/mcp-events:^2.0 code-wheel/mcp-schema-builder:^1.1 code-wheel/mcp-tool-gateway:^1.2.1 "enshrined/svg-sanitize:^0.22 || ^1.0" -W --no-interaction
 
       # Same set as the PHPUnit job in ci.yml. Without them the kernel tests
       # for trash, paragraphs and metatag cannot enable their modules.

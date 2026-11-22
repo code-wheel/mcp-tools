@@ -7,6 +7,7 @@ namespace Drupal\Tests\mcp_tools\Unit\Mcp;
 use Drupal\mcp_tools\Mcp\GatewayDirectCallHandler;
 use Drupal\mcp_tools\Mcp\ToolApiGateway;
 use Drupal\Tests\UnitTestCase;
+use Mcp\Schema\JsonRpc\Error;
 use Mcp\Schema\JsonRpc\Request;
 use Mcp\Schema\JsonRpc\Response;
 use Mcp\Schema\Request\CallToolRequest;
@@ -104,6 +105,49 @@ final class GatewayDirectCallHandlerTest extends UnitTestCase {
     // The name alone, for a tool without inputs.
     $handler->handle((new CallToolRequest('mcp_x', ['tool_name' => 'mcp_x']))->withId('c'), $session);
     $this->assertSame([], $this->seen[2]->arguments);
+  }
+
+  /**
+   * A name that does not exist is answered with where to look.
+   */
+  public function testAnUnknownNameIsAnsweredWithWhereToLook(): void {
+    $door = $this->createMock(RequestHandlerInterface::class);
+    $door->method('handle')->willReturnCallback(static fn(Request $request): Error => Error::forMethodNotFound('Unknown tool: mcp_list_content_types. Did you mean mcp_tools_list_content_types?', $request->getId()));
+    $handler = new GatewayDirectCallHandler($door, self::GATEWAY_TOOLS);
+
+    $response = $handler->handle((new CallToolRequest('mcp_list_content_types', []))->withId('q'), $this->createMock(SessionInterface::class));
+
+    $this->assertInstanceOf(Error::class, $response);
+    $this->assertSame(Error::METHOD_NOT_FOUND, $response->code);
+    $this->assertSame('q', $response->id);
+    $this->assertSame('Unknown tool: mcp_list_content_types. Did you mean mcp_tools_list_content_types? Find tools with mcp_tools_discover_tools.', $response->message);
+  }
+
+  /**
+   * A name close to one of the gateway's own tools is answered with it.
+   *
+   * A model called mcp_execute_tool. The closest names came from the
+   * catalog only, which does not hold the gateway's three tools, so the
+   * answer had no suggestion at all.
+   */
+  public function testANameCloseToAGatewayToolIsAnsweredWithThatTool(): void {
+    $door = $this->createMock(RequestHandlerInterface::class);
+    $door->method('handle')->willReturnCallback(static fn(Request $request): Error => Error::forMethodNotFound('Unknown tool: ' . $request->name . '.', $request->getId()));
+    $handler = new GatewayDirectCallHandler($door, self::GATEWAY_TOOLS);
+    $session = $this->createMock(SessionInterface::class);
+
+    $response = $handler->handle((new CallToolRequest('mcp_execute_tool', []))->withId('q'), $session);
+    $this->assertInstanceOf(Error::class, $response);
+    $this->assertSame(Error::METHOD_NOT_FOUND, $response->code);
+    $this->assertSame('q', $response->id);
+    $this->assertSame('Unknown tool: mcp_execute_tool. Did you mean mcp_tools_execute_tool? Find tools with mcp_tools_discover_tools.', $response->message);
+
+    $response = $handler->handle((new CallToolRequest('mcp_discover_tools', []))->withId('r'), $session);
+    $this->assertStringContainsString('Did you mean mcp_tools_discover_tools?', $response->message);
+
+    // A name near none of the three keeps the door's answer.
+    $response = $handler->handle((new CallToolRequest('mcp_tools_site_health', []))->withId('s'), $session);
+    $this->assertSame('Unknown tool: mcp_tools_site_health. Find tools with mcp_tools_discover_tools.', $response->message);
   }
 
   /**

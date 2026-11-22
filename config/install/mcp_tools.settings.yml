@@ -56,10 +56,12 @@ access:
   # before 1.0.0-beta20. A tool that is not listed is refused by name.
   list_all_tools: false
 
-  # A tool of another module that declares itself destructive is run after
-  # the client's user said yes, when the client can ask (MCP elicitation).
-  # A client that cannot ask gets the tool run. Set to true to refuse it
-  # for such a client. MCP Tools' own tools have their confirm flags.
+  # Three kinds of call are run after the client's user said yes, when the
+  # client can ask (MCP elicitation): a tool that declares itself
+  # destructive, a grant of a permission for trusted roles only, and a
+  # recipe that was written through MCP and that no person has reviewed.
+  # A client that cannot ask gets the call run, and the audit log says so.
+  # Set to true to refuse it for such a client.
   confirm_destructive_tools: false
 
 # Rate limiting for expensive read operations.

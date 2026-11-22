@@ -19,7 +19,7 @@ use Drupal\tool\TypedData\InputDefinition;
 #[Tool(
   id: 'mcp_redirect_delete',
   label: new TranslatableMarkup('Delete Redirect'),
-  description: new TranslatableMarkup('Delete a URL redirect. This is a write operation.'),
+  description: new TranslatableMarkup('Delete a URL redirect.'),
   operation: ToolOperation::Write,
   destructive: TRUE,
   input_definitions: [
@@ -39,7 +39,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'deleted_redirect' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Deleted Redirect Details'),
-      description: new TranslatableMarkup('Snapshot of the redirect data before deletion, including source, destination, and status_code. Useful for confirmation or undo operations via CreateRedirect.'),
+      description: new TranslatableMarkup('Snapshot of the redirect data before deletion, including source, destination, and status_code. Useful for confirmation or undo operations via mcp_redirect_create.'),
     ),
     'message' => new OutputDefinition(
       data_type: 'string',

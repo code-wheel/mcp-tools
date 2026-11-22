@@ -19,13 +19,13 @@ use Drupal\tool\TypedData\InputDefinition;
 #[Tool(
   id: 'mcp_create_content',
   label: new TranslatableMarkup('Create Content'),
-  description: new TranslatableMarkup('Create new content (node) of a specified type.'),
+  description: new TranslatableMarkup('Create new content (node) of a specified type. It is saved as an unpublished draft unless status is true.'),
   operation: ToolOperation::Write,
   input_definitions: [
     'type' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Content Type'),
-      description: new TranslatableMarkup('Content type machine name (e.g., "article", "page"). Use ListContentTypes to see available types.'),
+      description: new TranslatableMarkup('Content type machine name (e.g., "article", "page"). Use mcp_tools_list_content_types to see available types.'),
       required: TRUE,
     ),
     'title' => new InputDefinition(
@@ -37,13 +37,13 @@ use Drupal\tool\TypedData\InputDefinition;
     'fields' => new InputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Fields'),
-      description: new TranslatableMarkup('Field values as key-value pairs. Keys are field machine names. Text: {"value": "...", "format": "basic_html"}. Entity refs: {"target_id": 123}. Images: {"target_id": fid}.'),
+      description: new TranslatableMarkup('Field values by field machine name, for example {"body": "The text"}. Without it only the title is set. A text field takes a string or {"value": "...", "format": "basic_html"}. Entity refs: {"target_id": 123}. Images: {"target_id": fid}.'),
       required: FALSE,
     ),
     'status' => new InputDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Published'),
-      description: new TranslatableMarkup('True to publish immediately, false to save as draft. Defaults to true.'),
+      description: new TranslatableMarkup('True to publish immediately. Without it, or with false, the item is saved as an unpublished draft.'),
       required: FALSE,
     ),
   ],
@@ -62,6 +62,11 @@ use Drupal\tool\TypedData\InputDefinition;
       data_type: 'string',
       label: new TranslatableMarkup('Title'),
       description: new TranslatableMarkup('The title of the created node.'),
+    ),
+    'status' => new OutputDefinition(
+      data_type: 'string',
+      label: new TranslatableMarkup('Status'),
+      description: new TranslatableMarkup('Whether the new node is live: "published" or "draft".'),
     ),
     'message' => new OutputDefinition(
       data_type: 'string',

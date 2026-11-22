@@ -65,17 +65,17 @@ use Drupal\tool\TypedData\InputDefinition;
     'publish_on' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Scheduled Publish'),
-      description: new TranslatableMarkup('Scheduled publish date info: timestamp, formatted. NULL if not scheduled. Use SetSchedule to modify.'),
+      description: new TranslatableMarkup('Scheduled publish date info: timestamp, formatted. NULL if not scheduled. Use mcp_scheduler_publish to change it.'),
     ),
     'unpublish_on' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Scheduled Unpublish'),
-      description: new TranslatableMarkup('Scheduled unpublish date info: timestamp, formatted. NULL if not scheduled. Use SetSchedule to modify.'),
+      description: new TranslatableMarkup('Scheduled unpublish date info: timestamp, formatted. NULL if not scheduled. Use mcp_scheduler_unpublish to change it.'),
     ),
     'has_schedule' => new OutputDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Has Active Schedule'),
-      description: new TranslatableMarkup('TRUE if any schedule (publish or unpublish) is set. Use CancelSchedule to remove.'),
+      description: new TranslatableMarkup('TRUE if any schedule (publish or unpublish) is set. Use mcp_scheduler_cancel to remove.'),
     ),
   ],
 )]

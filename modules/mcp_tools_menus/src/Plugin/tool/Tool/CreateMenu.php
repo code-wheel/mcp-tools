@@ -45,7 +45,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'id' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Menu ID'),
-      description: new TranslatableMarkup('Machine name of the created menu. Use with AddMenuLink, GetMenuTree.'),
+      description: new TranslatableMarkup('Machine name of the created menu. Use with mcp_menus_add_menu_link, mcp_tools_get_menu_tree.'),
     ),
     'label' => new OutputDefinition(
       data_type: 'string',

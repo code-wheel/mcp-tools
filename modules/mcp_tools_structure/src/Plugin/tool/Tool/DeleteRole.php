@@ -19,14 +19,14 @@ use Drupal\tool\TypedData\InputDefinition;
 #[Tool(
   id: 'mcp_structure_delete_role',
   label: new TranslatableMarkup('Delete Role'),
-  description: new TranslatableMarkup('Delete a user role. Core roles cannot be deleted.'),
+  description: new TranslatableMarkup('Delete a user role. Core roles and administrator roles cannot be deleted.'),
   operation: ToolOperation::Write,
   destructive: TRUE,
   input_definitions: [
     'id' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Role ID'),
-      description: new TranslatableMarkup('Role machine name. Core roles (anonymous, authenticated, administrator) cannot be deleted.'),
+      description: new TranslatableMarkup('Role machine name. The anonymous and authenticated roles and administrator roles cannot be deleted.'),
       required: TRUE,
     ),
   ],

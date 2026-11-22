@@ -20,7 +20,7 @@ use Drupal\tool\TypedData\InputDefinition;
 #[Tool(
   id: 'mcp_recipes_create',
   label: new TranslatableMarkup('Create Recipe'),
-  description: new TranslatableMarkup("Create a new Drupal Recipe file in the site's recipes directory. Requires admin scope."),
+  description: new TranslatableMarkup("Create a new Drupal Recipe file in the site's recipes directory. Requires admin scope. A recipe written here is marked as not reviewed by a person, and the audit log says so when it is applied."),
   operation: ToolOperation::Trigger,
   input_definitions: [
     'name' => new InputDefinition(

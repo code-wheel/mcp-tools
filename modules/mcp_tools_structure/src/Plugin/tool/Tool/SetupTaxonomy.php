@@ -20,7 +20,7 @@ use Drupal\tool\TypedData\InputDefinition;
 #[Tool(
   id: 'mcp_structure_setup_taxonomy',
   label: new TranslatableMarkup('Setup Taxonomy'),
-  description: new TranslatableMarkup('Create a vocabulary with initial terms in a single operation. Reduces round-trips compared to calling CreateVocabulary + CreateTerms separately. Supports hierarchical terms.'),
+  description: new TranslatableMarkup('Create a vocabulary with initial terms in a single operation. Reduces round-trips compared to calling mcp_structure_create_vocabulary + mcp_structure_create_terms separately. Supports hierarchical terms.'),
   operation: ToolOperation::Write,
   input_definitions: [
     'id' => new InputDefinition(

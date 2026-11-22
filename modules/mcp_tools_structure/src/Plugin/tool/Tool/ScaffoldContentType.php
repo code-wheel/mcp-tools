@@ -20,7 +20,7 @@ use Drupal\tool\TypedData\InputDefinition;
 #[Tool(
   id: 'mcp_structure_scaffold_content_type',
   label: new TranslatableMarkup('Scaffold Content Type'),
-  description: new TranslatableMarkup('Create a content type with multiple fields in a single operation. Reduces round-trips compared to calling CreateContentType + AddField multiple times. Includes common defaults like title, body, and specified custom fields.'),
+  description: new TranslatableMarkup('Create a content type with multiple fields in a single operation. Reduces round-trips compared to calling mcp_structure_create_content_type + mcp_structure_add_field multiple times. Includes common defaults like title, body, and specified custom fields.'),
   operation: ToolOperation::Write,
   input_definitions: [
     'id' => new InputDefinition(

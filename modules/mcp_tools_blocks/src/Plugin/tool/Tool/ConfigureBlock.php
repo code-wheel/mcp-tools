@@ -25,13 +25,13 @@ use Drupal\tool\TypedData\InputDefinition;
     'block_id' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Block ID'),
-      description: new TranslatableMarkup('Config entity ID of placed block from PlaceBlock or ListRegions.'),
+      description: new TranslatableMarkup('Config entity ID of placed block from mcp_place_block or mcp_list_regions.'),
       required: TRUE,
     ),
     'region' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Move to Region'),
-      description: new TranslatableMarkup('New region to move block to. Get valid values from ListRegions.'),
+      description: new TranslatableMarkup('New region to move block to. Get valid values from mcp_list_regions.'),
       required: FALSE,
     ),
     'weight' => new InputDefinition(

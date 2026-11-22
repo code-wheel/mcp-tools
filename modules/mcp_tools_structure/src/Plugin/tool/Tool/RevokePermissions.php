@@ -26,7 +26,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'role' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Role ID'),
-      description: new TranslatableMarkup('Role machine name. Use GetRoles to see available roles.'),
+      description: new TranslatableMarkup('Role machine name. Use mcp_tools_get_roles to see available roles.'),
       required: TRUE,
     ),
     'permissions' => new InputDefinition(

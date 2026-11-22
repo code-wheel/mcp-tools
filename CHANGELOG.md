@@ -4,6 +4,196 @@ All notable changes to the MCP Tools module will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.0.0-beta21] - 2026-11-21
+
+### Security
+
+These tighten what a connection can do to accounts, roles and
+permissions, and how the STDIO server gets its scopes. They are in
+1.0.0-beta20, and the code is as old as the first releases, so assume
+that every earlier release has them. If the account your MCP connection
+runs as is not a full administrator, if you hand the write scope to an
+agent you do not fully trust, or if you start the STDIO server with a
+server profile, update.
+
+- **A role cannot be given the permissions of MCP Tools itself, and a
+  permission for trusted roles only needs the admin scope.** The role
+  tools refused a list of 19 permissions by name. A connection with the
+  write scope could give a role, its own too, the permissions that say
+  which MCP tools a user may call, and permissions that Drupal marks
+  "restrict access" and the list did not name. MCP Tools' own
+  permissions are refused now, with every scope, next to the list. A
+  "restrict access" permission is granted by a connection with the admin
+  scope only. Even then it is not granted to the roles "anonymous" and
+  "authenticated", and not to a role the connection's own user has,
+  unless that user has the permission already. A person can still grant
+  any of them on the permissions page.
+- **A connection does not give its own user a role that raises it.**
+  The user and batch tools refused administrator roles and gave out any
+  other. So a connection could make a role with a strong permission and
+  then take that role. For the user the connection runs as, a role that
+  would add a permission is now left out, and the answer says why. Roles
+  for other users are assigned as before.
+- **The STDIO server gets no more scopes than the site allows.**
+  `access.allowed_scopes` limited the scopes of an API key, a header and
+  the environment. `--scope` on the command line and the scopes of a
+  server profile were used as given. The shipped "development" profile
+  has the admin scope, so `drush mcp-tools:serve --server=development`
+  ran with the admin scope on a site that allows read and write only.
+  Both are limited now, and the command says on stderr which scope it
+  left out and how to allow it. To allow the admin scope, tick it under
+  "Allowed scopes" on the settings form.
+- **An administrator role is one by its flag, not only by its name.**
+  The user tools refused roles called "administrator" or "admin". On a
+  site whose administrator role has another name, that role could be
+  given to a user, and its users could be blocked. The batch tool
+  refused the exact name "administrator" only. They all go by Drupal's
+  own flag now, and by the names as before.
+- **`mcp_update_user` does not change an administrator.** It protected
+  user 1 only, and changed the e-mail address, the status and the roles
+  of other administrators. It refuses now, as `mcp_block_user` does.
+  `mcp_activate_user` does not switch a blocked administrator on again.
+- **An administrator role cannot be deleted.** The description of
+  `mcp_structure_delete_role` said so. The code refused the anonymous
+  and the authenticated role only.
+- **The client's user is asked before the two strongest calls.** With
+  the admin scope a connection grants a permission for trusted roles
+  only, and it writes a recipe with any content and applies it in the
+  next call. A recipe changes any config and grants any permission, past
+  the rules of the other tools. Both ran without a question. Now the
+  server asks the user of the client first, where the client can ask
+  (MCP elicitation), as it does before a destructive tool. A no runs
+  nothing. A recipe is asked about until a person has read it and
+  deleted the file `UNREVIEWED.txt` in its folder.
+
+Good to know before you hand out the admin scope: a client that cannot
+ask gets these calls run, and the audit log says so with a warning. To
+refuse them for such a client, tick "Strong calls need a confirmation"
+on the settings form. Nobody is asked when a tool is called through MCP
+Server or through the Drupal AI bridge. And a recipe that has run can
+have changed any setting, the ones of MCP Tools among them. So give the
+admin scope only to an agent you would let change any config of the
+site.
+
+### Fixed
+
+- **`mcp_create_content` says whether the new item is published.** The
+  `status` input was described as "Defaults to true". The code has
+  always saved a draft when no status is given, and the result did not
+  carry the status. A model that was asked for a published item left
+  the input out, read "created successfully" and reported a published
+  item. Nothing changes in what the tool does: without `status` it still
+  saves a draft. The description now says so, the result has `status`
+  ("published" or "draft"), and the message of a draft names
+  `mcp_publish_content`.
+
+- **`mcp_create_content` says when only the title was set.** Asked for
+  an item with a body text, a model sent the title and no field values,
+  read "created and published" and reported the body as set. The result
+  now says "Only the title was set" and names the fields the content
+  type has, with `mcp_update_content` to set them. The `fields` input
+  shows a whole example, `{"body": "The text"}`: a text field takes a
+  plain string.
+- **A text is saved with a format the site has.** A plain string for a
+  text field was saved with the format `basic_html`, on every site. A
+  site without that format (the minimal profile, or a site with formats
+  of its own) stored the text and showed nothing: Drupal renders a text
+  whose format is missing as empty. The same happened to a format a
+  model named because our descriptions show it. Now: the format that
+  was asked for if the site has it, else `basic_html` if the site has
+  that, else the site's fallback format. A site with `basic_html` sees
+  no change. This covers content, batch, migration and translation
+  tools and term descriptions.
+- **`mcp_update_user` takes `mail`, as its description says.** The code
+  read `email` only, so a change sent as described did nothing and was
+  reported as done. Both are taken now, and a field the tool does not
+  change is refused. `mcp_assign_user_roles` says in its answer which
+  roles it left out and why.
+- **`mcp_list_text_formats` says who may use a format.** It read the
+  roles from a property that Drupal leaves empty once a format is
+  saved. So every format had no roles, and `default_format` was
+  "plain_text" on every site. The roles now come from the permissions,
+  and the default is the first format an anonymous user may use.
+- **The server's instructions no longer promise a confirm flag for every
+  deleting tool.** They said "Deleting asks for an explicit confirm
+  flag". Of the 18 deleting tools one has such an input. A model that
+  had read the sentence passed `confirm` to `mcp_delete_view` ten times
+  in one run and was refused each time. The sentence now says to pass
+  one only when the tool has such an input.
+- **`mcp_tools_ai`: an argument a model got wrong is answered.** Drupal
+  AI reads a model's arguments into the function call before it runs
+  it, and throws for a value it cannot read: a word where an object
+  belongs, or JSON with a brace too many. Nothing caught that, so the
+  whole agent run ended with an exception. The model now gets an answer
+  that names the input and the problem, and can call the tool again.
+  Nothing is run for such a call. `mcp_tools_ai` is experimental.
+
+### Changed
+
+- **A recipe written through MCP is marked, and the site says when it
+  was applied unread.** A recipe that `mcp_recipes_create` writes gets a
+  file `UNREVIEWED.txt` in its folder. While the file is there, the
+  audit lines of each apply name the recipe as unreviewed, also when
+  another recipe pulls it in, the answer says so, and Drupal's status
+  report lists the recipe. Read `recipe.yml` and delete the file once
+  you have. Recipes you put on the server yourself have no such file.
+- **The audit line for a recipe is written before the recipe runs.** It
+  was written after. A recipe changes any config, so one that switched
+  `access.audit_logging` off left no line of its own run. Now a line
+  `apply_recipe_start` comes first, and when a recipe switched the audit
+  log off, the answer says so and a warning goes to the site's log.
+- **The audit log says whether a person said yes.** A line for a call
+  the client's user confirmed carries `confirmed_by_user`. A grant of a
+  permission for trusted roles only and an apply of an unreviewed recipe
+  are written as warnings when nobody confirmed them.
+- **The setting "Destructive tools of other modules need a
+  confirmation" is now "Strong calls need a confirmation".** It covers
+  the two calls above too. And it says what the server has done since
+  1.0.0-beta20: every tool that declares itself destructive is asked
+  about, MCP Tools' own tools too. The code meant to leave those out and
+  never did.
+- **A tool name that does not exist is answered with the closest real
+  names.** A model often makes a name up from what it expects: the module
+  left out (`mcp_list_content_types`), the words the other way round
+  (`mcp_config_get`), a letter missing. "Unknown tool" alone sent it
+  searching again. The answer now says "Did you mean
+  mcp_tools_list_content_types?", and in gateway mode it also names the
+  tool to search with. Only tools the connection may call are offered.
+  Nothing is run for the model: it gets names and calls the one it meant.
+  A name close to one of the gateway's own three tools
+  (`mcp_execute_tool`) gets that tool.
+- **Descriptions name other tools by their real name.** 114 tools said
+  things like "Use ListContentTypes to see available types". That is the
+  name of the PHP class. A client only sees tool names, so a model made
+  one up from it (`mcp_list_content_types`). The descriptions now say
+  `mcp_structure_list_content_types`. The module's help page lists the
+  base tools by their real names too, and no longer carries tool counts
+  that had gone stale. Twelve descriptions no longer end in "This is a
+  write operation": the tool's hints already say so.
+- **Gateway mode: a found tool comes with the names of its inputs.** A
+  model that has found a tool often calls it at once and guesses the
+  argument names ("title" where the search tool takes "query"). In the
+  runs of five local models that was half of all failed calls. Each match
+  of `mcp_tools_discover_tools` now has `inputs`, with the required and
+  the optional names. `mcp_tools_get_tool_info` still has the full schema.
+- **Gateway mode: the best match comes first.** Matches came in the
+  order of the catalog. A model that asked for "view" with a limit of ten
+  got the config tool first ("View a specific configuration object") and
+  did not see the tool that makes a view of a content type. Tools with
+  the search words in their name now come first, then the ones with the
+  words in their label, then the rest. Nothing is dropped.
+- **Gateway mode: a plural finds what its singular finds.** The tools
+  are named `..._view`, `..._user` and `..._content_type`, and a model
+  asks for "views", "users" and "content types". A plural found only
+  the tools that happen to have it in a description, in catalog order.
+  It now finds and orders what the singular does.
+- **A search for "health" finds the site status tool.** The server's
+  own instructions call that group of tools "site health", and a model
+  that searched for the word found the cron tool only.
+- **Gateway mode: one of the gateway's own tools, named in
+  `mcp_tools_execute_tool`, gets a plain answer.** It said "Unknown tool"
+  and advised the tool that had just been named.
+
 ## [1.0.0-beta20] - 2026-11-21
 
 ### Added

@@ -30,7 +30,7 @@ use Drupal\tool\Tool\ToolOperation;
     'vocabularies' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Vocabularies'),
-      description: new TranslatableMarkup('Array of vocabularies with vid (machine name), label, description, and term_count. Use vid with GetTerms or when creating entity references.'),
+      description: new TranslatableMarkup('Array of vocabularies with vid (machine name), label, description, and term_count. Use vid with mcp_tools_get_terms or when creating entity references.'),
     ),
   ],
 )]

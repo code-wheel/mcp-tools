@@ -56,7 +56,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'remaining' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Remaining items to index'),
-      description: new TranslatableMarkup('Number of items still pending indexing. Call IndexItems again to continue. Zero when complete.'),
+      description: new TranslatableMarkup('Number of items still pending indexing. Call mcp_search_api_index again to continue. Zero when complete.'),
     ),
   ],
 )]

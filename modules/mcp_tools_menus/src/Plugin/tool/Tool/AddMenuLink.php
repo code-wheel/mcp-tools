@@ -69,7 +69,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'id' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Link ID'),
-      description: new TranslatableMarkup('Menu link content entity ID. Use with UpdateMenuLink or DeleteMenuLink.'),
+      description: new TranslatableMarkup('Menu link content entity ID. Use with mcp_menus_update_menu_link or mcp_menus_delete_menu_link.'),
     ),
     'uuid' => new OutputDefinition(
       data_type: 'string',

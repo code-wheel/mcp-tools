@@ -25,7 +25,7 @@ use Drupal\tool\Tool\ToolOperation;
     'layouts' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Available Layouts'),
-      description: new TranslatableMarkup('Array of layouts with id, label, category, and regions. Use id with AddSection.'),
+      description: new TranslatableMarkup('Array of layouts with id, label, category, and regions. Use id with mcp_layout_add_section.'),
     ),
     'count' => new OutputDefinition(
       data_type: 'integer',

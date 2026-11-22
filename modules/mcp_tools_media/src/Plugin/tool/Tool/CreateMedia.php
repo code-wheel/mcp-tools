@@ -25,7 +25,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'bundle' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Media Type (Bundle)'),
-      description: new TranslatableMarkup('Media type machine name (e.g., "image", "document"). Get from ListMediaTypes.'),
+      description: new TranslatableMarkup('Media type machine name (e.g., "image", "document"). Get from mcp_list_media_types.'),
       required: TRUE,
     ),
     'name' => new InputDefinition(
@@ -37,7 +37,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'source_field_value' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Source Field Value'),
-      description: new TranslatableMarkup('Value for source field. For images: file ID from UploadFile. For remote_video: video URL.'),
+      description: new TranslatableMarkup('Value for source field. For images: file ID from mcp_upload_file. For remote_video: video URL.'),
       required: TRUE,
     ),
   ],

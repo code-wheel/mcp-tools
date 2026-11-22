@@ -19,7 +19,7 @@ use Drupal\tool\TypedData\InputDefinition;
 #[Tool(
   id: 'mcp_sitemap_set_entity',
   label: new TranslatableMarkup('Set Entity Sitemap Settings'),
-  description: new TranslatableMarkup('Set sitemap inclusion settings for an entity type bundle. This is a write operation.'),
+  description: new TranslatableMarkup('Set sitemap inclusion settings for an entity type bundle.'),
   operation: ToolOperation::Write,
   input_definitions: [
     'entity_type' => new InputDefinition(
@@ -55,7 +55,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'settings' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Applied Settings'),
-      description: new TranslatableMarkup('The settings now in effect. Use Regenerate to apply changes to the sitemap. Use GetEntitySettings to verify.'),
+      description: new TranslatableMarkup('The settings now in effect. Use mcp_sitemap_regenerate to apply changes to the sitemap. Use mcp_sitemap_entity_settings to verify.'),
     ),
     'message' => new OutputDefinition(
       data_type: 'string',

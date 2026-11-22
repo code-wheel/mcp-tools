@@ -19,7 +19,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 #[Tool(
   id: 'mcp_translate_content',
   label: new TranslatableMarkup('Translate Content'),
-  description: new TranslatableMarkup('Create a linked translation for a node and its paragraphs using the Content Translation API. Call GetTranslatableContent first to get the source text. You MUST provide a translated value for EVERY field and paragraph it returns (include a field unchanged if it is identical in the target language, e.g. a proper name or number). Translate the whole article as one coherent document, not field by field. Incomplete payloads are REJECTED and nothing is saved. The error lists the missing keys; on rejection, re-translate the entire article, not just the gaps.'),
+  description: new TranslatableMarkup('Create a linked translation for a node and its paragraphs using the Content Translation API. Call mcp_get_translatable_content first to get the source text. You MUST provide a translated value for EVERY field and paragraph it returns (include a field unchanged if it is identical in the target language, e.g. a proper name or number). Translate the whole article as one coherent document, not field by field. Incomplete payloads are REJECTED and nothing is saved. The error lists the missing keys; on rejection, re-translate the entire article, not just the gaps.'),
   operation: ToolOperation::Write,
   input_definitions: [
     'nid' => new InputDefinition(

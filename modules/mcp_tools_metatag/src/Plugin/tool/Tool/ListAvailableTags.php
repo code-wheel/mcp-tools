@@ -30,12 +30,12 @@ use Drupal\tool\Tool\ToolOperation;
     'by_group' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Tags Grouped'),
-      description: new TranslatableMarkup('Tags organized by group (basic, open_graph, twitter_cards, etc.). Use group names to filter ListMetatagGroups.'),
+      description: new TranslatableMarkup('Tags organized by group (basic, open_graph, twitter_cards, etc.). Use group names to filter mcp_metatag_list_groups.'),
     ),
     'all_tags' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('All Tags'),
-      description: new TranslatableMarkup('Flat list of all tag definitions with id, name, description, and group. Use tag id/name with SetEntityMetatags.'),
+      description: new TranslatableMarkup('Flat list of all tag definitions with id, name, description, and group. Use tag id/name with mcp_metatag_set_entity.'),
     ),
   ],
 )]

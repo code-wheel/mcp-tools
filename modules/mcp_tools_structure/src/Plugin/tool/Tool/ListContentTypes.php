@@ -25,7 +25,7 @@ use Drupal\tool\Tool\ToolOperation;
     'types' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Content Types'),
-      description: new TranslatableMarkup('Array of content types with id, label, description, field_count, and content_count. Use id with GetContentType for full field details or CreateContent.'),
+      description: new TranslatableMarkup('Array of content types with id, label, description, field_count, and content_count. Use id with mcp_structure_get_content_type for full field details or mcp_create_content.'),
     ),
     'total' => new OutputDefinition(
       data_type: 'integer',

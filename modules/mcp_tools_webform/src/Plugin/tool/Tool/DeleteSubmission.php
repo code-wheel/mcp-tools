@@ -26,7 +26,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'sid' => new InputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Submission ID'),
-      description: new TranslatableMarkup('Numeric submission ID to delete. Use GetSubmissions to find submission IDs. WARNING: This is permanent.'),
+      description: new TranslatableMarkup('Numeric submission ID to delete. Use mcp_get_webform_submissions to find submission IDs. WARNING: This is permanent.'),
       required: TRUE,
     ),
   ],

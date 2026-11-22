@@ -38,7 +38,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'redirect' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Redirect Details'),
-      description: new TranslatableMarkup('The matching redirect object with id, source, destination, status_code, and language. Use id with UpdateRedirect or DeleteRedirect tools. NULL if not found.'),
+      description: new TranslatableMarkup('The matching redirect object with id, source, destination, status_code, and language. Use id with mcp_redirect_update or mcp_redirect_delete tools. NULL if not found.'),
     ),
     'message' => new OutputDefinition(
       data_type: 'string',

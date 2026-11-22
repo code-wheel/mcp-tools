@@ -25,7 +25,7 @@ use Drupal\tool\Tool\ToolOperation;
     'types' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Field Types'),
-      description: new TranslatableMarkup('Array of field types with id (machine name), label, description, and category. Use id with AddField field_type parameter.'),
+      description: new TranslatableMarkup('Array of field types with id (machine name), label, description, and category. Use id with mcp_structure_add_field field_type parameter.'),
     ),
     'total' => new OutputDefinition(
       data_type: 'integer',

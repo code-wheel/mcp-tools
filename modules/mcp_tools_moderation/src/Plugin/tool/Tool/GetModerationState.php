@@ -60,7 +60,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'available_transitions' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Available Transitions'),
-      description: new TranslatableMarkup('States the entity can transition to. Use state id with SetModerationState.'),
+      description: new TranslatableMarkup('States the entity can transition to. Use state id with mcp_moderation_set_state.'),
     ),
   ],
 )]

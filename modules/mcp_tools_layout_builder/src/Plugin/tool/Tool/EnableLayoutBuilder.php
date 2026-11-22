@@ -50,7 +50,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'layout_builder_enabled' => new OutputDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Layout Builder Enabled'),
-      description: new TranslatableMarkup('True if Layout Builder is now enabled. Use AddSection to add layouts.'),
+      description: new TranslatableMarkup('True if Layout Builder is now enabled. Use mcp_layout_add_section to add layouts.'),
     ),
     'message' => new OutputDefinition(
       data_type: 'string',

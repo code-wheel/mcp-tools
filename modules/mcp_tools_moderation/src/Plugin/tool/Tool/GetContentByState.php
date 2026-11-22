@@ -25,13 +25,13 @@ use Drupal\tool\TypedData\InputDefinition;
     'workflow_id' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Workflow ID'),
-      description: new TranslatableMarkup('Machine name of the workflow. Get from GetWorkflows.'),
+      description: new TranslatableMarkup('Machine name of the workflow. Get from mcp_moderation_get_workflows.'),
       required: TRUE,
     ),
     'state' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Moderation State'),
-      description: new TranslatableMarkup('State to filter by (e.g., "draft", "review", "published"). Get from GetWorkflow.'),
+      description: new TranslatableMarkup('State to filter by (e.g., "draft", "review", "published"). Get from mcp_moderation_get_workflow.'),
       required: TRUE,
     ),
     'limit' => new InputDefinition(

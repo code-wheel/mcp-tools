@@ -26,7 +26,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'id' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Content Type ID'),
-      description: new TranslatableMarkup('Machine name of the content type to delete. Use ListContentTypes to see types.'),
+      description: new TranslatableMarkup('Machine name of the content type to delete. Use mcp_structure_list_content_types to see types.'),
       required: TRUE,
     ),
     'force' => new InputDefinition(

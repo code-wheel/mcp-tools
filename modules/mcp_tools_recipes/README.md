@@ -93,6 +93,21 @@ Returns: [
 ## Safety Features
 
 - **Admin scope required:** Apply operations need `admin` scope
+- **A person is asked about what an agent wrote:** a recipe made with
+  `mcp_recipes_create` gets a file `UNREVIEWED.txt` in its folder. While
+  that file is there, the user of the client is asked before
+  `mcp_recipes_apply` runs the recipe, or a recipe that pulls it in. The
+  audit log names it as unreviewed, and Drupal's status report lists it
+  once it was applied. Read `recipe.yml`, and delete the file if the
+  recipe does what you want.
+- **A client that cannot ask:** it gets the recipe run, and the audit
+  line is a warning. Tick "Strong calls need a confirmation" on the MCP
+  Tools settings form to refuse it instead. Nobody is asked when the tool
+  is called through MCP Server or the Drupal AI bridge.
+- **What the admin scope means:** a recipe can change any config, the
+  settings of MCP Tools too. Give that scope only to an agent you would
+  let do that. A site allows `read` and `write` as it comes: allow
+  `admin` under "Allowed scopes" on the settings form.
 - **Validation first:** Always validate before applying
 - **Non-destructive:** Recipes add configuration, don't overwrite
 - **Audit logging:** All recipe operations logged

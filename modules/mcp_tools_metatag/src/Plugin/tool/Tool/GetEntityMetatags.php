@@ -54,7 +54,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'stored_tags' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Stored Metatags'),
-      description: new TranslatableMarkup('Metatags explicitly set on this entity. Keys are tag names (e.g., "title", "description"). Use SetEntityMetatags to modify.'),
+      description: new TranslatableMarkup('Metatags explicitly set on this entity. Keys are tag names (e.g., "title", "description"). Use mcp_metatag_set_entity to modify.'),
     ),
     'computed_tags' => new OutputDefinition(
       data_type: 'map',

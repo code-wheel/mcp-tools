@@ -69,7 +69,20 @@ final class GatewayDirectCallHandler implements RequestHandlerInterface {
         $request = (new CallToolRequest($request->name, $inner))->withId($request->getId());
       }
     }
-    return $this->door->handle($request, $session);
+    $response = $this->door->handle($request, $session);
+    // A name that does not exist: the door has added the closest names.
+    // In gateway mode there is also a tool to look for more.
+    if ($response instanceof Error && $response->code === Error::METHOD_NOT_FOUND) {
+      // The door knows the catalog, not the gateway's own three tools. A
+      // name close to one of those (mcp_execute_tool) gets that one.
+      $own = ToolNameSuggester::closest($request->name, $this->gatewayToolNames, 1);
+      $message = $own !== []
+        ? 'Unknown tool: ' . $request->name . '. Did you mean ' . $own[0] . '?'
+        : rtrim($response->message, '.') . (str_ends_with($response->message, '?') ? '' : '.');
+      $message .= ToolApiGateway::FIND_HINT;
+      return Error::forMethodNotFound($message, $request->getId());
+    }
+    return $response;
   }
 
 }

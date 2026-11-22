@@ -50,7 +50,7 @@ mcp_tools.settings:
           label: 'List every tool, also those this connection may not call'
         confirm_destructive_tools:
           type: boolean
-          label: 'Run a destructive tool of another module only after the user confirmed'
+          label: 'Run a destructive tool, a grant of a restricted permission or an unreviewed recipe only after the user confirmed'
     rate_limits:
       type: mapping
       label: 'Rate limits for read operations'

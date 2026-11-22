@@ -8,6 +8,7 @@ use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AuditLogger;
+use Drupal\mcp_tools\Service\TextFormat;
 
 /**
  * Service for managing taxonomies (vocabularies and terms).
@@ -279,7 +280,7 @@ class TaxonomyManagementService {
         'name' => $name,
         'description' => [
           'value' => $options['description'] ?? '',
-          'format' => 'basic_html',
+          'format' => TextFormat::resolve($this->entityTypeManager),
         ],
         'weight' => $options['weight'] ?? 0,
       ];

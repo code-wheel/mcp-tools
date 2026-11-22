@@ -30,7 +30,7 @@ use Drupal\tool\Tool\ToolOperation;
     'servers' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('List of search servers'),
-      description: new TranslatableMarkup('Array of server objects with id, label, backend type, status, and index count. Use id with GetServer for full details.'),
+      description: new TranslatableMarkup('Array of server objects with id, label, backend type, status, and index count. Use id with mcp_search_api_get_server for full details.'),
     ),
   ],
 )]

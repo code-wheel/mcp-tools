@@ -25,7 +25,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'id' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Workflow ID'),
-      description: new TranslatableMarkup('Machine name of the workflow (e.g., "editorial"). Get from GetWorkflows.'),
+      description: new TranslatableMarkup('Machine name of the workflow (e.g., "editorial"). Get from mcp_moderation_get_workflows.'),
       required: TRUE,
     ),
   ],
@@ -43,7 +43,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'states' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('States'),
-      description: new TranslatableMarkup('Available states with id, label, and whether it is published. Use state id with SetModerationState.'),
+      description: new TranslatableMarkup('Available states with id, label, and whether it is published. Use state id with mcp_moderation_set_state.'),
     ),
     'transitions' => new OutputDefinition(
       data_type: 'map',

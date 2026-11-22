@@ -30,7 +30,7 @@ use Drupal\tool\Tool\ToolOperation;
     'effects' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Available image effects'),
-      description: new TranslatableMarkup('Array of effects with id and label. Use id with AddImageEffect (e.g., image_scale, image_crop).'),
+      description: new TranslatableMarkup('Array of effects with id and label. Use id with mcp_image_styles_add_effect (e.g., image_scale, image_crop).'),
     ),
   ],
 )]

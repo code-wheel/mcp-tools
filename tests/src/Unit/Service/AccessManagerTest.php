@@ -232,6 +232,24 @@ class AccessManagerTest extends UnitTestCase {
     $this->assertFalse($accessManager->canAdmin());
   }
 
+  /**
+   * The site's allowed scopes are the most a profile or --scope gets.
+   */
+  public function testLimitToAllowed(): void {
+    $this->config->method('get')
+      ->willReturnMap([
+        ['access.allowed_scopes', [AccessManager::SCOPE_READ, AccessManager::SCOPE_WRITE]],
+      ]);
+    $accessManager = $this->createAccessManager();
+
+    $this->assertSame([['read', 'write'], ['admin']], $accessManager->limitToAllowed(['read', 'write', 'admin']));
+    $this->assertSame([['read', 'write'], []], $accessManager->limitToAllowed(['read', 'write']));
+    // Left with nothing, a connection can read.
+    $this->assertSame([['read'], ['admin']], $accessManager->limitToAllowed(['admin']));
+    // A word that is no scope is not one the site refused.
+    $this->assertSame([['write'], []], $accessManager->limitToAllowed(['write', 'superuser']));
+  }
+
   public function testGetCurrentScopesFromHeader(): void {
     $this->config->method('get')
       ->willReturnMap([

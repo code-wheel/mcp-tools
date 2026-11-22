@@ -35,6 +35,16 @@ class RecipesService {
    */
   protected const APPLIED_RECIPES_STATE_KEY = 'mcp_tools_recipes.applied';
 
+  /**
+   * The note in the folder of a recipe that was written through MCP.
+   *
+   * A recipe changes any config, grants any permission and installs any
+   * module. One that a session wrote itself carries this file until a
+   * person has read the recipe and deleted it. While it is there, the
+   * audit line of each apply names the recipe as unreviewed.
+   */
+  public const UNREVIEWED_FILE = 'UNREVIEWED.txt';
+
   public function __construct(
     protected ConfigFactoryInterface $configFactory,
     protected ModuleExtensionList $moduleExtensionList,
@@ -280,6 +290,11 @@ class RecipesService {
         $warnings[] = 'RecipeRunner class not found. Recipe may need to be applied via Drush.';
       }
 
+      $unreviewed = $this->unreviewedRecipes($recipePath);
+      if ($unreviewed !== []) {
+        $warnings[] = 'Written through MCP and not reviewed by a person yet: ' . implode(', ', $unreviewed) . '. The audit log says so when it is applied.';
+      }
+
       $isValid = empty($errors);
 
       return [
@@ -344,6 +359,12 @@ class RecipesService {
 
     $recipePath = $this->findRecipe($recipeName);
 
+    // A recipe that was written through MCP and that no person has read
+    // yet is run all the same: the admin scope is the gate. The audit line
+    // names it, whether the run works or not.
+    $unreviewed = $this->unreviewedRecipes((string) $recipePath);
+    $trail = $unreviewed === [] ? [] : ['unreviewed' => $unreviewed];
+
     // Check if RecipeRunner is available.
     if (!class_exists('Drupal\Core\Recipe\RecipeRunner')) {
       $this->auditLogger->logFailure('apply_recipe', 'recipe', $recipeName, [
@@ -358,6 +379,17 @@ class RecipesService {
       ];
     }
 
+    // This line is written before the recipe runs. A recipe changes any
+    // config, the settings of MCP Tools among it: one that switched the
+    // audit log off would leave no line of its own run.
+    // An unreviewed recipe makes both of its lines ones a person should
+    // look at.
+    $log = $trail === [] ? 'logSuccess' : 'logSensitive';
+    $this->auditLogger->$log('apply_recipe_start', 'recipe', $recipeName, [
+      'path' => $recipePath,
+    ] + $trail);
+    $auditWasOn = $this->auditIsOn();
+
     try {
       // Load and apply the recipe using Drupal's RecipeRunner.
       $recipe = Recipe::createFromDirectory($recipePath);
@@ -366,30 +398,94 @@ class RecipesService {
       // Track applied recipe.
       $this->trackAppliedRecipe($recipeName, $recipePath);
 
-      $this->auditLogger->logSuccess('apply_recipe', 'recipe', $recipeName, [
+      $this->auditLogger->$log('apply_recipe', 'recipe', $recipeName, [
         'path' => $recipePath,
-      ]);
+      ] + $trail);
+
+      $note = $unreviewed === [] ? '' : ' It was written through MCP and no person had reviewed it (' . implode(', ', $unreviewed) . '). The audit log says so.';
+      $note .= $this->noteAuditSwitchedOff($auditWasOn, $recipeName);
 
       return [
         'success' => TRUE,
         'data' => [
           'recipe' => $recipeName,
           'path' => $recipePath,
-          'message' => sprintf('Recipe "%s" applied successfully.', $recipeName),
+          'message' => sprintf('Recipe "%s" applied successfully.', $recipeName) . $note,
         ],
       ];
     }
     catch (\Exception $e) {
       $this->auditLogger->logFailure('apply_recipe', 'recipe', $recipeName, [
         'error' => $e->getMessage(),
-      ]);
+      ] + $trail);
 
       return [
         'success' => FALSE,
-        'error' => sprintf('Failed to apply recipe "%s": %s', $recipeName, $e->getMessage()),
+        'error' => sprintf('Failed to apply recipe "%s": %s', $recipeName, $e->getMessage()) . $this->noteAuditSwitchedOff($auditWasOn, $recipeName),
         'code' => 'APPLY_ERROR',
       ];
     }
+  }
+
+  /**
+   * The unreviewed recipes a recipe would run: itself, or ones it pulls in.
+   *
+   * @param string $recipeName
+   *   The recipe's machine name.
+   *
+   * @return string[]
+   *   Their names. Empty for a recipe that is not there.
+   */
+  public function unreviewedIn(string $recipeName): array {
+    return $this->unreviewedRecipes((string) $this->findRecipe($recipeName));
+  }
+
+  /**
+   * The recipes that were applied through MCP and that nobody has reviewed.
+   *
+   * For the status report: a recipe is named until a person has deleted
+   * the note in its folder.
+   *
+   * @return string[]
+   *   The names of the applied recipes that run an unreviewed one.
+   */
+  public function appliedUnreviewed(): array {
+    $names = [];
+    foreach ((array) $this->state->get(self::APPLIED_RECIPES_STATE_KEY, []) as $name => $applied) {
+      if ($this->unreviewedRecipes((string) ($applied['path'] ?? '')) !== []) {
+        $names[] = (string) $name;
+      }
+    }
+    return $names;
+  }
+
+  /**
+   * Whether MCP Tools writes its audit lines, as the audit logger reads it.
+   */
+  protected function auditIsOn(): bool {
+    return (bool) ($this->configFactory->get('mcp_tools.settings')->get('access.audit_logging') ?? TRUE);
+  }
+
+  /**
+   * Says so when a recipe switched the audit log off.
+   *
+   * The warning goes to the site's log by this module's own channel, which
+   * the setting does not silence.
+   *
+   * @param bool $wasOn
+   *   Whether the audit log was on before the recipe ran.
+   * @param string $recipeName
+   *   The recipe that ran.
+   *
+   * @return string
+   *   A sentence for the answer, or nothing.
+   */
+  protected function noteAuditSwitchedOff(bool $wasOn, string $recipeName): string {
+    if (!$wasOn || $this->auditIsOn()) {
+      return '';
+    }
+    $this->logger->warning('The recipe "@recipe", applied through MCP, switched the audit log of MCP Tools off (access.audit_logging).', ['@recipe' => $recipeName]);
+    return ' It switched the audit log of MCP Tools off.';
   }
 
   /**
@@ -493,6 +589,12 @@ class RecipesService {
       // Write recipe.yml.
       $yamlContent = Yaml::dump($recipeData, 4, 2);
       file_put_contents($recipePath . '/recipe.yml', $yamlContent);
+      file_put_contents(
+        $recipePath . '/' . self::UNREVIEWED_FILE,
+        "This recipe was written through MCP Tools (the tool mcp_recipes_create), not by a person.\n"
+        . "While this file is here, the audit log says \"unreviewed\" each time MCP Tools applies the recipe.\n"
+        . "Read recipe.yml and the config folder. If the recipe does what you want, delete this file.\n"
+      );
 
       // Create config directory if config files are needed.
       if (!empty($config['config_files'])) {
@@ -519,7 +621,7 @@ class RecipesService {
         'data' => [
           'name' => $name,
           'path' => $recipePath,
-          'message' => sprintf('Recipe "%s" created successfully.', $name),
+          'message' => sprintf('Recipe "%s" created successfully. It is marked as not reviewed by a person (the file %s in %s). The audit log says so when it is applied.', $name, self::UNREVIEWED_FILE, $recipePath),
         ],
       ];
     }
@@ -618,6 +720,43 @@ class RecipesService {
     }
 
     return NULL;
+  }
+
+  /**
+   * The recipes that wait for a review: this one and the ones it pulls in.
+   *
+   * @param string $recipePath
+   *   Path to the recipe directory.
+   * @param array $seen
+   *   Paths that were looked at already.
+   *
+   * @return string[]
+   *   The folder names of the recipes that have the note.
+   */
+  protected function unreviewedRecipes(string $recipePath, array &$seen = []): array {
+    if ($recipePath === '' || isset($seen[$recipePath])) {
+      return [];
+    }
+    $seen[$recipePath] = TRUE;
+    $found = file_exists($recipePath . '/' . self::UNREVIEWED_FILE) ? [basename($recipePath)] : [];
+    try {
+      $recipeData = Yaml::parseFile($recipePath . '/recipe.yml');
+    }
+    catch (\Exception $e) {
+      return $found;
+    }
+    foreach ((array) ($recipeData['recipes'] ?? []) as $dependency) {
+      if (!is_string($dependency)) {
+        continue;
+      }
+      // Drupal looks next to the recipe first.
+      $next = dirname($recipePath) . '/' . basename($dependency);
+      $path = is_dir($next) ? $next : $this->findRecipe($dependency);
+      if ($path) {
+        $found = array_merge($found, $this->unreviewedRecipes($path, $seen));
+      }
+    }
+    return array_values(array_unique($found));
   }
 
   /**

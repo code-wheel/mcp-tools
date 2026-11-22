@@ -40,12 +40,12 @@ use Drupal\tool\TypedData\InputDefinition;
     'message' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result message'),
-      description: new TranslatableMarkup('Human-readable confirmation. Note: actual indexing happens via cron or IndexItems.'),
+      description: new TranslatableMarkup('Human-readable confirmation. Note: actual indexing happens via cron or mcp_search_api_index.'),
     ),
     'total_items' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total items to reindex'),
-      description: new TranslatableMarkup('Total items marked for reindexing. Use GetIndexStatus to monitor progress, IndexItems to trigger indexing.'),
+      description: new TranslatableMarkup('Total items marked for reindexing. Use mcp_search_api_status to monitor progress, mcp_search_api_index to trigger indexing.'),
     ),
   ],
 )]

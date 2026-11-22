@@ -20,13 +20,13 @@ use Drupal\tool\TypedData\InputDefinition;
 #[Tool(
   id: 'mcp_update_content',
   label: new TranslatableMarkup('Update Content'),
-  description: new TranslatableMarkup('Update an existing node. Creates a new revision. Without language, updates the source-language version. With language, updates ONLY that translation: translatable node fields, plus a "paragraphs" map (keyed by source paragraph ID, same keying as GetTranslatableContent/TranslateContent) for the translation\'s paragraph content.'),
+  description: new TranslatableMarkup('Update an existing node. Creates a new revision. Without language, updates the source-language version. With language, updates ONLY that translation: translatable node fields, plus a "paragraphs" map (keyed by source paragraph ID, same keying as mcp_get_translatable_content/mcp_translate_content) for the translation\'s paragraph content.'),
   operation: ToolOperation::Write,
   input_definitions: [
     'nid' => new InputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Node ID'),
-      description: new TranslatableMarkup('The node ID to update. Get from SearchContent, GetRecentContent, or CreateContent.'),
+      description: new TranslatableMarkup('The node ID to update. Get from mcp_tools_search_content, mcp_tools_get_recent_content, or mcp_create_content.'),
       required: TRUE,
     ),
     'language' => new InputDefinition(
@@ -38,7 +38,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'updates' => new InputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Updates'),
-      description: new TranslatableMarkup('Fields to update. Include "title" for title changes. Field format same as CreateContent. Only specified fields are changed; unknown field names are rejected. With language, non-translatable fields are rejected (they are shared across languages) and a "paragraphs" map keyed by source paragraph ID updates the translation\'s paragraphs in place.'),
+      description: new TranslatableMarkup('Fields to update. Include "title" for title changes. Field format same as mcp_create_content. Only specified fields are changed; unknown field names are rejected. With language, non-translatable fields are rejected (they are shared across languages) and a "paragraphs" map keyed by source paragraph ID updates the translation\'s paragraphs in place.'),
       required: TRUE,
     ),
   ],

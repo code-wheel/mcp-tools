@@ -33,7 +33,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'id' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Paragraph Type ID'),
-      description: new TranslatableMarkup('Machine name of the paragraph type. Use with AddParagraphField, DeleteParagraphType, etc.'),
+      description: new TranslatableMarkup('Machine name of the paragraph type. Use with mcp_paragraphs_add_field, mcp_paragraphs_delete_type, etc.'),
     ),
     'label' => new OutputDefinition(
       data_type: 'string',
@@ -48,7 +48,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'fields' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Fields'),
-      description: new TranslatableMarkup('Array of field definitions with name, type, label, required, and cardinality. Use AddParagraphField to add more.'),
+      description: new TranslatableMarkup('Array of field definitions with name, type, label, required, and cardinality. Use mcp_paragraphs_add_field to add more.'),
     ),
     'admin_path' => new OutputDefinition(
       data_type: 'string',

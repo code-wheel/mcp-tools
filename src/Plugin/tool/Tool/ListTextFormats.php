@@ -67,7 +67,7 @@ class ListTextFormats extends McpToolsToolBase {
     $formats = $formatStorage->loadMultiple();
 
     $result = [];
-    $defaultFormat = NULL;
+    $allRoles = $this->entityTypeManager->getStorage('user_role')->loadMultiple();
 
     foreach ($formats as $format) {
       // Skip disabled formats.
@@ -75,11 +75,15 @@ class ListTextFormats extends McpToolsToolBase {
         continue;
       }
 
-      $roles = $format->get('roles') ?: [];
-      $isDefault = in_array('anonymous', $roles) || in_array('authenticated', $roles);
-
-      if ($isDefault && !$defaultFormat) {
-        $defaultFormat = $format->id();
+      // Who may use a format is a permission, and everybody may use the
+      // fallback format. The "roles" property of a format is empty once
+      // the format is saved.
+      $permission = $format->getPermissionName();
+      $roles = [];
+      foreach ($allRoles as $roleId => $role) {
+        if ($permission === FALSE || $role->hasPermission($permission)) {
+          $roles[] = (string) $roleId;
+        }
       }
 
       $result[] = [
@@ -94,12 +98,22 @@ class ListTextFormats extends McpToolsToolBase {
     // Sort by weight.
     usort($result, fn($a, $b) => ($a['weight'] ?? 0) <=> ($b['weight'] ?? 0));
 
+    // The first format an anonymous user may use: what Drupal itself
+    // preselects for them.
+    $defaultFormat = '';
+    foreach ($result as $each) {
+      if (in_array('anonymous', $each['roles'], TRUE)) {
+        $defaultFormat = (string) $each['id'];
+        break;
+      }
+    }
+
     return [
       'success' => TRUE,
       'data' => [
         'formats' => $result,
         'total' => count($result),
-        'default_format' => $defaultFormat ?? 'plain_text',
+        'default_format' => $defaultFormat,
       ],
     ];
   }

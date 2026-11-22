@@ -19,7 +19,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 #[Tool(
   id: 'mcp_jsonapi_create_entity',
   label: new TranslatableMarkup('JSON:API Create Entity'),
-  description: new TranslatableMarkup('Create a new entity of any exposed type. Use DiscoverTypes to find available entity types and bundles.'),
+  description: new TranslatableMarkup('Create a new entity of any exposed type. Use mcp_jsonapi_discover_types to find available entity types and bundles.'),
   operation: ToolOperation::Write,
   input_definitions: [
     'entity_type' => new InputDefinition(

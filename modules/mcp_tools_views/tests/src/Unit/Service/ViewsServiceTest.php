@@ -74,6 +74,7 @@ class ViewsServiceTest extends UnitTestCase {
   /**
    * @dataProvider invalidMachineNameProvider
    */
+  #[\PHPUnit\Framework\Attributes\DataProvider('invalidMachineNameProvider')]
   public function testCreateViewInvalidMachineName(string $invalidName): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
 
@@ -113,6 +114,7 @@ class ViewsServiceTest extends UnitTestCase {
   /**
    * @dataProvider invalidBaseTableProvider
    */
+  #[\PHPUnit\Framework\Attributes\DataProvider('invalidBaseTableProvider')]
   public function testCreateViewInvalidBaseTable(string $invalidTable): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
     $this->viewStorage->method('load')->willReturn(NULL);
@@ -162,6 +164,7 @@ class ViewsServiceTest extends UnitTestCase {
   /**
    * @dataProvider coreViewsProvider
    */
+  #[\PHPUnit\Framework\Attributes\DataProvider('coreViewsProvider')]
   public function testDeleteViewProtectsCoreViews(string $coreViewId): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
 

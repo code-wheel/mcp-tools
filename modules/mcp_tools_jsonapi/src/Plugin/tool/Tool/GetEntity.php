@@ -19,7 +19,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 #[Tool(
   id: 'mcp_jsonapi_get_entity',
   label: new TranslatableMarkup('JSON:API Get Entity'),
-  description: new TranslatableMarkup('Retrieve a single entity by its UUID. Use DiscoverTypes to find available entity types.'),
+  description: new TranslatableMarkup('Retrieve a single entity by its UUID. Use mcp_jsonapi_discover_types to find available entity types.'),
   operation: ToolOperation::Read,
   input_definitions: [
     'entity_type' => new InputDefinition(

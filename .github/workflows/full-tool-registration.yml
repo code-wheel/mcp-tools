@@ -49,7 +49,7 @@ jobs:
           # Application::addCommand(), which Symfony Console 6.4 (Drupal 10)
           # lacks, so every drush command fatals. Remove once fixed upstream.
           composer require drush/drush "consolidation/robo:<5.2.1" --no-interaction
-          composer require drupal/tool:^1.0.0-beta9 mcp/sdk:^0.10 -W --no-interaction
+          composer require drupal/tool:^1.0.0-beta12 mcp/sdk:^0.10 -W --no-interaction
           composer require code-wheel/mcp-http-security:^1.0 code-wheel/mcp-error-codes:^1.3 code-wheel/mcp-events:^2.0 code-wheel/mcp-schema-builder:^1.1 code-wheel/mcp-tool-gateway:^1.2.1 "enshrined/svg-sanitize:^0.22 || ^1.0" -W --no-interaction
 
           # Optional contrib dependencies for all submodules.

@@ -89,12 +89,12 @@ use Drupal\tool\TypedData\InputDefinition;
     'field_name' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Field Name'),
-      description: new TranslatableMarkup('Full machine name of the created field (includes field_ prefix). Use with DeleteParagraphField to remove.'),
+      description: new TranslatableMarkup('Full machine name of the created field (includes field_ prefix). Use with mcp_paragraphs_delete_field to remove.'),
     ),
     'bundle' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Paragraph Type'),
-      description: new TranslatableMarkup('Paragraph type the field was added to. Use GetParagraphType to view all fields.'),
+      description: new TranslatableMarkup('Paragraph type the field was added to. Use mcp_paragraphs_get_type to view all fields.'),
     ),
     'field_type' => new OutputDefinition(
       data_type: 'string',

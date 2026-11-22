@@ -30,7 +30,7 @@ use Drupal\tool\Tool\ToolOperation;
     'is_overdue' => new OutputDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Is cron overdue'),
-      description: new TranslatableMarkup('True if cron has not run within threshold. Consider running RunCron.'),
+      description: new TranslatableMarkup('True if cron has not run within threshold. Consider running mcp_cron_run.'),
     ),
     'jobs' => new OutputDefinition(
       data_type: 'list',

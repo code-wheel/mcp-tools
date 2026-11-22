@@ -26,7 +26,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'block_id' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Block ID'),
-      description: new TranslatableMarkup('Config entity ID of block placement to remove. Get from PlaceBlock output or ListRegions.'),
+      description: new TranslatableMarkup('Config entity ID of block placement to remove. Get from mcp_place_block output or mcp_list_regions.'),
       required: TRUE,
     ),
   ],
@@ -54,7 +54,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'message' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
-      description: new TranslatableMarkup('Success confirmation. Block can be placed again with PlaceBlock.'),
+      description: new TranslatableMarkup('Success confirmation. Block can be placed again with mcp_place_block.'),
     ),
   ],
 )]

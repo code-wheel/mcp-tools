@@ -55,7 +55,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'block' => new InputDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Create Block Display'),
-      description: new TranslatableMarkup('Set true to create a block display. Place with PlaceBlock tool.'),
+      description: new TranslatableMarkup('Set true to create a block display. Place with mcp_place_block tool.'),
       required: FALSE,
     ),
     'items_per_page' => new InputDefinition(
@@ -75,7 +75,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'id' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('View ID'),
-      description: new TranslatableMarkup('Machine name of the created view. Use with AddViewDisplay, EnableView, DeleteView.'),
+      description: new TranslatableMarkup('Machine name of the created view. Use with mcp_add_view_display, mcp_enable_view, mcp_delete_view.'),
     ),
     'label' => new OutputDefinition(
       data_type: 'string',

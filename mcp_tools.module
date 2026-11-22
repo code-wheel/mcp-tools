@@ -37,23 +37,23 @@ function mcp_tools_help($route_name, RouteMatchInterface $route_match) {
     case 'help.page.mcp_tools':
       $output = '<h3>' . t('About') . '</h3>';
       $output .= '<p>' . t('MCP Tools provides batteries-included tools for AI assistants working with Drupal sites via the Model Context Protocol (MCP).') . '</p>';
-      $output .= '<h3>' . t('Available Tools (25 read-only)') . '</h3>';
+      $output .= '<h3>' . t('Tools of the base module (read only)') . '</h3>';
       $output .= '<dl>';
       $output .= '<dt>' . t('Site Health') . '</dt>';
-      $output .= '<dd>' . t('GetSiteStatus, GetSystemStatus, CheckSecurityUpdates, CheckCronStatus, AnalyzeWatchdog, GetQueueStatus, GetFileSystemStatus') . '</dd>';
+      $output .= '<dd>' . t('mcp_tools_get_site_status, mcp_tools_get_system_status, mcp_tools_check_security_updates, mcp_tools_check_cron_status, mcp_tools_analyze_watchdog, mcp_tools_get_queue_status, mcp_tools_get_file_system_status') . '</dd>';
       $output .= '<dt>' . t('Content') . '</dt>';
-      $output .= '<dd>' . t('ListContentTypes, GetRecentContent, SearchContent, GetVocabularies, GetTerms, GetFiles, FindOrphanedFiles') . '</dd>';
+      $output .= '<dd>' . t('mcp_tools_list_content_types, mcp_tools_get_recent_content, mcp_tools_search_content, mcp_tools_get_vocabularies, mcp_tools_get_terms, mcp_tools_get_files, mcp_tools_find_orphaned_files') . '</dd>';
       $output .= '<dt>' . t('Configuration') . '</dt>';
-      $output .= '<dd>' . t('GetConfigStatus, GetConfig, ListConfig, ListTextFormats, GetTextFormat') . '</dd>';
+      $output .= '<dd>' . t('mcp_tools_get_config_status, mcp_tools_get_config, mcp_tools_list_config, mcp_list_text_formats, mcp_get_text_format') . '</dd>';
       $output .= '<dt>' . t('Users') . '</dt>';
-      $output .= '<dd>' . t('GetRoles, GetUsers, GetPermissions') . '</dd>';
+      $output .= '<dd>' . t('mcp_tools_get_roles, mcp_tools_get_users, mcp_tools_get_permissions') . '</dd>';
       $output .= '<dt>' . t('Structure') . '</dt>';
-      $output .= '<dd>' . t('GetMenus, GetMenuTree') . '</dd>';
+      $output .= '<dd>' . t('mcp_tools_get_menus, mcp_tools_get_menu_tree') . '</dd>';
       $output .= '<dt>' . t('Discovery') . '</dt>';
-      $output .= '<dd>' . t('ListAvailableTools') . '</dd>';
+      $output .= '<dd>' . t('mcp_tools_list_available') . '</dd>';
       $output .= '</dl>';
-      $output .= '<h3>' . t('Write Operations') . '</h3>';
-      $output .= '<p>' . t('197 write/analysis tools across 34 optional submodules. Enable the submodules you need for content, structure, views, blocks, media, and more.') . '</p>';
+      $output .= '<h3>' . t('More tools') . '</h3>';
+      $output .= '<p>' . t('The optional submodules add the tools that change a site, and more read tools. Enable the ones you need: content, structure, views, blocks, media and more.') . '</p>';
       return $output;
   }
 }

@@ -316,14 +316,7 @@ class AccessManager implements AccessManagerInterface {
     $config = $this->configFactory->get('mcp_tools.settings');
 
     // Maximum allowed scopes are always enforced.
-    $allowedScopes = $config->get('access.allowed_scopes')
-      ?? $config->get('access.default_scopes')
-      ?? [self::SCOPE_READ];
-    $allowedScopes = array_values(array_intersect($allowedScopes, self::ALL_SCOPES));
-    if (empty($allowedScopes)) {
-      // Always allow at least read; prevents accidental lockout.
-      $allowedScopes = [self::SCOPE_READ];
-    }
+    $allowedScopes = $this->allowedScopes();
 
     // Default scopes (used when no trusted override is present).
     $defaultScopes = $config->get('access.default_scopes') ?? [self::SCOPE_READ];
@@ -368,6 +361,46 @@ class AccessManager implements AccessManagerInterface {
     $this->currentScopes = $defaultScopes;
 
     return $this->currentScopes;
+  }
+
+  /**
+   * The most any connection gets on this site (access.allowed_scopes).
+   *
+   * @return string[]
+   *   The allowed scopes. Never empty: read is always allowed, which
+   *   prevents an accidental lockout.
+   */
+  private function allowedScopes(): array {
+    $config = $this->configFactory->get('mcp_tools.settings');
+    $allowedScopes = $config->get('access.allowed_scopes')
+      ?? $config->get('access.default_scopes')
+      ?? [self::SCOPE_READ];
+    $allowedScopes = array_values(array_intersect($allowedScopes, self::ALL_SCOPES));
+    return $allowedScopes === [] ? [self::SCOPE_READ] : $allowedScopes;
+  }
+
+  /**
+   * Takes out of a list of scopes what the site does not allow.
+   *
+   * The setting access.allowed_scopes is the most any connection gets,
+   * whoever asks for more: an API key, a header, the environment, and since
+   * 1.0.0-beta21 also a server profile and --scope on the command line of
+   * the STDIO server. Those two were used as given, so the documented
+   * "--server=development" ran with the admin scope on a site that had
+   * never allowed it.
+   *
+   * @param string[] $scopes
+   *   The scopes that were asked for.
+   *
+   * @return array{0: string[], 1: string[]}
+   *   The scopes that stay, and the ones that were taken out. What stays is
+   *   never empty: a connection left with nothing can read.
+   */
+  public function limitToAllowed(array $scopes): array {
+    $scopes = array_values(array_intersect($scopes, self::ALL_SCOPES));
+    $kept = array_values(array_intersect($scopes, $this->allowedScopes()));
+    $dropped = array_values(array_diff($scopes, $kept));
+    return [$kept === [] ? [self::SCOPE_READ] : $kept, $dropped];
   }
 
   /**

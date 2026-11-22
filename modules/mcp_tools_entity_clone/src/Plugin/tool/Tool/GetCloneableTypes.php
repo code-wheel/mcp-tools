@@ -25,7 +25,7 @@ use Drupal\tool\Tool\ToolOperation;
     'types' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Cloneable Entity Types'),
-      description: new TranslatableMarkup('Array of entity types with their bundles. Use entity_type and bundle with GetCloneSettings for details or CloneEntity to clone.'),
+      description: new TranslatableMarkup('Array of entity types with their bundles. Use entity_type and bundle with mcp_entity_clone_settings for details or mcp_entity_clone_clone to clone.'),
     ),
     'total' => new OutputDefinition(
       data_type: 'integer',

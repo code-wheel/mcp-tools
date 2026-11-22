@@ -2,41 +2,23 @@
 
 This document describes how to test the MCP Tools module locally and in CI.
 
-## Quick Start with DDEV
+## Running the tests
 
-[DDEV](https://ddev.readthedocs.io/) is the recommended way to run tests locally.
-
-### Prerequisites
-
-- [Docker](https://docs.docker.com/get-docker/)
-- [DDEV](https://ddev.readthedocs.io/en/stable/users/install/)
-
-### Setup
+You need a Drupal site (10.5 or later, or 11) with this module in
+`web/modules/contrib/mcp_tools` and `drupal/core-dev` installed.
 
 ```bash
-# Clone the repository
-git clone https://github.com/code-wheel/mcp-tools.git
-cd mcp-tools
+# From the Drupal root: everything
+./vendor/bin/phpunit -c web/modules/contrib/mcp_tools/phpunit.xml
 
-# Start DDEV
-ddev start
-
-# Set up the module for testing
-ddev setup-module
+# One class or one method
+./vendor/bin/phpunit -c web/modules/contrib/mcp_tools/phpunit.xml --filter=AccessManagerTest
+./vendor/bin/phpunit -c web/modules/contrib/mcp_tools/phpunit.xml --filter=testCanWriteWithWriteScope
 ```
 
-### Running Tests
-
-```bash
-# Run all tests
-ddev test
-
-# Run specific test class
-ddev test AccessManagerTest
-
-# Run specific test method
-ddev test testCanWriteWithWriteScope
-```
+Kernel and functional tests need a database: set `SIMPLETEST_DB` (and
+`SIMPLETEST_BASE_URL` for the functional tests), as for any Drupal
+module.
 
 ## Test Types
 
@@ -91,19 +73,14 @@ GitHub Actions runs tests automatically on every push and PR:
 
 See `.github/workflows/ci.yml` for configuration.
 
-## Running Tests Without DDEV
-
-If you have a local Drupal installation:
-
-```bash
-# From Drupal root
-./vendor/bin/phpunit -c web/modules/contrib/mcp_tools/phpunit.xml
-
-# With filter
-./vendor/bin/phpunit -c web/modules/contrib/mcp_tools/phpunit.xml --filter=AccessManager
-```
-
 ## Writing New Tests
+
+The tests run on Drupal 10 with PHPUnit 9 and on Drupal 11 with PHPUnit 11.
+PHPUnit 9 does not read PHP attributes. So a test with a data provider needs
+the `@dataProvider` annotation, or it fails on Drupal 10. You can add the
+`#[DataProvider]` attribute next to it: PHPUnit 11 then uses the attribute.
+The group and the covered class are attributes, as in the templates below.
+PHPUnit 9 ignores them, and no test run here depends on them.
 
 ### Unit Test Template
 
@@ -118,9 +95,10 @@ use Drupal\mcp_tools_content\Service\ContentService;
 use Drupal\Tests\UnitTestCase;
 
 /**
- * @coversDefaultClass \Drupal\mcp_tools_content\Service\ContentService
- * @group mcp_tools
+ * Tests for ContentService.
  */
+#[\PHPUnit\Framework\Attributes\CoversClass(ContentService::class)]
+#[\PHPUnit\Framework\Attributes\Group('mcp_tools_content')]
 class ContentServiceTest extends UnitTestCase {
 
   protected ContentService $service;
@@ -150,8 +128,10 @@ namespace Drupal\Tests\mcp_tools\Kernel;
 use Drupal\KernelTests\KernelTestBase;
 
 /**
- * @group mcp_tools
+ * Tests an example service on a real container.
  */
+#[\PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses]
+#[\PHPUnit\Framework\Attributes\Group('mcp_tools')]
 class ExampleKernelTest extends KernelTestBase {
 
   protected static $modules = ['mcp_tools', 'system'];
@@ -167,38 +147,4 @@ class ExampleKernelTest extends KernelTestBase {
   }
 
 }
-```
-
-## Test Coverage Goals
-
-| Area | Current | Target |
-|------|---------|--------|
-| Core Services | Good | Maintain |
-| Access Control | Good | Maintain |
-| Security | Good | Expand |
-| Submodule Services | Partial | Improve |
-| Admin UI | Basic | Expand |
-
-## Troubleshooting
-
-### Tests fail with "class not found"
-
-```bash
-# Rebuild autoloader
-ddev composer dump-autoload
-```
-
-### Database errors in kernel tests
-
-```bash
-# Reset test database
-ddev drush sql:drop -y && ddev drush site:install -y
-```
-
-### DDEV won't start
-
-```bash
-# Reset DDEV
-ddev poweroff
-ddev start
 ```

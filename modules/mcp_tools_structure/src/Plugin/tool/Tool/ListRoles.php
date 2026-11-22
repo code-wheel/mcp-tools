@@ -25,7 +25,7 @@ use Drupal\tool\Tool\ToolOperation;
     'roles' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Roles'),
-      description: new TranslatableMarkup('Array of roles with id, label, weight, is_admin, permission_count, and user_count. Use id with GetRolePermissions or GrantPermissions.'),
+      description: new TranslatableMarkup('Array of roles with id, label, weight, is_admin, permission_count, and user_count. Use id with mcp_structure_get_role_permissions or mcp_structure_grant_permissions.'),
     ),
     'total' => new OutputDefinition(
       data_type: 'integer',

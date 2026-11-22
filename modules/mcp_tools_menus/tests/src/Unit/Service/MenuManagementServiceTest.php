@@ -76,6 +76,7 @@ class MenuManagementServiceTest extends UnitTestCase {
   /**
    * @dataProvider invalidMenuMachineNameProvider
    */
+  #[\PHPUnit\Framework\Attributes\DataProvider('invalidMenuMachineNameProvider')]
   public function testCreateMenuInvalidMachineName(string $invalidName): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
 
@@ -137,6 +138,7 @@ class MenuManagementServiceTest extends UnitTestCase {
   /**
    * @dataProvider protectedMenuProvider
    */
+  #[\PHPUnit\Framework\Attributes\DataProvider('protectedMenuProvider')]
   public function testDeleteMenuProtectsSystemMenus(string $protectedMenu): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
 

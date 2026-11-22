@@ -19,13 +19,13 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 #[Tool(
   id: 'mcp_get_translatable_content',
   label: new TranslatableMarkup('Get Translatable Content'),
-  description: new TranslatableMarkup('Extract all translatable text fields from a node and its paragraphs. Returns structured content ready for translation. Read ALL returned fields and paragraphs and translate the article as ONE coherent document: consistent terminology, tone and cross-references throughout; never translate fields in isolation. "reading_order" gives the document sequence (node fields, then paragraphs with nested children). Use before TranslateContent to know which fields to translate.'),
+  description: new TranslatableMarkup('Extract all translatable text fields from a node and its paragraphs. Returns structured content ready for translation. Read ALL returned fields and paragraphs and translate the article as ONE coherent document: consistent terminology, tone and cross-references throughout; never translate fields in isolation. "reading_order" gives the document sequence (node fields, then paragraphs with nested children). Use before mcp_translate_content to know which fields to translate.'),
   operation: ToolOperation::Read,
   input_definitions: [
     'nid' => new InputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Node ID'),
-      description: new TranslatableMarkup('The node ID to extract translatable content from. Get from SearchContent or GetRecentContent.'),
+      description: new TranslatableMarkup('The node ID to extract translatable content from. Get from mcp_tools_search_content or mcp_tools_get_recent_content.'),
       required: TRUE,
     ),
   ],

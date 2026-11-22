@@ -25,13 +25,13 @@ use Drupal\tool\TypedData\InputDefinition;
     'vocabulary' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Vocabulary'),
-      description: new TranslatableMarkup('Vocabulary machine name. Use GetVocabularies to see available vocabularies.'),
+      description: new TranslatableMarkup('Vocabulary machine name. Use mcp_tools_get_vocabularies to see available vocabularies.'),
       required: TRUE,
     ),
     'terms' => new InputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Terms'),
-      description: new TranslatableMarkup('Array of strings (term names) or objects with {name, description, parent, weight}. More efficient than multiple CreateTerm calls.'),
+      description: new TranslatableMarkup('Array of strings (term names) or objects with {name, description, parent, weight}. More efficient than multiple mcp_structure_create_term calls.'),
       required: TRUE,
     ),
   ],

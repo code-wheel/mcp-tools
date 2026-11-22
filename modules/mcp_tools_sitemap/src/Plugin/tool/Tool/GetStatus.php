@@ -35,7 +35,7 @@ use Drupal\tool\Tool\ToolOperation;
     'generator_queue' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Generator Queue Status'),
-      description: new TranslatableMarkup('Regeneration queue status: items_pending, is_running, last_run. Check after Regenerate to monitor progress.'),
+      description: new TranslatableMarkup('Regeneration queue status: items_pending, is_running, last_run. Check after mcp_sitemap_regenerate to monitor progress.'),
     ),
   ],
 )]

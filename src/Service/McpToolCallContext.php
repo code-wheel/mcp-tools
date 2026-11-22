@@ -47,6 +47,13 @@ class McpToolCallContext {
   private ?string $correlationId = NULL;
 
   /**
+   * Whether the client's user said yes to the call that is running.
+   *
+   * @var bool
+   */
+  private bool $confirmedByUser = FALSE;
+
+  /**
    * Constructs the context.
    *
    * @param \Drupal\Core\State\StateInterface|null $state
@@ -77,6 +84,7 @@ class McpToolCallContext {
   public function enter(): void {
     if ($this->depth === 0) {
       $this->correlationId = $this->generateCorrelationId();
+      $this->confirmedByUser = FALSE;
       // State loads its values once per object. In the long-running stdio
       // server that would serve every call the values of the first read, so
       // each call starts like a new request: destruct() writes what the
@@ -120,7 +128,24 @@ class McpToolCallContext {
     }
     if ($this->depth === 0) {
       $this->correlationId = NULL;
+      $this->confirmedByUser = FALSE;
     }
+  }
+
+  /**
+   * Notes that the client's user was asked about this call and said yes.
+   *
+   * The audit lines of the call say so. It holds until the call ends.
+   */
+  public function markConfirmedByUser(): void {
+    $this->confirmedByUser = TRUE;
+  }
+
+  /**
+   * Whether the client's user said yes to the call that is running.
+   */
+  public function wasConfirmedByUser(): bool {
+    return $this->confirmedByUser;
   }
 
   /**

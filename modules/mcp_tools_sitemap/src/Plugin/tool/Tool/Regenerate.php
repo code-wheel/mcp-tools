@@ -19,7 +19,7 @@ use Drupal\tool\TypedData\InputDefinition;
 #[Tool(
   id: 'mcp_sitemap_regenerate',
   label: new TranslatableMarkup('Regenerate Sitemap'),
-  description: new TranslatableMarkup('Regenerate sitemap(s). Can regenerate all sitemaps or a specific variant. This is a write operation.'),
+  description: new TranslatableMarkup('Regenerate sitemap(s). Can regenerate all sitemaps or a specific variant.'),
   operation: ToolOperation::Write,
   destructive: TRUE,
   input_definitions: [
@@ -39,7 +39,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'queue_status' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Queue Status'),
-      description: new TranslatableMarkup('Queue information: items_queued, estimated_time. Generation happens via cron. Use GetStatus to check progress.'),
+      description: new TranslatableMarkup('Queue information: items_queued, estimated_time. Generation happens via cron. Use mcp_sitemap_status to check progress.'),
     ),
     'message' => new OutputDefinition(
       data_type: 'string',

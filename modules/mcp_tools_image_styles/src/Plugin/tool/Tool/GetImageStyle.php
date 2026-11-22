@@ -43,7 +43,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'effects' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Image effects'),
-      description: new TranslatableMarkup('Array of effects with uuid, id, label, weight, and configuration. Use uuid with RemoveImageEffect.'),
+      description: new TranslatableMarkup('Array of effects with uuid, id, label, weight, and configuration. Use uuid with mcp_image_styles_remove_effect.'),
     ),
   ],
 )]

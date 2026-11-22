@@ -38,7 +38,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'layout_id' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Layout Plugin ID'),
-      description: new TranslatableMarkup('Layout plugin ID from ListLayoutPlugins (e.g., "layout_onecol", "layout_twocol_section").'),
+      description: new TranslatableMarkup('Layout plugin ID from mcp_layout_list_plugins (e.g., "layout_onecol", "layout_twocol_section").'),
       required: TRUE,
     ),
     'delta' => new InputDefinition(
@@ -68,7 +68,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'delta' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Section Delta'),
-      description: new TranslatableMarkup('Position of the added section. Use with AddBlock to add content.'),
+      description: new TranslatableMarkup('Position of the added section. Use with mcp_layout_add_block to add content.'),
     ),
     'section_count' => new OutputDefinition(
       data_type: 'integer',

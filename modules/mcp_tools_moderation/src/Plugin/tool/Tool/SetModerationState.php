@@ -38,7 +38,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'state' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Moderation State'),
-      description: new TranslatableMarkup('Target state (e.g., "draft", "published"). Get from GetModerationState.'),
+      description: new TranslatableMarkup('Target state (e.g., "draft", "published"). Get from mcp_moderation_get_state.'),
       required: TRUE,
     ),
     'revision_message' => new InputDefinition(

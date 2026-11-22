@@ -19,7 +19,7 @@ use Drupal\tool\TypedData\InputDefinition;
 #[Tool(
   id: 'mcp_pathauto_update',
   label: new TranslatableMarkup('Update Pathauto Pattern'),
-  description: new TranslatableMarkup('Update an existing URL alias pattern. This is a write operation.'),
+  description: new TranslatableMarkup('Update an existing URL alias pattern.'),
   operation: ToolOperation::Write,
   input_definitions: [
     'id' => new InputDefinition(

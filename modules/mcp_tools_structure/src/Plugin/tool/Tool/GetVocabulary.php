@@ -25,7 +25,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'id' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Vocabulary ID'),
-      description: new TranslatableMarkup('Machine name of the vocabulary (e.g., "tags", "categories"). Use ListVocabularies to see available vocabularies.'),
+      description: new TranslatableMarkup('Machine name of the vocabulary (e.g., "tags", "categories"). Use mcp_structure_list_vocabularies to see available vocabularies.'),
       required: TRUE,
     ),
     'limit' => new InputDefinition(

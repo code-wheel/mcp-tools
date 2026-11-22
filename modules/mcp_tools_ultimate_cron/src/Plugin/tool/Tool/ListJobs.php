@@ -25,7 +25,7 @@ use Drupal\tool\Tool\ToolOperation;
     'jobs' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('List of Ultimate Cron jobs'),
-      description: new TranslatableMarkup('Array of job objects with id, title, module, status, and last_run. Use id with GetJob for full details.'),
+      description: new TranslatableMarkup('Array of job objects with id, title, module, status, and last_run. Use id with mcp_ultimate_cron_get_job for full details.'),
     ),
     'count' => new OutputDefinition(
       data_type: 'integer',

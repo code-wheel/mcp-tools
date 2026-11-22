@@ -39,7 +39,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'delta' => new InputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Section Delta'),
-      description: new TranslatableMarkup('Section index to remove (0-based). Get from GetLayout.'),
+      description: new TranslatableMarkup('Section index to remove (0-based). Get from mcp_layout_get.'),
       required: TRUE,
     ),
   ],

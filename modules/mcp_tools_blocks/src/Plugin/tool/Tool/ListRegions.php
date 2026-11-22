@@ -38,7 +38,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'regions' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Available Regions'),
-      description: new TranslatableMarkup('Array of regions with id, label, and placed blocks. Use id as region in PlaceBlock.'),
+      description: new TranslatableMarkup('Array of regions with id, label, and placed blocks. Use id as region in mcp_place_block.'),
     ),
     'count' => new OutputDefinition(
       data_type: 'integer',

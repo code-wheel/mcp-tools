@@ -10,6 +10,7 @@ use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\State\StateInterface;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AuditLogger;
+use Drupal\mcp_tools\Service\TextFormat;
 
 /**
  * Service for content import/export and migration operations.
@@ -625,7 +626,7 @@ class MigrationService {
     $fieldType = $fieldDefinitions[$fieldName]->getType();
 
     return match ($fieldType) {
-      'text_long', 'text_with_summary' => is_array($value) ? $value : ['value' => $value, 'format' => 'basic_html'],
+      'text_long', 'text_with_summary' => TextFormat::fieldValue($this->entityTypeManager, $value),
       'entity_reference' => is_array($value) ? $value : ['target_id' => (int) $value],
       'image', 'file' => is_array($value) ? $value : ['target_id' => (int) $value],
       'link' => is_array($value) ? $value : ['uri' => $value],

@@ -55,7 +55,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'clone_id' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Cloned Entity ID'),
-      description: new TranslatableMarkup('ID of the new cloned entity. Use with GetContent to view.'),
+      description: new TranslatableMarkup('ID of the new cloned entity.'),
     ),
     'clone_uuid' => new OutputDefinition(
       data_type: 'string',

@@ -25,7 +25,7 @@ use Drupal\tool\Tool\ToolOperation;
     'blocks' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Available Blocks'),
-      description: new TranslatableMarkup('Array of block plugins with id, label, category. Use id as plugin_id in PlaceBlock.'),
+      description: new TranslatableMarkup('Array of block plugins with id, label, category. Use id as plugin_id in mcp_place_block.'),
     ),
     'count' => new OutputDefinition(
       data_type: 'integer',
