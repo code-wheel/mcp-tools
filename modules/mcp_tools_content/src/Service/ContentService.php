@@ -161,7 +161,7 @@ class ContentService {
       return [
         'success' => FALSE,
         'error' => "Content with ID $nid not found."
-          . " Use mcp_content_search to find content by title or mcp_content_list to browse.",
+          . " Use mcp_tools_search_content to find content by title or mcp_tools_get_recent_content to browse.",
       ];
     }
 
@@ -303,7 +303,7 @@ class ContentService {
       return [
         'success' => FALSE,
         'error' => "Content with ID $nid not found."
-          . " Use mcp_content_search to find content by title or mcp_content_list to browse.",
+          . " Use mcp_tools_search_content to find content by title or mcp_tools_get_recent_content to browse.",
       ];
     }
 
@@ -475,7 +475,7 @@ class ContentService {
   /**
    * Publish or unpublish content.
    */
-  public function setPublishStatus(int $nid, bool $publish): array {
+  public function setPublishStatus(int $nid, bool $publish, ?string $langcode = NULL): array {
     if (!$this->accessManager->canWrite()) {
       return $this->accessManager->getWriteAccessDenied();
     }
@@ -485,44 +485,67 @@ class ContentService {
       return [
         'success' => FALSE,
         'error' => "Content with ID $nid not found."
-          . " Use mcp_content_search to find content by title or mcp_content_list to browse.",
+          . " Use mcp_tools_search_content to find content by title or mcp_tools_get_recent_content to browse.",
       ];
     }
 
-    if ($publish === $node->isPublished()) {
+    // Each language version of a node is published on its own. Without a
+    // language this changes the source language, as it always did. It used
+    // to say "unpublished" and no more, while the other languages stayed
+    // public.
+    $node = $node->getUntranslated();
+    $languages = array_keys($node->getTranslationLanguages());
+    $langcode = $langcode !== NULL && $langcode !== '' ? $langcode : $node->language()->getId();
+    if (!in_array($langcode, $languages, TRUE)) {
       return [
-        'success' => TRUE,
-        'data' => [
-          'nid' => $nid,
-          'status' => $publish ? 'published' : 'unpublished',
-          'message' => 'Content was already ' . ($publish ? 'published' : 'unpublished') . '.',
-          'changed' => FALSE,
-        ],
+        'success' => FALSE,
+        'error' => sprintf("Node %d has no '%s' version. Its language versions: %s.", $nid, $langcode, implode(', ', $languages)),
       ];
     }
+    $target = $node->getTranslation($langcode);
+    $word = $publish ? 'published' : 'unpublished';
 
-    try {
-      $publish ? $node->setPublished() : $node->setUnpublished();
-      $node->setNewRevision(TRUE);
-      $node->setRevisionLogMessage(($publish ? 'Published' : 'Unpublished') . ' via MCP Tools');
-      $node->save();
-
-      $this->auditLogger->logSuccess($publish ? 'publish_content' : 'unpublish_content', 'node', (string) $nid, []);
-
-      return [
-        'success' => TRUE,
-        'data' => [
-          'nid' => $nid,
-          'title' => $node->getTitle(),
-          'status' => $publish ? 'published' : 'unpublished',
-          'message' => "Content '" . $node->getTitle() . "' " . ($publish ? 'published' : 'unpublished') . '.',
-          'changed' => TRUE,
-        ],
-      ];
+    $changed = $publish !== $target->isPublished();
+    if ($changed) {
+      try {
+        $publish ? $target->setPublished() : $target->setUnpublished();
+        $target->setNewRevision(TRUE);
+        $target->setRevisionLogMessage(($publish ? 'Published' : 'Unpublished') . ' via MCP Tools');
+        $target->save();
+        $this->auditLogger->logSuccess($publish ? 'publish_content' : 'unpublish_content', 'node', (string) $nid, count($languages) > 1 ? ['language' => $langcode] : []);
+      }
+      catch (\Exception $e) {
+        return ['success' => FALSE, 'error' => 'Failed to change publish status: ' . $e->getMessage()];
+      }
     }
-    catch (\Exception $e) {
-      return ['success' => FALSE, 'error' => 'Failed to change publish status: ' . $e->getMessage()];
+
+    $states = [];
+    foreach ($languages as $code) {
+      $states[$code] = $node->getTranslation($code)->isPublished() ? 'published' : 'unpublished';
     }
+    $message = $changed ? "Content '" . $target->getTitle() . "' $word." : "Content was already $word.";
+    if (count($languages) > 1) {
+      $message = $changed
+        ? sprintf("Content '%s' %s in '%s'%s.", $target->getTitle(), $word, $langcode, $target->isDefaultTranslation() ? ' (the source language)' : '')
+        : sprintf("The '%s' version was already %s.", $langcode, $word);
+      $others = array_keys(array_filter($states, static fn(string $state, string $code): bool => $code !== $langcode && $state !== $word, ARRAY_FILTER_USE_BOTH));
+      if ($others !== []) {
+        $message .= sprintf(' Other language versions are still %s: %s. Pass language to change one of them.', $publish ? 'unpublished' : 'published', implode(', ', $others));
+      }
+    }
+
+    return [
+      'success' => TRUE,
+      'data' => [
+        'nid' => $nid,
+        'title' => $target->getTitle(),
+        'status' => $word,
+        'language' => $langcode,
+        'languages' => $states,
+        'message' => $message,
+        'changed' => $changed,
+      ],
+    ];
   }
 
   /**

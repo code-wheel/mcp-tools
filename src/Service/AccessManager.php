@@ -151,9 +151,13 @@ class AccessManager implements AccessManagerInterface {
   /**
    * Whether the site insists on a confirmation for destructive tools.
    *
-   * It decides what happens when a client cannot ask its user: with this
-   * on, another provider's tool that declares itself destructive is refused
-   * for such a client. With it off, which is the default, the tool runs.
+   * It decides what happens where nobody can be asked: a client without
+   * elicitation, Drupal AI, MCP Server with mcp_tools_policy. With this on,
+   * a tool that declares itself destructive is refused there, and so are
+   * the two calls of MCP Tools' own that ask first. With it off the call
+   * runs, with a warning in the audit log. On is the default of a site
+   * installed with 1.0.0-beta22 or later. A site from before has no value,
+   * which is off.
    *
    * @return bool
    *   TRUE if a destructive tool may only run after a confirmation.

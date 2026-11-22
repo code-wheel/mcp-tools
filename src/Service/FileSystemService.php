@@ -72,6 +72,13 @@ class FileSystemService {
   }
 
   /**
+   * Whether the site has managed files at all: the File module is enabled.
+   */
+  public function hasManagedFiles(): bool {
+    return $this->entityTypeManager->hasDefinition('file');
+  }
+
+  /**
    * Get managed files summary.
    *
    * @param int $limit

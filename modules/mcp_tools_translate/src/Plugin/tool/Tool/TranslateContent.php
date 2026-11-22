@@ -37,7 +37,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
     'translations' => new InputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Translated Content'),
-      description: new TranslatableMarkup('Translated field values. Include "title" for the node title, field names (e.g. "field_description") for node fields, and a "paragraphs" map keyed by paragraph ID with translated field values. Text fields accept a string (the source field\'s text format is kept) or {"value": "...", "format": "..."}.'),
+      description: new TranslatableMarkup('Translated field values. Include "title" for the node title, field names (e.g. "field_description") for node fields, and a "paragraphs" map keyed by paragraph ID with translated field values. Text fields accept a string (the source field\'s text format is kept) or {"value": "...", "format": "..."}. A field that came with a "summary" takes {"value": "...", "summary": "..."}.'),
       required: TRUE,
     ),
   ],

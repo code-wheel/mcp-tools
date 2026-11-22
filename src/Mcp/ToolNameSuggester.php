@@ -12,8 +12,11 @@ namespace Drupal\mcp_tools\Mcp;
  * other way round ("mcp_config_get"), a letter missing. "Unknown tool" alone
  * sends it searching again. The closest real names let it go on at once.
  *
- * Names are compared by their words, in any order. Nothing is run for the
- * model: it gets names, and calls the one it meant.
+ * Names are compared by their words, in any order. For these the model
+ * gets names, and calls the one it meant.
+ *
+ * Two mistakes are not answered with a name: the tool is run. That is a
+ * name with only "tools_" left out, or only "tools_" put in, see meant().
  */
 final class ToolNameSuggester {
 
@@ -60,6 +63,55 @@ final class ToolNameSuggester {
 
     usort($scored, static fn(array $a, array $b): int => [$b[0], $a[1], $a[2]] <=> [$a[0], $b[1], $b[2]]);
     return array_column(array_slice($scored, 0, max(0, $limit)), 2);
+  }
+
+  /**
+   * The same name with "tools_" after "mcp_", for a name without it.
+   *
+   * Some of the tools are named mcp_tools_..., and most are not. A model
+   * follows the many: it calls mcp_search_content right after it was shown
+   * mcp_tools_search_content. In 161 runs of a local model, 64 of the 78
+   * made-up names were this one mistake. Only one tool can be meant, so the
+   * callers look this name up and run it, with every check a call by the
+   * full name gets.
+   *
+   * @return string|null
+   *   The name to look up. NULL for a name that does not start with "mcp_"
+   *   or that has "tools_" already.
+   */
+  public static function withTools(string $name): ?string {
+    if (!str_starts_with($name, 'mcp_') || str_starts_with($name, 'mcp_tools_') || strlen($name) < 5) {
+      return NULL;
+    }
+    return 'mcp_tools_' . substr($name, 4);
+  }
+
+  /**
+   * The same name with "tools_" after "mcp_" taken out, for a name with it.
+   *
+   * The reverse of withTools(): a model that has seen mcp_tools_search_content
+   * calls mcp_tools_redirect_create for mcp_redirect_create (3 times in 34
+   * runs on 2026-11-21).
+   *
+   * @return string|null
+   *   The name to look up. NULL for a name that does not start with
+   *   "mcp_tools_".
+   */
+  public static function withoutTools(string $name): ?string {
+    if (!str_starts_with($name, 'mcp_tools_') || strlen($name) <= strlen('mcp_tools_')) {
+      return NULL;
+    }
+    return 'mcp_' . substr($name, strlen('mcp_tools_'));
+  }
+
+  /**
+   * The other name that is meant, for "tools_" too few or too many.
+   *
+   * @return string|null
+   *   The name to look up, or NULL.
+   */
+  public static function meant(string $name): ?string {
+    return self::withTools($name) ?? self::withoutTools($name);
   }
 
   /**

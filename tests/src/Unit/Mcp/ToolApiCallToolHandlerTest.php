@@ -57,9 +57,9 @@ final class ToolApiCallToolHandlerTest extends UnitTestCase {
   /**
    * A name that does not exist is answered with the closest real names.
    *
-   * A local model made up "mcp_list_content_types" in most runs. "Unknown
-   * tool" alone sent it searching again. A tool of a provider this server
-   * does not serve is not offered.
+   * A local model made names up in most runs. "Unknown tool" alone sent it
+   * searching again. A tool of a provider this server does not serve is
+   * not offered, and not reached by a name without "tools_" either.
    */
   public function testUnknownToolIsAnsweredWithTheClosestNames(): void {
     $toolManager = $this->createMock(PluginManagerInterface::class);
@@ -78,6 +78,13 @@ final class ToolApiCallToolHandlerTest extends UnitTestCase {
         'description' => new TranslatableMarkup('Another module.'),
         'operation' => ToolOperation::Read,
       ]),
+      'mcp_tools_elsewhere' => new ToolDefinition([
+        'id' => 'mcp_tools_elsewhere',
+        'provider' => 'other',
+        'label' => new TranslatableMarkup('Elsewhere'),
+        'description' => new TranslatableMarkup('Another module with our prefix.'),
+        'operation' => ToolOperation::Read,
+      ]),
     ]);
 
     $handler = new ToolApiCallToolHandler(
@@ -88,13 +95,20 @@ final class ToolApiCallToolHandlerTest extends UnitTestCase {
       new ToolInputValidator(new ToolApiSchemaConverter(), new NullLogger()),
     );
 
-    $result = $handler->handle((new CallToolRequest('mcp_list_content_types', []))->withId(7), $this->createMock(SessionInterface::class));
+    $result = $handler->handle((new CallToolRequest('mcp_content_types_list', []))->withId(7), $this->createMock(SessionInterface::class));
 
     $this->assertInstanceOf(Error::class, $result);
     $this->assertSame(Error::METHOD_NOT_FOUND, $result->code);
-    $this->assertStringContainsString('Unknown tool: mcp_list_content_types.', $result->message);
+    $this->assertStringContainsString('Unknown tool: mcp_content_types_list.', $result->message);
     $this->assertStringContainsString('Did you mean mcp_tools_list_content_types?', $result->message);
     $this->assertStringNotContainsString('other_list_content_types', $result->message);
+
+    // "tools_" left out of the name of a tool this server does not serve:
+    // unknown under the name that was used, and the tool is not named.
+    $elsewhere = $handler->handle((new CallToolRequest('mcp_elsewhere', []))->withId(9), $this->createMock(SessionInterface::class));
+    $this->assertInstanceOf(Error::class, $elsewhere);
+    $this->assertSame(Error::METHOD_NOT_FOUND, $elsewhere->code);
+    $this->assertSame('Unknown tool: mcp_elsewhere', $elsewhere->message);
 
     // Nothing close: the plain answer, as before.
     $none = $handler->handle((new CallToolRequest('zebra_crossing', []))->withId(8), $this->createMock(SessionInterface::class));

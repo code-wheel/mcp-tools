@@ -23,7 +23,7 @@ use Drupal\tool\TypedData\InputDefinition;
   label: new TranslatableMarkup('Invalidate Cache Tags'),
   description: new TranslatableMarkup('Invalidate specific cache tags to clear related cached data.'),
   operation: ToolOperation::Write,
-  destructive: TRUE,
+  destructive: FALSE,
   input_definitions: [
     'tags' => new InputDefinition(
       data_type: 'list',

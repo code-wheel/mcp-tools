@@ -40,14 +40,18 @@ final class ThemeEnableKernelTest extends KernelTestBase {
     $this->container->get('mcp_tools.access_manager')->setScopes(['read', 'write']);
     $service = $this->container->get('mcp_tools_theme.theme');
 
-    $result = $service->enableTheme('claro');
+    // Drupal 10 and 11 ship Claro. Drupal 12 does not: its admin theme is
+    // default_admin.
+    $theme = $this->container->get('extension.list.theme')->exists('claro') ? 'claro' : 'default_admin';
+
+    $result = $service->enableTheme($theme);
     $this->assertTrue($result['success'], (string) ($result['error'] ?? ''));
     $this->assertTrue($result['data']['changed']);
-    $this->assertTrue($this->container->get('theme_handler')->themeExists('claro'));
+    $this->assertTrue($this->container->get('theme_handler')->themeExists($theme));
 
-    $result = $service->disableTheme('claro');
+    $result = $service->disableTheme($theme);
     $this->assertTrue($result['success'], (string) ($result['error'] ?? ''));
-    $this->assertFalse($this->container->get('theme_handler')->themeExists('claro'));
+    $this->assertFalse($this->container->get('theme_handler')->themeExists($theme));
   }
 
 }

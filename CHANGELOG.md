@@ -4,6 +4,179 @@ All notable changes to the MCP Tools module will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.0.0-beta22] - 2026-11-22
+
+### Security
+
+- **A new site refuses a strong call where nobody can be asked.** Three
+  kinds of call run only after a person said yes: a tool that declares
+  itself destructive, a grant of a permission for trusted roles only,
+  and a recipe that no person has reviewed. A client that can ask its
+  user is asked, as before. A client that cannot was given the call all
+  the same, unless the site had "Strong calls need a confirmation"
+  ticked. A site installed with this release has it ticked. **A site
+  that updates keeps what it had, which is off.** 30 tools declare
+  themselves destructive. To
+  run such calls without a question, untick the setting, or:
+  `drush config:set mcp_tools.settings access.confirm_destructive_tools 0 -y`
+- **The rule holds where nobody can be asked, not only in our own
+  server.** Through the Drupal AI bridge, and through MCP Server with
+  the submodule `mcp_tools_policy`, nobody was asked and such a call
+  ran whatever the site had set. The setting decides there now too:
+  ticked, the call is refused. It is one rule in the policy that these
+  ways share. Through MCP Server without `mcp_tools_policy` nothing of
+  ours stands in front of the call, and it runs as before.
+- **The lowest MCP SDK is 0.6.** `composer.json` allowed 0.2.2 to 0.5,
+  which no test runs. Composer picks 0.10 on a new site, and 0.9 next
+  to MCP Server.
+- **`SECURITY.md`** says how to report a problem in private.
+- **What counts as destructive: what loses something.** The five cache
+  tools and `mcp_sitemap_regenerate` no longer declare themselves
+  destructive, because what they clear is rebuilt. Nor do
+  `mcp_disable_view`, `mcp_theme_disable` and
+  `mcp_ultimate_cron_disable`, because what they switch off can be
+  switched on again. `mcp_layout_disable` still does: turning Layout
+  Builder off deletes the layouts of the items.
+  `mcp_jsonapi_delete_entity` now does: it deletes, and it was the one
+  deleting tool that did not say so, so it was never asked about. A
+  test checks both rules for every tool. 30 tools declare it.
+
+### Fixed
+
+- **A translation includes the body.** `mcp_get_translatable_content`
+  offered only the title and fields named `field_...`. The body field
+  of core is called `body`, so it was not offered and not asked for,
+  and `mcp_translate_content` left the source body in the new language.
+  A field with another prefix was left out the same way. Every
+  translatable text field a site builder added is offered now. If you
+  made translations with these tools, check their body text.
+- **A summary is translated with its text.** A field that has a summary
+  comes with `summary` next to `value`, and takes
+  `{"value": "...", "summary": "..."}`. A summary that is not given is
+  left empty in the new language, and the answer says so. It used to be
+  dropped without a word.
+- **A translation is saved with a text format the site has.** A text
+  given as `{"value": "...", "format": "..."}` with a format the site
+  does not have was saved with it, and Drupal shows such a text as
+  nothing. It gets the format of the field it comes from.
+- **A content type that is not enabled for translation is not
+  translated.** `mcp_translate_content` made a translation of any node.
+  It refuses now and says where translation is enabled.
+- **A text that does not fit its field is refused.** A string longer
+  than its field allows was cut to that length without a word, so a
+  long translated title lost its end. Nothing is saved now, and the
+  answer names the field and both lengths.
+- **`mcp_publish_content` names the language it changed.** Each language
+  version of a node is published on its own. The tool changed the
+  source language and said "unpublished", while the other versions
+  stayed public. It takes `language` now, and the answer says which
+  version changed and which other versions are still in the other
+  state. The result has `language` and `languages`.
+- **`mcp_tools_search_content` shows the language version that
+  matched.** A match in a translated title came back with the title and
+  the address of the source language. Each result has `language` now.
+- **The hints in refusals name tools that exist.** 21 messages named 11
+  tools that are not there ("Use mcp_list_users or mcp_find_user to
+  locate users"). A model that is told a name calls it. Each message
+  names the real tool now, or none.
+- **The two file tools say why they have nothing on a site without the
+  File module.** `mcp_tools_get_files` and
+  `mcp_tools_find_orphaned_files` answered "Tool execution failed: The
+  "file" entity type does not exist." They say now that the File module
+  is not enabled.
+- **`mcp_structure_setup_taxonomy` makes child terms.** With a parent
+  it made the vocabulary and every term at the top level, and then
+  stopped with a type error. A second try could not work, because
+  everything was there by then.
+- **Options given as `{"value": ..., "label": ...}` items are stored as
+  options.** `mcp_structure_add_field` stored such a list as one option
+  called "Array" and said success. An item that is no option is refused
+  now, and nothing is made.
+- **`allowed_values` on a field type without options is not dropped.**
+  "integer" with options made a plain number field and said success. A
+  `string` or `integer` field with options is made as `list_string` or
+  `list_integer`, and the answer says so. Any other type is refused.
+- **`mcp_structure_scaffold_content_type` keeps `target_bundles`.** It
+  dropped them, so a reference meant for one vocabulary took terms of
+  any.
+- **The field type inputs name all 19 types.** The text of
+  `mcp_structure_add_field` named 6, so a model picked `text_long` for
+  plain long text and did not know `list_integer` exists.
+- **A redirect to a path where nothing is says so.**
+  `mcp_redirect_create` and `mcp_redirect_update` took any path as the
+  destination and said success. A model that was asked to send a path
+  to a content item it knew by title made the path up. The redirect is
+  still made, because a page can come later. The answer now says that
+  nothing answers there (no page, no path alias, no file) and how to
+  find the content that was meant. It is in `message` and in a new
+  output `warning`. Another site's address is not looked at.
+
+### Changed
+
+- **A tool name with only `tools_` put in runs the tool too.** The
+  reverse: `mcp_tools_redirect_create` for `mcp_redirect_create` (3
+  failed calls in 34 runs of the same model). The same checks apply.
+- **A tool name with only `tools_` left out runs the tool.** 23 tools
+  are named `mcp_tools_...` and 204 are not, and a model follows the
+  many: it calls `mcp_search_content` right after it was shown
+  `mcp_tools_search_content`. In 161 runs of the local model
+  `gpt-oss:20b` in gateway mode, 64 of the 78 calls to a name that does
+  not exist were this one mistake. Up to 1.0.0-beta21 the answer was
+  "Unknown tool. Did you mean ...?" and nothing was run, which cost a
+  call each time. Now the tool is run, because no other tool can be
+  meant. It is the same call as one by the full name: the same scope
+  and permission checks, input checks and limits, and what the site
+  records of the call names the real tool. It goes for a call by the
+  short name itself, for a short name given to `mcp_tools_execute_tool`
+  or `mcp_tools_get_tool_info` in gateway mode, and for the run tool
+  called as `mcp_execute_tool`. The 23 tools named `mcp_tools_...` only
+  read. Any other name that does not exist is answered with the closest
+  names, as before, and nothing is run for it. That goes for
+  `mcp_discover_tools` and `mcp_get_tool_info` too: no run had them.
+  Measured with the same model, ten runs each way: 9 failed calls
+  without the change and 4 with it, 119 of 120 tasks done both ways,
+  and no change in the number of calls.
+- **The server's instructions say where the Drupal version is.** They
+  named the tools by area and ended with "config, cache and site
+  health". Asked for the Drupal version, the local model `gpt-oss:20b`
+  looked in config first in 13 of 40 runs, and 8 runs had a failed call
+  (a config that is not there, a made-up tool). They now end with "site
+  status (Drupal and PHP version, cron)". In 40 runs with that, the
+  model went to the status tool every time: no failed call, and 2.5
+  calls a run where it had been 3.6. The answer was right in all 80
+  runs.
+- **The instructions name the things the tools work on.** They said
+  "structure (content types, fields, taxonomy, roles)", and the model
+  searched for "structure", which finds 22 tools and not the content
+  type ones. Now: "content types, fields, taxonomy, roles". Over 28 runs
+  each way the tasks done were the same, with a few fewer calls and
+  failed calls.
+- **What breaks on Drupal 12 in our code is fixed.** Drupal 12 is not
+  a supported version yet: no release of Tool API allows it. We ran our
+  tests on Drupal 12.0.0-beta2 with the branch of Tool API's own Drupal
+  12 merge request, and nothing failed in Tool API. In our code: three
+  severity constants that are gone (the status tool, and the checks of
+  the two transport modules), a file constant in the media upload, the
+  Drupal AI bridge's `execute()`, and the body field. Drupal 12 moved
+  the field type `text_with_summary` out of core, to a module of that
+  name. On a site without it a new content type gets a long formatted
+  text as its body, and a field asked for as `text_with_summary`
+  becomes `text_long`, and the answer says so. All of it works on
+  Drupal 10 and 11 as before.
+
+### Documentation
+
+- Six module READMEs and the use cases page listed 41 tool names that
+  do not exist (`mcp_users_block_user` for `mcp_block_user`). A test
+  now compares every tool name in the docs and in the code's messages
+  with the tools.
+- The README lists the submodules once, not three times, and its
+  security part says what 1.0.0-beta21 does.
+- The quick start's test command answered with an error. It uses
+  `drush mcp:server-smoke` now.
+- The examples no longer start the server with `--server=development`,
+  which asks for a scope a new site does not allow.
+
 ## [1.0.0-beta21] - 2026-11-21
 
 ### Security

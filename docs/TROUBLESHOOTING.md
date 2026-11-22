@@ -37,6 +37,7 @@ Common issues and fixes for MCP Tools.
 
 - Scopes are intersected across global settings, server profile scopes, and (for HTTP) API key scopes.
 - Use `mcp_tools.settings` and `mcp_tools.servers` to confirm allowed scopes.
+- "The tool ... says it is destructive, and this site runs such a tool only after the user confirmed it": the site insists on a yes for a tool that destroys something, and nobody could be asked. That is a client without MCP elicitation, MCP Server, or the Drupal AI bridge. A site installed with 1.0.0-beta22 or later insists. The cache tools count too. To run such tools without a question, untick "Strong calls need a confirmation" on the settings form, or `drush config:set mcp_tools.settings access.confirm_destructive_tools 0 -y`.
 - The recipe tools or other admin tools are missing over STDIO: the site does not allow the `admin` scope. A new site allows `read` and `write`. From 1.0.0-beta21 `--scope` and a server profile get no more than that, and the command says so on stderr. Tick "admin" under "Allowed scopes" on the settings form, or run `drush config:set mcp_tools.settings access.allowed_scopes '[read, write, admin]' --input-format=yaml -y`.
 - The audit log is Drupal's log. Enable `dblog` or `syslog` to keep it. `dblog` trims old rows, so send the log off the server with `syslog` if you need it to last.
 

@@ -14,6 +14,10 @@ use Drupal\mcp_tools\Mcp\Sdk;
  */
 function mcp_tools_stdio_requirements(string $phase): array {
   $requirements = [];
+  // Drupal 10 has the severities as constants only, Drupal 12 as an enum
+  // only, and 11.2 and later have both.
+  $enum = 'Drupal\Core\Extension\Requirement\RequirementSeverity';
+  $error = enum_exists($enum) ? $enum::Error : REQUIREMENT_ERROR;
 
   if (in_array($phase, ['install', 'runtime'], TRUE)) {
     // This module can be installed in the same step as mcp_tools, for
@@ -28,7 +32,7 @@ function mcp_tools_stdio_requirements(string $phase): array {
         'title' => t('MCP SDK (mcp/sdk)'),
         'value' => t('Missing'),
         'description' => t('The MCP Tools STDIO Server module requires the Model Context Protocol PHP SDK. Run: <code>@command</code>.', ['@command' => Sdk::INSTALL_COMMAND]),
-        'severity' => REQUIREMENT_ERROR,
+        'severity' => $error,
       ];
     }
   }

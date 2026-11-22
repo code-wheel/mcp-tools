@@ -1,39 +1,53 @@
 # Quickstart
 
-Get a working MCP server in a few minutes.
+A working MCP server in a few minutes, on a local site.
 
-## 1) Optional: apply the dev profile
+## 1) Enable the modules
+
+```bash
+composer require drupal/mcp_tools
+drush en mcp_tools mcp_tools_stdio mcp_tools_content mcp_tools_structure -y
+```
+
+Add the submodules you need. The README lists them.
+
+## 2) Check that the server starts
+
+```bash
+drush mcp:server-smoke --server=default
+```
+
+## 3) Connect a client
+
+```bash
+drush mcp-tools:client-config > .mcp.json
+```
+
+That writes a config most MCP clients read. It starts the server like
+this:
+
+```bash
+drush mcp-tools:serve --quiet --uid=1 --scope=read,write
+```
+
+Use `--scope=read` for a connection that cannot change anything, and
+add `--gateway` for a model on your own machine. For anything but local
+development, use a user of its own and not user 1.
+
+[CLIENT_INTEGRATIONS.md](CLIENT_INTEGRATIONS.md) has examples for
+Claude Code, Codex CLI, HTTP and local models.
+
+## Optional: the development preset
 
 ```bash
 drush mcp:dev-profile
 ```
 
-This applies the development preset and enables the recommended bundles.
+It enables the usual submodules, turns read-only mode off, allows all
+three scopes (also `admin`), and switches the audit log and the write
+limits off. For a local site only.
 
-## 2) Enable modules (if you skipped step 1)
+## Tools of your own
 
-```bash
-drush en tool mcp_tools mcp_tools_stdio -y
-```
-
-## 3) Start the STDIO server
-
-```bash
-drush mcp-tools:serve --server=development --uid=1
-```
-
-For shared environments, use a dedicated execution user instead of uid 1.
-
-## 4) Connect a client
-
-See `mcp_tools/docs/CLIENT_INTEGRATIONS.md` for ready `mcp.json` examples.
-
-## 5) Test a call
-
-```bash
-echo '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}' | drush mcp-tools:serve --server=development --uid=1
-```
-
-To add tools of your own, write a Tool API plugin: the server lists the
-plugins of modules whose name starts with `mcp_tools`, and every module's
-with `--all-tools`.
+Write a Tool API plugin. The server lists the plugins of modules whose
+name starts with `mcp_tools`, and every module's with `--all-tools`.

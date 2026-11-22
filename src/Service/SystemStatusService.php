@@ -8,7 +8,6 @@ use Drupal\Core\Database\Connection;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Render\RendererInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
-use Drupal\system\SystemManager;
 
 /**
  * Service for gathering system status and requirements.
@@ -18,17 +17,24 @@ class SystemStatusService {
   use StringTranslationTrait;
 
   /**
-   * Severity level labels.
+   * Severity level labels, by the number of the severity.
+   *
+   * Drupal 10 and 11 name the numbers SystemManager::REQUIREMENT_OK,
+   * _WARNING and _ERROR, and a global REQUIREMENT_INFO. From 11.2 there is
+   * the enum RequirementSeverity with the same numbers, and Drupal 12 has
+   * only the enum. The numbers are what all of them share.
    */
   protected const SEVERITY_LABELS = [
-    // REQUIREMENT_INFO is a global constant defined in
-    // core/includes/install.inc. It is not available as a
-    // SystemManager class constant in Drupal 10/11.
     -1 => 'info',
-    SystemManager::REQUIREMENT_OK => 'ok',
-    SystemManager::REQUIREMENT_WARNING => 'warning',
-    SystemManager::REQUIREMENT_ERROR => 'error',
+    0 => 'ok',
+    1 => 'warning',
+    2 => 'error',
   ];
+
+  /**
+   * The number of the severity "warning".
+   */
+  private const WARNING = 1;
 
   public function __construct(
     protected ModuleHandlerInterface $moduleHandler,
@@ -84,7 +90,7 @@ class SystemStatusService {
     ];
 
     foreach ($requirements as $key => $requirement) {
-      $severity = $requirement['severity'] ?? (defined('REQUIREMENT_INFO') ? REQUIREMENT_INFO : -1);
+      $severity = $requirement['severity'] ?? -1;
       // Since Drupal 11.2 a requirement may give its severity as the
       // RequirementSeverity enum instead of an integer; Drupal 12 only has
       // the enum. Its values are the same integers.
@@ -96,7 +102,7 @@ class SystemStatusService {
       $summary[$severityLabel] = ($summary[$severityLabel] ?? 0) + 1;
 
       // Skip non-errors if errorsOnly is true.
-      if ($errorsOnly && $severity < SystemManager::REQUIREMENT_WARNING) {
+      if ($errorsOnly && $severity < self::WARNING) {
         continue;
       }
 

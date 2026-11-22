@@ -219,6 +219,58 @@ final class ToolOperationDeclarationTest extends UnitTestCase {
   }
 
   /**
+   * What counts as destructive: what loses something, not what rebuilds.
+   *
+   * A new site runs a destructive tool only after a person said yes. The
+   * five cache tools and the sitemap rebuild declared themselves
+   * destructive, so a cache clear needed a yes. They lose nothing a site
+   * cannot rebuild, so they do not declare it (his decision of
+   * 2026-11-21). Every tool that deletes still does.
+   */
+  public function testOnlyWhatLosesSomethingIsDestructive(): void {
+    $destructive = [];
+    foreach ($this->findToolPluginFiles(dirname(__DIR__, 4)) as $path) {
+      $code = (string) file_get_contents($path);
+      if (preg_match('/#\[Tool\((.*?)\n\)\]/s', $code, $attribute) && preg_match("/\bid:\s*'([^']+)'/", $attribute[1], $id)) {
+        $destructive[$id[1]] = (bool) preg_match('/\bdestructive:\s*TRUE/', $attribute[1]);
+      }
+    }
+    $this->assertGreaterThan(200, count($destructive));
+    // And what can be switched on again: a view, a theme, a cron job.
+    foreach (['mcp_cache_clear_all', 'mcp_cache_clear_bin', 'mcp_cache_clear_entity', 'mcp_cache_invalidate_tags', 'mcp_cache_rebuild', 'mcp_sitemap_regenerate', 'mcp_disable_view', 'mcp_theme_disable', 'mcp_ultimate_cron_disable'] as $rebuilds) {
+      $this->assertFalse($destructive[$rebuilds], $rebuilds . ' declares itself destructive, and a new site asks before it.');
+    }
+    foreach ($destructive as $toolId => $isDestructive) {
+      // Turning Layout Builder off deletes the layouts of the items.
+      if (preg_match('/(^|_)delete(_|$)/', $toolId) || $toolId === 'mcp_layout_disable') {
+        $this->assertTrue($isDestructive, $toolId . ' deletes and does not declare itself destructive.');
+      }
+    }
+  }
+
+  /**
+   * The instructions say where the Drupal version is.
+   *
+   * They named the tools by area and ended with "config, cache and site
+   * health". Asked for the Drupal version, a local model looked in config
+   * first in 13 of 40 runs, and 8 runs had a failed call (a config that is
+   * not there, a made-up "site_health" tool). With "site status (Drupal and
+   * PHP version, cron)" it went to the status tool in all 40 runs: no
+   * failed call, and 2.5 calls a run where it had been 3.6.
+   */
+  public function testTheInstructionsSayWhereTheVersionIs(): void {
+    foreach ([TRUE, FALSE] as $gatewayMode) {
+      $text = McpToolsServerFactory::instructions($gatewayMode);
+      $this->assertStringContainsString('site status (Drupal and PHP version, cron)', $text);
+      $this->assertStringNotContainsString('site health', $text);
+      // "structure (content types, fields, ...)" sent a model to search for
+      // "structure", which finds 22 tools and not the content type ones.
+      $this->assertStringNotContainsString('structure (', $text);
+      $this->assertStringContainsString('content types, fields, taxonomy, roles', $text);
+    }
+  }
+
+  /**
    * @return string[]
    *   Absolute paths to Tool API plugin PHP files.
    */

@@ -55,6 +55,11 @@ final class ForeignToolPolicyKernelTest extends KernelTestBase {
       ->set('access.allowed_scopes', ['read', 'write', 'admin'])
       ->set('access.read_only_mode', FALSE)
       ->set('access.config_only_mode', FALSE)
+      // These tests are about scopes, limits and the audit line. They call
+      // a destructive tool with a client that cannot ask, which a site
+      // that insists on a yes refuses: ForeignToolConfirmationKernelTest
+      // and ToolPolicyKernelTest are about that.
+      ->set('access.confirm_destructive_tools', FALSE)
       ->save();
   }
 

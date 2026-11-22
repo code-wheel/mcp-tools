@@ -5,3 +5,4 @@ services:
       - '@entity_type.manager'
       - '@mcp_tools.access_manager'
       - '@mcp_tools.audit_logger'
+      - '@path.validator'

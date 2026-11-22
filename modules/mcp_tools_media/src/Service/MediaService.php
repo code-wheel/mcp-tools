@@ -7,6 +7,7 @@ namespace Drupal\mcp_tools_media\Service;
 use Mcp\Schema\Content\ImageContent;
 use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\File\FileExists;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\file\Entity\File;
 use Drupal\media\Entity\Media;
@@ -248,7 +249,7 @@ class MediaService {
       $destination = $directory . '/' . $safeFilename;
 
       // Save the file.
-      $uri = $this->fileSystem->saveData($decodedData, $destination, FileSystemInterface::EXISTS_RENAME);
+      $uri = $this->fileSystem->saveData($decodedData, $destination, FileExists::Rename);
 
       // Create file entity.
       // Use getCurrentTime() to avoid frozen REQUEST_TIME in server mode.
@@ -355,7 +356,7 @@ class MediaService {
 
     $media = $this->entityTypeManager->getStorage('media')->load($mid);
     if (!$media) {
-      return ['success' => FALSE, 'error' => "Media with ID $mid not found. Use mcp_list_media to browse media items."];
+      return ['success' => FALSE, 'error' => "Media with ID $mid not found."];
     }
 
     try {
@@ -450,7 +451,7 @@ class MediaService {
     if ($this->clientBridge === NULL || !$this->clientBridge->supportsSampling()) {
       return [
         'success' => FALSE,
-        'error' => 'The connected MCP client does not support sampling, which this tool uses to describe the image. Set the alt text directly with mcp_update_media instead.',
+        'error' => 'The connected MCP client does not support sampling, which this tool uses to describe the image. Nothing was changed.',
       ];
     }
 

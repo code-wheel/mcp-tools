@@ -6,13 +6,13 @@ Webform creation and submission management for MCP Tools.
 
 | Tool | Description |
 |------|-------------|
-| `mcp_webform_list` | List all webforms |
-| `mcp_webform_get` | Get webform details |
-| `mcp_webform_get_submissions` | Get form submissions |
-| `mcp_webform_create` | Create new webforms |
-| `mcp_webform_update` | Update webform settings |
-| `mcp_webform_delete` | Delete webforms |
-| `mcp_webform_delete_submission` | Delete individual submissions |
+| `mcp_list_webforms` | List all webforms |
+| `mcp_get_webform` | Get webform details |
+| `mcp_get_webform_submissions` | Get form submissions |
+| `mcp_create_webform` | Create new webforms |
+| `mcp_update_webform` | Update webform settings |
+| `mcp_delete_webform` | Delete webforms |
+| `mcp_delete_webform_submission` | Delete individual submissions |
 
 ## Requirements
 
@@ -32,7 +32,7 @@ drush en mcp_tools_webform
 ```
 User: "Create a contact form"
 
-AI calls: mcp_webform_create(
+AI calls: mcp_create_webform(
   id: "contact",
   title: "Contact Us",
   elements: {
@@ -65,7 +65,7 @@ AI calls: mcp_webform_create(
 ```
 User: "Create a customer satisfaction survey"
 
-AI calls: mcp_webform_create(
+AI calls: mcp_create_webform(
   id: "satisfaction_survey",
   title: "Customer Satisfaction",
   elements: {
@@ -94,7 +94,7 @@ AI calls: mcp_webform_create(
 ```
 User: "Show me recent contact form submissions"
 
-AI calls: mcp_webform_get_submissions(
+AI calls: mcp_get_webform_submissions(
   webform_id: "contact",
   limit: 10
 )

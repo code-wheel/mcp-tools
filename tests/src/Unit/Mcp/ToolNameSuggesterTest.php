@@ -60,6 +60,36 @@ final class ToolNameSuggesterTest extends UnitTestCase {
   }
 
   /**
+   * A name without "tools_" gets it, and no other name is changed.
+   *
+   * In 161 runs of a local model, 64 of 78 made-up names were a real name
+   * with only "tools_" left out: mcp_search_content, mcp_list_content_types,
+   * mcp_execute_tool. That one is looked up and run.
+   */
+  public function testANameWithoutToolsGetsThem(): void {
+    $this->assertSame('mcp_tools_search_content', ToolNameSuggester::withTools('mcp_search_content'));
+    $this->assertSame('mcp_tools_execute_tool', ToolNameSuggester::withTools('mcp_execute_tool'));
+    // It has them, or it is not one of these names at all.
+    $this->assertNull(ToolNameSuggester::withTools('mcp_tools_search_content'));
+    $this->assertNull(ToolNameSuggester::withTools('search_content'));
+    $this->assertNull(ToolNameSuggester::withTools('other_search_content'));
+    $this->assertNull(ToolNameSuggester::withTools('mcp_'));
+    $this->assertNull(ToolNameSuggester::withTools(''));
+  }
+
+  /**
+   * A name with "tools_" put in loses it, and meant() tries both ways.
+   */
+  public function testANameWithToolsTooManyLosesThem(): void {
+    $this->assertSame('mcp_redirect_create', ToolNameSuggester::withoutTools('mcp_tools_redirect_create'));
+    $this->assertNull(ToolNameSuggester::withoutTools('mcp_redirect_create'));
+    $this->assertNull(ToolNameSuggester::withoutTools('mcp_tools_'));
+    $this->assertSame('mcp_redirect_create', ToolNameSuggester::meant('mcp_tools_redirect_create'));
+    $this->assertSame('mcp_tools_search_content', ToolNameSuggester::meant('mcp_search_content'));
+    $this->assertNull(ToolNameSuggester::meant('zebra_crossing'));
+  }
+
+  /**
    * At most three, and none for a name that is close to nothing.
    */
   public function testFewAndOnlyCloseOnes(): void {

@@ -53,6 +53,11 @@ use Drupal\tool\TypedData\InputDefinition;
       label: new TranslatableMarkup('Created Redirect'),
       description: new TranslatableMarkup('The created redirect object containing id, source, destination, status_code, and language. Use id with mcp_redirect_get, mcp_redirect_update, or mcp_redirect_delete tools.'),
     ),
+    'warning' => new OutputDefinition(
+      data_type: 'string',
+      label: new TranslatableMarkup('Warning'),
+      description: new TranslatableMarkup('Set when the destination is a path of this site and nothing answers there now: no page, no path alias, no file. The redirect is made all the same.'),
+    ),
     'message' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),

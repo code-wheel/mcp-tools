@@ -60,9 +60,11 @@ access:
   # client can ask (MCP elicitation): a tool that declares itself
   # destructive, a grant of a permission for trusted roles only, and a
   # recipe that was written through MCP and that no person has reviewed.
-  # A client that cannot ask gets the call run, and the audit log says so.
-  # Set to true to refuse it for such a client.
-  confirm_destructive_tools: false
+  # Where nobody can be asked (a client without elicitation, Drupal AI,
+  # MCP Server with mcp_tools_policy) the call is refused. Set to false
+  # to run it there, with a warning in the audit log. A site that was
+  # installed before 1.0.0-beta22 keeps what it had: false.
+  confirm_destructive_tools: true
 
 # Rate limiting for expensive read operations.
 rate_limits:

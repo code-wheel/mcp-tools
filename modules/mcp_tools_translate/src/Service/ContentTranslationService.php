@@ -53,6 +53,10 @@ class ContentTranslationService {
     if (!$node) {
       return ['success' => FALSE, 'error' => "Node $nid not found."];
     }
+    $notEnabled = $this->translationAccess->checkTranslatable($node);
+    if ($notEnabled !== NULL) {
+      return $notEnabled;
+    }
     $denied = $this->translationAccess->checkTranslateAccess($node);
     if ($denied !== NULL) {
       return $denied;
@@ -185,6 +189,10 @@ class ContentTranslationService {
     if (!$node) {
       return ['success' => FALSE, 'error' => "Node $nid not found."];
     }
+    $notEnabled = $this->translationAccess->checkTranslatable($node);
+    if ($notEnabled !== NULL) {
+      return $notEnabled;
+    }
     $denied = $this->translationAccess->checkTranslateAccess($node);
     if ($denied !== NULL) {
       return $denied;
@@ -221,6 +229,25 @@ class ContentTranslationService {
       ];
     }
 
+    $tooLong = $this->overlong($node, $translations);
+    if ($tooLong !== []) {
+      return $this->tooLongResult($tooLong);
+    }
+
+    // A summary is its own text. One that was not translated is left empty
+    // in the new language, and the answer says so.
+    $summariesLeftOut = [];
+    foreach ($required['fields'] as $fieldName) {
+      $item = $node->get($fieldName)->first()?->getValue() ?? [];
+      $given = $translations[$fieldName] ?? NULL;
+      if (($item['summary'] ?? '') !== '' && !(is_array($given) && array_key_exists('summary', $given))) {
+        $summariesLeftOut[] = $fieldName;
+      }
+    }
+
+    $summaryNote = $summariesLeftOut === [] ? '' : ' The summary of ' . implode(', ', $summariesLeftOut)
+      . ' was not translated and is empty in this language. To set it, update the field with {"value": "...", "summary": "..."}.';
+
     try {
       $sourceMap = $this->prepareParagraphSourceMap($node, $langcode);
       $nodeValues = $this->buildNodeTranslationValues(
@@ -255,7 +282,7 @@ class ContentTranslationService {
           'url' => $nodeTranslation->toUrl()->toString(),
           'fields_translated' => count($required['fields']),
           'paragraphs_translated' => $paragraphCount,
-          'message' => "Translation to {$language->getName()} created for '{$node->getTitle()}'.",
+          'message' => "Translation to {$language->getName()} created for '{$node->getTitle()}'." . $summaryNote,
         ],
       ];
     }
@@ -393,6 +420,11 @@ class ContentTranslationService {
       }
     }
 
+    $tooLong = $this->overlong($node, $resolved + ['paragraphs' => $paragraphUpdates]);
+    if ($tooLong !== []) {
+      return $this->tooLongResult($tooLong);
+    }
+
     try {
       $updatedFields = [];
       foreach ($resolved as $fieldName => $value) {
@@ -403,7 +435,7 @@ class ContentTranslationService {
           $value ? $translation->setPublished() : $translation->setUnpublished();
         }
         else {
-          $translation->set($fieldName, $this->normalizeFieldValue($fieldName, $value, $definitions, $translation));
+          $translation->set($fieldName, $this->normalizeFieldValue($fieldName, $value, $definitions, $translation, TRUE));
         }
         $updatedFields[] = $fieldName;
       }
@@ -977,7 +1009,13 @@ class ContentTranslationService {
       if (!$definition->isTranslatable()) {
         continue;
       }
-      if (!str_starts_with($name, 'field_') && !in_array($name, $allowedBase, TRUE)) {
+      // Every text field a site builder added, whatever it is called. This
+      // went by the name: "field_..." and the title. The body field of core
+      // is called "body", and a site can choose another prefix, so those
+      // were not offered and a translation kept their source text. Of the
+      // fields an entity type defines itself, only the ones that hold
+      // content.
+      if ($definition->getFieldStorageDefinition()->isBaseField() && !in_array($name, $allowedBase, TRUE)) {
         continue;
       }
 
@@ -996,9 +1034,73 @@ class ContentTranslationService {
         'value' => $value['value'],
         'format' => $value['format'],
       ];
+      if (($value['summary'] ?? '') !== '') {
+        $fields[$name]['summary'] = $value['summary'];
+      }
     }
 
     return $fields;
+  }
+
+  /**
+   * The strings of a translation that do not fit their field.
+   *
+   * A string was cut to the length of its field without a word, so a long
+   * title lost its end. Now nothing is saved and the answer says which.
+   *
+   * @param \Drupal\node\NodeInterface $node
+   *   The node.
+   * @param array<string, mixed> $values
+   *   Field values by field name, and a "paragraphs" map by paragraph ID.
+   *
+   * @return string[]
+   *   One phrase for each string that is too long.
+   */
+  protected function overlong(NodeInterface $node, array $values): array {
+    $paragraphs = is_array($values['paragraphs'] ?? NULL) ? $values['paragraphs'] : [];
+    unset($values['paragraphs']);
+    $found = $this->overlongIn('node', $node->bundle(), $values, '');
+    // A site without the Paragraphs module has no such values.
+    if ($paragraphs === [] || !$this->entityTypeManager->hasDefinition('paragraph')) {
+      return $found;
+    }
+    $storage = $this->entityTypeManager->getStorage('paragraph');
+    foreach ($paragraphs as $pid => $fieldValues) {
+      $paragraph = is_array($fieldValues) ? $storage->load($pid) : NULL;
+      if ($paragraph !== NULL) {
+        $found = array_merge($found, $this->overlongIn('paragraph', $paragraph->bundle(), $fieldValues, "paragraph $pid, "));
+      }
+    }
+    return $found;
+  }
+
+  /**
+   * The strings among some field values that do not fit their field.
+   */
+  private function overlongIn(string $entityType, string $bundle, array $values, string $where): array {
+    $definitions = $this->entityFieldManager->getFieldDefinitions($entityType, $bundle);
+    $found = [];
+    foreach ($values as $fieldName => $value) {
+      $fieldName = (string) $fieldName;
+      if (!is_string($value) || !isset($definitions[$fieldName]) || $definitions[$fieldName]->getType() !== 'string') {
+        continue;
+      }
+      $max = (int) ($definitions[$fieldName]->getSetting('max_length') ?: 255);
+      if (mb_strlen($value) > $max) {
+        $found[] = sprintf('%s%s has %d characters and the field takes %d', $where, $fieldName, mb_strlen($value), $max);
+      }
+    }
+    return $found;
+  }
+
+  /**
+   * The answer for a translation with a string that does not fit.
+   */
+  private function tooLongResult(array $tooLong): array {
+    return [
+      'success' => FALSE,
+      'error' => 'A text is longer than its field allows: ' . implode('; ', $tooLong) . '. Nothing was saved. Shorten it and send the translation again.',
+    ];
   }
 
   /**
@@ -1179,6 +1281,9 @@ class ContentTranslationService {
    *   Field definitions for the entity bundle.
    * @param \Drupal\Core\Entity\ContentEntityInterface|null $source
    *   Entity whose current field value supplies the text format fallback.
+   * @param bool $keepSummary
+   *   Whether a text given as a string keeps the summary $source has: yes
+   *   for an update of a language version, no for a new translation.
    *
    * @return mixed
    *   Normalized value.
@@ -1188,6 +1293,7 @@ class ContentTranslationService {
     mixed $value,
     array $definitions,
     ?ContentEntityInterface $source = NULL,
+    bool $keepSummary = FALSE,
   ): mixed {
     if (!isset($definitions[$fieldName])) {
       return $value;
@@ -1195,25 +1301,30 @@ class ContentTranslationService {
 
     $type = $definitions[$fieldName]->getType();
 
-    if ($type === 'string' && is_string($value)) {
-      $max = $definitions[$fieldName]->getSetting('max_length') ?: 255;
-      return mb_substr($value, 0, $max);
-    }
-
     if (in_array($type, ['text_long', 'text_with_summary', 'text'], TRUE)) {
+      // A translation keeps the text format of the field it comes from:
+      // formats are the site's own and are not named here.
+      $current = [];
+      if ($source !== NULL && $source->hasField($fieldName) && !$source->get($fieldName)->isEmpty()) {
+        $current = $source->get($fieldName)->first()->getValue();
+      }
+      $sourceFormat = TextFormat::resolve($this->entityTypeManager, $current['format'] ?? NULL);
+
       if (is_array($value)) {
+        // A format that was asked for and that the site does not have used
+        // to be saved, and Drupal shows such a text as nothing.
+        $asked = isset($value['format']) && is_string($value['format']) ? $value['format'] : NULL;
+        $value['format'] = $asked !== NULL && TextFormat::resolve($this->entityTypeManager, $asked) === $asked ? $asked : $sourceFormat;
         return $value;
       }
-      // A translation must keep the source field's text format — formats are
-      // site-specific and must not be hardcoded here.
-      $format = NULL;
-      if ($source !== NULL && $source->hasField($fieldName) && !$source->get($fieldName)->isEmpty()) {
-        $format = $source->get($fieldName)->first()->getValue()['format'] ?? NULL;
+
+      $item = ['value' => $value, 'format' => $sourceFormat];
+      // An update of the text alone leaves the summary of this language as
+      // it is. A new translation starts without one: see translateContent().
+      if ($type === 'text_with_summary' && $keepSummary && ($current['summary'] ?? '') !== '') {
+        $item['summary'] = $current['summary'];
       }
-      return [
-        'value' => $value,
-        'format' => TextFormat::resolve($this->entityTypeManager, $format),
-      ];
+      return $item;
     }
 
     return $value;

@@ -435,7 +435,7 @@ class McpToolsServerFactory {
    * the tool names at first, so it stays short and says how to find things.
    */
   public static function instructions(bool $gatewayMode, int $hidden = 0): string {
-    $text = 'Tools for administering this Drupal site: content, structure (content types, fields, taxonomy, roles), menus, views, media, blocks, users, config, cache and site health. Which tools exist depends on the modules the site enabled. '
+    $text = 'Tools for administering this Drupal site: content, content types, fields, taxonomy, roles, menus, views, media, blocks, users, config, cache and site status (Drupal and PHP version, cron). Which tools exist depends on the modules the site enabled. '
       . 'Tools that only read are safe to call. Tools that write change the live site and need the write scope; if a call is denied, tell the user which scope or permission is missing. A few tools ask for a confirm flag before they delete: pass one only when the tool has such an input, and read a refusal, it says what would be removed. '
       . 'Look up IDs and machine names with a list, get or search tool before you write. When a call fails, the error names the parameter and the problem: fix that and retry.';
     if ($gatewayMode) {

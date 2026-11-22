@@ -168,13 +168,24 @@ class ToolApiCallToolHandler implements RequestHandlerInterface {
     $definitions = $this->toolManager->getDefinitions();
     $definition = $definitions[$pluginId] ?? NULL;
 
+    // A name with only "tools_" left out (mcp_search_content) is the tool
+    // with it, and one with "tools_" put in (mcp_tools_redirect_create) the
+    // tool without it. From here on the call is one by the full name: the same
+    // checks, limits and audit line.
+    $meant = $definition instanceof ToolDefinition ? NULL : ToolNameSuggester::meant($toolName);
+    if ($meant !== NULL && ($definitions[$this->mcpNameToPluginId($meant)] ?? NULL) instanceof ToolDefinition) {
+      $toolName = $meant;
+      $pluginId = $this->mcpNameToPluginId($meant);
+      $definition = $definitions[$pluginId];
+    }
+
     if (!$definition instanceof ToolDefinition) {
-      return $this->unknownTool($toolName, $definitions, $request->getId());
+      return $this->unknownTool($request->name, $definitions, $request->getId());
     }
 
     $provider = $definition->getProvider() ?? '';
     if (!$this->includeAllTools && (!is_string($provider) || !str_starts_with($provider, $this->allowedProviderPrefix))) {
-      return $this->unknownTool($toolName, $definitions, $request->getId());
+      return $this->unknownTool($request->name, $definitions, $request->getId());
     }
 
     $this->dispatchEvent(new ToolExecutionStartedEvent(
@@ -299,6 +310,9 @@ class ToolApiCallToolHandler implements RequestHandlerInterface {
     if ($outcome instanceof ToolRefusal) {
       if ($outcome->reason === ToolRefusal::ACCESS) {
         return $failed(ToolExecutionFailedEvent::REASON_ACCESS_DENIED, $toolErrorHandler->accessDenied($toolName));
+      }
+      if ($outcome->reason === ToolRefusal::CONFIRMATION) {
+        return $this->confirmationRefusal($requestId, $toolName, $outcome->message);
       }
       return $failed(ToolExecutionFailedEvent::REASON_POLICY_BUDGET, new CallToolResult([new TextContent($outcome->message)], TRUE, [
         'success' => FALSE,
@@ -570,7 +584,7 @@ class ToolApiCallToolHandler implements RequestHandlerInterface {
     }
     if ($reason !== NULL) {
       $message = $reason . ' Run it?';
-      $cannotAsk = $reason . ' This site runs such a call only after the user confirmed it. This client cannot ask its user, so nothing was run.';
+      $cannotAsk = $reason . ' This site runs such a call only after the user confirmed it. This client cannot ask its user, so nothing was run. No argument changes that: do not call it again. Tell the user what you wanted to run, so a person can do it or allow it.';
       $noAnswer = $reason . ' The user was asked to confirm and no answer came back, so nothing was run.';
     }
     else {
@@ -579,7 +593,7 @@ class ToolApiCallToolHandler implements RequestHandlerInterface {
       if ($shown !== []) {
         $message .= ' Arguments: ' . mb_substr((string) json_encode($shown, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE), 0, 600);
       }
-      $cannotAsk = "The tool '$toolName' says it is destructive, and this site runs such a tool only after the user confirmed it. This client cannot ask its user, so the tool was not run.";
+      $cannotAsk = "The tool '$toolName' says it is destructive, and this site runs such a tool only after the user confirmed it. This client cannot ask its user, so the tool was not run. No argument changes that: do not call it again. Tell the user what you wanted to run, so a person can do it or allow it.";
       $noAnswer = "The tool '$toolName' says it is destructive. The user was asked to confirm and no answer came back, so the tool was not run.";
     }
 

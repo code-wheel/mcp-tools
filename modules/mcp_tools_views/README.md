@@ -6,12 +6,12 @@ Views creation and management for MCP Tools.
 
 | Tool | Description |
 |------|-------------|
-| `mcp_views_create_view` | Create custom views |
-| `mcp_views_create_content_list` | Quick content listing view |
-| `mcp_views_delete_view` | Remove custom views |
-| `mcp_views_add_display` | Add display to existing view |
-| `mcp_views_enable` | Enable a view |
-| `mcp_views_disable` | Disable a view |
+| `mcp_create_view` | Create custom views |
+| `mcp_create_content_list_view` | Quick content listing view |
+| `mcp_delete_view` | Remove custom views |
+| `mcp_add_view_display` | Add display to existing view |
+| `mcp_enable_view` | Enable a view |
+| `mcp_disable_view` | Disable a view |
 
 ## Requirements
 
@@ -31,7 +31,7 @@ drush en mcp_tools_views
 ```
 User: "Create a view showing recent articles"
 
-AI calls: mcp_views_create_content_list(
+AI calls: mcp_create_content_list_view(
   id: "recent_articles",
   label: "Recent Articles",
   content_type: "article",
@@ -46,7 +46,7 @@ AI calls: mcp_views_create_content_list(
 ```
 User: "Create a view of published events sorted by date"
 
-AI calls: mcp_views_create_view(
+AI calls: mcp_create_view(
   id: "upcoming_events",
   label: "Upcoming Events",
   base_table: "node_field_data",
@@ -73,7 +73,7 @@ AI calls: mcp_views_create_view(
 ```
 User: "Add a block display to the articles view"
 
-AI calls: mcp_views_add_display(
+AI calls: mcp_add_view_display(
   view_id: "recent_articles",
   display_type: "block",
   display_id: "sidebar_block",

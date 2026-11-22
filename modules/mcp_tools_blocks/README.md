@@ -6,11 +6,11 @@ Block placement and configuration for MCP Tools.
 
 | Tool | Description |
 |------|-------------|
-| `mcp_blocks_place` | Place a block in a region |
-| `mcp_blocks_remove` | Remove a placed block |
-| `mcp_blocks_configure` | Configure block settings |
-| `mcp_blocks_list_available` | List available blocks |
-| `mcp_blocks_list_regions` | List theme regions |
+| `mcp_place_block` | Place a block in a region |
+| `mcp_remove_block` | Remove a placed block |
+| `mcp_configure_block` | Configure block settings |
+| `mcp_list_available_blocks` | List available blocks |
+| `mcp_list_regions` | List theme regions |
 
 ## Requirements
 
@@ -30,7 +30,7 @@ drush en mcp_tools_blocks
 ```
 User: "Add the recent content block to the sidebar"
 
-AI calls: mcp_blocks_place(
+AI calls: mcp_place_block(
   plugin_id: "views_block:content_recent-block_1",
   region: "sidebar_first",
   theme: "olivero"
@@ -42,7 +42,7 @@ AI calls: mcp_blocks_place(
 ```
 User: "What regions are available in the current theme?"
 
-AI calls: mcp_blocks_list_regions(theme: "olivero")
+AI calls: mcp_list_regions(theme: "olivero")
 ```
 
 ### Configure Block Visibility
@@ -50,7 +50,7 @@ AI calls: mcp_blocks_list_regions(theme: "olivero")
 ```
 User: "Make the sidebar block only show on article pages"
 
-AI calls: mcp_blocks_configure(
+AI calls: mcp_configure_block(
   block_id: "olivero_views_block__content_recent_block_1",
   settings: {
     visibility: {
@@ -67,7 +67,7 @@ AI calls: mcp_blocks_configure(
 ```
 User: "Add the site branding block to the header"
 
-AI calls: mcp_blocks_place(
+AI calls: mcp_place_block(
   plugin_id: "system_branding_block",
   region: "header",
   theme: "olivero",

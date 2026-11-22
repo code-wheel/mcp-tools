@@ -23,7 +23,7 @@ use Drupal\tool\TypedData\InputDefinition;
   label: new TranslatableMarkup('Clear Entity Cache'),
   description: new TranslatableMarkup('Clear render cache for a specific entity.'),
   operation: ToolOperation::Write,
-  destructive: TRUE,
+  destructive: FALSE,
   input_definitions: [
     'entity_type' => new InputDefinition(
       data_type: 'string',

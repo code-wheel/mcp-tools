@@ -59,8 +59,12 @@ SDK sees the request. How a call ended comes from the SDK's
 - **Tools that are not Tool API tools.** MCP Server can also have tools
   of its own kind (its `#[Tool]` plugins). This module only knows the
   ones the Tool Bridge exposes. The others run as before.
-- **No confirmation.** It does not ask the user before a destructive
-  tool. MCP Tools' own server does.
+- **It cannot ask.** MCP Tools' own server asks the user of the client
+  before a destructive tool. Here nobody can be asked. So on a site
+  that insists on a yes (the setting "Strong calls need a
+  confirmation", on for a site installed with 1.0.0-beta22 or later) a
+  tool that declares itself destructive is refused. On a site that does
+  not insist it runs.
 - **It cannot see whether a failed call had run.** A call that comes
   back as an error keeps its count against the limit and gets an audit
   line that says it failed, also when Tool API refused it for its input

@@ -56,7 +56,7 @@ and module prerequisites for quick setup.
 1. `mcp_migration_validate`
 2. `mcp_migration_field_mapping`
 3. `mcp_migration_import_csv`
-4. `mcp_migration_status`
+4. `mcp_migration_import_status`
 
 ## 4) Content Audit (20 minutes)
 

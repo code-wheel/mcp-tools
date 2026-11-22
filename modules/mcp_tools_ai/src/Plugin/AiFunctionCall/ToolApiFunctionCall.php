@@ -106,8 +106,11 @@ final class ToolApiFunctionCall extends FunctionCallBase implements ExecutableFu
 
   /**
    * {@inheritdoc}
+   *
+   * @param object|null $object
+   *   Unused. Drupal 12 adds it to ExecutableInterface::execute().
    */
-  public function execute(): void {
+  public function execute(?object $object = NULL): void {
     $tool_id = $this->getPluginDefinition()['tool_api_id'] ?? NULL;
     if (!$tool_id) {
       $this->output = 'Error: no Tool API id bound to this function call.';

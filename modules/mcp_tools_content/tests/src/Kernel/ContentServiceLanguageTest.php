@@ -295,4 +295,90 @@ class ContentServiceLanguageTest extends KernelTestBase {
     $this->assertSame('IT titolo', $this->reload($nid)->getTranslation('it')->getTitle(), 'Translation untouched.');
   }
 
+  /**
+   * Publishing says which language it changed, and which it did not.
+   *
+   * The tool had no language. It changed the source language, said
+   * "unpublished", and the other language versions stayed public.
+   */
+  public function testPublishNamesTheLanguages(): void {
+    $node = $this->createTranslatedNode();
+    $node->setPublished();
+    $node->getTranslation('it')->setPublished();
+    $node->save();
+    $nid = (int) $node->id();
+
+    // Without a language: the source language, and the answer says so.
+    $result = $this->contentService->setPublishStatus($nid, FALSE);
+    $this->assertTrue($result['success'], json_encode($result));
+    $this->assertSame('en', $result['data']['language']);
+    $this->assertSame(['en' => 'unpublished', 'it' => 'published'], $result['data']['languages']);
+    $this->assertStringContainsString("'en'", $result['data']['message']);
+    $this->assertStringContainsString('it', $result['data']['message']);
+    $this->assertStringContainsString('still published', $result['data']['message']);
+    $this->assertFalse($this->reload($nid)->isPublished());
+    $this->assertTrue($this->reload($nid)->getTranslation('it')->isPublished());
+
+    // With a language: that version only.
+    $result = $this->contentService->setPublishStatus($nid, FALSE, 'it');
+    $this->assertTrue($result['success'], json_encode($result));
+    $this->assertSame('it', $result['data']['language']);
+    $this->assertFalse($this->reload($nid)->getTranslation('it')->isPublished());
+    $this->assertSame(['en' => 'unpublished', 'it' => 'unpublished'], $result['data']['languages']);
+
+    // A language the node does not have.
+    $result = $this->contentService->setPublishStatus($nid, TRUE, 'fr');
+    $this->assertFalse($result['success']);
+    $this->assertStringContainsString('en, it', $result['error']);
+
+    // A node in one language is told as before.
+    $single = Node::create(['type' => 'article', 'title' => 'Alone', 'langcode' => 'en', 'status' => 1]);
+    $single->save();
+    $result = $this->contentService->setPublishStatus((int) $single->id(), FALSE);
+    $this->assertSame("Content 'Alone' unpublished.", $result['data']['message']);
+  }
+
+  /**
+   * The publish tool takes the language and gives back what it changed.
+   */
+  public function testPublishToolTakesALanguage(): void {
+    $node = $this->createTranslatedNode();
+    $node->setPublished();
+    $node->getTranslation('it')->setPublished();
+    $node->save();
+
+    $tool = $this->container->get('plugin.manager.tool')->createInstance('mcp_publish_content');
+    $tool->setInputValue('nid', (int) $node->id());
+    $tool->setInputValue('publish', FALSE);
+    $tool->setInputValue('language', 'it');
+    $tool->execute();
+    $this->assertTrue($tool->getResult()->isSuccess(), (string) $tool->getResult()->getMessage());
+    $values = $tool->getOutputValues();
+    $this->assertSame('it', $values['language']);
+    $this->assertSame(['en' => 'published', 'it' => 'unpublished'], $values['languages']);
+    $this->assertTrue($this->reload((int) $node->id())->isPublished());
+    $this->assertFalse($this->reload((int) $node->id())->getTranslation('it')->isPublished());
+  }
+
+  /**
+   * A title that matches in a translation is shown in that language.
+   */
+  public function testSearchShowsTheLanguageThatMatched(): void {
+    $node = $this->createTranslatedNode();
+    $node->setPublished();
+    $node->getTranslation('it')->setPublished();
+    $node->save();
+
+    $found = $this->container->get('mcp_tools.content_analysis')->searchContent('titolo');
+    $this->assertSame(1, $found['total'], json_encode($found));
+    $this->assertSame('IT titolo', $found['results'][0]['title'], 'A match in the Italian title is shown with the English title.');
+    $this->assertSame('it', $found['results'][0]['language']);
+    // The address has the language in it on a site with path prefixes. A
+    // kernel test has none, so that part is checked on a real site.
+
+    $found = $this->container->get('mcp_tools.content_analysis')->searchContent('EN title');
+    $this->assertSame('EN title', $found['results'][0]['title']);
+    $this->assertSame('en', $found['results'][0]['language']);
+  }
+
 }

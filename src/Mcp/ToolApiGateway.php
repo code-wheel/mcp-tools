@@ -411,6 +411,12 @@ class ToolApiGateway {
    */
   public function getToolInfo(string $tool_name): CallToolResult {
     $toolInfo = $this->toolProvider->getTool($tool_name);
+    // A name with only "tools_" left out: the tool with it is described,
+    // under its real name.
+    $meant = $toolInfo === NULL ? ToolNameSuggester::meant($tool_name) : NULL;
+    if ($meant !== NULL) {
+      $toolInfo = $this->toolProvider->getTool($meant);
+    }
     if ($toolInfo === NULL) {
       // A name a model made up: say which real names are close.
       $closest = ToolNameSuggester::closest($tool_name, array_map(static fn($info): string => (string) $info->name, $this->toolProvider->getTools()));

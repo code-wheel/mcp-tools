@@ -49,27 +49,18 @@ The base module provides:
 - **Admin UI** for configuration
 - **McpToolsToolBase** base class for all tool plugins
 
-### Submodules (36 total)
+### Submodules (38)
+
+32 of them hold tools, 202 in all. The other six are our server
+(`mcp_tools_stdio`, `mcp_tools_remote`) and the bridges and helpers
+(`mcp_tools_ai`, `mcp_tools_policy`, `mcp_tools_mcp_server`,
+`mcp_tools_observability`). The README has the list with the number of
+tools in each.
 
 Each submodule is self-contained with its own:
 - Tool plugins in `src/Plugin/tool/Tool/`
 - Service classes in `src/Service/`
 - README.md with usage examples
-
-```
-modules/
-├── mcp_tools_content/        # Content CRUD (4 tools)
-├── mcp_tools_structure/      # Types, fields, roles, taxonomies (18 tools)
-├── mcp_tools_users/          # User management (5 tools)
-├── mcp_tools_menus/          # Menu management (5 tools)
-├── mcp_tools_views/          # Views creation (6 tools)
-├── mcp_tools_blocks/         # Block placement (5 tools)
-├── mcp_tools_media/          # Media management (7 tools)
-├── mcp_tools_layout_builder/ # Layout Builder (9 tools)
-├── mcp_tools_config/         # Config management (5 tools)
-├── mcp_tools_analysis/       # Site analysis (8 tools)
-└── ... (20 more)
-```
 
 ## Design Patterns
 
@@ -79,7 +70,7 @@ Tools are Drupal plugins using PHP 8 attributes:
 
 ```php
 #[Tool(
-  id: 'mcp_content_create',
+  id: 'mcp_create_content',
   label: new TranslatableMarkup('Create Content'),
   description: new TranslatableMarkup('Create a new content item...'),
   operation: ToolOperation::Write,
@@ -149,18 +140,23 @@ The `McpToolsToolBase::doExecute()` method converts this to `ExecutableResult`.
 │  Layer 3: Connection Scopes                             │
 │  - read: read-only operations                           │
 │  - write: create/update/delete operations               │
-│  - admin: recipe application, config export             │
+│  - admin: recipes, templates, config export             │
 └─────────────────────────────────────────────────────────┘
 ```
 
 ### Protected Entities
 
-Certain entities cannot be modified via MCP:
-- User ID 1 (superadmin)
-- Administrator role
-- System menus (admin, main, footer)
+Certain things cannot be changed via MCP:
+- User ID 1
+- Administrator roles (by the role's flag or its name), and the users
+  who have one
+- System menus (admin, main, footer, tools, account)
 - Core views
-- Dangerous permissions
+- The permissions of MCP Tools itself and a list of strong permissions.
+  The README names them.
+
+The scopes of a connection never go past `access.allowed_scopes`, and a
+connection cannot give its own user more permissions.
 
 ### Rate Limiting
 
@@ -213,10 +209,10 @@ Tools are organized by category for permission control:
 
 | Category | Permission | Tools |
 |----------|------------|-------|
-| `discovery` | `mcp_tools use discovery` | ListTextFormats, GetTextFormat, etc. |
-| `content` | `mcp_tools use content` | CreateContent, UpdateContent, etc. |
-| `structure` | `mcp_tools use structure` | CreateContentType, AddField, etc. |
-| `users` | `mcp_tools use users` | CreateUser, BlockUser, etc. |
+| `discovery` | `mcp_tools use discovery` | `mcp_list_text_formats`, `mcp_get_text_format`, etc. |
+| `content` | `mcp_tools use content` | `mcp_create_content`, `mcp_update_content`, etc. |
+| `structure` | `mcp_tools use structure` | `mcp_structure_create_content_type`, `mcp_structure_add_field`, etc. |
+| `users` | `mcp_tools use users` | `mcp_create_user`, `mcp_block_user`, etc. |
 | ... | ... | ... |
 
 ## MCP Annotations

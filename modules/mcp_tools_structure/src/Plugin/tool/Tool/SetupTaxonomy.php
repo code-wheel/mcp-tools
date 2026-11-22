@@ -162,7 +162,8 @@ class SetupTaxonomy extends McpToolsToolBase {
 
         if (isset($termNameToId[$termName]) && isset($termNameToId[$parentName])) {
           // Update the term's parent.
-          $this->updateTermParent($termNameToId[$termName], $termNameToId[$parentName]);
+          // Entity ids come back as strings.
+          $this->updateTermParent((int) $termNameToId[$termName], (int) $termNameToId[$parentName]);
         }
       }
     }

@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools\Policy;
 
+use Drupal\Component\Plugin\PluginManagerInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AuditLogger;
+use Drupal\mcp_tools\Service\McpToolCallContext;
 use Drupal\mcp_tools\Service\RateLimiter;
+use Drupal\mcp_tools\Tool\AsksFirstInterface;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Tool\Invoker;
 use Drupal\tool\Tool\ToolDefinition;
@@ -43,6 +46,8 @@ final class ToolPolicy {
     private readonly RateLimiter $rateLimiter,
     private readonly AuditLogger $auditLogger,
     private readonly AccountInterface $currentUser,
+    private readonly ?McpToolCallContext $callContext = NULL,
+    private readonly ?PluginManagerInterface $toolManager = NULL,
   ) {}
 
   /**
@@ -53,10 +58,19 @@ final class ToolPolicy {
    * call, then giveBack() when the call did not run, or record() when it
    * did.
    *
+   * @param \Drupal\tool\Tool\ToolDefinition $definition
+   *   The tool.
+   * @param array<string, mixed> $values
+   *   The values of the call. One of MCP Tools' own tools may want a yes
+   *   for some values and not for others.
+   *
    * @return \Drupal\mcp_tools\Policy\ToolRefusal|null
    *   The refusal, or NULL when the call may go on.
    */
-  public function admit(ToolDefinition $definition): ?ToolRefusal {
+  public function admit(ToolDefinition $definition, array $values = []): ?ToolRefusal {
+    if (($refusal = $this->unconfirmed($definition, $values)) !== NULL) {
+      return $refusal;
+    }
     if (McpToolsToolBase::owns($definition)) {
       return NULL;
     }
@@ -72,6 +86,61 @@ final class ToolPolicy {
       }
     }
     return NULL;
+  }
+
+  /**
+   * A strong call that nobody confirmed, on a site that insists on a yes.
+   *
+   * Strong is a tool that declares itself destructive, of any provider, and
+   * a tool of MCP Tools that says so for these values: a grant of a
+   * permission for trusted roles only, a recipe no person has read.
+   *
+   * MCP Tools' own server asks the client's user before the call gets here
+   * and marks it. On the other ways through this policy nobody can be
+   * asked: Drupal AI, MCP Server with mcp_tools_policy in front of it, code
+   * that calls run(). Up to 1.0.0-beta21 such a call just ran there,
+   * whatever the site had set. Now the site's setting decides, as it does
+   * in our server for a client that cannot ask: with
+   * access.confirm_destructive_tools on, the call is refused.
+   *
+   * MCP Server without mcp_tools_policy does not come through here: its
+   * bridge runs the tool itself.
+   */
+  private function unconfirmed(ToolDefinition $definition, array $values): ?ToolRefusal {
+    if (!$this->accessManager->destructiveToolsNeedConfirmation() || $this->callContext?->wasConfirmedByUser()) {
+      return NULL;
+    }
+    // A session that may not run the tool at all is refused for that, as
+    // for every tool, by the steps that follow.
+    if (!$this->accessManager->couldCall($definition)) {
+      return NULL;
+    }
+    $reason = $this->reasonToAsk($definition, $values);
+    if ($reason !== NULL) {
+      return ToolRefusal::confirmation($reason . ' This site runs such a call only after a person confirmed it. Nobody was asked, so nothing was run. No argument changes that: do not call it again. Tell the user what you wanted to run, so a person can do it or allow it.');
+    }
+    if ($definition->get('destructive') === TRUE) {
+      return ToolRefusal::confirmation(sprintf("The tool '%s' says it is destructive, and this site runs such a tool only after a person confirmed it. Nobody was asked, so the tool was not run. No argument changes that: do not call it again. Tell the user what you wanted to run, so a person can do it or allow it.", (string) $definition->id()));
+    }
+    return NULL;
+  }
+
+  /**
+   * Why one of MCP Tools' own tools wants a yes for these values, if it does.
+   */
+  private function reasonToAsk(ToolDefinition $definition, array $values): ?string {
+    $class = $definition->getClass();
+    if ($this->toolManager === NULL || !is_string($class) || !is_a($class, AsksFirstInterface::class, TRUE)) {
+      return NULL;
+    }
+    try {
+      $tool = $this->toolManager->createInstance((string) $definition->id());
+      return $tool instanceof AsksFirstInterface ? $tool->reasonToAsk($values) : NULL;
+    }
+    catch (\Throwable) {
+      // The call itself will say what is wrong with the tool.
+      return NULL;
+    }
   }
 
   /**
@@ -155,7 +224,7 @@ final class ToolPolicy {
    *   that failed. A refusal when one of the rules here said no.
    */
   public function run(ToolDefinition $definition, array $values, Invoker $invoker, bool $enforce = TRUE): ToolInvocation|ToolRefusal {
-    if ($enforce && ($refusal = $this->admit($definition)) !== NULL) {
+    if ($enforce && ($refusal = $this->admit($definition, $values)) !== NULL) {
       return $refusal;
     }
 

@@ -54,7 +54,7 @@ class BlockService {
     if (!isset($definitions[$pluginId])) {
       return [
         'success' => FALSE,
-        'error' => "Block plugin '$pluginId' not found. Use mcp_list_block_plugins to see available block types.",
+        'error' => "Block plugin '$pluginId' not found. Use mcp_list_available_blocks to see available block types.",
       ];
     }
 
@@ -148,7 +148,10 @@ class BlockService {
 
     $block = $this->entityTypeManager->getStorage('block')->load($blockId);
     if (!$block) {
-      return ['success' => FALSE, 'error' => "Block '$blockId' not found. Use mcp_list_blocks to see placed blocks."];
+      return [
+        'success' => FALSE,
+        'error' => "Block '$blockId' not found. Use mcp_list_regions to see the placed blocks.",
+      ];
     }
 
     try {
@@ -206,7 +209,10 @@ class BlockService {
 
     $block = $this->entityTypeManager->getStorage('block')->load($blockId);
     if (!$block) {
-      return ['success' => FALSE, 'error' => "Block '$blockId' not found. Use mcp_list_blocks to see placed blocks."];
+      return [
+        'success' => FALSE,
+        'error' => "Block '$blockId' not found. Use mcp_list_regions to see the placed blocks.",
+      ];
     }
 
     try {

@@ -343,8 +343,12 @@ Requires `write` scope on the API key.
 - **Text fields** (`text_long`, `text_with_summary`, `text`): pass a string.
   The service auto-wraps with `{"value": "...", "format": "content_format"}`.
   Or pass the full object if you need a different format.
-- **String fields** (`string`): pass a string. Auto-truncated to the field's
-  `max_length` setting (e.g. 100 chars for `field_button_text`).
+- **String fields** (`string`): pass a string. One that is longer than
+  the field's `max_length` (e.g. 100 chars for `field_button_text`) is
+  refused, and the answer says how long it may be. Up to 1.0.0-beta21 it
+  was cut without a word.
+- **A summary**: a field with a summary takes
+  `{"value": "...", "summary": "..."}`.
 - **Paragraph IDs**: use the IDs returned by `mcp_get_translatable_content`.
 
 **Output:**
@@ -485,13 +489,14 @@ mcp_tools_translate tools
             │
             ├── Paragraphs translated first (recursive, depth-first)
             ├── Node translation created last (links to paragraph translations)
-            ├── String fields auto-truncated to max_length
+            ├── String fields longer than max_length are refused
             └── Text fields auto-wrapped with content_format
 ```
 
 ## Supported content
 
-- All node types with translatable text fields
+- All node types that are enabled for translation, with their
+  translatable text fields (the body too, from 1.0.0-beta22)
 - Nested paragraphs (recursive: child paragraphs are translated before parents)
 - Paragraph reference fields: `field_paragraphs`, `field_summary_key_facts`
 - Field types: `string`, `string_long`, `text_long`, `text_with_summary`, `text`

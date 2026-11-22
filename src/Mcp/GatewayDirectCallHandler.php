@@ -56,8 +56,15 @@ final class GatewayDirectCallHandler implements RequestHandlerInterface {
     // A model also mixes the two ways: the tool's own name, with the
     // arguments in the shape the run tool takes ({"tool_name": ...,
     // "arguments": {...}}). Then the inner arguments are meant.
+    //
+    // The run tool itself is also called with "tools_" left out of its
+    // name (mcp_execute_tool). The tool it names is run through the door,
+    // as a call by that tool's own name is.
     $arguments = $request->arguments ?? [];
-    if (($arguments['tool_name'] ?? NULL) === $request->name
+    $named = $arguments['tool_name'] ?? NULL;
+    $asRunTool = ToolNameSuggester::withTools($request->name) === ToolApiGateway::EXECUTE_TOOL
+      && is_string($named) && !in_array($named, $this->gatewayToolNames, TRUE);
+    if (($named === $request->name || $asRunTool)
       && array_diff(array_keys($arguments), ['tool_name', 'arguments']) === []) {
       // From mcp/sdk 0.10 a nested object arrives as \stdClass. Only the
       // outer one is opened, so an empty object inside stays an object.
@@ -66,7 +73,7 @@ final class GatewayDirectCallHandler implements RequestHandlerInterface {
         $inner = (array) $inner;
       }
       if (is_array($inner)) {
-        $request = (new CallToolRequest($request->name, $inner))->withId($request->getId());
+        $request = (new CallToolRequest($named, $inner))->withId($request->getId());
       }
     }
     $response = $this->door->handle($request, $session);

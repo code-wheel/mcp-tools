@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Drupal\mcp_tools_redirect\Service;
 
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Path\PathValidatorInterface;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AuditLogger;
 
@@ -17,6 +18,7 @@ class RedirectService {
     protected EntityTypeManagerInterface $entityTypeManager,
     protected AccessManager $accessManager,
     protected AuditLogger $auditLogger,
+    protected ?PathValidatorInterface $pathValidator = NULL,
   ) {}
 
   /**
@@ -170,13 +172,11 @@ class RedirectService {
         'status_code' => $statusCode,
       ]);
 
-      return [
-        'success' => TRUE,
-        'data' => [
-          'redirect' => $this->formatRedirect($redirect),
-          'message' => "Redirect from '/$source' to '$destination' created successfully.",
-        ],
+      $data = [
+        'redirect' => $this->formatRedirect($redirect),
+        'message' => "Redirect from '/$source' to '$destination' created successfully.",
       ];
+      return ['success' => TRUE, 'data' => $this->withDestinationNote($data, $destination)];
     }
     catch (\Exception $e) {
       $this->auditLogger->logFailure('create_redirect', 'redirect', $source, ['error' => $e->getMessage()]);
@@ -253,14 +253,14 @@ class RedirectService {
         'updated_fields' => $updatedFields,
       ]);
 
-      return [
-        'success' => TRUE,
-        'data' => [
-          'redirect' => $this->formatRedirect($redirect),
-          'updated_fields' => $updatedFields,
-          'message' => "Redirect $id updated successfully.",
-        ],
+      $data = [
+        'redirect' => $this->formatRedirect($redirect),
+        'updated_fields' => $updatedFields,
+        'message' => "Redirect $id updated successfully.",
       ];
+      // Only a destination that was given now is looked at.
+      $given = in_array('destination', $updatedFields, TRUE) ? (string) $values['destination'] : NULL;
+      return ['success' => TRUE, 'data' => $given === NULL ? $data : $this->withDestinationNote($data, $given)];
     }
     catch (\Exception $e) {
       $this->auditLogger->logFailure('update_redirect', 'redirect', (string) $id, ['error' => $e->getMessage()]);
@@ -531,6 +531,56 @@ class RedirectService {
       'language' => $redirect->language()->getId(),
       'created' => $redirect->getCreated() ? date('Y-m-d H:i:s', (int) $redirect->getCreated()) : NULL,
     ];
+  }
+
+  /**
+   * Adds a warning when a destination on this site leads nowhere.
+   *
+   * A model was asked to send a path to a content item it knew by its
+   * title. It made the path up, and the redirect was made and said success.
+   * A redirect to a page that comes later is a fair thing to make, so it is
+   * still made. The answer says that nothing is there now and how to find
+   * what was meant, in the message (which a model reads) and on its own.
+   *
+   * @param array $data
+   *   The data of the answer, with a message.
+   * @param string $destination
+   *   The destination as it was given.
+   *
+   * @return array
+   *   The data, with "warning" when nothing answers at the destination.
+   */
+  protected function withDestinationNote(array $data, string $destination): array {
+    if ($this->destinationAnswers($destination)) {
+      return $data;
+    }
+    $data['warning'] = "Nothing answers at '$destination' on this site now: no page, no path alias and no file."
+      . ' If a content item was meant, find it with mcp_tools_search_content and give its path, like /node/12, to mcp_redirect_update.';
+    $data['message'] .= ' ' . $data['warning'];
+    return $data;
+  }
+
+  /**
+   * Whether something answers at a destination, as far as this site knows.
+   *
+   * Another site is not looked at, and neither is an entity:, route: or
+   * base: address: only a path of this site.
+   */
+  protected function destinationAnswers(string $destination): bool {
+    $uri = $this->normalizeDestination($destination);
+    if ($this->pathValidator === NULL || !str_starts_with($uri, 'internal:')) {
+      return TRUE;
+    }
+    $path = (string) preg_replace('/[?#].*$/', '', substr($uri, strlen('internal:')));
+    if ($path === '' || $path === '/' || $path === '/<front>') {
+      return TRUE;
+    }
+    // A route with what it needs (a node that exists), or a path alias.
+    if ($this->pathValidator->getUrlIfValidWithoutAccessCheck($path) !== FALSE) {
+      return TRUE;
+    }
+    // A file under the web root.
+    return is_file(DRUPAL_ROOT . $path);
   }
 
   /**

@@ -1,0 +1,19 @@
+<?php
+
+/**
+ * @file
+ * A site without the text_with_summary field type.
+ *
+ * Drupal 12 moved the type out of core, to the module text_with_summary. A
+ * new site on 12 does not have it. This takes it away on Drupal 10 and 11,
+ * so the same test runs on all three.
+ */
+
+declare(strict_types=1);
+
+/**
+ * Implements hook_field_info_alter().
+ */
+function no_summary_type_test_field_info_alter(array &$info): void {
+  unset($info['text_with_summary']);
+}

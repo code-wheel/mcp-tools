@@ -45,6 +45,8 @@ services:
       - '@mcp_tools.rate_limiter'
       - '@mcp_tools.audit_logger'
       - '@current_user'
+      - '@mcp_tools.tool_call_context'
+      - '@plugin.manager.tool'
 
   # Tool Call Context (used for MCP-scoped side effects like config tracking).
   mcp_tools.tool_call_context:

@@ -155,7 +155,6 @@ final class SystemStatusServiceTest extends UnitTestCase {
 
 namespace {
 
-use Drupal\system\SystemManager;
 
 /**
  * Implements hook_requirements() for SystemStatusService unit tests.
@@ -172,23 +171,22 @@ function mcp_tools_test_requirements_mod_requirements(string $phase): array {
       'title' => 'Error',
       'value' => '<b>hello</b>',
       'description' => '<i>desc</i>',
-      'severity' => SystemManager::REQUIREMENT_ERROR,
+      'severity' => 2,
     ],
     'mcp_tools_warning' => [
       'title' => 'Warning',
       'value' => 'warn',
-      'severity' => SystemManager::REQUIREMENT_WARNING,
+      'severity' => 1,
     ],
     'mcp_tools_ok' => [
       'title' => 'Ok',
       'value' => 'ok',
-      'severity' => SystemManager::REQUIREMENT_OK,
+      'severity' => 0,
     ],
     'mcp_tools_info' => [
       'title' => 'Info',
       'value' => 'info',
-      // REQUIREMENT_INFO is a global constant defined in install.inc; use -1 fallback.
-      'severity' => defined('REQUIREMENT_INFO') ? REQUIREMENT_INFO : -1,
+      'severity' => -1,
     ],
   ];
 }
@@ -227,7 +225,7 @@ function mcp_tools_test_requirements_render_requirements(string $phase): array {
       'title' => 'Updates',
       'value' => ['#markup' => '<strong>Two updates</strong>'],
       'description' => ['#markup' => '<p>Update core and <em>Views</em>.</p>'],
-      'severity' => \Drupal\system\SystemManager::REQUIREMENT_WARNING,
+      'severity' => 1,
     ],
   ];
 }

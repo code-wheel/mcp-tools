@@ -44,7 +44,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'field_type' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Field Type'),
-      description: new TranslatableMarkup('string, text_long, integer, boolean, entity_reference, image, etc.'),
+      description: new TranslatableMarkup('Plain text: string (one line), string_long (long). Formatted text: text (one line), text_long (long), text_with_summary (long, with a summary). Numbers: integer, decimal, float. Others: boolean, email, link, datetime (date and time), date (date only), timestamp, image, file, entity_reference, and list_string or list_integer for a fixed set of options (see allowed_values). mcp_structure_list_field_types lists the ones this site has.'),
       required: TRUE,
     ),
     'label' => new InputDefinition(
@@ -88,7 +88,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'allowed_values' => new InputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Allowed Values'),
-      description: new TranslatableMarkup('For list fields'),
+      description: new TranslatableMarkup('The options of a list_string or list_integer field: labels like ["Draft", "Final"], whole numbers like [1, 2, 3], or items like {"value": "d", "label": "Draft"}.'),
       required: FALSE,
     ),
   ],

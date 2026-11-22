@@ -58,7 +58,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
     'fields' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Translatable Node Fields'),
-      description: new TranslatableMarkup('Translatable text fields of the node, keyed by field name.'),
+      description: new TranslatableMarkup('Translatable text fields of the node, keyed by field name. A field with a summary has "summary" next to "value": translate both.'),
     ),
     'paragraphs' => new OutputDefinition(
       data_type: 'map',

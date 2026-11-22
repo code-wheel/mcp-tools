@@ -34,6 +34,11 @@ exposed_operations:
   - write       # create/modify: opt-in, used with care
 ```
 
+An agent inside the site cannot ask a person. So a tool that declares
+itself destructive is refused on a site that insists on a yes (the
+setting "Strong calls need a confirmation" of MCP Tools, on for a site
+installed with 1.0.0-beta22 or later).
+
 Tools become available to any `drupal/ai` consumer (for example the AI Agents
 module) under the `mcp_tools` function-call group.
 

@@ -22,7 +22,7 @@ use Drupal\tool\Tool\ToolOperation;
   label: new TranslatableMarkup('Clear All Caches'),
   description: new TranslatableMarkup('Clear all Drupal caches (equivalent to drush cr).'),
   operation: ToolOperation::Write,
-  destructive: TRUE,
+  destructive: FALSE,
   input_definitions: [],
   output_definitions: [
     'success' => new OutputDefinition(

@@ -1,0 +1,5 @@
+name: 'No summary type (test)'
+type: module
+description: 'Takes the text_with_summary field type away, as on a new Drupal 12 site without the module of that name.'
+package: Testing
+core_version_requirement: ^10.5 || ^11

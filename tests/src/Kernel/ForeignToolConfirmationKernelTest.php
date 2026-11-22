@@ -177,9 +177,28 @@ final class ForeignToolConfirmationKernelTest extends KernelTestBase {
   }
 
   /**
-   * A client that cannot ask its user gets the tool run, as before.
+   * A new site insists: a client that cannot ask its user is refused.
+   */
+  public function testANewSiteRefusesAClientThatCannotAsk(): void {
+    $this->assertTrue($this->config('mcp_tools.settings')->get('access.confirm_destructive_tools'), 'A new site does not insist on a yes.');
+    [$fiber, $asked] = $this->start('foreign_test_delete', FALSE);
+    $this->assertNull($asked);
+    $result = $fiber->getReturn()->result;
+    $this->assertTrue($result->isError);
+    $this->assertSame('CONFIRMATION_REQUIRED', $result->structuredContent['error_code']);
+    // A model that is refused tries again with "confirm": true, which the
+    // tool does not take. The refusal says that no argument changes it.
+    $this->assertStringContainsString('do not call it again', (string) $result->content[0]->text);
+    $this->assertTrue($this->flagIsStillThere(), 'The tool ran.');
+  }
+
+  /**
+   * On a site that does not insist, such a client gets the tool run.
+   *
+   * That is a site from before 1.0.0-beta22, or one that switched it off.
    */
   public function testClientThatCannotAsk(): void {
+    $this->config('mcp_tools.settings')->set('access.confirm_destructive_tools', FALSE)->save();
     [$fiber, $asked] = $this->start('foreign_test_delete', FALSE);
     $this->assertNull($asked);
     $this->assertTrue($fiber->getReturn()->result->structuredContent['success']);

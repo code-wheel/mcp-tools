@@ -34,6 +34,12 @@ use Drupal\tool\TypedData\InputDefinition;
       description: new TranslatableMarkup('True to publish, false to unpublish. Defaults to true.'),
       required: FALSE,
     ),
+    'language' => new InputDefinition(
+      data_type: 'string',
+      label: new TranslatableMarkup('Language'),
+      description: new TranslatableMarkup('A language code such as "fr", to publish or unpublish that language version only. Without it the source language is changed. Each language version is published on its own.'),
+      required: FALSE,
+    ),
   ],
   output_definitions: [
     'nid' => new OutputDefinition(
@@ -45,6 +51,16 @@ use Drupal\tool\TypedData\InputDefinition;
       data_type: 'string',
       label: new TranslatableMarkup('New Status'),
       description: new TranslatableMarkup('New publish status: "published" or "unpublished".'),
+    ),
+    'language' => new OutputDefinition(
+      data_type: 'string',
+      label: new TranslatableMarkup('Language'),
+      description: new TranslatableMarkup('The language version that was changed.'),
+    ),
+    'languages' => new OutputDefinition(
+      data_type: 'map',
+      label: new TranslatableMarkup('Language Versions'),
+      description: new TranslatableMarkup('Every language version of the node with its status now: "published" or "unpublished".'),
     ),
     'changed' => new OutputDefinition(
       data_type: 'boolean',
@@ -89,7 +105,8 @@ class PublishContent extends McpToolsToolBase {
       return ['success' => FALSE, 'error' => 'Node ID (nid) is required.'];
     }
 
-    return $this->contentService->setPublishStatus((int) $nid, (bool) ($input['publish'] ?? TRUE));
+    $language = isset($input['language']) && is_string($input['language']) && $input['language'] !== '' ? $input['language'] : NULL;
+    return $this->contentService->setPublishStatus((int) $nid, (bool) ($input['publish'] ?? TRUE), $language);
   }
 
 }

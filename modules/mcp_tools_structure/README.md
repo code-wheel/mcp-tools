@@ -49,17 +49,26 @@ Site structure management: content types, fields, taxonomy, and roles.
 |------|-------------|
 | `mcp_structure_scaffold_content_type` | Scaffold a complete content type with fields |
 
-## Supported Field Types (18)
+## Supported Field Types (19)
 
-- `string` / `string_long` - Text fields
+- `string` / `string_long` - Plain text, one line or long
 - `text` / `text_long` / `text_with_summary` - Formatted text
 - `integer` / `decimal` / `float` - Numbers
 - `boolean` - Checkbox
-- `datetime` - Date/time
+- `email` / `link` - An address, a URL
+- `datetime` / `date` / `timestamp` - Date and time, date only, a timestamp
 - `entity_reference` - References to other entities
 - `image` / `file` - Media
-- `link` - URLs
-- `list_string` / `list_integer` / `list_float` - Select lists
+- `list_string` / `list_integer` - A fixed set of options
+
+Only the types the site has are offered: `mcp_structure_list_field_types`
+lists them. Drupal 12 moved `text_with_summary` to a module of that
+name. On a site without it such a field is made as `text_long`.
+
+Options (`allowed_values`) are a list of labels, a list of whole
+numbers, or items like `{"value": "d", "label": "Draft"}`. Given with
+`string` or `integer`, the field is made as a list field and the answer
+says so. With any other type the call is refused.
 - `email` / `telephone` - Contact fields
 
 ## Requirements

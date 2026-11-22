@@ -112,15 +112,53 @@ final class GatewayDirectCallHandlerTest extends UnitTestCase {
    */
   public function testAnUnknownNameIsAnsweredWithWhereToLook(): void {
     $door = $this->createMock(RequestHandlerInterface::class);
-    $door->method('handle')->willReturnCallback(static fn(Request $request): Error => Error::forMethodNotFound('Unknown tool: mcp_list_content_types. Did you mean mcp_tools_list_content_types?', $request->getId()));
+    $door->method('handle')->willReturnCallback(static fn(Request $request): Error => Error::forMethodNotFound('Unknown tool: mcp_content_types_list. Did you mean mcp_tools_list_content_types?', $request->getId()));
     $handler = new GatewayDirectCallHandler($door, self::GATEWAY_TOOLS);
 
-    $response = $handler->handle((new CallToolRequest('mcp_list_content_types', []))->withId('q'), $this->createMock(SessionInterface::class));
+    $response = $handler->handle((new CallToolRequest('mcp_content_types_list', []))->withId('q'), $this->createMock(SessionInterface::class));
 
     $this->assertInstanceOf(Error::class, $response);
     $this->assertSame(Error::METHOD_NOT_FOUND, $response->code);
     $this->assertSame('q', $response->id);
-    $this->assertSame('Unknown tool: mcp_list_content_types. Did you mean mcp_tools_list_content_types? Find tools with mcp_tools_discover_tools.', $response->message);
+    $this->assertSame('Unknown tool: mcp_content_types_list. Did you mean mcp_tools_list_content_types? Find tools with mcp_tools_discover_tools.', $response->message);
+  }
+
+  /**
+   * The run tool with "tools_" left out of its name runs the tool it names.
+   *
+   * A local model called mcp_execute_tool, 13 times in 161 runs, and was
+   * told the name it had meant.
+   */
+  public function testTheRunToolWithoutToolsInItsNameRunsTheToolItNames(): void {
+    $session = $this->createMock(SessionInterface::class);
+    $handler = $this->handler();
+
+    $handler->handle((new CallToolRequest('mcp_execute_tool', [
+      'tool_name' => 'mcp_tools_get_config',
+      'arguments' => ['name' => 'system.site'],
+    ]))->withId('a'), $session);
+    $this->assertSame('mcp_tools_get_config', $this->seen[0]->name);
+    $this->assertSame(['name' => 'system.site'], $this->seen[0]->arguments);
+    $this->assertSame('a', $this->seen[0]->getId());
+
+    // The name alone, for a tool without inputs.
+    $handler->handle((new CallToolRequest('mcp_execute_tool', ['tool_name' => 'mcp_x']))->withId('b'), $session);
+    $this->assertSame('mcp_x', $this->seen[1]->name);
+    $this->assertSame([], $this->seen[1]->arguments);
+
+    // Not with anything else in the arguments, and not for one of the
+    // gateway's own three tools: the call goes on as it came, and the
+    // door does not know it.
+    $handler->handle((new CallToolRequest('mcp_execute_tool', ['tool_name' => 'mcp_x', 'confirm' => TRUE]))->withId('c'), $session);
+    $this->assertSame('mcp_execute_tool', $this->seen[2]->name);
+    $handler->handle((new CallToolRequest('mcp_execute_tool', ['tool_name' => ToolApiGateway::DISCOVER_TOOL, 'arguments' => ['query' => 'content']]))->withId('d'), $session);
+    $this->assertSame('mcp_execute_tool', $this->seen[3]->name);
+
+    // Another tool's name with the run tool's shape stays as it is: only
+    // the tool's own name or the run tool's is unwrapped.
+    $handler->handle((new CallToolRequest('mcp_y', ['tool_name' => 'mcp_x']))->withId('e'), $session);
+    $this->assertSame('mcp_y', $this->seen[4]->name);
+    $this->assertSame(['tool_name' => 'mcp_x'], $this->seen[4]->arguments);
   }
 
   /**

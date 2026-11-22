@@ -21,7 +21,7 @@ use Drupal\tool\TypedData\InputDefinition;
   label: new TranslatableMarkup('Regenerate Sitemap'),
   description: new TranslatableMarkup('Regenerate sitemap(s). Can regenerate all sitemaps or a specific variant.'),
   operation: ToolOperation::Write,
-  destructive: TRUE,
+  destructive: FALSE,
   input_definitions: [
     'variant' => new InputDefinition(
       data_type: 'string',

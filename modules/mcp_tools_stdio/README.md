@@ -28,8 +28,8 @@ drush mcp-tools:serve --uid=1
 # With specific scopes
 drush mcp-tools:serve --uid=1 --scope=read,write
 
-# With a specific server profile
-drush mcp-tools:serve --uid=1 --server=development
+# With a server profile (its scopes, and gateway mode if it says so)
+drush mcp-tools:serve --uid=1 --server=staging
 
 # In gateway mode (reduced tool list)
 drush mcp-tools:serve --uid=1 --gateway

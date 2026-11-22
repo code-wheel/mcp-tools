@@ -14,6 +14,11 @@ URL redirect management for MCP Tools. Create, update, and manage URL redirects 
 | `mcp_redirect_find` | Find a redirect by source path |
 | `mcp_redirect_import` | Bulk import multiple redirects |
 
+A redirect to a path of this site where nothing answers (no page, no
+path alias, no file) is still made, because the page can come later.
+The answer of `mcp_redirect_create` and `mcp_redirect_update` then has
+a `warning` that says so.
+
 ## Requirements
 
 - mcp_tools (base module)

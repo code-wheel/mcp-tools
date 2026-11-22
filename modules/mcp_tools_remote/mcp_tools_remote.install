@@ -14,6 +14,11 @@ use Drupal\mcp_tools\Mcp\Sdk;
  */
 function mcp_tools_remote_requirements(string $phase): array {
   $requirements = [];
+  // Drupal 10 has the severities as constants only, Drupal 12 as an enum
+  // only, and 11.2 and later have both.
+  $enum = 'Drupal\Core\Extension\Requirement\RequirementSeverity';
+  $error = enum_exists($enum) ? $enum::Error : REQUIREMENT_ERROR;
+  $ok = enum_exists($enum) ? $enum::OK : REQUIREMENT_OK;
 
   if (in_array($phase, ['install', 'runtime'], TRUE)) {
     // This module can be installed in the same step as mcp_tools, for
@@ -28,7 +33,7 @@ function mcp_tools_remote_requirements(string $phase): array {
         'title' => t('MCP SDK (mcp/sdk)'),
         'value' => t('Missing'),
         'description' => t('The MCP Tools Remote Server module requires the Model Context Protocol PHP SDK. Run: <code>@command</code>.', ['@command' => Sdk::INSTALL_COMMAND]),
-        'severity' => REQUIREMENT_ERROR,
+        'severity' => $error,
       ];
     }
   }
@@ -47,7 +52,7 @@ function mcp_tools_remote_requirements(string $phase): array {
           'description' => t('The remote HTTP endpoint requires an execution user. Visit <a href=":url">Remote Settings</a> to configure.', [
             ':url' => '/admin/config/services/mcp-tools/remote',
           ]),
-          'severity' => REQUIREMENT_ERROR,
+          'severity' => $error,
         ];
       }
       else {
@@ -60,14 +65,14 @@ function mcp_tools_remote_requirements(string $phase): array {
               '@uid' => $uid,
               ':url' => '/admin/config/services/mcp-tools/remote',
             ]),
-            'severity' => REQUIREMENT_ERROR,
+            'severity' => $error,
           ];
         }
         else {
           $requirements['mcp_tools_remote_uid'] = [
             'title' => t('MCP Tools Remote: Execution User'),
             'value' => t('@name (uid @uid)', ['@name' => $user->getAccountName(), '@uid' => $uid]),
-            'severity' => REQUIREMENT_OK,
+            'severity' => $ok,
           ];
         }
       }

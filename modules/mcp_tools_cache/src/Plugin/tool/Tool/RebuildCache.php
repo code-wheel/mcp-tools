@@ -23,7 +23,7 @@ use Drupal\tool\TypedData\InputDefinition;
   label: new TranslatableMarkup('Rebuild Cache'),
   description: new TranslatableMarkup('Rebuild a specific cache type (router, theme, container, menu).'),
   operation: ToolOperation::Write,
-  destructive: TRUE,
+  destructive: FALSE,
   input_definitions: [
     'type' => new InputDefinition(
       data_type: 'string',

@@ -54,6 +54,10 @@ final class ToolPolicyKernelTest extends KernelTestBase {
       ->set('access.allowed_scopes', ['read', 'write', 'admin'])
       ->set('access.read_only_mode', FALSE)
       ->set('access.config_only_mode', FALSE)
+      // The tests here are about scopes, limits and the audit line, on a
+      // site that does not insist on a yes. The last test is about one
+      // that does, which is what a new site is.
+      ->set('access.confirm_destructive_tools', FALSE)
       ->save();
     $this->container->get('mcp_tools.access_manager')->setScopes(['read', 'write', 'admin']);
   }
@@ -271,6 +275,71 @@ final class ToolPolicyKernelTest extends KernelTestBase {
     $this->assertInstanceOf(ToolInvocation::class, $outcome);
     $this->assertTrue($this->wroteSinceLastLook());
     $this->assertSame([], $this->auditLines());
+  }
+
+  /**
+   * A destructive call that nobody confirmed is refused on any way in.
+   *
+   * The question was asked in MCP Tools' own server only. Through MCP
+   * Server's bridge, through Drupal AI and for any code that runs a tool
+   * through this policy, a destructive tool just ran, whatever the site
+   * had set. A new site insists on a yes, and that holds here now.
+   */
+  public function testAStrongCallNobodyConfirmedIsRefusedWhereTheSiteInsists(): void {
+    $state = $this->container->get('state');
+    $state->set('foreign_tool_test.wrote', TRUE);
+
+    // What a new site gets.
+    $installed = $this->container->get('config.storage')->read('mcp_tools.settings');
+    $this->assertNotFalse($installed);
+    $shipped = \Drupal\Core\Serialization\Yaml::decode((string) file_get_contents($this->container->get('extension.list.module')->getPath('mcp_tools') . '/config/install/mcp_tools.settings.yml'));
+    $this->assertTrue($shipped['access']['confirm_destructive_tools'], 'A new site does not insist on a yes.');
+    $this->config('mcp_tools.settings')->set('access.confirm_destructive_tools', TRUE)->save();
+
+    $refused = $this->runTool('foreign_test_delete');
+    $this->assertInstanceOf(ToolRefusal::class, $refused, 'A destructive tool ran with nobody asked.');
+    $this->assertSame(ToolRefusal::CONFIRMATION, $refused->reason);
+    $this->assertSame('CONFIRMATION_REQUIRED', $refused->code);
+    $this->assertStringContainsString('foreign_test_delete', $refused->message);
+    $this->assertStringContainsString('do not call it again', $refused->message);
+    $this->assertTrue((bool) $state->get('foreign_tool_test.wrote'), 'The tool ran.');
+
+    // The first step alone says the same: MCP Server's bridge calls it.
+    $definition = $this->container->get('plugin.manager.tool')->getDefinition('foreign_test_delete');
+    $this->assertSame(ToolRefusal::CONFIRMATION, $this->container->get('mcp_tools.tool_policy')->admit($definition, [])?->reason);
+
+    // A write that does not declare itself destructive is not held back.
+    $this->assertInstanceOf(ToolInvocation::class, $this->runTool('foreign_test_write'));
+    // A session that may not run the tool is refused for that.
+    $this->container->get('mcp_tools.access_manager')->setScopes(['read']);
+    $this->assertSame(ToolRefusal::ACCESS, $this->runTool('foreign_test_delete')->reason);
+    $this->container->get('mcp_tools.access_manager')->setScopes(['read', 'write', 'admin']);
+
+    // After a person said yes, it runs.
+    $state->set('foreign_tool_test.wrote', TRUE);
+    $this->container->get('mcp_tools.tool_call_context')->markConfirmedByUser();
+    $ran = $this->runTool('foreign_test_delete');
+    $this->assertInstanceOf(ToolInvocation::class, $ran);
+    $this->assertTrue($ran->hasExecuted());
+    $this->assertFalse((bool) $state->get('foreign_tool_test.wrote'));
+
+    // And on a site that does not insist, it runs as before.
+    $this->container->get('mcp_tools.tool_call_context')->enter();
+    $this->container->get('mcp_tools.tool_call_context')->leave();
+    $this->config('mcp_tools.settings')->set('access.confirm_destructive_tools', FALSE)->save();
+    $state->set('foreign_tool_test.wrote', TRUE);
+    $this->assertInstanceOf(ToolInvocation::class, $this->runTool('foreign_test_delete'));
+    $this->assertFalse((bool) $state->get('foreign_tool_test.wrote'));
+
+    // Nor is a cache clear on a site that insists: it loses nothing a site
+    // cannot rebuild. Last, because it rebuilds the container.
+    $this->config('mcp_tools.settings')->set('access.confirm_destructive_tools', TRUE)->save();
+    $caller = $this->container->get('current_user')->getAccount();
+    $this->setUpCurrentUser([], ['mcp_tools use cache']);
+    $cleared = $this->runTool('mcp_cache_clear_all');
+    $this->container->get('current_user')->setAccount($caller);
+    $this->assertInstanceOf(ToolInvocation::class, $cleared, 'A cache clear needs a yes.');
+    $this->assertTrue($cleared->hasExecuted(), (string) $cleared->getResult()->getMessage());
   }
 
 }

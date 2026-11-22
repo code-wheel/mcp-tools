@@ -94,14 +94,15 @@ final class McpServerPolicy implements MiddlewareInterface, EventSubscriberInter
       if ($definition === NULL) {
         continue;
       }
-      $refusal = $this->policy->admit($definition);
+      $arguments = $message['params']['arguments'] ?? [];
+      $arguments = is_array($arguments) ? $arguments : [];
+      $refusal = $this->policy->admit($definition, $arguments);
       if ($refusal !== NULL) {
         $verdicts[$at] = $refusal;
         $anyRefused = TRUE;
         continue;
       }
-      $arguments = $message['params']['arguments'] ?? [];
-      $verdicts[$at] = [$definition, is_array($arguments) ? $arguments : []];
+      $verdicts[$at] = [$definition, $arguments];
     }
 
     if (!$anyRefused) {

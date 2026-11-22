@@ -21,7 +21,7 @@ use Drupal\tool\TypedData\InputDefinition;
   label: new TranslatableMarkup('Disable Theme'),
   description: new TranslatableMarkup('Disable/uninstall a theme. Cannot disable the default or admin theme. Reversible via mcp_theme_enable.'),
   operation: ToolOperation::Write,
-  destructive: TRUE,
+  destructive: FALSE,
   input_definitions: [
     'theme' => new InputDefinition(
       data_type: 'string',

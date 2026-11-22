@@ -64,6 +64,11 @@ use Drupal\tool\TypedData\InputDefinition;
       label: new TranslatableMarkup('Updated Fields'),
       description: new TranslatableMarkup('List of field names that were modified (e.g., ["source", "destination"]). Empty if no changes were made.'),
     ),
+    'warning' => new OutputDefinition(
+      data_type: 'string',
+      label: new TranslatableMarkup('Warning'),
+      description: new TranslatableMarkup('Set when the destination is a path of this site and nothing answers there now: no page, no path alias, no file. The redirect is made all the same.'),
+    ),
     'message' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),

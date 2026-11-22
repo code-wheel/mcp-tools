@@ -78,6 +78,9 @@ class FindOrphanedFiles extends McpToolsToolBase {
    * {@inheritdoc}
    */
   protected function executeLegacy(array $input): array {
+    if (!$this->fileSystem->hasManagedFiles()) {
+      return ['success' => FALSE, 'error' => 'This site has no managed files: the File module is not enabled.'];
+    }
     $limit = min($input['limit'] ?? 100, 500);
 
     return [

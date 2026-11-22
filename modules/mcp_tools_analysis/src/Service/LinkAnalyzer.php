@@ -184,7 +184,7 @@ class LinkAnalyzer {
       if (!empty($brokenLinks)) {
         $suggestions[] = 'Review and fix or remove the broken links listed above.';
         $suggestions[] = 'Consider setting up URL redirects for moved content.';
-        $suggestions[] = 'Use the mcp_redirect module to create redirects for 404 URLs.';
+        $suggestions[] = 'Use mcp_redirect_create (submodule mcp_tools_redirect) to create redirects for 404 URLs.';
       }
 
       return [

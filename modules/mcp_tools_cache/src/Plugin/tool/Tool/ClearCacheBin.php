@@ -23,7 +23,7 @@ use Drupal\tool\TypedData\InputDefinition;
   label: new TranslatableMarkup('Clear Cache Bin'),
   description: new TranslatableMarkup('Clear a specific cache bin (e.g., render, page, entity).'),
   operation: ToolOperation::Write,
-  destructive: TRUE,
+  destructive: FALSE,
   input_definitions: [
     'bin' => new InputDefinition(
       data_type: 'string',

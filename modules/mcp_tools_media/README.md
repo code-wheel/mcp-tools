@@ -2,16 +2,17 @@
 
 Media type and entity management for MCP Tools.
 
-## Tools (6)
+## Tools (7)
 
 | Tool | Description |
 |------|-------------|
-| `mcp_media_create_type` | Create media types |
-| `mcp_media_delete_type` | Remove media types |
-| `mcp_media_upload_file` | Upload files (base64 support) |
-| `mcp_media_create` | Create media entities |
-| `mcp_media_delete` | Delete media entities |
-| `mcp_media_list_types` | List available media types |
+| `mcp_create_media_type` | Create media types |
+| `mcp_delete_media_type` | Remove media types |
+| `mcp_upload_file` | Upload files (base64 support) |
+| `mcp_create_media` | Create media entities |
+| `mcp_delete_media` | Delete media entities |
+| `mcp_list_media_types` | List available media types |
+| `mcp_generate_alt_text` | Write the alt text of an image with the client's own model (needs a client that supports MCP sampling) |
 
 ## Requirements
 
@@ -31,7 +32,7 @@ drush en mcp_tools_media
 ```
 User: "Upload this logo image"
 
-AI calls: mcp_media_upload_file(
+AI calls: mcp_upload_file(
   filename: "logo.png",
   data: "base64-encoded-data...",
   directory: "public://logos"
@@ -43,7 +44,7 @@ AI calls: mcp_media_upload_file(
 ```
 User: "Create a media entity for the uploaded image"
 
-AI calls: mcp_media_create(
+AI calls: mcp_create_media(
   bundle: "image",
   name: "Company Logo",
   field_media_image: {
@@ -58,7 +59,7 @@ AI calls: mcp_media_create(
 ```
 User: "Create a media type for PDFs"
 
-AI calls: mcp_media_create_type(
+AI calls: mcp_create_media_type(
   id: "document",
   label: "Document",
   source: "file",
@@ -73,7 +74,7 @@ AI calls: mcp_media_create_type(
 ```
 User: "What media types are available?"
 
-AI calls: mcp_media_list_types()
+AI calls: mcp_list_media_types()
 
 Returns: image, document, video, audio, remote_video
 ```

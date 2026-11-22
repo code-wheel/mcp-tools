@@ -379,6 +379,13 @@ final class ToolApiSchemaConverterTest extends UnitTestCase {
   private function markup(string $string): TranslatableMarkup {
     $translation = new class implements TranslationInterface {
 
+      /**
+       * Drupal 12 added this method to the interface.
+       */
+      public function selectPluralForm(int|float $count, string $string, ?string $langcode = NULL): string {
+        return $string;
+      }
+
       public function translate($string, array $args = [], array $options = []): TranslatableMarkup {
         return new TranslatableMarkup((string) $string, $args, $options, $this);
       }

@@ -4,294 +4,287 @@
 [![Security](https://github.com/code-wheel/mcp-tools/actions/workflows/security.yml/badge.svg)](https://github.com/code-wheel/mcp-tools/actions/workflows/security.yml)
 [![codecov](https://codecov.io/gh/code-wheel/mcp-tools/branch/master/graph/badge.svg)](https://codecov.io/gh/code-wheel/mcp-tools)
 
-Batteries-included MCP tools for AI assistants working with Drupal sites.
+MCP Tools lets an AI assistant work on a Drupal site. It can read the
+site, build content types, fields and views, and edit content.
 
-## Version Compatibility
-
-| Drupal Version | PHP Version | Status | Notes |
-|----------------|-------------|--------|-------|
-| **10.5+** | 8.3 | ✅ Tested on 10.6 | Minimum: Tool API 1.0.0-beta12 and later need Drupal 10.5 |
-| **11.x** | 8.4 | ✅ Tested on 11.4 | |
-| **12.x** | 8.4 | Not yet | Needs a Tool API release that supports Drupal 12 |
-
-**PHP Support:** 8.3, 8.4
-
-CI runs tests against all supported Drupal versions on every push.
-
-## Overview
-
-MCP Tools provides curated, high-value tools that solve real problems, not generic CRUD. Inspired by [Sentry MCP](https://docs.sentry.io/product/sentry-mcp/).
-
-**Current:** 227 tools total: 25 read-only tools in the base module and 202 more in 32 optional submodules
-
-**Drupal AI ecosystem:** The optional `mcp_tools_ai` submodule exposes these tools to [Drupal AI](https://www.drupal.org/project/ai) / [AI Agents](https://www.drupal.org/project/ai_agents) as native Function Calls, so in-site AI agents can use the same library MCP clients use. Curated read-only by default; see `modules/mcp_tools_ai/README.md`.
-
-**Resources:** MCP Tools now exposes read-only resources (e.g., `drupal://site/status`, `drupal://site/snapshot`) for lightweight site context, including blueprint + config drift summary.
-**Prompts:** MCP Tools now exposes prompts (e.g., `mcp_tools/site-brief`) for reusable analysis instructions.
-**Observability hooks:** MCP Tools dispatches tool execution events for custom logging or metrics.
-
-**Full AI-powered site building** - create content types, fields, roles, taxonomies, views, blocks, media, webforms, themes, layouts, and apply recipes through natural conversation.
+It speaks the [Model Context Protocol](https://modelcontextprotocol.io)
+(MCP). So it is not tied to one assistant or one model: any MCP client
+can connect, with a model in the cloud or one on your own machine.
 
 ```
-User: "Create a blog with articles, categories, tags, and an editor role"
-AI:   Creates content type, fields, vocabularies, role, and permissions
+You: "Create a blog with articles, categories, tags, and an editor role"
+AI:  Creates the content type, fields, vocabularies, role, and permissions
 ```
 
-**Admin UI** - Configure settings at `/admin/config/services/mcp-tools` including access control and rate limiting.
+- **227 tools:** 25 read-only tools in the base module and 202 more in 32
+  optional submodules. They are [Tool API](https://www.drupal.org/project/tool)
+  plugins.
+- **Its own MCP server:** STDIO through Drush for local work, HTTP with
+  API keys for a remote site.
+- **Rules around every call:** scopes, read-only mode, write limits, an
+  audit log. You decide what a connection may do.
 
-## Recommended Usage
+## Where to use it
 
-> **MCP Tools is designed primarily for LOCAL DEVELOPMENT and prototyping.**
+MCP Tools is made for local development and prototyping.
 
-| Environment | Read Tools | Write Tools | Recommendation |
-|-------------|------------|-------------|----------------|
-| **Local dev** | ✅ Safe | ✅ Safe | Full functionality |
-| **Staging** | ✅ Safe | ⚠️ Caution | Use config-only mode or limited scopes |
-| **Production** | ⚠️ Careful | ❌ Not recommended | Read-only mode strongly advised (config-only if unavoidable) |
+| Environment | Read tools | Write tools | Advice |
+|-------------|------------|-------------|--------|
+| **Local dev** | ✅ | ✅ | Everything |
+| **Staging** | ✅ | ⚠️ | Config-only mode, or limited scopes |
+| **Production** | ⚠️ | ❌ | Read-only mode |
 
-**Why write tools are risky in production:**
-- Creates configuration in database, not in version-controlled code
-- AI assistants can be manipulated via prompt injection
-- No human review step before changes are applied
-- Can cause configuration drift from your Git repository
+Why write tools are a risk on a live site:
 
-**Ideal workflow:**
-1. Use MCP Tools locally to scaffold your site
-2. Enable config-only mode to keep changes reviewable as code
-3. Export configuration: `drush config:export`
-4. Commit to Git and deploy through normal CI/CD
-5. Keep production in read-only mode
+- They change configuration in the database, not in your Git repository.
+  The next deploy can overwrite it, or conflict with it.
+- An assistant can be steered by text it reads (prompt injection).
+- Nobody reviews a change before it is made.
+
+A workflow that fits:
+
+1. Build the site locally with MCP Tools.
+2. Export the configuration: `drush config:export`
+3. Commit it and deploy as usual.
+4. Keep production in read-only mode.
 
 ## Requirements
 
-- Drupal 10.5+ or 11 (Drupal 12 once Tool API supports it)
-- PHP 8.3+
-- [Tool API](https://www.drupal.org/project/tool) module, 1.0.0-beta12 or later
-- `mcp/sdk` 0.2.2 to 0.7.1, 0.9 or 0.10 (resolved automatically). 0.8 is skipped: it has a security advisory. From 0.9 the server also speaks the 2026-07-28 revision of MCP. Next to MCP Server 2.0.0-beta7 and later, Composer picks 0.9, which is what MCP Server requires.
+- Drupal 10.5+ or 11. Tested on 10.6 and 11.4. Drupal 12 once Tool API
+  supports it.
+- PHP 8.3+. Tested on 8.3, 8.4 and 8.5.
+- [Tool API](https://www.drupal.org/project/tool) 1.0.0-beta12 or later
+- `mcp/sdk` 0.6 to 0.7.1, 0.9 or 0.10. Composer picks it. 0.8 is
+  skipped: it has a security advisory. From 0.9 the server also speaks
+  the 2026-07-28 revision of MCP. Next to MCP Server 2.0.0-beta7 and
+  later, Composer picks 0.9, which is what MCP Server requires.
 
-### MCP Transports (choose one, or none)
-
-- **Recommended (local dev):** `mcp_tools_stdio` runs an MCP server over STDIO via Drush.
-- **Experimental (remote HTTP):** `mcp_tools_remote` exposes an HTTP endpoint with API key authentication.
-- **Alternative (MCP Server 2.x):** [MCP Server](https://www.drupal.org/project/mcp_server) + [MCP Server Tool Bridge](https://www.drupal.org/project/mcp_server_tool_bridge) serve this tool library through mcp_server's own transports. You pick each exposed tool in the bridge's settings. MCP Tools' own tools keep their scope and permission checks there. For the tools of other modules, the optional `mcp_tools_policy` submodule adds the same rules on MCP Server's HTTP endpoint. Tested before each release and by a weekly CI job.
-- **MCP Server 1.x:** `mcp_tools_mcp_server` writes MCP Server 1.x tool configs for our tools (requires `drupal/mcp_server < 2.0`). It is not being ported to 2.x, where the Tool Bridge does that job. It stays available for 1.x sites.
-- **None (library-only):** every tool is a plain [Tool API](https://www.drupal.org/project/tool) plugin, so you can enable the base module plus tool submodules with no transport at all and consume the tools from ECA, AI Agents (via `mcp_tools_ai`), custom code, or another MCP runtime.
-
-## Installation
+## Install
 
 ```bash
 composer require drupal/mcp_tools
 drush en mcp_tools
 ```
 
-### Local MCP (STDIO) setup (recommended)
+Settings are at `/admin/config/services/mcp-tools`.
+
+### Local: STDIO (recommended)
 
 ```bash
 drush en mcp_tools_stdio
-drush mcp-tools:serve --uid=1
-```
-
-Tip: Drush often boots as uid 0 (anonymous). For local development, use `--uid=1`. For shared environments, use a dedicated user with only the MCP Tools permissions you need.
-
-Pick what the connection may do with `--scope` (or the `MCP_SCOPE` environment variable):
-
-```bash
 drush mcp-tools:serve --uid=1 --scope=read,write
 ```
 
-**Gateway mode (optional):** expose only the discover/info/execute tools to reduce tool list size.
+Drush often starts as the anonymous user, so name the user with
+`--uid`. Use user 1 for local development, and a user of its own with
+only the MCP Tools permissions it needs anywhere else.
 
-```bash
-drush mcp-tools:serve --uid=1 --gateway
-```
+`--scope` (or the `MCP_SCOPE` environment variable) says what the
+connection may do. See "Access control" below.
 
-Gateway tools:
-- `mcp_tools_discover_tools`
-- `mcp_tools_get_tool_info`
-- `mcp_tools_execute_tool`
+`drush mcp-tools:client-config > .mcp.json` writes the config for your
+client. [docs/CLIENT_INTEGRATIONS.md](docs/CLIENT_INTEGRATIONS.md) has
+ready examples.
 
-A tool that a model calls by its own name runs too, through the same
-checks. The list stays at these three.
-
-Gateway mode is also the way to use a model on your own machine: three
-tools fit a small context. [docs/CLIENT_INTEGRATIONS.md](docs/CLIENT_INTEGRATIONS.md)
-has what we measured with five local models and five clients.
-
-### Remote MCP (HTTP) setup (experimental)
+### Remote: HTTP (experimental)
 
 ```bash
 drush en mcp_tools_remote
 drush mcp-tools:remote-key-create --label="My Key" --scopes=read --ttl=86400
 ```
 
-Configure the endpoint at `/_mcp_tools` in your MCP client, and send the key as `Authorization: Bearer …` or `X-MCP-Api-Key: …`.
+Point your client at `/_mcp_tools` and send the key as
+`Authorization: Bearer …` or `X-MCP-Api-Key: …`.
 
-Only use this on trusted internal networks. Configure the execution user at `/admin/config/services/mcp-tools/remote` (use "uid 1" checkbox for development, or create a dedicated mcp_executor account for production). Consider setting IP and Origin/Host allowlists, and keep keys read-only unless absolutely necessary.
+Use this on trusted networks only. Choose the user the tools run as at
+`/admin/config/services/mcp-tools/remote`: user 1 for development, or
+the `mcp_executor` account the form creates. Set IP and Origin/Host
+allowlists, and keep keys read-only unless you need more.
 
-To reduce tool list size for remote clients, enable **Gateway mode** in the remote settings UI. This exposes only the discover/info/execute tools while still allowing execution of any allowed tool by name.
-
-## Observability hooks
-
-MCP Tools dispatches PSR-14 events during tool execution. Subscribe to these classes from `code-wheel/mcp-events`:
-- `CodeWheel\McpEvents\ToolExecutionStartedEvent`
-- `CodeWheel\McpEvents\ToolExecutionSucceededEvent`
-- `CodeWheel\McpEvents\ToolExecutionFailedEvent`
-
-Events include tool name, plugin ID, sanitized arguments, request ID, and execution duration. Failed events include a reason constant (e.g., `REASON_VALIDATION`, `REASON_ACCESS_DENIED`).
-
-Enable the optional `mcp_tools_observability` submodule to log execution events to watchdog.
-
-## Docs
-
-- `mcp_tools/docs/QUICKSTART.md`: 5-minute onboarding
-- `mcp_tools/docs/TROUBLESHOOTING.md`: Common errors and fixes
-- `mcp_tools/docs/CLIENT_INTEGRATIONS.md`: MCP client configs (STDIO + HTTP)
-- `mcp_tools/docs/USE_CASES.md`: Real-world workflows
-- `mcp_tools/docs/TOOL_EXAMPLES.md`: Real calls with arguments for the tools of each submodule, as run before every release
-
-## Architecture: Granular Submodules
-
-MCP Tools uses a **modular architecture** where each functional area is a separate submodule. This allows you to enable only the capabilities you need.
-
-```
-mcp_tools/                        # Base module (25 read-only tools)
-├── src/
-│   ├── Form/SettingsForm.php     # Admin UI at /admin/config/services/mcp-tools
-│   └── Service/
-│       ├── AccessManager.php     # Three-layer access control
-│       ├── RateLimiter.php       # Rate limiting for write operations
-│       ├── AuditLogger.php       # Audit logging with sanitization
-│       └── ErrorFormatter.php    # Standardized error responses
-└── modules/
-    ├── mcp_tools_content/        # Content CRUD (4 tools)
-    ├── mcp_tools_structure/      # Content types, fields, taxonomy, roles (20 tools)
-    ├── mcp_tools_users/          # User management (5 tools)
-    ├── mcp_tools_menus/          # Menu management (5 tools)
-    ├── mcp_tools_views/          # Views management (6 tools)
-    ├── mcp_tools_blocks/         # Block placement (5 tools)
-    ├── mcp_tools_media/          # Media management (7 tools)
-    ├── mcp_tools_webform/        # Webform integration (7 tools)
-    ├── mcp_tools_theme/          # Theme settings (8 tools)
-    ├── mcp_tools_layout_builder/ # Layout Builder (9 tools)
-    ├── mcp_tools_recipes/        # Drupal Recipes (6 tools)
-    ├── mcp_tools_config/         # Configuration management (5 tools)
-    ├── mcp_tools_stdio/          # Our MCP server over STDIO (drush)
-    ├── mcp_tools_remote/         # Our MCP server over HTTP, with API keys
-    ├── mcp_tools_ai/             # The tools as Drupal AI function calls
-    ├── mcp_tools_observability/  # Tool execution logging subscriber
-    ├── mcp_tools_policy/         # For MCP Server 2.x: our rules in front of its HTTP endpoint
-    ├── mcp_tools_mcp_server/     # For MCP Server 1.x: writes its tool configs
-    ├── mcp_tools_paragraphs/     # Paragraphs integration (6 tools)
-    ├── mcp_tools_moderation/     # Content Moderation (6 tools)
-    ├── mcp_tools_scheduler/      # Scheduled publish (5 tools)
-    ├── mcp_tools_metatag/        # SEO meta tags (5 tools)
-    ├── mcp_tools_image_styles/   # Image styles (7 tools)
-    ├── mcp_tools_cache/          # Cache management (6 tools)
-    ├── mcp_tools_cron/           # Cron management (5 tools)
-    ├── mcp_tools_ultimate_cron/  # Ultimate Cron (6 tools)
-    ├── mcp_tools_pathauto/       # URL aliases (6 tools)
-    ├── mcp_tools_redirect/       # URL redirects (7 tools)
-    ├── mcp_tools_sitemap/        # XML sitemap (7 tools)
-    ├── mcp_tools_search_api/     # Search API (9 tools)
-    ├── mcp_tools_entity_clone/   # Entity cloning (4 tools)
-    ├── mcp_tools_analysis/       # Site analysis (8 tools)
-    ├── mcp_tools_batch/          # Bulk operations (6 tools)
-    ├── mcp_tools_templates/      # Site templates (5 tools)
-    ├── mcp_tools_migration/      # Content migration (7 tools)
-    ├── mcp_tools_jsonapi/        # JSON:API entity CRUD (6 tools)
-    ├── mcp_tools_translate/      # Content translations (3 tools)
-    └── mcp_tools_remote_media/   # Remote file fetch & media (1 tool)
-```
-
-Enable submodules as needed:
+### Gateway mode
 
 ```bash
-# Enable specific capabilities
-drush en mcp_tools_content        # Content CRUD
-drush en mcp_tools_structure      # Site building (content types, fields, roles)
-drush en mcp_tools_users          # User management
-drush en mcp_tools_menus          # Menu management
-drush en mcp_tools_views          # Views creation
-drush en mcp_tools_blocks         # Block placement
-drush en mcp_tools_media          # Media management
-drush en mcp_tools_webform        # Webform integration
-drush en mcp_tools_theme          # Theme settings
-drush en mcp_tools_layout_builder # Layout Builder
-drush en mcp_tools_recipes        # Drupal Recipes
-drush en mcp_tools_config         # Configuration management
-drush en mcp_tools_paragraphs     # Paragraphs integration
-drush en mcp_tools_moderation     # Content Moderation workflows
-drush en mcp_tools_scheduler      # Scheduled publish/unpublish
-drush en mcp_tools_metatag        # SEO meta tags
-drush en mcp_tools_image_styles   # Image styles and effects
-drush en mcp_tools_cache          # Cache management
-drush en mcp_tools_cron           # Cron and queue management
-drush en mcp_tools_ultimate_cron  # Ultimate Cron job management
-drush en mcp_tools_pathauto       # URL alias patterns
-drush en mcp_tools_redirect       # URL redirects
-drush en mcp_tools_sitemap        # XML sitemap management
-drush en mcp_tools_search_api     # Search API indexes
-drush en mcp_tools_entity_clone   # Entity cloning
-drush en mcp_tools_analysis       # Site analysis tools
-drush en mcp_tools_batch          # Bulk operations
-drush en mcp_tools_templates      # Site templates
-drush en mcp_tools_migration      # Content import/export
-drush en mcp_tools_remote_media   # Remote file fetch & media
+drush mcp-tools:serve --uid=1 --gateway
 ```
 
-Common starter bundles:
+The client then sees three tools and not the whole list:
+`mcp_tools_discover_tools`, `mcp_tools_get_tool_info` and
+`mcp_tools_execute_tool`. A tool that a model calls by its own name runs
+too, through the same checks. For HTTP, turn gateway mode on in the
+remote settings.
+
+### Other ways to run the tools
+
+Every tool is a plain Tool API plugin, so you do not need our server:
+
+- **[MCP Server](https://www.drupal.org/project/mcp_server) 2.x** with
+  its [Tool Bridge](https://www.drupal.org/project/mcp_server_tool_bridge).
+  You pick each exposed tool in the bridge's settings. MCP Tools' own
+  tools keep their scope and permission checks there. For the tools of
+  other modules, the optional `mcp_tools_policy` submodule adds the same
+  rules on MCP Server's HTTP endpoint. Tested before each release and by
+  a weekly CI job. See [docs/CLIENT_INTEGRATIONS.md](docs/CLIENT_INTEGRATIONS.md).
+- **MCP Server 1.x:** `mcp_tools_mcp_server` writes its tool configs
+  (`drush mcp-tools:mcp-server-sync --enable-read`). It needs
+  `drupal/mcp_server < 2.0` and is not being ported to 2.x.
+- **[Drupal AI](https://www.drupal.org/project/ai):** the optional
+  `mcp_tools_ai` submodule (experimental) offers the tools to in-site
+  agents as function calls. Read-only tools by default. See
+  `modules/mcp_tools_ai/README.md`.
+- **No transport at all:** enable the base module and the tool
+  submodules, and call the tools from ECA or your own code.
+
+## Any client, any model
+
+MCP is an open protocol, and the server does not know or care which
+model is on the other end. What we tried ourselves:
+
+- **Clients:** Claude Code, Codex CLI, fast-agent, Goose and OpenCode,
+  and the official MCP clients for JavaScript and Python before each
+  release.
+- **Models on one graphics card,** through Ollama: five models of 9 to
+  30 billion parameters did 10 to 12 of twelve site tasks in every run,
+  with two of the clients. With the three other clients one of the
+  models did 8 to 12.
+- **Inside the site,** through Drupal AI and `mcp_tools_ai`.
+
+Use gateway mode for a local model: three tools fit a small context.
+The size of the model matters: one of 8 billion parameters did five or
+six of the twelve when we tried it with 1.0.0-beta19.
+[docs/CLIENT_INTEGRATIONS.md](docs/CLIENT_INTEGRATIONS.md) has the
+numbers, per model and per client, and what to know before you judge a
+model.
+
+## The tools
+
+### Base module: 25 read-only tools
+
+| Area | Tools |
+|------|-------|
+| Site health | `mcp_tools_get_site_status`, `mcp_tools_get_system_status`, `mcp_tools_check_security_updates`, `mcp_tools_check_cron_status`, `mcp_tools_analyze_watchdog`, `mcp_tools_get_queue_status`, `mcp_tools_get_file_system_status` |
+| Content | `mcp_tools_list_content_types`, `mcp_tools_get_recent_content`, `mcp_tools_search_content`, `mcp_tools_get_vocabularies`, `mcp_tools_get_terms`, `mcp_tools_get_files`, `mcp_tools_find_orphaned_files` |
+| Configuration | `mcp_tools_get_config_status`, `mcp_tools_get_config`, `mcp_tools_list_config`, `mcp_list_text_formats`, `mcp_get_text_format` |
+| Users | `mcp_tools_get_roles`, `mcp_tools_get_users`, `mcp_tools_get_permissions` |
+| Menus | `mcp_tools_get_menus`, `mcp_tools_get_menu_tree` |
+| Discovery | `mcp_tools_list_available` |
+
+The base module also offers read-only MCP resources (for example
+`drupal://site/status`) and prompts (for example `mcp_tools/site-brief`).
+
+### Submodules: 202 tools in 32 submodules
+
+Enable what you need. Each submodule lists its tools in its own
+`README.md`, and [docs/TOOL_EXAMPLES.md](docs/TOOL_EXAMPLES.md) has a
+real call for every tool.
+
+| Submodule | Tools | What it does |
+|-----------|------:|--------------|
+| `mcp_tools_content` | 4 | Create, update, delete and publish content |
+| `mcp_tools_translate` | 3 | Read translatable fields, create and update linked translations, also in paragraphs |
+| `mcp_tools_structure` | 20 | Content types, fields, vocabularies, roles, permissions |
+| `mcp_tools_users` | 5 | User accounts, roles, blocking |
+| `mcp_tools_menus` | 5 | Menus and menu links |
+| `mcp_tools_views` | 6 | Views |
+| `mcp_tools_blocks` | 5 | Block placement and configuration |
+| `mcp_tools_media` | 7 | Media types, uploads, media |
+| `mcp_tools_webform` | 7 | Webforms and submissions (needs `webform`) |
+| `mcp_tools_theme` | 8 | Theme settings, enable and disable |
+| `mcp_tools_layout_builder` | 9 | Layout sections, blocks, plugins (needs `layout_builder`) |
+| `mcp_tools_recipes` | 6 | Drupal Recipes. Needs the `admin` scope. |
+| `mcp_tools_config` | 5 | Configuration diff, export, change tracking, preview |
+| `mcp_tools_paragraphs` | 6 | Paragraph types and fields (needs `paragraphs`) |
+| `mcp_tools_moderation` | 6 | Content moderation (needs `content_moderation`) |
+| `mcp_tools_scheduler` | 5 | Scheduled publishing (needs `scheduler`) |
+| `mcp_tools_metatag` | 5 | Meta tags (needs `metatag`) |
+| `mcp_tools_image_styles` | 7 | Image styles and effects |
+| `mcp_tools_cache` | 6 | Cache clear, invalidate, rebuild |
+| `mcp_tools_cron` | 5 | Cron jobs and queues |
+| `mcp_tools_ultimate_cron` | 6 | Ultimate Cron jobs (needs `ultimate_cron`) |
+| `mcp_tools_pathauto` | 6 | URL alias patterns (needs `pathauto`) |
+| `mcp_tools_redirect` | 7 | Redirects (needs `redirect`) |
+| `mcp_tools_sitemap` | 7 | XML sitemap (needs `simple_sitemap`) |
+| `mcp_tools_search_api` | 9 | Search indexes and servers (needs `search_api`) |
+| `mcp_tools_entity_clone` | 4 | Entity cloning (needs `entity_clone`) |
+| `mcp_tools_analysis` | 8 | SEO, security, accessibility and performance checks |
+| `mcp_tools_batch` | 6 | Bulk content operations (50 items a batch at most) |
+| `mcp_tools_templates` | 5 | Site templates (blog, portfolio, business, docs) |
+| `mcp_tools_migration` | 7 | CSV and JSON import and export (100 items at most) |
+| `mcp_tools_jsonapi` | 6 | Any entity through JSON:API (needs `jsonapi`) |
+| `mcp_tools_remote_media` | 1 | Fetch a remote file and make media of it |
+
+Six more submodules have no tools: `mcp_tools_stdio` and
+`mcp_tools_remote` (our server), `mcp_tools_ai`, `mcp_tools_policy`,
+`mcp_tools_mcp_server` and `mcp_tools_observability`.
+
+Two bundles to start with:
 
 ```bash
-# Core site builder (local dev)
+# Site building
 drush en mcp_tools_structure mcp_tools_views mcp_tools_blocks mcp_tools_menus mcp_tools_users mcp_tools_content mcp_tools_media -y
 
-# Ops (use with care)
+# Operations (use with care)
 drush en mcp_tools_cache mcp_tools_cron mcp_tools_batch mcp_tools_analysis -y
 ```
 
-## Access Control
+## Access control
 
-MCP Tools provides three layers of access control, and shows each
-connection only what those layers let it call:
+Three layers decide what a connection may do, and each connection is
+shown only the tools those layers let it call.
 
-### 1. Module-Based Access
-Only enabled submodules expose their tools.
+### 1. Submodules
 
-### 2. Global Read-Only Mode
-Site-wide toggle to disable all write operations:
+Only enabled submodules offer their tools. Each category of tools has a
+Drupal permission of its own.
+
+### 2. Read-only mode
+
+A switch for the whole site that turns every write off:
 
 ```php
-// In settings.php or via config
+// In settings.php, or on the settings form
 $config['mcp_tools.settings']['access']['read_only_mode'] = TRUE;
 ```
 
-### 3. Connection Scopes
-Per-connection access levels (read/write/admin).
+Config-only mode is the step between: tools that change configuration
+run, tools that change content or run operations do not.
 
-**Default:** new installs start with `read` only via `access.default_scopes`.
+### 3. Scopes
 
-**Security default:** HTTP scope overrides are disabled by default. Enable them only if you have a trusted reverse proxy stripping/overwriting client-supplied scope headers/params.
+Each connection has scopes: `read`, `write`, `admin`.
+
+- `read`: tools that change nothing.
+- `write`: tools that change the site.
+- `admin`: five tools that reach further (writing and applying
+  recipes, applying and exporting site templates, exporting
+  configuration), and granting a permission that Drupal marks for
+  trusted roles only. Give this scope only to an agent you would let
+  change any config of the site.
+
+A new site gives a connection `read` (`access.default_scopes`) and
+allows `read` and `write` at most (`access.allowed_scopes`). The allowed
+scopes limit every way to ask for scopes: an API key, a server profile,
+`--scope` on the command line, the environment. When a session asks for
+more, the STDIO server says on stderr which scope it left out.
 
 ```bash
-# Via HTTP header
-X-MCP-Scope: read,write
-
-# Via query parameter
-?mcp_scope=read,write
-
-# Via environment (for STDIO transport)
+# STDIO
+drush mcp-tools:serve --uid=1 --scope=read,write
 MCP_SCOPE=read,write drush mcp-tools:serve --uid=1
 ```
+
+Scopes from an HTTP header (`X-MCP-Scope`) or a query parameter
+(`mcp_scope`) are ignored unless you switch them on. Do that only behind
+a proxy you trust to overwrite what a client sends.
 
 ### What a connection is shown
 
 The tool list is what the connection may call. A connection with the
 `read` scope is shown the tools that read. Write tools are left out in
 read-only mode, and config-only mode leaves out the tools that write
-content or run operations. Tools of a category the user has no permission
-for are left out too. The server's instructions tell the model how many
-tools are not listed, and why. A tool that is not listed is still refused
-when it is called by name.
+content or run operations. Tools of a category the user has no
+permission for are left out too. The server's instructions tell the
+model how many tools are not listed, and why. A tool that is not listed
+is still refused when it is called by name.
 
 The STDIO server builds its list when it starts. A mode you switch later
 changes at once what may run, and the list at the next start.
@@ -302,13 +295,7 @@ To list every tool, as before 1.0.0-beta20:
 $config['mcp_tools.settings']['access']['list_all_tools'] = TRUE;
 ```
 
-### Tools of other modules
-
-With `--all-tools` (or `include_all_tools` in a server profile) the server
-also runs the Tool API tools of other modules. They are held to the same
-rules as MCP Tools' own: the scope their operation needs, read-only and
-config-only mode, the write limits when rate limiting is on, and a line
-in the audit log for each write that ran.
+### Calls that ask first
 
 Three kinds of call are run after the user of the client said yes, when
 the client can ask its user (MCP elicitation):
@@ -318,25 +305,47 @@ the client can ask its user (MCP elicitation):
 - a grant of a permission that Drupal marks for trusted roles only,
 - a recipe that was written through MCP and that no person has reviewed.
 
-A no runs nothing. A client that cannot ask gets the call run, and the
-audit log has it, the last two as warnings. To refuse such a call for
-clients that cannot ask, tick "Strong calls need a confirmation" on the
+A no runs nothing.
+
+Where nobody can be asked, the call is refused. That is a client
+without elicitation, the Drupal AI bridge, and MCP Server when the
+submodule `mcp_tools_policy` is enabled (without it, MCP Server runs
+the tool). This is the setting "Strong calls need a confirmation", and
+a site installed with 1.0.0-beta22 or later has it on. A site from
+before keeps what it had, which is off: there such a call runs, and the
+audit log has it, the last two kinds as warnings.
+
+30 tools declare themselves destructive: the ones that delete, remove
+or revoke, the bulk imports, turning Layout Builder off (it deletes the
+layouts), cancelling a schedule, and a few that clear something for
+good (a search index, a cron key). The cache tools and the sitemap
+rebuild do not, because what they clear is rebuilt, and neither do the
+tools that disable a view, a theme or a cron job, which can be switched
+on again.
+
+To run these calls where nobody can be asked, untick the setting on the
 settings form, or:
 
 ```php
-$config['mcp_tools.settings']['access']['confirm_destructive_tools'] = TRUE;
+$config['mcp_tools.settings']['access']['confirm_destructive_tools'] = FALSE;
 ```
 
-Nobody is asked when a tool is called through MCP Server or through the
-Drupal AI bridge. Of MCP Tools' own tools, two also take a confirm flag,
-as before: deleting a piece of content with all its translations, and
-exporting configuration.
+Two of our tools also take a confirm flag: deleting a piece of content
+with all its translations, and exporting configuration.
 
-## Server Profiles (YAML-only)
+### Tools of other modules
 
-Define multiple MCP server profiles in `mcp_tools.servers.yml` and select them via the STDIO `--server` option or the remote `server_id` setting.
+With `--all-tools` (or `include_all_tools` in a server profile) the
+server also runs the Tool API tools of other modules. They are held to
+the same rules as MCP Tools' own: the scope their operation needs,
+read-only and config-only mode, the write limits when rate limiting is
+on, and a line in the audit log for each write that ran.
 
-New installs include `development`, `staging`, and `production` presets; update `default_server` to point at the one you want.
+## Server profiles
+
+Define server profiles in `mcp_tools.servers.yml` and pick one with
+`--server` on STDIO or the `server_id` setting of the remote endpoint.
+New installs have `development`, `staging` and `production` profiles.
 
 ```yaml
 default_server: default
@@ -354,260 +363,104 @@ servers:
     # permission_callback: 'my_module.server_access:check'
 ```
 
-Scopes are limited by `access.allowed_scopes`, wherever they come from: an API key, a header, a query parameter, the environment, a server profile, or `--scope` on the command line. A new site allows `read` and `write`. When a session asks for more, the STDIO server says on stderr which scope it left out. When nothing sets scopes, `access.default_scopes` are used.
-
-Set `transports` to limit which entrypoints (HTTP/STDIO) can run a profile; leave empty or omit to allow all transports.
-
-Available scopes:
-- `read` - Read-only operations
-- `write` - Write operations
-- `admin` - Administrative operations: applying a recipe, also one the
-  agent wrote itself, and granting a permission that Drupal marks for
-  trusted roles only. Your client asks you before either of them, when
-  it can ask, and both are written to the audit log. To refuse them for
-  a client that cannot ask, tick "Strong calls need a confirmation" on
-  the settings form. Give this scope only to an agent you would let
-  change any config of the site.
-
-## Read-Only Tools (25)
-
-### Site Health
-
-| Tool | Description |
-|------|-------------|
-| `get_site_status` | Drupal/PHP version, module counts, cron, maintenance mode |
-| `get_system_status` | System requirements, PHP info, database status |
-| `check_security_updates` | Security updates for core and contrib |
-| `check_cron_status` | Cron health and last run time |
-| `analyze_watchdog` | Log analysis - errors, warnings, summaries |
-| `get_queue_status` | Queue item counts and worker status |
-| `get_file_system_status` | Directory permissions, disk usage |
-
-### Content
-
-| Tool | Description |
-|------|-------------|
-| `list_content_types` | Content types with field definitions |
-| `get_recent_content` | Recently created/modified content |
-| `search_content` | Title-based content search |
-| `get_vocabularies` | Taxonomy vocabularies with term counts |
-| `get_terms` | Terms from vocabulary (flat or hierarchical) |
-| `get_files` | Managed files with MIME breakdown |
-| `find_orphaned_files` | Unused file detection |
-
-### Configuration
-
-| Tool | Description |
-|------|-------------|
-| `get_config_status` | Config sync status (active vs staged) |
-| `get_config` | View specific configuration object |
-| `list_config` | List config names with optional prefix filter |
-| `list_text_formats` | List all available text formats |
-| `get_text_format` | Get details about a specific text format |
-
-### Users
-
-| Tool | Description |
-|------|-------------|
-| `get_roles` | Roles with permissions |
-| `get_users` | User accounts, status, activity |
-| `get_permissions` | All permissions by provider |
-
-### Structure
-
-| Tool | Description |
-|------|-------------|
-| `get_menus` | All menus with link counts |
-| `get_menu_tree` | Hierarchical menu structure |
-
-### Discovery
-
-| Tool | Description |
-|------|-------------|
-| `mcp_tools_list_available` | List all available MCP tools by category or search |
-
-## Write Submodules (202 tools across 32 submodules)
-
-Enable submodules for the capabilities you need. Each submodule's tools are listed in its own `README.md`.
-
-| Submodule | Tools | Description |
-|-----------|------:|-------------|
-| `mcp_tools_content` | 4 | Content CRUD (create, update, delete, publish) |
-| `mcp_tools_translate` | 3 | Content translations: read translatable fields, create and update linked translations (paragraphs-aware) |
-| `mcp_tools_structure` | 20 | Content types, fields, vocabularies, roles, permissions |
-| `mcp_tools_users` | 5 | User accounts, roles, blocking |
-| `mcp_tools_menus` | 5 | Menus and menu links |
-| `mcp_tools_views` | 6 | Views creation and management |
-| `mcp_tools_blocks` | 5 | Block placement and configuration |
-| `mcp_tools_media` | 7 | Media types, uploads, entities |
-| `mcp_tools_webform` | 7 | Webform management and submissions (requires `webform`) |
-| `mcp_tools_theme` | 8 | Theme settings, enable/disable |
-| `mcp_tools_layout_builder` | 9 | Layout sections, blocks, plugins (requires `layout_builder`) |
-| `mcp_tools_recipes` | 6 | Drupal Recipes. Apply requires `admin` scope |
-| `mcp_tools_config` | 5 | Configuration diff, export, MCP change tracking, preview |
-| `mcp_tools_paragraphs` | 6 | Paragraph types and fields (requires `paragraphs`) |
-| `mcp_tools_moderation` | 6 | Content moderation workflows (requires `content_moderation`) |
-| `mcp_tools_scheduler` | 5 | Scheduled publish/unpublish (requires `scheduler`) |
-| `mcp_tools_metatag` | 5 | SEO meta tags (requires `metatag`) |
-| `mcp_tools_image_styles` | 7 | Image styles and effects |
-| `mcp_tools_cache` | 6 | Cache clear, invalidate, rebuild |
-| `mcp_tools_cron` | 5 | Cron jobs and queues |
-| `mcp_tools_ultimate_cron` | 6 | Ultimate Cron job management (requires `ultimate_cron`) |
-| `mcp_tools_pathauto` | 6 | URL alias patterns (requires `pathauto`) |
-| `mcp_tools_redirect` | 7 | URL redirects (requires `redirect`) |
-| `mcp_tools_sitemap` | 7 | XML sitemap management (requires `simple_sitemap`) |
-| `mcp_tools_search_api` | 9 | Search indexes and servers (requires `search_api`) |
-| `mcp_tools_entity_clone` | 4 | Entity cloning (requires `entity_clone`) |
-| `mcp_tools_analysis` | 8 | SEO, security, accessibility, performance audits |
-| `mcp_tools_batch` | 6 | Bulk content operations (max 50 items/batch) |
-| `mcp_tools_templates` | 5 | Site templates (blog, portfolio, business, docs) |
-| `mcp_tools_migration` | 7 | CSV/JSON import and export (max 100 items) |
-| `mcp_tools_jsonapi` | 6 | Generic entity CRUD via JSON:API (requires `jsonapi`) |
-| `mcp_tools_remote_media` | 1 | Remote file fetch and media creation |
-
-**Safety built in:** uid 1 protected, administrator role unassignable, system menus/views/themes guarded, dangerous permissions blocked, batch limits enforced, base64 uploads capped.
+A profile's scopes are limited by `access.allowed_scopes`, like every
+other way to ask for scopes. `transports` says which entry points may
+run a profile. Leave it out to allow both.
 
 ## Security
 
-### Built-in Protections
+### What is protected
 
-- **Modular by default** - Enable only the submodules you need
-- **Route-level access control** - The remote HTTP endpoint is gated at the routing layer (returns 404 when disabled or to non-allowlisted clients), not by controller logic alone
-- **Three-layer access control** - Modules, global toggle, connection scopes
-- **Permission-based** - Each category has its own Drupal permission
-- **Audit logging** - All write operations logged with user info
-- **Read operation throttling** - Expensive read operations are rate-limited (broken links, content search)
-- **Sensitive data redaction** - Passwords and secrets never logged
-- **Protected entities** - uid 1, administrator role, core views/menus protected
-- **Dangerous permissions blocked** - Cannot grant site admin permissions via MCP
+| What | How |
+|------|-----|
+| User 1 | Cannot be changed or blocked |
+| Administrators | An administrator role (by its flag or its name) cannot be assigned or deleted. A user who has one cannot be changed, blocked or activated. |
+| A connection's own user | Cannot be given a role that would add a permission |
+| System menus | admin, main, footer, tools, account |
+| Core views | Cannot be deleted |
+| Active themes | The default and the admin theme cannot be disabled |
 
-### Protected Entities
+### Permissions that are not granted
 
-| Entity | Protection |
-|--------|------------|
-| User ID 1 | Cannot be modified or blocked |
-| Administrator role | Cannot be assigned via MCP |
-| System menus | admin, main, footer, tools, account protected |
-| Core views | Cannot delete core-provided views |
-| Active themes | Cannot disable current default/admin theme |
+These are never granted through MCP, with any scope:
 
-### Blocked Permissions
+- Every permission of MCP Tools itself. They say which tools a user may
+  call.
+- `administer permissions`, `administer users`,
+  `administer site configuration`, `administer modules`,
+  `administer software updates`, `administer themes`, `administer menu`,
+  `administer blocks`, `administer views`, `administer url aliases`,
+  `create url aliases`, `bypass node access`, `access all views`,
+  `synchronize configuration`, `import configuration`,
+  `export configuration`, `cancel account`,
+  `select account cancellation method`, `translate interface`.
 
-These permissions can never be granted via MCP:
-- `administer permissions`
-- `administer users`
-- `administer site configuration`
-- `administer modules`
-- `administer software updates`
-- `administer themes`
-- `bypass node access`
-- `synchronize configuration`
-- `import configuration`
-- `export configuration`
+Every other permission that Drupal marks "restrict access" needs the
+`admin` scope. Even then it is not granted to the roles `anonymous` and
+`authenticated`, or to a role the connection's own user has.
 
-### Security Considerations
+### What else is built in
 
-| Risk | Mitigation | Status |
-|------|------------|--------|
-| **Prompt injection** | Malicious content could instruct AI | ⚠️ Use read-only in production |
-| **Privilege escalation** | Blocked dangerous permissions | ✅ Implemented |
-| **Content injection (XSS)** | Relies on Drupal's text filtering | ✅ Drupal handles |
-| **DoS via mass creation** | Rate limiting | ✅ Implemented |
-| **Data exfiltration** | Read tools expose site info | ⚠️ Use proper auth |
-| **Config drift** | Changes not in Git | ⚠️ Export after changes |
+- The audit log has every write, with the user and with secrets taken
+  out. It is Drupal's log: enable `dblog` or `syslog` to keep it.
+- Write limits per minute and per hour, when rate limiting is on. Two
+  costly read tools are limited too (broken links, content search).
+- The remote endpoint is closed at the routing layer: a client that is
+  not allowed gets a 404.
+- Arguments a tool does not know are refused, not dropped.
+- Batch tools take 50 items at most, and uploads are capped.
 
-### Production Hardening
+### What is left to you
 
-If you must use MCP Tools in production:
+| Risk | What to do |
+|------|------------|
+| **Prompt injection:** text on the site or the web can steer an assistant | Read-only mode on a live site. Give the `admin` scope sparingly. |
+| **What read tools show:** they expose site information | Proper authentication, and a user with only the permissions it needs |
+| **Config drift:** changes are made in the database | Export and commit after you used write tools |
+| **Content a tool saves** | Goes through Drupal's text formats, as content from a form does |
+
+### On a live site
 
 ```php
-// settings.php - Enable read-only mode
+// settings.php
 $config['mcp_tools.settings']['access']['read_only_mode'] = TRUE;
-
-// Or allow only read scope by default
 $config['mcp_tools.settings']['access']['default_scopes'] = ['read'];
+$config['mcp_tools.settings']['access']['allowed_scopes'] = ['read'];
 
-// Enable rate limiting
 $config['mcp_tools.settings']['rate_limiting']['enabled'] = TRUE;
 $config['mcp_tools.settings']['rate_limiting']['max_writes_per_minute'] = 10;
 $config['mcp_tools.settings']['rate_limiting']['max_writes_per_hour'] = 100;
 ```
 
-**Additional recommendations:**
-1. Use IP allowlisting at the web server level
-2. Require authentication for MCP endpoints
-3. Monitor audit logs for unusual activity
-4. Keep write submodules disabled in production
-5. Use separate environments for AI-assisted development
+Also: allow only known IP addresses at the web server, keep write
+submodules disabled, and read the audit log.
 
-### Configuration Management Warning
+## More
 
-MCP Tools creates configuration directly in the database. This can cause **config drift**:
-
-```
-Developer commits config to Git
-  ↓
-Deploys to production
-  ↓
-AI creates new content type via MCP (in database only!)
-  ↓
-Next deploy: Config conflict or overwrite!
-```
-
-**Best practice:** Always export config after using write tools:
-```bash
-# After using MCP to create structures
-drush config:export
-git add config/
-git commit -m "Export MCP-created configuration"
-```
-
-## Testing
+- **Docs:** [QUICKSTART](docs/QUICKSTART.md),
+  [CLIENT_INTEGRATIONS](docs/CLIENT_INTEGRATIONS.md),
+  [USE_CASES](docs/USE_CASES.md), [TOOL_EXAMPLES](docs/TOOL_EXAMPLES.md),
+  [TROUBLESHOOTING](docs/TROUBLESHOOTING.md),
+  [ARCHITECTURE](docs/ARCHITECTURE.md)
+- **Events:** the server dispatches PSR-14 events from
+  `code-wheel/mcp-events` when a tool starts, succeeds or fails. The
+  optional `mcp_tools_observability` submodule writes them to the log.
+- **Commands:**
 
 ```bash
-cd mcp_tools
-../vendor/bin/phpunit
-```
-
-[TESTING.md](TESTING.md) has the rest.
-
-## More commands
-
-### CLI Helpers
-
-```bash
-# List server profiles.
-drush mcp:servers
-
-# Apply the recommended development preset and enable bundles.
-drush mcp:dev-profile
-
-# Inspect a server profile and list components.
+drush mcp:servers                       # the server profiles
 drush mcp:server-info --server=default --tools --resources --prompts
-
-# Smoke-test server configuration and dependencies.
-drush mcp:server-smoke --server=default
-
+drush mcp:server-smoke --server=default # does the server start?
+drush mcp:dev-profile                   # the development preset (see docs/QUICKSTART.md)
 ```
 
-### Alternative: drupal/mcp_server
-
-[MCP Server](https://www.drupal.org/project/mcp_server) has its own Drush commands and its own HTTP endpoint. Which of our submodules goes with it depends on its version:
-
-- **MCP Server 2.x:** install its Tool Bridge and pick the tools there. See [docs/CLIENT_INTEGRATIONS.md](docs/CLIENT_INTEGRATIONS.md). Optional: `drush en mcp_tools_policy -y` holds the tools of other modules to MCP Tools' rules on its HTTP endpoint.
-- **MCP Server 1.x:** write its tool configs with our bridge:
-
-```bash
-drush en mcp_tools_mcp_server -y
-drush mcp-tools:mcp-server-sync --enable-read
-```
-
-Our own server (`mcp_tools_stdio`, `mcp_tools_remote`) stays the default path.
-
+- **Tests:** `../vendor/bin/phpunit` from the module folder.
+  [TESTING.md](TESTING.md) has the rest.
 
 ## Contributing
 
-Issues and merge requests: https://www.drupal.org/project/issues/mcp_tools
+Issues and merge requests: https://www.drupal.org/project/issues/mcp_tools.
+See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 

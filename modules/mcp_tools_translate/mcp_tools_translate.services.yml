@@ -5,6 +5,7 @@ services:
       - '@entity_type.manager'
       - '@current_user'
       - '@mcp_tools.audit_logger'
+      - '@content_translation.manager'
   mcp_tools_translate.translation:
     class: Drupal\mcp_tools_translate\Service\ContentTranslationService
     arguments:

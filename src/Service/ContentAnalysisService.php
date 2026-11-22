@@ -166,14 +166,28 @@ class ContentAnalysisService {
     $results = [];
 
     foreach ($nodes as $node) {
+      // The match can be in any language version. A match in the French
+      // title was shown with the title and the address of the source
+      // language, so the result did not contain what was searched for.
+      $shown = $node;
+      if (mb_stripos((string) $node->getTitle(), $query) === FALSE) {
+        foreach (array_keys($node->getTranslationLanguages(FALSE)) as $langcode) {
+          $translation = $node->getTranslation($langcode);
+          if (mb_stripos((string) $translation->getTitle(), $query) !== FALSE) {
+            $shown = $translation;
+            break;
+          }
+        }
+      }
       $results[] = [
         'id' => $node->id(),
         'uuid' => $node->uuid(),
-        'title' => $node->getTitle(),
+        'title' => $shown->getTitle(),
         'type' => $node->bundle(),
-        'status' => $node->isPublished() ? 'published' : 'unpublished',
-        'changed' => date('Y-m-d H:i:s', (int) $node->getChangedTime()),
-        'url' => $node->toUrl()->toString(),
+        'language' => $shown->language()?->getId(),
+        'status' => $shown->isPublished() ? 'published' : 'unpublished',
+        'changed' => date('Y-m-d H:i:s', (int) $shown->getChangedTime()),
+        'url' => $shown->toUrl()->toString(),
       ];
     }
 

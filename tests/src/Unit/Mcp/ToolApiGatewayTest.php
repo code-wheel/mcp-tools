@@ -67,6 +67,13 @@ final class ToolApiGatewayTest extends UnitTestCase {
   protected function markup(string $string): TranslatableMarkup {
     $translation = new class implements TranslationInterface {
 
+      /**
+       * Drupal 12 added this method to the interface.
+       */
+      public function selectPluralForm(int|float $count, string $string, ?string $langcode = NULL): string {
+        return $string;
+      }
+
       public function translate($string, array $args = [], array $options = []): TranslatableMarkup {
         return new TranslatableMarkup((string) $string, $args, $options, $this);
       }
@@ -551,11 +558,16 @@ final class ToolApiGatewayTest extends UnitTestCase {
       'mcp_cache:clear_all' => $this->createToolDefinition('mcp_cache:clear_all', 'mcp_tools_cache', 'Clear All Caches', 'Clear every cache.'),
     ]);
 
-    $result = $this->createGateway()->getToolInfo('mcp_list_content_types');
+    $result = $this->createGateway()->getToolInfo('mcp_content_types_list');
 
     $this->assertTrue($result->isError);
     $this->assertSame(['mcp_tools_list_content_types'], $result->structuredContent['did_you_mean']);
-    $this->assertSame('Unknown tool: mcp_list_content_types. Did you mean mcp_tools_list_content_types? Find tools with mcp_tools_discover_tools.', $result->structuredContent['error']);
+    $this->assertSame('Unknown tool: mcp_content_types_list. Did you mean mcp_tools_list_content_types? Find tools with mcp_tools_discover_tools.', $result->structuredContent['error']);
+
+    // A name with only "tools_" left out is described, under its real name.
+    $short = $this->createGateway()->getToolInfo('mcp_list_content_types');
+    $this->assertFalse($short->isError, json_encode($short->structuredContent));
+    $this->assertSame('mcp_tools_list_content_types', $short->structuredContent['name']);
 
     $none = $this->createGateway()->getToolInfo('zebra_crossing');
     $this->assertSame('Unknown tool: zebra_crossing. Find tools with mcp_tools_discover_tools.', $none->structuredContent['error']);

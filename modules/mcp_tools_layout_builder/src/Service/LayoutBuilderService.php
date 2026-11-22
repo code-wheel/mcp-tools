@@ -475,7 +475,7 @@ class LayoutBuilderService {
     if (!$this->blockManager->hasDefinition($blockId)) {
       return [
         'success' => FALSE,
-        'error' => "Block plugin '$blockId' not found. Use mcp_list_block_plugins to see available block types.",
+        'error' => "Block plugin '$blockId' not found. Use mcp_list_available_blocks to see available block types.",
       ];
     }
 

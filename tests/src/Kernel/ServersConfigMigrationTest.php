@@ -26,18 +26,13 @@ class ServersConfigMigrationTest extends KernelTestBase {
   ];
 
   /**
-   * The legacy name has no schema (and no owning module) by design.
-   *
-   * @var string[]
-   */
-  protected static $configSchemaCheckerExclusions = [
-    'mcp_tools_servers.settings',
-  ];
-
-  /**
    * {@inheritdoc}
    */
   protected function setUp(): void {
+    // The legacy name has no schema (and no owning module) by design. The
+    // list is added to here, not declared again: Drupal 12 gives the
+    // property a type, and a declaration that fits 12 does not fit 10.
+    static::$configSchemaCheckerExclusions[] = 'mcp_tools_servers.settings';
     parent::setUp();
     $this->container->get('module_handler')->loadInclude('mcp_tools', 'install');
   }

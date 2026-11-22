@@ -169,7 +169,7 @@ class SettingsForm extends ConfigFormBase {
     $form['access']['confirm_destructive_tools'] = [
       '#type' => 'checkbox',
       '#title' => $this->t('Strong calls need a confirmation'),
-      '#description' => $this->t('Three kinds of call are run after the user of the client confirmed them, when the client can ask: a tool that declares itself destructive, a grant of a permission for trusted roles only, and a recipe that was written through MCP and that no person has reviewed. Tick this to refuse such a call for clients that cannot ask. Without it they get it run, and the audit log says so.'),
+      '#description' => $this->t('Three kinds of call are run after the user of the client confirmed them, when the client can ask: a tool that declares itself destructive, a grant of a permission for trusted roles only, and a recipe that was written through MCP and that no person has reviewed. With this ticked, such a call is refused where nobody can be asked: a client that cannot ask, the Drupal AI bridge, MCP Server with the MCP Tools Policy submodule. Without it the call runs there, and the audit log says so. A new site has it ticked.'),
       '#default_value' => $config->get('access.confirm_destructive_tools') ?? FALSE,
     ];
 

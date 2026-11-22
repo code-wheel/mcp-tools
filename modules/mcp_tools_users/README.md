@@ -6,11 +6,11 @@ User account management for MCP Tools.
 
 | Tool | Description |
 |------|-------------|
-| `mcp_users_create_user` | Create user accounts with roles |
-| `mcp_users_update_user` | Update email, status, roles |
-| `mcp_users_block_user` | Block a user account |
-| `mcp_users_activate_user` | Activate a blocked user |
-| `mcp_users_assign_roles` | Assign roles to users |
+| `mcp_create_user` | Create user accounts with roles |
+| `mcp_update_user` | Update email, status, roles |
+| `mcp_block_user` | Block a user account |
+| `mcp_activate_user` | Activate a blocked user |
+| `mcp_assign_user_roles` | Assign roles to users |
 
 ## Requirements
 
@@ -30,7 +30,7 @@ drush en mcp_tools_users
 ```
 User: "Create a new editor account for John"
 
-AI calls: mcp_users_create_user(
+AI calls: mcp_create_user(
   name: "john_editor",
   email: "john@example.com",
   roles: ["editor"],
@@ -43,7 +43,7 @@ AI calls: mcp_users_create_user(
 ```
 User: "Give user 5 the content_admin role"
 
-AI calls: mcp_users_assign_roles(
+AI calls: mcp_assign_user_roles(
   uid: 5,
   roles: ["content_admin"],
   operation: "add"
@@ -55,7 +55,7 @@ AI calls: mcp_users_assign_roles(
 ```
 User: "Block the spam account"
 
-AI calls: mcp_users_block_user(uid: 123)
+AI calls: mcp_block_user(uid: 123)
 ```
 
 ## Safety Features

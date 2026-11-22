@@ -23,7 +23,7 @@ use Drupal\tool\TypedData\InputDefinition;
   label: new TranslatableMarkup('Disable Ultimate Cron Job'),
   description: new TranslatableMarkup('Disable an Ultimate Cron job to prevent it from running.'),
   operation: ToolOperation::Write,
-  destructive: TRUE,
+  destructive: FALSE,
   input_definitions: [
     'id' => new InputDefinition(
       data_type: 'string',

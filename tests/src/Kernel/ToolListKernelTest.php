@@ -219,9 +219,10 @@ final class ToolListKernelTest extends KernelTestBase {
       $access,
     );
 
-    // "site health" is what the server's own instructions call this group
-    // of tools. A model that searched "health" found the cron tool only.
-    foreach (['core', 'drupal core', 'core version', 'drupal version', 'php version', 'health', 'site health'] as $query) {
+    // "site status" is what the server's own instructions call this group
+    // of tools, and "site health" was. A model that searched "health" found
+    // the cron tool only.
+    foreach (['core', 'drupal core', 'core version', 'drupal version', 'php version', 'health', 'site health', 'status', 'site status'] as $query) {
       $found = array_column($gateway->discoverTools($query, 5)->structuredContent['tools'], 'name');
       $this->assertContains('mcp_tools_get_site_status', $found, sprintf('searching "%s" found: %s', $query, implode(', ', $found)));
     }

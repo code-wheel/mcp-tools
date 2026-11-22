@@ -1,8 +1,11 @@
 # Client Integrations
 
-This pack provides ready MCP client snippets for both STDIO and HTTP. Most MCP
-clients accept a `mcp.json` file with an `mcpServers` map. See
-`mcp_tools/mcp.json.example` for a combined example.
+MCP is an open protocol, so any MCP client can connect, with any model
+that can call tools. This page has ready snippets for STDIO and HTTP,
+and what we measured with the clients and models we tried. Most clients
+read a `mcp.json` file with an `mcpServers` map. `mcp.json.example` in
+the module folder is one, and `drush mcp-tools:client-config` writes one
+for your site.
 
 ## STDIO (local, recommended)
 
@@ -14,16 +17,19 @@ clients accept a `mcp.json` file with an `mcpServers` map. See
       "args": [
         "--root=/path/to/drupal",
         "mcp-tools:serve",
-        "--server=development",
-        "--uid=1"
-      ],
-      "env": {
-        "MCP_SCOPE": "read,write"
-      }
+        "--quiet",
+        "--uid=1",
+        "--scope=read,write"
+      ]
     }
   }
 }
 ```
+
+Use `--scope=read` for a connection that cannot change anything. A
+server profile (`--server=staging`) can set the scopes and gateway mode
+for you. No connection gets more scopes than the site allows: see
+"Scopes" in the README.
 
 ## Codex CLI
 
@@ -104,6 +110,17 @@ the client it did 12, 12 and 12. The other four models have not run on
 1.0.0-beta21 yet. The 1.0.0-beta21 runs on this page were made before
 its last security changes and were not repeated after them.
 
+1.0.0-beta22 runs a tool whose name has only `tools_` left out. With
+`gpt-oss:20b`, ten runs each way, the failed tool calls went from 9 to
+4. The tasks done stayed at 119 of 120 and the number of tool calls did
+not change. It also says in the server's instructions where the Drupal
+version is: asked for it, the model had a failed call in 8 of 40 runs
+before and in none of 40 after.
+
+Most tasks a local model missed in these runs were not about the tools:
+Ollama answered with an error because the model's own tool call was cut
+off. A client that tells the model and lets it try again loses fewer.
+
 Three things to know before you judge a model:
 
 - The Ollama version matters. The same model scored lower after an Ollama
@@ -111,6 +128,10 @@ Three things to know before you judge a model:
   own tasks.
 - A small model often calls a tool by the name it found, and not through
   the run tool. From 1.0.0-beta20 that works.
+- A new site (1.0.0-beta22 or later) runs a tool that destroys something
+  only after the user of the client said yes. A client that cannot ask
+  its user, such as one started from a script, is refused. See "Calls
+  that ask first" in the README for how to change that.
 - `ollama ps` has to say "100% GPU". When ours ran on the processor after
   a reboot, its context was also down to 4,096 tokens, which is too small
   for any of this.
@@ -151,9 +172,13 @@ drush en mcp_server mcp_server_tool_bridge
 
 MCP Tools' own protections still apply to MCP Tools' own tools: scopes
 from `mcp_tools.settings` (a connection of MCP Server gets the default
-scopes), category permissions, protected entities, and the delete
-confirmation guardrails. Compatibility with the bridge is re-verified
+scopes), category permissions, protected entities, and the confirm flag
+of the delete tool. Compatibility with the bridge is re-verified
 weekly by this project's Bridge Compat CI job.
+
+Nobody can be asked for a yes on this way in. With `mcp_tools_policy`
+enabled (below), a site that insists on a yes refuses a destructive
+tool here. Without it such a tool runs.
 
 ### The same rules for other modules' tools
 
@@ -173,9 +198,11 @@ drush en mcp_tools_policy
 - A write counts against the write limits. The call over the limit is
   answered with how many seconds to wait.
 - A write that ran has a line in the audit log.
+- A tool that declares itself destructive, of any module, is refused on
+  a site that insists on a yes (the setting "Strong calls need a
+  confirmation", on for a new site). Nobody can be asked here.
 
-It does not cover MCP Server over STDIO, and it does not ask for a
-confirmation before a destructive tool. See the submodule's README for
+It does not cover MCP Server over STDIO. See the submodule's README for
 what else it cannot see.
 
 ## Notes

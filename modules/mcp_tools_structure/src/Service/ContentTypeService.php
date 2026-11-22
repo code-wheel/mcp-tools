@@ -9,6 +9,7 @@ use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Field\FieldTypePluginManagerInterface;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AuditLogger;
 
@@ -24,6 +25,7 @@ class ContentTypeService {
     protected AccessManager $accessManager,
     protected AuditLogger $auditLogger,
     protected EntityFieldManagerInterface $entityFieldManager,
+    protected ?FieldTypePluginManagerInterface $fieldTypeManager = NULL,
   ) {}
 
   /**
@@ -347,17 +349,22 @@ class ContentTypeService {
       ->load('node.body');
 
     if (!$fieldStorage) {
+      // Drupal 12 has no text_with_summary in core: the type moved to the
+      // module of that name. A site without it gets a long formatted text.
+      $hasSummaryType = $this->fieldTypeManager === NULL || $this->fieldTypeManager->hasDefinition('text_with_summary');
       // Create field storage.
       $fieldStorage = $this->entityTypeManager
         ->getStorage('field_storage_config')
         ->create([
           'field_name' => 'body',
           'entity_type' => 'node',
-          'type' => 'text_with_summary',
+          'type' => $hasSummaryType ? 'text_with_summary' : 'text_long',
           'cardinality' => 1,
         ]);
       $fieldStorage->save();
     }
+    // The storage may be there already, of either type.
+    $withSummary = $fieldStorage->getType() === 'text_with_summary';
 
     // Create field instance.
     $field = $this->entityTypeManager
@@ -366,9 +373,7 @@ class ContentTypeService {
         'field_storage' => $fieldStorage,
         'bundle' => $bundle,
         'label' => 'Body',
-        'settings' => [
-          'display_summary' => TRUE,
-        ],
+        'settings' => $withSummary ? ['display_summary' => TRUE] : [],
       ]);
     $field->save();
 
@@ -389,7 +394,7 @@ class ContentTypeService {
     }
 
     $formDisplay->setComponent('body', [
-      'type' => 'text_textarea_with_summary',
+      'type' => $withSummary ? 'text_textarea_with_summary' : 'text_textarea',
       'weight' => 0,
     ])->save();
 

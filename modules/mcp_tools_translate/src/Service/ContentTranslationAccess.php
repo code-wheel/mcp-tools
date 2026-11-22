@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools_translate\Service;
 
+use Drupal\content_translation\ContentTranslationManagerInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\mcp_tools\Service\AuditLogger;
@@ -26,7 +27,35 @@ class ContentTranslationAccess {
     protected EntityTypeManagerInterface $entityTypeManager,
     protected AccountInterface $currentUser,
     protected AuditLogger $auditLogger,
+    protected ?ContentTranslationManagerInterface $translationManager = NULL,
   ) {}
+
+  /**
+   * Says no for a node whose content type is not enabled for translation.
+   *
+   * The API takes a translation of any node. A site whose owner has not
+   * switched translation on for a content type has no page to see or edit
+   * such a translation, so the tools do not make one.
+   *
+   * @param \Drupal\node\NodeInterface $node
+   *   The node to be translated.
+   *
+   * @return array<string, mixed>|null
+   *   A legacy MCP error result, or NULL when the type is enabled.
+   */
+  public function checkTranslatable(NodeInterface $node): ?array {
+    if ($this->translationManager === NULL || $this->translationManager->isEnabled('node', $node->bundle())) {
+      return NULL;
+    }
+    return [
+      'success' => FALSE,
+      'error' => sprintf(
+        "The content type '%s' is not enabled for translation, so node %d was not translated. A person enables it under Configuration, Content language and translation (/admin/config/regional/content-language).",
+        $node->bundle(),
+        $node->id(),
+      ),
+    ];
+  }
 
   /**
    * Loads a node by ID, bypassing the entity cache.

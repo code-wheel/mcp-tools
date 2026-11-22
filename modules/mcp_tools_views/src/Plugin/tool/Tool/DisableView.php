@@ -21,7 +21,7 @@ use Drupal\tool\TypedData\InputDefinition;
   label: new TranslatableMarkup('Disable View'),
   description: new TranslatableMarkup('Disable an enabled view. View pages will return 404, blocks hidden. Config is preserved; re-enable with mcp_enable_view.'),
   operation: ToolOperation::Write,
-  destructive: TRUE,
+  destructive: FALSE,
   input_definitions: [
     'id' => new InputDefinition(
       data_type: 'string',
