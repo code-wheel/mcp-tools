@@ -496,10 +496,25 @@ class ComponentFactory {
                 'row' => [
                   'type' => 'fields',
                 ],
+                // A template's view at /articles had no access rule and no
+                // status filter: unpublished titles, open to anyone.
+                'access' => [
+                  'type' => 'perm',
+                  'options' => ['perm' => 'access content'],
+                ],
               ],
             ],
           ],
         ];
+        if ($viewConfig['base_table'] === 'node_field_data') {
+          $viewConfig['display']['default']['display_options']['filters']['status'] = [
+            'id' => 'status',
+            'table' => 'node_field_data',
+            'field' => 'status',
+            'value' => '1',
+            'plugin_id' => 'boolean',
+          ];
+        }
 
         // Add page display if configured.
         if (!empty($config['display']['page'])) {

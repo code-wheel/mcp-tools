@@ -54,7 +54,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'created' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Created Redirects'),
-      description: new TranslatableMarkup('Array of successfully created redirect objects with their assigned IDs. Use these IDs with mcp_redirect_get or mcp_redirect_update.'),
+      description: new TranslatableMarkup('Array of successfully created redirect objects with their assigned IDs. Use these IDs with mcp_redirect_get or mcp_redirect_update. A redirect to a path of this site where nothing answers now has a warning.'),
     ),
     'skipped' => new OutputDefinition(
       data_type: 'list',

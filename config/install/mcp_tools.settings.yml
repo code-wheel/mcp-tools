@@ -65,6 +65,12 @@ access:
   # to run it there, with a warning in the audit log. A site that was
   # installed before 1.0.0-beta22 keeps what it had: false.
   confirm_destructive_tools: true
+  # A tool may do to an entity what its user may do in Drupal: edit a node
+  # only with permission to edit it, see it only with permission to see it.
+  # The content, media, scheduler, metatag, clone, moderation, user and
+  # batch tools follow it. A site that was installed before 1.0.0-beta23
+  # keeps what it had: false, the tool permission alone decides.
+  entity_access: true
 
 # Rate limiting for expensive read operations.
 rate_limits:

@@ -629,6 +629,13 @@ final class FakeNode {
     private readonly string $ownerName = 'admin',
   ) {}
 
+  /**
+   * A real node answers whether the caller may view it; here it may.
+   */
+  public function access(string $operation): bool {
+    return TRUE;
+  }
+
   public function id(): int {
     return $this->id;
   }

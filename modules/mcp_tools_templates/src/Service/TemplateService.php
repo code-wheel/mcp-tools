@@ -19,6 +19,11 @@ use Drupal\mcp_tools\Service\AuditLogger;
 class TemplateService {
 
   /**
+   * The kinds of component a template has, in the order they are made.
+   */
+  public const COMPONENT_KINDS = ['vocabularies', 'roles', 'content_types', 'media_types', 'webforms', 'views'];
+
+  /**
    * Built-in template definitions.
    */
   protected const TEMPLATES = [
@@ -572,6 +577,16 @@ class TemplateService {
     $components = $template['components'];
     $skipExisting = $options['skip_existing'] ?? TRUE;
     $componentFilter = $options['components'] ?? NULL;
+    // A name that is not one of these applied nothing and said success.
+    if ($componentFilter !== NULL) {
+      $unknown = array_values(array_diff((array) $componentFilter, self::COMPONENT_KINDS));
+      if ($unknown !== []) {
+        return [
+          'success' => FALSE,
+          'error' => 'No component kind ' . implode(', ', $unknown) . '. The kinds are: ' . implode(', ', self::COMPONENT_KINDS) . '.',
+        ];
+      }
+    }
 
     $created = [];
     $skipped = [];

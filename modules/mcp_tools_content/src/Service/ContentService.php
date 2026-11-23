@@ -10,8 +10,10 @@ use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Session\AccountProxyInterface;
+use Drupal\mcp_tools\Service\EntityAccess;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AuditLogger;
+use Drupal\mcp_tools\Service\EntityReferences;
 use Drupal\mcp_tools\Service\TextFormat;
 use Drupal\node\NodeInterface;
 use Drupal\paragraphs\ParagraphInterface;
@@ -40,6 +42,9 @@ class ContentService {
     }
 
     $nodeType = $this->entityTypeManager->getStorage('node_type')->load($type);
+    if ($nodeType && ($denied = EntityAccess::createDenied('node', $type)) !== NULL) {
+      return $denied;
+    }
     if (!$nodeType) {
       return [
         'success' => FALSE,
@@ -89,6 +94,9 @@ class ContentService {
       $now = $this->time->getCurrentTime();
       $node->setCreatedTime($now);
       $node->setChangedTime($now);
+      if (($problem = EntityReferences::problem($node)) !== NULL) {
+        return ['success' => FALSE, 'error' => $problem];
+      }
       $node->save();
 
       $this->auditLogger->logSuccess('create_content', 'node', (string) $node->id(), [
@@ -157,6 +165,9 @@ class ContentService {
     }
 
     $node = $this->entityTypeManager->getStorage('node')->load($nid);
+    if ($node && ($denied = EntityAccess::denied($node, 'update')) !== NULL) {
+      return $denied;
+    }
     if (!$node instanceof NodeInterface) {
       return [
         'success' => FALSE,
@@ -222,6 +233,9 @@ class ContentService {
 
       $node->setNewRevision(TRUE);
       $node->setRevisionLogMessage('Updated via MCP Tools');
+      if (($problem = EntityReferences::problem($node)) !== NULL) {
+        return ['success' => FALSE, 'error' => $problem];
+      }
       $node->save();
 
       $this->auditLogger->logSuccess('update_content', 'node', (string) $nid, [
@@ -299,6 +313,9 @@ class ContentService {
     }
 
     $node = $this->entityTypeManager->getStorage('node')->load($nid);
+    if ($node && ($denied = EntityAccess::denied($node, 'delete')) !== NULL) {
+      return $denied;
+    }
     if (!$node instanceof NodeInterface) {
       return [
         'success' => FALSE,
@@ -481,6 +498,9 @@ class ContentService {
     }
 
     $node = $this->entityTypeManager->getStorage('node')->load($nid);
+    if ($node && ($denied = EntityAccess::denied($node, 'update')) !== NULL) {
+      return $denied;
+    }
     if (!$node) {
       return [
         'success' => FALSE,

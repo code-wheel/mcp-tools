@@ -80,6 +80,19 @@ class BlockService {
         return ['success' => FALSE, 'error' => "Block with ID '$blockId' already exists."];
       }
 
+      $plugin = $this->blockManager->createInstance($pluginId);
+      $unknown = $this->unknownSettings($plugin->getConfiguration(), $options['settings'] ?? []);
+      if ($unknown !== NULL) {
+        return ['success' => FALSE, 'error' => $unknown];
+      }
+      $visibility = NULL;
+      if (isset($options['visibility'])) {
+        $visibility = $this->visibilityConditions($options['visibility']);
+        if (is_string($visibility)) {
+          return ['success' => FALSE, 'error' => $visibility];
+        }
+      }
+
       // Build block configuration.
       $blockConfig = [
         'id' => $blockId,
@@ -89,7 +102,7 @@ class BlockService {
         'weight' => $options['weight'] ?? 0,
         'status' => TRUE,
         'settings' => array_merge(
-          $this->blockManager->createInstance($pluginId)->defaultConfiguration(),
+          $plugin->defaultConfiguration(),
           $options['settings'] ?? []
         ),
       ];
@@ -101,8 +114,8 @@ class BlockService {
       }
 
       // Add visibility conditions if provided.
-      if (isset($options['visibility'])) {
-        $blockConfig['visibility'] = $options['visibility'];
+      if ($visibility !== NULL) {
+        $blockConfig['visibility'] = $visibility;
       }
 
       $block = Block::create($blockConfig);
@@ -256,6 +269,10 @@ class BlockService {
         }
 
         if (isset($config['settings'])) {
+          $unknown = $this->unknownSettings($block->getPlugin()->getConfiguration(), $config['settings']);
+          if ($unknown !== NULL) {
+            return ['success' => FALSE, 'error' => $unknown];
+          }
           $settings = array_merge($settings, $config['settings']);
           $updated[] = 'settings';
         }
@@ -263,9 +280,20 @@ class BlockService {
         $block->set('settings', $settings);
       }
 
-      // Update visibility.
+      // Update visibility: the conditions given replace the ones there were.
       if (isset($config['visibility'])) {
-        $block->setVisibilityConfig($config['visibility']['condition_id'] ?? 'request_path', $config['visibility']);
+        $visibility = $this->visibilityConditions($config['visibility']);
+        if (is_string($visibility)) {
+          return ['success' => FALSE, 'error' => $visibility];
+        }
+        foreach (array_keys($block->getVisibility()) as $old) {
+          if (!isset($visibility[$old])) {
+            $block->getVisibilityConditions()->removeInstanceId($old);
+          }
+        }
+        foreach ($visibility as $conditionId => $conditionConfig) {
+          $block->setVisibilityConfig($conditionId, $conditionConfig);
+        }
         $updated[] = 'visibility';
       }
 
@@ -414,6 +442,105 @@ class BlockService {
       $this->auditLogger->logFailure('list_regions', 'theme', $theme ?? 'default', ['error' => $e->getMessage()]);
       return ['success' => FALSE, 'error' => 'Failed to list regions: ' . $e->getMessage()];
     }
+  }
+
+  /**
+   * Why some settings are not the block's, or NULL when all of them are.
+   *
+   * Settings a block does not have were merged in and stored, and the call
+   * said success: the block went on as before.
+   *
+   * @param array $defaults
+   *   The block plugin's configuration: the keys it has, its own and the
+   *   ones every block has (label, label_display, provider).
+   * @param mixed $given
+   *   The settings that were given.
+   */
+  protected function unknownSettings(array $defaults, mixed $given): ?string {
+    if (!is_array($given)) {
+      return 'settings must be an object of the block\'s own settings.';
+    }
+    // The plugin id and its provider are the block's, not settings to set.
+    $settable = array_diff(array_keys($defaults), ['id', 'provider']);
+    $unknown = array_values(array_diff(array_keys($given), $settable));
+    if ($unknown === []) {
+      return NULL;
+    }
+    return 'This block has no setting ' . implode(', ', $unknown) . ' to set. Its settings are: ' . implode(', ', $settable) . '.';
+  }
+
+  /**
+   * Visibility conditions in the shape Drupal stores, from what was given.
+   *
+   * One shape for both tools: {"request_path": {"pages": "/about"}},
+   * {"user_role": {"roles": ["authenticated"]}} or
+   * {"entity_bundle:node": {"bundles": ["article"]}}, keyed by condition.
+   * "node_type", the name Drupal 8 had for the last, is taken too. The
+   * configure tool used to want one condition with a "condition_id" key and
+   * stored the place tool's shape wrong; that shape is still taken. Pages can
+   * be a list, roles a list or a map.
+   *
+   * @return array|string
+   *   The conditions, keyed by condition id, or why they cannot be read.
+   */
+  protected function visibilityConditions(mixed $given): array|string {
+    if (!is_array($given)) {
+      return 'visibility must be an object, like {"request_path": {"pages": "/about"}}.';
+    }
+    if (isset($given['condition_id']) && is_string($given['condition_id'])) {
+      $id = $given['condition_id'];
+      unset($given['condition_id']);
+      $given = [$id => $given];
+    }
+    // The flat shape the release took for a page, {"pages": "/about"}, and
+    // the same for roles and content types: one condition each.
+    $flat = ['pages' => 'request_path', 'roles' => 'user_role', 'bundles' => 'entity_bundle:node'];
+    if (array_intersect_key($given, $flat) !== []) {
+      $negate = $given['negate'] ?? NULL;
+      $unflat = [];
+      foreach ($flat as $key => $condition) {
+        if (array_key_exists($key, $given)) {
+          $unflat[$condition] = [$key => $given[$key]] + ($negate !== NULL ? ['negate' => $negate] : []);
+        }
+      }
+      $given = $unflat;
+    }
+    $conditions = [];
+    foreach ($given as $id => $conditionConfig) {
+      if (!is_string($id) || !is_array($conditionConfig)) {
+        return 'visibility is keyed by condition, like {"request_path": {"pages": "/about"}} or {"user_role": {"roles": ["authenticated"]}}.';
+      }
+      if ($id === 'node_type') {
+        $id = 'entity_bundle:node';
+      }
+      $conditionConfig['id'] = $id;
+      if (isset($conditionConfig['pages'])) {
+        $pages = is_array($conditionConfig['pages']) ? $conditionConfig['pages'] : preg_split('/\R/', (string) $conditionConfig['pages']);
+        // "\/user" is "/user" escaped once too often. A page that is not a
+        // path was stored and matched nothing.
+        $pages = array_values(array_filter(array_map(static fn($page): string => str_replace('\\/', '/', trim((string) $page)), $pages), 'strlen'));
+        foreach ($pages as $page) {
+          if (!str_starts_with($page, '/') && $page !== '<front>') {
+            return "visibility pages are paths that start with /, or <front>: '$page' is not one.";
+          }
+        }
+        $conditionConfig['pages'] = implode("\n", $pages);
+      }
+      if (str_starts_with($id, 'entity_bundle:') && isset($conditionConfig['bundles'])) {
+        $bundles = (array) $conditionConfig['bundles'];
+        $conditionConfig['bundles'] = array_is_list($bundles) ? array_combine($bundles, $bundles) : $bundles;
+      }
+      if ($id === 'entity_bundle:node') {
+        $conditionConfig['context_mapping'] ??= ['node' => '@node.node_route_context:node'];
+      }
+      if ($id === 'user_role') {
+        $roles = (array) ($conditionConfig['roles'] ?? []);
+        $conditionConfig['roles'] = array_is_list($roles) ? array_combine($roles, $roles) : $roles;
+        $conditionConfig['context_mapping'] ??= ['user' => '@user.current_user_context:current_user'];
+      }
+      $conditions[$id] = $conditionConfig;
+    }
+    return $conditions;
   }
 
   /**

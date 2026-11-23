@@ -8,6 +8,7 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Menu\MenuLinkManagerInterface;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AuditLogger;
+use Drupal\mcp_tools\Service\LinkTarget;
 use Drupal\menu_link_content\Entity\MenuLinkContent;
 use Drupal\system\Entity\Menu;
 
@@ -70,6 +71,7 @@ class MenuManagementService {
     protected MenuLinkManagerInterface $menuLinkManager,
     protected AccessManager $accessManager,
     protected AuditLogger $auditLogger,
+    protected ?LinkTarget $linkTarget = NULL,
   ) {}
 
   /**
@@ -264,18 +266,22 @@ class MenuManagementService {
         'uri' => $uri,
       ]);
 
-      return [
-        'success' => TRUE,
-        'data' => [
-          'id' => $menuLink->id(),
-          'uuid' => $menuLink->uuid(),
-          'title' => $title,
-          'menu' => $menuName,
-          'uri' => $uri,
-          'plugin_id' => $menuLink->getPluginId(),
-          'message' => "Menu link '$title' added to '$menuName'.",
-        ],
+      $data = [
+        'id' => $menuLink->id(),
+        'uuid' => $menuLink->uuid(),
+        'title' => $title,
+        'menu' => $menuName,
+        'uri' => $uri,
+        'plugin_id' => $menuLink->getPluginId(),
+        'message' => "Menu link '$title' added to '$menuName'.",
       ];
+      // The link is made either way: a page can come later.
+      $warning = $this->linkTarget?->warning($uri, 'mcp_menus_update_menu_link');
+      if ($warning !== NULL) {
+        $data['warning'] = $warning;
+        $data['message'] .= ' ' . $warning;
+      }
+      return ['success' => TRUE, 'data' => $data];
     }
     catch (\Exception $e) {
       $this->auditLogger->logFailure('add_menu_link', 'menu_link_content', 'new', ['error' => $e->getMessage()]);
@@ -342,14 +348,18 @@ class MenuManagementService {
         'updates' => array_keys($updates),
       ]);
 
-      return [
-        'success' => TRUE,
-        'data' => [
-          'id' => $linkId,
-          'title' => $menuLink->getTitle(),
-          'message' => "Menu link updated successfully.",
-        ],
+      $data = [
+        'id' => $linkId,
+        'title' => $menuLink->getTitle(),
+        'message' => "Menu link updated successfully.",
       ];
+      // Only a target that was given now is looked at.
+      $warning = isset($updates['uri']) ? $this->linkTarget?->warning((string) $menuLink->get('link')->uri, 'mcp_menus_update_menu_link') : NULL;
+      if ($warning !== NULL) {
+        $data['warning'] = $warning;
+        $data['message'] .= ' ' . $warning;
+      }
+      return ['success' => TRUE, 'data' => $data];
     }
     catch (\Exception $e) {
       $this->auditLogger->logFailure('update_menu_link', 'menu_link_content', (string) $linkId, ['error' => $e->getMessage()]);

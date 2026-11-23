@@ -413,7 +413,7 @@ class ToolApiGateway {
     $toolInfo = $this->toolProvider->getTool($tool_name);
     // A name with only "tools_" left out: the tool with it is described,
     // under its real name.
-    $meant = $toolInfo === NULL ? ToolNameSuggester::meant($tool_name) : NULL;
+    $meant = $toolInfo === NULL ? ToolNameSuggester::meantAmong($tool_name, array_map(static fn($info): string => (string) $info->name, $this->toolProvider->getTools())) : NULL;
     if ($meant !== NULL) {
       $toolInfo = $this->toolProvider->getTool($meant);
     }

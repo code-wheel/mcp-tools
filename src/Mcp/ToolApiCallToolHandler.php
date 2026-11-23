@@ -172,7 +172,7 @@ class ToolApiCallToolHandler implements RequestHandlerInterface {
     // with it, and one with "tools_" put in (mcp_tools_redirect_create) the
     // tool without it. From here on the call is one by the full name: the same
     // checks, limits and audit line.
-    $meant = $definition instanceof ToolDefinition ? NULL : ToolNameSuggester::meant($toolName);
+    $meant = $definition instanceof ToolDefinition ? NULL : ToolNameSuggester::meantAmong($toolName, array_map(static fn($id): string => McpToolsServerFactory::pluginIdToMcpName((string) $id), array_keys($definitions)));
     if ($meant !== NULL && ($definitions[$this->mcpNameToPluginId($meant)] ?? NULL) instanceof ToolDefinition) {
       $toolName = $meant;
       $pluginId = $this->mcpNameToPluginId($meant);
@@ -445,6 +445,22 @@ class ToolApiCallToolHandler implements RequestHandlerInterface {
   private function upcastArgument(mixed $argument, InputDefinitionInterface $definition): mixed {
     $dataType = $definition->getDataType();
 
+    // An object or a list sent as its JSON text is meant as the object or
+    // the list. nemotron-3.5-lightning sent "fields" and "updates" that way
+    // (37 refused calls in four runs), mimo-v2.6 a permission list, which
+    // then read as one permission called ["access content"].
+    $wantsStructure = $definition instanceof ListInputDefinition
+      || $definition instanceof MapInputDefinition
+      || $definition->isMultiple()
+      || $dataType === 'list'
+      || $dataType === 'map';
+    if ($wantsStructure && is_string($argument) && preg_match('/^\s*[\[{]/', $argument)) {
+      $decoded = json_decode($argument, TRUE);
+      if (is_array($decoded)) {
+        $argument = $decoded;
+      }
+    }
+
     if ($definition instanceof ListInputDefinition || $definition->isMultiple() || $dataType === 'list') {
       if (!is_array($argument) && $argument !== NULL && $argument !== '') {
         $argument = [$argument];
@@ -483,6 +499,16 @@ class ToolApiCallToolHandler implements RequestHandlerInterface {
 
     if ($dataType === 'float') {
       return is_numeric($argument) ? (float) $argument : $argument;
+    }
+
+    // A number or a yes/no given to a text input is meant as its text: a
+    // model sent status: 1 for "published", and the input check refused
+    // it before the tool could read it.
+    if ($dataType === 'string' && (is_int($argument) || is_float($argument))) {
+      return (string) $argument;
+    }
+    if ($dataType === 'string' && is_bool($argument)) {
+      return $argument ? 'true' : 'false';
     }
 
     return $argument;

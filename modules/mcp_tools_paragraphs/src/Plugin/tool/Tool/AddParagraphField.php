@@ -75,13 +75,13 @@ use Drupal\tool\TypedData\InputDefinition;
     'target_bundles' => new InputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Reference Target Bundles'),
-      description: new TranslatableMarkup('Limit references to specific bundles'),
+      description: new TranslatableMarkup('For entity_reference: the bundles it may point to, by machine name, e.g. ["article", "page"]. A bundle that does not exist is refused with the ones there are. Default: all.'),
       required: FALSE,
     ),
     'allowed_values' => new InputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Allowed Values'),
-      description: new TranslatableMarkup('For list fields'),
+      description: new TranslatableMarkup('The options of a list_string or list_integer field: labels like ["Draft", "Final"], whole numbers like [1, 2, 3], or items like {"value": "d", "label": "Draft"}.'),
       required: FALSE,
     ),
   ],

@@ -115,6 +115,39 @@ final class ToolNameSuggester {
   }
 
   /**
+   * The one real name that is meant, from the names there are.
+   *
+   * First "tools_" too few or too many, then the module part of the name:
+   * a model calls mcp_tools_list_field_types for
+   * mcp_structure_list_field_types (77 of 124 made-up names in 1,295 runs of
+   * the framework session, 2026-11-21). With the first word after "mcp_"
+   * taken off, the rest must have two words at least and end exactly one
+   * real name. Two or more and nothing is meant: the closest names answer.
+   *
+   * @param string $name
+   *   The name that was used.
+   * @param string[] $names
+   *   The names there are.
+   *
+   * @return string|null
+   *   The real name, or NULL.
+   */
+  public static function meantAmong(string $name, array $names): ?string {
+    $known = array_flip($names);
+    $simple = self::meant($name);
+    if ($simple !== NULL && isset($known[$simple])) {
+      return $simple;
+    }
+    if (!str_starts_with($name, 'mcp_') || !preg_match('/^mcp_[a-z0-9]+_((?:[a-z0-9]+_)+[a-z0-9]+)$/', $name, $match)) {
+      return NULL;
+    }
+    $rest = '_' . $match[1];
+    $found = array_values(array_filter($names, static fn(string $real): bool => $real !== $name && str_starts_with($real, 'mcp_') && str_ends_with($real, $rest)
+      && substr_count(substr($real, 4, -strlen($rest)), '_') === 0));
+    return count($found) === 1 ? $found[0] : NULL;
+  }
+
+  /**
    * The words of a name that say something, each in one form.
    *
    * @return string[]

@@ -9,14 +9,12 @@ namespace Drupal\mcp_tools_analysis\Service;
  *
  * This service delegates to specialized analyzer services for each domain.
  *
- * SECURITY NOTE: Analysis services use accessCheck(FALSE) in entity queries.
- * This is intentional for analysis operations because:
- * 1. Analysis tools are read-only - they don't modify data
- * 2. Site analysis requires visibility into ALL content to be accurate
- * 3. MCP access is already controlled via AccessManager scopes
- * 4. Partial analysis results could lead to missed issues
- *
- * Access control is enforced at the MCP layer, not the query layer.
+ * SECURITY NOTE: the analyzers that list content check the caller's access
+ * (accessCheck(TRUE), and access('view') on rows from table queries). They
+ * did not, and a read session got the titles of unpublished content its
+ * user may not see. An analysis is of what the user may see; a site-wide
+ * audit is for a user who may see everything. The security auditor's
+ * counts of administrator accounts still look at all of them.
  */
 class AnalysisService {
 

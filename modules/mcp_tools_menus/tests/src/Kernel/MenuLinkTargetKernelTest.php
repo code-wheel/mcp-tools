@@ -1,0 +1,79 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Drupal\Tests\mcp_tools_menus\Kernel;
+
+use Drupal\KernelTests\KernelTestBase;
+use Drupal\node\Entity\Node;
+use Drupal\node\Entity\NodeType;
+use Drupal\Tests\user\Traits\UserCreationTrait;
+
+/**
+ * A menu link to a path where nothing is says so.
+ *
+ * The same fault as the redirect tools had: a model knows a page by its
+ * title, makes its path up, and the link is stored with "success".
+ */
+#[\PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses]
+#[\PHPUnit\Framework\Attributes\Group('mcp_tools_menus')]
+final class MenuLinkTargetKernelTest extends KernelTestBase {
+
+  use UserCreationTrait;
+
+  /**
+   * {@inheritdoc}
+   */
+  protected static $modules = ['system', 'user', 'field', 'text', 'filter', 'node', 'link', 'menu_link_content', 'dblog', 'update', 'tool', 'mcp_tools', 'mcp_tools_menus'];
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function setUp(): void {
+    parent::setUp();
+    $this->installEntitySchema('user');
+    $this->installEntitySchema('node');
+    $this->installEntitySchema('menu_link_content');
+    $this->installSchema('node', ['node_access']);
+    $this->installSchema('dblog', ['watchdog']);
+    $this->installConfig(['system', 'filter', 'mcp_tools']);
+    NodeType::create(['type' => 'page', 'name' => 'Page'])->save();
+    Node::create(['type' => 'page', 'title' => 'Pricing page', 'status' => 1])->save();
+    $menus = $this->container->get('entity_type.manager')->getStorage('menu');
+    if (!$menus->load('main')) {
+      $menus->create(['id' => 'main', 'label' => 'Main'])->save();
+    }
+    $this->setUpCurrentUser([], [], TRUE);
+    $this->container->get('mcp_tools.access_manager')->setScopes(['read', 'write']);
+    $this->container->get('router.builder')->rebuild();
+  }
+
+  /**
+   * A made-up path gets a warning, a real one none, an update too.
+   */
+  public function testATargetWhereNothingIsGetsAWarning(): void {
+    $service = $this->container->get('mcp_tools_menus.menu');
+
+    $made = $service->addMenuLink('main', 'Pricing', '/pricing-page');
+    $this->assertTrue($made['success'], (string) ($made['error'] ?? ''));
+    $this->assertArrayHasKey('warning', $made['data'], 'A link to a path where nothing is said success and nothing else.');
+    $this->assertStringContainsString('/pricing-page', $made['data']['warning']);
+    $this->assertStringContainsString('mcp_menus_update_menu_link', $made['data']['warning']);
+    $this->assertStringContainsString($made['data']['warning'], $made['data']['message']);
+
+    foreach (['/node/1', 'node/1', '<front>', 'https://example.com/x', 'entity:node/1'] as $n => $uri) {
+      $ok = $service->addMenuLink('main', 'Fine ' . $n, $uri);
+      $this->assertTrue($ok['success'], $uri . ': ' . ($ok['error'] ?? ''));
+      $this->assertArrayNotHasKey('warning', $ok['data'], $uri . ' got: ' . ($ok['data']['warning'] ?? ''));
+    }
+
+    $updated = $service->updateMenuLink((int) $made['data']['id'], ['uri' => '/node/1']);
+    $this->assertTrue($updated['success'], (string) ($updated['error'] ?? ''));
+    $this->assertArrayNotHasKey('warning', $updated['data']);
+    $updated = $service->updateMenuLink((int) $made['data']['id'], ['uri' => '/no/such/page']);
+    $this->assertArrayHasKey('warning', $updated['data']);
+    $updated = $service->updateMenuLink((int) $made['data']['id'], ['title' => 'Prices']);
+    $this->assertArrayNotHasKey('warning', $updated['data'], 'A change of the title is not a change of the target.');
+  }
+
+}

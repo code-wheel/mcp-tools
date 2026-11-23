@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools_search_api\Service;
 
+use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\search_api\IndexInterface;
 
@@ -448,16 +449,16 @@ class SearchApiService {
         $query->keys($keywords);
       }
 
-      // Apply filters.
+      // Apply filters. One the index cannot use is refused: it was dropped,
+      // and the results looked filtered.
       foreach ($filters as $field => $value) {
-        // Validate field name to prevent injection.
-        if (!preg_match('/^[a-z_][a-z0-9_]*$/i', $field)) {
-          continue;
+        if (!preg_match('/^[a-z_][a-z0-9_]*$/i', (string) $field) || !$index->getField($field)) {
+          return [
+            'success' => FALSE,
+            'error' => "Index '$indexId' has no field '$field' to filter on. mcp_search_api_get_index lists its fields.",
+          ];
         }
-        // Check if field exists in index.
-        if ($index->getField($field)) {
-          $query->addCondition($field, $value);
-        }
+        $query->addCondition($field, $value);
       }
 
       // Set pagination.
@@ -467,7 +468,21 @@ class SearchApiService {
       $results = $query->execute();
 
       $items = [];
+      $notShown = 0;
       foreach ($results->getResultItems() as $resultItem) {
+        // Only what the user may view: label, URL and excerpt went out for
+        // every result, unpublished ones too, on an index without the
+        // content_access processor. One that cannot be loaded is left out.
+        try {
+          $original = $resultItem->getOriginalObject()?->getValue();
+        }
+        catch (\Exception $e) {
+          $original = NULL;
+        }
+        if (!$original instanceof EntityInterface || !$original->access('view')) {
+          $notShown++;
+          continue;
+        }
         $item = [
           'id' => $resultItem->getId(),
           'score' => $resultItem->getScore(),
@@ -513,6 +528,7 @@ class SearchApiService {
           'items' => $items,
           'total' => $results->getResultCount(),
           'returned' => count($items),
+          'not_shown' => $notShown,
           'limit' => $limit,
           'offset' => $offset,
           'has_more' => ($offset + count($items)) < $results->getResultCount(),

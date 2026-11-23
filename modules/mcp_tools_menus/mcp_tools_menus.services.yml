@@ -6,3 +6,4 @@ services:
       - '@plugin.manager.menu.link'
       - '@mcp_tools.access_manager'
       - '@mcp_tools.audit_logger'
+      - '@mcp_tools.link_target'

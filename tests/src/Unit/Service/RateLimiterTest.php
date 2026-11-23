@@ -440,4 +440,26 @@ class RateLimiterTest extends UnitTestCase {
     $this->assertSame($trusted, $stillTrusted);
   }
 
+  /**
+   * A client that changes its User-Agent keeps its bucket.
+   *
+   * The id was the IP and the User-Agent and Accept-Language, which the
+   * client chooses: a new User-Agent on each call was a new bucket.
+   */
+  public function testClientIdentifierIgnoresHeadersTheClientChooses(): void {
+    $this->config->method('get')->willReturnMap([['rate_limiting.trust_client_id_header', FALSE]]);
+    $request = Request::create('/', 'GET', [], [], [], ['REMOTE_ADDR' => '127.0.0.1']);
+    $request->headers->set('User-Agent', 'ua-1');
+    $this->requestStack->method('getCurrentRequest')->willReturn($request);
+    $limiter = new class($this->configFactory, $this->state, $this->requestStack) extends RateLimiter {
+      public function exposedClientIdentifier(): string {
+        return $this->getClientIdentifier();
+      }
+    };
+    $first = $limiter->exposedClientIdentifier();
+    $request->headers->set('User-Agent', 'ua-2');
+    $request->headers->set('Accept-Language', 'fr');
+    $this->assertSame($first, $limiter->exposedClientIdentifier(), 'A new User-Agent was a new rate limit bucket.');
+  }
+
 }

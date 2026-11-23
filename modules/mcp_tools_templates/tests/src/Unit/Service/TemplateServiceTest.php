@@ -149,6 +149,19 @@ final class TemplateServiceTest extends UnitTestCase {
     $this->assertSame(['vocabularies', 'roles'], $called);
   }
 
+  /**
+   * A kind of component the template does not have is refused.
+   *
+   * "content_type" for "content_types" applied nothing and said success.
+   */
+  public function testAnUnknownComponentKindIsRefused(): void {
+    $accessManager = $this->createMock(AccessManager::class);
+    $accessManager->method('canAdmin')->willReturn(TRUE);
+    $result = $this->createService(accessManager: $accessManager)->applyTemplate('blog', ['components' => ['content_type']]);
+    $this->assertFalse($result['success'], 'A kind the template does not have applied nothing and said success.');
+    $this->assertStringContainsString('content_types', $result['error']);
+  }
+
   public function testApplyTemplateLogsFailureWhenErrorsOccur(): void {
     $accessManager = $this->createMock(AccessManager::class);
     $accessManager->method('canAdmin')->willReturn(TRUE);

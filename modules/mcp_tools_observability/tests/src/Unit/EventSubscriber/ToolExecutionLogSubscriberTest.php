@@ -200,4 +200,26 @@ final class ToolExecutionLogSubscriberTest extends TestCase {
     $this->subscriber->onFailed($event);
   }
 
+  /**
+   * A password given to a tool does not go to the log.
+   *
+   * dblog drops the context keys, syslog and monolog keep them.
+   */
+  public function testSecretsDoNotGoToTheLog(): void {
+    $logged = NULL;
+    $this->logger->method('debug')->willReturnCallback(function ($message, array $context) use (&$logged): void {
+      $logged = $context;
+    });
+    $this->subscriber->onStarted(new ToolExecutionStartedEvent(
+      toolName: 'mcp_create_user',
+      pluginId: 'mcp_create_user',
+      arguments: ['username' => 'ann', 'password' => 'hunter2', 'settings' => ['api_key' => 'k-123']],
+      requestId: 'r1',
+      timestamp: 1.0,
+    ));
+    $this->assertStringNotContainsString('hunter2', json_encode($logged), 'A password went to the log.');
+    $this->assertStringNotContainsString('k-123', json_encode($logged));
+    $this->assertSame('ann', $logged['arguments']['username']);
+  }
+
 }

@@ -9,6 +9,7 @@ use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Config\Entity\ThirdPartySettingsInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Session\AccountProxyInterface;
+use Drupal\mcp_tools\Service\EntityAccess;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AuditLogger;
 
@@ -179,6 +180,9 @@ class SchedulerService {
     }
 
     $node = $this->entityTypeManager->getStorage('node')->load($entityId);
+    if ($node && ($denied = EntityAccess::denied($node, 'update')) !== NULL) {
+      return $denied;
+    }
     if (!$node) {
       return [
         'success' => FALSE,
@@ -252,6 +256,9 @@ class SchedulerService {
     }
 
     $node = $this->entityTypeManager->getStorage('node')->load($entityId);
+    if ($node && ($denied = EntityAccess::denied($node, 'update')) !== NULL) {
+      return $denied;
+    }
     if (!$node) {
       return [
         'success' => FALSE,
@@ -325,6 +332,9 @@ class SchedulerService {
     }
 
     $node = $this->entityTypeManager->getStorage('node')->load($entityId);
+    if ($node && ($denied = EntityAccess::denied($node, 'update')) !== NULL) {
+      return $denied;
+    }
     if (!$node) {
       return [
         'success' => FALSE,
@@ -407,6 +417,9 @@ class SchedulerService {
     }
 
     $node = $this->entityTypeManager->getStorage('node')->load($entityId);
+    if ($node && ($denied = EntityAccess::denied($node, 'view')) !== NULL) {
+      return $denied;
+    }
     if (!$node) {
       return [
         'success' => FALSE,

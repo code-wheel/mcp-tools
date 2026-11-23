@@ -111,31 +111,7 @@ class ConfigAnalysisService {
    *   Sanitized configuration data.
    */
   protected function sanitizeConfigData(array $data): array {
-    $sensitiveKeys = [
-      'password',
-      'pass',
-      'secret',
-      'token',
-      'key',
-      'credential',
-      'credentials',
-      'api_key',
-      'apikey',
-      'client_secret',
-      'private',
-    ];
-
-    $sanitized = $data;
-    array_walk_recursive($sanitized, function (&$value, $key) use ($sensitiveKeys) {
-      foreach ($sensitiveKeys as $sensitiveKey) {
-        if (stripos((string) $key, $sensitiveKey) !== FALSE) {
-          $value = '[REDACTED]';
-          return;
-        }
-      }
-    });
-
-    return $sanitized;
+    return SecretRedactor::redact($data);
   }
 
   /**

@@ -1,6 +1,6 @@
 name: 'MCP Tools - Theme'
 type: module
-description: 'MCP tools for theme settings management.'
+description: 'Themes: list, enable and disable themes, set the default and admin theme, and change theme settings.'
 package: MCP Tools
 core_version_requirement: ^10.5 || ^11
 lifecycle: experimental

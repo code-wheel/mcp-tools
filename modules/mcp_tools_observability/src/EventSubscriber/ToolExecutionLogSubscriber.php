@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools_observability\EventSubscriber;
 
+use Drupal\mcp_tools\Service\SecretRedactor;
 use CodeWheel\McpEvents\ToolExecutionFailedEvent;
 use CodeWheel\McpEvents\ToolExecutionStartedEvent;
 use CodeWheel\McpEvents\ToolExecutionSucceededEvent;
@@ -39,7 +40,7 @@ final class ToolExecutionLogSubscriber implements EventSubscriberInterface {
       'tool_name' => $event->toolName,
       'plugin_id' => $event->pluginId,
       'request_id' => $event->requestId,
-      'arguments' => $event->arguments,
+      'arguments' => self::clean($event->arguments),
       'timestamp' => $event->timestamp,
     ]);
   }
@@ -55,8 +56,8 @@ final class ToolExecutionLogSubscriber implements EventSubscriberInterface {
       'plugin_id' => $event->pluginId,
       'request_id' => $event->requestId,
       'duration_ms' => $event->durationMs,
-      'arguments' => $event->arguments,
-      'structured' => $event->result->structuredContent ?? NULL,
+      'arguments' => self::clean($event->arguments),
+      'structured' => self::clean($event->result->structuredContent ?? NULL),
     ]);
   }
 
@@ -72,8 +73,8 @@ final class ToolExecutionLogSubscriber implements EventSubscriberInterface {
       'request_id' => $event->requestId,
       'duration_ms' => $event->durationMs,
       'reason' => $event->reason,
-      'arguments' => $event->arguments,
-      'structured' => $event->result?->structuredContent ?? NULL,
+      'arguments' => self::clean($event->arguments),
+      'structured' => self::clean($event->result?->structuredContent ?? NULL),
     ];
 
     if ($event->exception) {
@@ -95,6 +96,17 @@ final class ToolExecutionLogSubscriber implements EventSubscriberInterface {
     }
 
     $this->logger->warning($message, $context);
+  }
+
+  /**
+   * Data for a log line, without secrets.
+   *
+   * The dblog module drops these keys, but syslog and monolog keep them: a
+   * password given to a user tool, or a key in a result, went to the log in
+   * full.
+   */
+  private static function clean(mixed $data): mixed {
+    return is_array($data) ? SecretRedactor::redact($data) : $data;
   }
 
 }

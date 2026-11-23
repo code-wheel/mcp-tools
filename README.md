@@ -113,6 +113,12 @@ The client then sees three tools and not the whole list:
 too, through the same checks. For HTTP, turn gateway mode on in the
 remote settings.
 
+A model often gets a tool's name a little wrong. When only one tool can
+be meant, it runs, through the same checks as the full name: `tools_`
+left out or put in after `mcp_`, or the wrong module in the name, such
+as `tools` where the tool belongs to `structure`. Any other name that
+does not exist is answered with the closest real names.
+
 ### Other ways to run the tools
 
 Every tool is a plain Tool API plugin, so you do not need our server:
@@ -142,10 +148,10 @@ model is on the other end. What we tried ourselves:
 - **Clients:** Claude Code, Codex CLI, fast-agent, Goose and OpenCode,
   and the official MCP clients for JavaScript and Python before each
   release.
-- **Models on one graphics card,** through Ollama: five models of 9 to
-  30 billion parameters did 10 to 12 of twelve site tasks in every run,
-  with two of the clients. With the three other clients one of the
-  models did 8 to 12.
+- **Models on one graphics card,** through Ollama: with 1.0.0-beta22,
+  three of seven models did all twelve site tasks in every run, two did
+  10 to 12, and two did 8 to 12 (four runs each, our small test
+  client). `gpt-oss:20b` did 119 of 120 in ten runs.
 - **Inside the site,** through Drupal AI and `mcp_tools_ai`.
 
 Use gateway mode for a local model: three tools fit a small context.
@@ -228,7 +234,7 @@ drush en mcp_tools_cache mcp_tools_cron mcp_tools_batch mcp_tools_analysis -y
 
 ## Access control
 
-Three layers decide what a connection may do, and each connection is
+Four layers decide what a connection may do, and each connection is
 shown only the tools those layers let it call.
 
 ### 1. Submodules
@@ -236,7 +242,16 @@ shown only the tools those layers let it call.
 Only enabled submodules offer their tools. Each category of tools has a
 Drupal permission of its own.
 
-### 2. Read-only mode
+### 2. Entity access
+
+On a new site a tool may do to a node, a media item or a user what the
+tool user may do on the site: edit a node only with permission to edit
+it, see it only with permission to see it. A site that updated from
+1.0.0-beta22 or earlier has the tool permission decide alone until you
+tick "Tools follow Drupal entity access" on the settings form. Give the
+tool user the Drupal permissions it needs first.
+
+### 3. Read-only mode
 
 A switch for the whole site that turns every write off:
 
@@ -248,7 +263,7 @@ $config['mcp_tools.settings']['access']['read_only_mode'] = TRUE;
 Config-only mode is the step between: tools that change configuration
 run, tools that change content or run operations do not.
 
-### 3. Scopes
+### 4. Scopes
 
 Each connection has scopes: `read`, `write`, `admin`.
 
@@ -330,6 +345,13 @@ settings form, or:
 $config['mcp_tools.settings']['access']['confirm_destructive_tools'] = FALSE;
 ```
 
+Our own tools also hold this themselves, whoever calls them. Tool API
+tells a tool who called it. On a site that insists, a strong call from a
+caller that is not a person and asked nobody is refused: MCP Server's
+bridge without `mcp_tools_policy`, Tool API's own AI connector, another
+module's agent. Drush, a form and the site's own code are a person and
+are not held back.
+
 Two of our tools also take a confirm flag: deleting a piece of content
 with all its translations, and exporting configuration.
 
@@ -403,11 +425,19 @@ Every other permission that Drupal marks "restrict access" needs the
 
 - The audit log has every write, with the user and with secrets taken
   out. It is Drupal's log: enable `dblog` or `syslog` to keep it.
-- Write limits per minute and per hour, when rate limiting is on. Two
-  costly read tools are limited too (broken links, content search).
+- Write limits per minute and per hour, when rate limiting is on. A
+  batch or an import counts each item. Two costly read tools are
+  limited too (broken links, content search).
 - The remote endpoint is closed at the routing layer: a client that is
   not allowed gets a 404.
 - Arguments a tool does not know are refused, not dropped.
+- A tool that stores a path (a redirect, a menu link) says when nothing
+  answers there on the site. The link is still made.
+- The content tools refuse a reference to something that is not there,
+  such as a tag given by its name.
+- The block, webform, field and template tools refuse a list or an
+  object they cannot use, and say what they take. Before 1.0.0-beta23
+  some of them stored it and said success.
 - Batch tools take 50 items at most, and uploads are capped.
 
 ### What is left to you

@@ -90,6 +90,24 @@ final class ToolNameSuggesterTest extends UnitTestCase {
   }
 
   /**
+   * The one real name that ends the same, when the module part is wrong.
+   */
+  public function testTheModulePartOfANameIsWrong(): void {
+    $names = ['mcp_structure_list_field_types', 'mcp_structure_get_role_permissions', 'mcp_create_content', 'mcp_batch_create_content', 'mcp_tools_search_content', 'mcp_cache_get_status'];
+    $this->assertSame('mcp_structure_list_field_types', ToolNameSuggester::meantAmong('mcp_tools_list_field_types', $names));
+    $this->assertSame('mcp_structure_get_role_permissions', ToolNameSuggester::meantAmong('mcp_tools_get_role_permissions', $names));
+    // "tools_" too few still comes first.
+    $this->assertSame('mcp_tools_search_content', ToolNameSuggester::meantAmong('mcp_search_content', $names));
+    // "tools_" too many is the rule before: mcp_create_content is there.
+    $this->assertSame('mcp_create_content', ToolNameSuggester::meantAmong('mcp_tools_create_content', $names));
+    // Two real names end the same: nothing is meant.
+    $this->assertNull(ToolNameSuggester::meantAmong('mcp_structure_create_content', $names));
+    // One word after the module is too little to go by.
+    $this->assertNull(ToolNameSuggester::meantAmong('mcp_tools_status', $names));
+    $this->assertNull(ToolNameSuggester::meantAmong('zebra_get_status', $names));
+  }
+
+  /**
    * At most three, and none for a name that is close to nothing.
    */
   public function testFewAndOnlyCloseOnes(): void {

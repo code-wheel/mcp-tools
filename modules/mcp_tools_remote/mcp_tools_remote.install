@@ -7,11 +7,20 @@
 
 declare(strict_types=1);
 
+use Drupal\Core\Hook\Attribute\LegacyRequirementsHook;
 use Drupal\mcp_tools\Mcp\Sdk;
 
 /**
  * Implements hook_requirements().
+ *
+ * Drupal 11.3 and later do not call this: they run
+ * Install\Requirements\McpToolsRemoteRequirements at install time and
+ * Hook\McpToolsRemoteRequirementsHooks for the status report, and both run this
+ * function, so the checks are written once. Drupal 12 has no plain
+ * hook_requirements() any more: without the attribute, enabling any module
+ * failed with "Class mcp_tools_remote_requirements does not exist".
  */
+#[LegacyRequirementsHook]
 function mcp_tools_remote_requirements(string $phase): array {
   $requirements = [];
   // Drupal 10 has the severities as constants only, Drupal 12 as an enum

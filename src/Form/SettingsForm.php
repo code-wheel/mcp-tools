@@ -173,6 +173,13 @@ class SettingsForm extends ConfigFormBase {
       '#default_value' => $config->get('access.confirm_destructive_tools') ?? FALSE,
     ];
 
+    $form['access']['entity_access'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Tools follow Drupal entity access'),
+      '#description' => $this->t('A tool may then do to a node, a media item or a user what the tool user may do on the site: edit a node only with permission to edit it. Without it the MCP Tools permission of a category decides alone. Give the tool user the Drupal permissions it needs before you tick this. A new site has it ticked.'),
+      '#default_value' => $config->get('access.entity_access') ?? FALSE,
+    ];
+
     $form['access']['list_all_tools'] = [
       '#type' => 'checkbox',
       '#title' => $this->t('List every tool'),
@@ -415,6 +422,7 @@ class SettingsForm extends ConfigFormBase {
     $config->set('access.audit_logging', (bool) $form_state->getValue('audit_logging'));
     $config->set('access.list_all_tools', (bool) $form_state->getValue('list_all_tools'));
     $config->set('access.confirm_destructive_tools', (bool) $form_state->getValue('confirm_destructive_tools'));
+    $config->set('access.entity_access', (bool) $form_state->getValue('entity_access'));
 
     // Rate limiting settings.
     $config->set('rate_limiting.enabled', (bool) $form_state->getValue('rate_limiting_enabled'));

@@ -99,7 +99,7 @@ class SearchContent extends McpToolsToolBase {
     if (empty($query)) {
       return [
         'success' => FALSE,
-        'error' => 'Search query is required.',
+        'error' => 'Search query is required: this tool finds content by its title. To list content of a type, or to count it, use mcp_tools_get_recent_content.',
       ];
     }
 

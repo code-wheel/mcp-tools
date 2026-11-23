@@ -52,7 +52,7 @@ final class UserStatusToolsKernelTest extends KernelTestBase {
     // The first user is uid 1 and passes every permission check, so the
     // session runs as a second one.
     $this->createUser();
-    $this->setUpCurrentUser([], ['mcp_tools use users']);
+    $this->setUpCurrentUser([], ['mcp_tools use users', 'administer users']);
     $this->config('mcp_tools.settings')
       ->set('access.allowed_scopes', ['read', 'write', 'admin'])
       ->set('access.read_only_mode', FALSE)

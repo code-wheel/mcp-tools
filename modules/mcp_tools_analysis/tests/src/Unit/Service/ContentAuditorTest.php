@@ -54,6 +54,8 @@ final class ContentAuditorTest extends UnitTestCase {
 
   public function testContentAuditFindsOrphanedContent(): void {
     $unpublishedNode = $this->createMock(NodeInterface::class);
+    // The caller of these tests may see the node.
+    $unpublishedNode->method('access')->willReturn(TRUE);
     $unpublishedNode->method('id')->willReturn(1);
     $unpublishedNode->method('getTitle')->willReturn('Draft Article');
     $unpublishedNode->method('bundle')->willReturn('article');

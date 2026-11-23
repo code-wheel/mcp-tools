@@ -120,6 +120,8 @@ final class ContentAnalysisServiceTest extends UnitTestCase {
     $query->method('accessCheck')->willReturnSelf();
     $query->method('sort')->willReturnSelf();
     $query->method('range')->willReturnSelf();
+    // The listing also counts what matches in all (the same query, counted).
+    $query->method('count')->willReturnSelf();
     $query->method('condition')->willReturnSelf();
     $query->method('execute')->willReturn([]);
 
@@ -158,6 +160,8 @@ final class ContentAnalysisServiceTest extends UnitTestCase {
     $query->method('accessCheck')->willReturnSelf();
     $query->method('sort')->willReturnSelf();
     $query->method('range')->willReturnSelf();
+    // The listing also counts what matches in all (the same query, counted).
+    $query->method('count')->willReturnSelf();
     $query->method('condition')->willReturnSelf();
     $query->method('execute')->willReturn([1]);
 
@@ -264,6 +268,8 @@ final class ContentAnalysisServiceTest extends UnitTestCase {
     $query->method('condition')->willReturnSelf();
     $query->method('sort')->willReturnSelf();
     $query->method('range')->willReturnSelf();
+    // The listing also counts what matches in all (the same query, counted).
+    $query->method('count')->willReturnSelf();
     $query->method('execute')->willReturn([1]);
 
     $storage = $this->createMock(EntityStorageInterface::class);
@@ -287,6 +293,8 @@ final class ContentAnalysisServiceTest extends UnitTestCase {
     $query->method('condition')->willReturnSelf();
     $query->method('sort')->willReturnSelf();
     $query->method('range')->willReturnSelf();
+    // The listing also counts what matches in all (the same query, counted).
+    $query->method('count')->willReturnSelf();
     $query->method('execute')->willReturn([]);
 
     $storage = $this->createMock(EntityStorageInterface::class);

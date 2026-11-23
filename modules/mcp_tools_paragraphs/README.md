@@ -103,8 +103,11 @@ Add a field to a paragraph type.
 - `description` (optional): Help text
 - `cardinality` (optional): 1 for single, -1 for unlimited (default: 1)
 - `target_type` (optional): For entity_reference fields
-- `target_bundles` (optional): Limit references to specific bundles
-- `allowed_values` (optional): For list fields
+- `target_bundles` (optional): For entity_reference fields, the bundles
+  it may point to, by machine name, like `["image", "text"]`. A bundle
+  that does not exist is refused, with the ones there are.
+- `allowed_values` (optional): For list fields, a list of labels, whole
+  numbers, or items like `{"value": "d", "label": "Draft"}`
 
 **Available Field Types:**
 - `string` - Plain text (255 chars max)

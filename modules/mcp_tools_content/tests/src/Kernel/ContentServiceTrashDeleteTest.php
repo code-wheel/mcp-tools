@@ -58,7 +58,8 @@ class ContentServiceTrashDeleteTest extends KernelTestBase {
     $this->config('trash.settings')->set('enabled_entity_types', ['node' => []])->save();
     $this->container->get('kernel')->rebuildContainer();
 
-    $this->setUpCurrentUser();
+    // An editor who may delete any content (tools follow entity access).
+    $this->setUpCurrentUser([], ['bypass node access']);
     $this->config('mcp_tools.settings')
       ->set('access.allowed_scopes', ['read', 'write'])
       ->set('access.read_only_mode', FALSE)

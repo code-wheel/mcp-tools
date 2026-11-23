@@ -67,13 +67,13 @@ use Drupal\tool\TypedData\InputDefinition;
     'visibility' => new InputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Visibility Conditions'),
-      description: new TranslatableMarkup('Visibility rules: {"request_path": {"pages": "/about\\n/contact"}} or {"user_role": {"roles": {"authenticated": "authenticated"}}}.'),
+      description: new TranslatableMarkup('Visibility rules, keyed by condition: {"request_path": {"pages": "/about\n/contact"}} {"user_role": {"roles": ["authenticated"]}}, or {"entity_bundle:node": {"bundles": ["article"]}} for pages of one content type.'),
       required: FALSE,
     ),
     'settings' => new InputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Block Settings'),
-      description: new TranslatableMarkup('Plugin-specific settings. Varies by block type.'),
+      description: new TranslatableMarkup('The block\'s own settings, by their names, e.g. {"items_per_page": 5}. They vary by block. An unknown setting is refused with the ones the block has.'),
       required: FALSE,
     ),
   ],

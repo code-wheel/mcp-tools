@@ -62,7 +62,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'config' => new InputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Configuration'),
-      description: new TranslatableMarkup('Configuration object with import and actions sections.'),
+      description: new TranslatableMarkup('The recipe\'s config section, as in recipe.yml, e.g. {"import": {"node": "*"}, "actions": {"node.type.article": {"setDescription": "News"}}}.'),
       required: FALSE,
     ),
   ],

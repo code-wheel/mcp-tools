@@ -31,7 +31,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'params' => new InputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Parameters'),
-      description: new TranslatableMarkup('Parameters for the operation (varies by operation type).'),
+      description: new TranslatableMarkup('The arguments the operation would get, by name, e.g. {"bundle": "article", "field_name": "field_price", "field_type": "decimal"} for add_field, or {"role": "editor", "permissions": ["access content"]} for grant_permissions.'),
       required: FALSE,
     ),
   ],

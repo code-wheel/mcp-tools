@@ -8,6 +8,7 @@ use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Entity\FieldableEntityInterface;
+use Drupal\mcp_tools\Service\EntityAccess;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AuditLogger;
 
@@ -69,6 +70,9 @@ class EntityCloneService {
     // Load the source entity.
     $storage = $this->entityTypeManager->getStorage($entityType);
     $entity = $storage->load($entityId);
+    if ($entity && ($denied = EntityAccess::denied($entity, 'view') ?? EntityAccess::createDenied((string) $entity->getEntityTypeId(), (string) $entity->bundle())) !== NULL) {
+      return $denied;
+    }
 
     if (!$entity) {
       return [
@@ -168,6 +172,9 @@ class EntityCloneService {
     // Load the source entity.
     $storage = $this->entityTypeManager->getStorage($entityType);
     $entity = $storage->load($entityId);
+    if ($entity && ($denied = EntityAccess::denied($entity, 'view') ?? EntityAccess::createDenied((string) $entity->getEntityTypeId(), (string) $entity->bundle())) !== NULL) {
+      return $denied;
+    }
 
     if (!$entity) {
       return [

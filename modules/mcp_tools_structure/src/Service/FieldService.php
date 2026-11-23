@@ -9,6 +9,7 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Field\FieldTypePluginManagerInterface;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AuditLogger;
+use Drupal\mcp_tools\Service\FieldInput;
 
 /**
  * Service for managing fields.
@@ -275,7 +276,18 @@ class FieldService {
     $allowedValues = NULL;
     if (in_array($typeConfig['type'], ['list_string', 'list_integer'], TRUE) && isset($options['allowed_values'])) {
       try {
-        $allowedValues = $this->formatAllowedValues($options['allowed_values']);
+        $allowedValues = FieldInput::allowedValues($options['allowed_values']);
+      }
+      catch (\InvalidArgumentException $e) {
+        return ['success' => FALSE, 'error' => $e->getMessage()];
+      }
+    }
+
+    // The bundles a reference may point to, read before anything is made.
+    $targetBundles = [];
+    if ($typeConfig['type'] === 'entity_reference') {
+      try {
+        $targetBundles = FieldInput::targetBundles($options['target_bundles'] ?? NULL, (string) ($options['target_type'] ?? 'node'), $this->entityTypeManager);
       }
       catch (\InvalidArgumentException $e) {
         return ['success' => FALSE, 'error' => $e->getMessage()];
@@ -340,11 +352,9 @@ class FieldService {
       // Handle entity reference handler settings.
       if ($typeConfig['type'] === 'entity_reference') {
         $targetType = $options['target_type'] ?? 'node';
-        $targetBundles = $options['target_bundles'] ?? [];
-
         $fieldSettings['handler'] = 'default:' . $targetType;
-        if (!empty($targetBundles)) {
-          $fieldSettings['handler_settings']['target_bundles'] = array_combine($targetBundles, $targetBundles);
+        if ($targetBundles !== []) {
+          $fieldSettings['handler_settings']['target_bundles'] = $targetBundles;
         }
       }
 
@@ -536,59 +546,6 @@ class FieldService {
       'settings' => $settings,
       'label' => 'above',
     ])->save();
-  }
-
-  /**
-   * Format allowed values for list fields.
-   *
-   * @param mixed $values
-   *   A map of key to label, a list of labels, or a list of items like
-   *   ['value' => 'key', 'label' => 'label'], which is how a model sends
-   *   options. Such items were stored as one option called "Array".
-   *
-   * @return array
-   *   Formatted allowed values.
-   *
-   * @throws \InvalidArgumentException
-   *   When the options are not a list, or an item is not an option. Nothing
-   *   is skipped: an option that is left out without a word is the same
-   *   mistake as one stored wrongly.
-   */
-  protected function formatAllowedValues(mixed $values): array {
-    if (!is_array($values)) {
-      throw new \InvalidArgumentException('allowed_values must be a list of options.');
-    }
-    // Check if associative array.
-    if (array_keys($values) !== range(0, count($values) - 1)) {
-      // Already key => label format.
-      return $values;
-    }
-
-    // Convert to key => label. A number is its own key, which is what a
-    // list of numbers needs. A text gets a key made from the label.
-    $result = [];
-    foreach ($values as $position => $value) {
-      if (is_array($value)) {
-        $itemValue = $value['value'] ?? NULL;
-        $itemLabel = $value['label'] ?? NULL;
-        if (is_scalar($itemValue) && (string) $itemValue !== '' && ($itemLabel === NULL || is_scalar($itemLabel))) {
-          $result[is_float($itemValue) ? (string) $itemValue : $itemValue] = (string) ($itemLabel ?? $itemValue);
-          continue;
-        }
-        // A label alone is as a plain label.
-        $value = $itemValue === NULL && is_scalar($itemLabel) && (string) $itemLabel !== '' ? $itemLabel : NULL;
-      }
-      if (!is_scalar($value)) {
-        throw new \InvalidArgumentException('allowed_values: item ' . ($position + 1) . ' is not an option. Give each option as a text, a whole number, or {"value": ..., "label": ...}.');
-      }
-      if (is_int($value) || is_float($value)) {
-        $result[$value] = (string) $value;
-        continue;
-      }
-      $key = strtolower(preg_replace('/[^a-z0-9]+/i', '_', (string) $value));
-      $result[$key] = (string) $value;
-    }
-    return $result;
   }
 
 }

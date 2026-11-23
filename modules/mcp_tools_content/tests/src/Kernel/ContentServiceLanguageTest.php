@@ -65,7 +65,9 @@ class ContentServiceLanguageTest extends KernelTestBase {
     NodeType::create(['type' => 'article', 'name' => 'Article'])->save();
     $this->container->get('content_translation.manager')->setEnabled('node', 'article', TRUE);
 
-    $this->setUpCurrentUser();
+    // An editor who may edit and delete any content (tools follow entity
+    // access on a new site).
+    $this->setUpCurrentUser([], ['bypass node access']);
     $this->config('mcp_tools.settings')
       ->set('access.allowed_scopes', ['read', 'write'])
       ->set('access.read_only_mode', FALSE)

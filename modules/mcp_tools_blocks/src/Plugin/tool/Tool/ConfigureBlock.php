@@ -61,13 +61,13 @@ use Drupal\tool\TypedData\InputDefinition;
     'visibility' => new InputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Visibility Conditions'),
-      description: new TranslatableMarkup('Update visibility rules. Replaces existing conditions.'),
+      description: new TranslatableMarkup('Visibility rules, keyed by condition. They replace the ones there were: {"request_path": {"pages": "/about\n/contact"}} {"user_role": {"roles": ["authenticated"]}}, or {"entity_bundle:node": {"bundles": ["article"]}} for pages of one content type.'),
       required: FALSE,
     ),
     'settings' => new InputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Block Settings'),
-      description: new TranslatableMarkup('Plugin-specific settings to update.'),
+      description: new TranslatableMarkup('The block\'s own settings to change, by their names, e.g. {"items_per_page": 5}. Only settings the block has are taken: mcp_list_available_blocks names a block\'s plugin, and an unknown setting is refused with the ones there are.'),
       required: FALSE,
     ),
   ],

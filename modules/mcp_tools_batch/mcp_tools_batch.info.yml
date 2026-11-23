@@ -1,6 +1,6 @@
 name: 'MCP Tools - Batch'
 type: module
-description: 'Bulk/batch operations for content, users, terms, and redirects.'
+description: 'Bulk operations: create, update, publish and delete content, create terms, and assign a role to users.'
 package: MCP Tools
 core_version_requirement: ^10.5 || ^11
 dependencies:

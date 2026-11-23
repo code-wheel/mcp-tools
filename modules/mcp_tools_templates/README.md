@@ -151,6 +151,9 @@ AI calls: mcp_templates_apply(
 )
 ```
 
+The kinds are `content_types`, `vocabularies`, `roles`, `views`,
+`media_types` and `webforms`. Another name is refused.
+
 ### Export Current Config as Template
 
 ```

@@ -97,10 +97,7 @@ class MigrationService {
    *   Result array with success status and import details.
    */
   public function importFromCsv(string $contentType, string $csvData, array $fieldMapping): array {
-    if (!$this->accessManager->canWrite()) {
-      return $this->accessManager->getWriteAccessDenied();
-    }
-
+    // The JSON import checks write access, counting each row.
     // Parse CSV data.
     $lines = str_getcsv(
       $csvData, "\n", '"', '\\'
@@ -143,7 +140,7 @@ class MigrationService {
    *   Result array with success status and import details.
    */
   public function importFromJson(string $contentType, array $items): array {
-    if (!$this->accessManager->canWrite()) {
+    if (!$this->accessManager->canWrite('write', count($items))) {
       return $this->accessManager->getWriteAccessDenied();
     }
 

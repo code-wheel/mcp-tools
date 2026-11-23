@@ -412,6 +412,14 @@ final class ParagraphsServiceTest extends UnitTestCase {
     $this->assertSame([1 => '1', 2 => '2', 5 => '5'], $method->invoke($service, [1, 2, 5]));
   }
 
+  /**
+   * Options as {"value", "label"} items, as the structure tool takes them.
+   */
+  public function testFormatAllowedValuesWithItems(): void {
+    $method = new \ReflectionMethod($this->createService(), 'formatAllowedValues');
+    $this->assertSame(['d' => 'Draft', 'f' => 'Final'], $method->invoke($this->createService(), [['value' => 'd', 'label' => 'Draft'], ['value' => 'f', 'label' => 'Final']]));
+  }
+
   public function testGetFieldsForBundleFiltersBaseFields(): void {
     // Create fresh entityFieldManager mock for this specific test.
     $entityFieldManager = $this->createMock(EntityFieldManagerInterface::class);

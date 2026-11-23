@@ -207,4 +207,22 @@ final class ViewCreationKernelTest extends KernelTestBase {
     $this->assertNull(View::load('comments'));
   }
 
+  /**
+   * A new page of users is not open to anonymous visitors.
+   *
+   * A view had no access rule, and Views' default is none: a page of
+   * users_field_data was a public list of user names.
+   */
+  public function testANewViewHasAnAccessRule(): void {
+    $result = $this->service->createView('probe_people', 'People', 'users_field_data', ['page_path' => '/probe-people']);
+    $this->assertTrue($result['success'], (string) ($result['error'] ?? ''));
+    $view = \Drupal\views\Views::getView('probe_people');
+    $page = array_values(array_filter(array_keys($view->storage->get('display')), fn($id) => $id !== 'default'))[0];
+    $anonymous = \Drupal\user\Entity\User::getAnonymousUser();
+    $this->assertFalse($view->access($page, $anonymous), 'Anonymous visitors may see a new page of users.');
+    $access = $view->storage->get('display')['default']['display_options']['access'];
+    $this->assertSame(['type' => 'perm', 'options' => ['perm' => 'access user profiles']], $access);
+    $this->assertSame('1', $view->storage->get('display')['default']['display_options']['filters']['status']['value']);
+  }
+
 }

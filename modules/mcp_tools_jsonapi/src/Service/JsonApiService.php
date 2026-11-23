@@ -12,6 +12,7 @@ use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\jsonapi\ResourceType\ResourceTypeRepositoryInterface;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AuditLogger;
+use Drupal\mcp_tools\Service\EntityValidation;
 
 /**
  * Service for JSON:API entity operations via MCP.
@@ -197,11 +198,14 @@ class JsonApiService {
         $query->condition($bundleKey, $bundle);
       }
 
-      // Apply field filters.
+      // Apply field filters. A filter that cannot be used is refused: it was
+      // dropped, and the answer looked filtered.
       foreach ($filters as $field => $value) {
-        // Basic sanitization - only allow alphanumeric field names.
-        if (!preg_match('/^[a-z_][a-z0-9_]*$/i', $field)) {
-          continue;
+        if (!preg_match('/^[a-z_][a-z0-9_]*$/i', (string) $field)) {
+          return [
+            'success' => FALSE,
+            'error' => "Filter '$field' is not a field name. Give a field of $entityType, like {\"status\": 1}.",
+          ];
         }
         $query->condition($field, $value);
       }
@@ -296,6 +300,13 @@ class JsonApiService {
       }
 
       $entity = $storage->create($values);
+      $unknown = array_values(array_filter(array_keys($fields), fn($name) => !$entity->hasField((string) $name)));
+      if ($unknown !== []) {
+        return [
+          'success' => FALSE,
+          'error' => "$entityType:$bundle has no field " . implode(', ', $unknown) . '. Nothing was saved.',
+        ];
+      }
 
       // Check create access.
       if (!$entity->access('create', $this->currentUser)) {
@@ -303,6 +314,17 @@ class JsonApiService {
           'success' => FALSE,
           'error' => 'Access denied to create this entity type.',
         ];
+      }
+      // Field access and Drupal's validation, as JSON:API runs them.
+      $denied = EntityValidation::notEditable($entity, array_keys($fields), $this->currentUser);
+      if ($denied !== []) {
+        return [
+          'success' => FALSE,
+          'error' => 'This user may not set ' . implode(', ', $denied) . '. Nothing was saved.',
+        ];
+      }
+      if (($problem = EntityValidation::problem($entity)) !== NULL) {
+        return ['success' => FALSE, 'error' => $problem];
       }
 
       $entity->save();
@@ -380,11 +402,29 @@ class JsonApiService {
         ];
       }
 
+      // A field the entity does not have was skipped, and the answer said
+      // updated.
+      $unknown = array_values(array_filter(array_keys($fields), fn($name) => !$entity->hasField((string) $name)));
+      if ($unknown !== []) {
+        return [
+          'success' => FALSE,
+          'error' => "This $entityType has no field " . implode(', ', $unknown) . '. Nothing was saved.',
+        ];
+      }
+      $denied = EntityValidation::notEditable($entity, array_keys($fields), $this->currentUser);
+      if ($denied !== []) {
+        return [
+          'success' => FALSE,
+          'error' => 'This user may not set ' . implode(', ', $denied) . '. Nothing was saved.',
+        ];
+      }
+
       // Update fields.
       foreach ($fields as $fieldName => $value) {
-        if ($entity->hasField($fieldName)) {
-          $entity->set($fieldName, $value);
-        }
+        $entity->set($fieldName, $value);
+      }
+      if (($problem = EntityValidation::problem($entity, array_keys($fields))) !== NULL) {
+        return ['success' => FALSE, 'error' => $problem];
       }
 
       $entity->save();
@@ -508,8 +548,13 @@ class JsonApiService {
 
     $config = $this->configFactory->get('mcp_tools_jsonapi.settings');
     $blockedTypes = $config->get('blocked_entity_types') ?? [];
-
-    return in_array($entityType, $blockedTypes, TRUE);
+    if (in_array($entityType, $blockedTypes, TRUE)) {
+      return TRUE;
+    }
+    // The allowlist holds for every call, not only for discovery: with
+    // "node" only, terms and files were listed and written.
+    $allowedTypes = $config->get('allowed_entity_types') ?? [];
+    return $allowedTypes !== [] && !in_array($entityType, $allowedTypes, TRUE);
   }
 
   /**
@@ -551,6 +596,11 @@ class JsonApiService {
         'uuid', 'id', 'type', 'bundle', 'status',
         'created', 'changed', 'langcode', 'default_langcode',
       ])) {
+        continue;
+      }
+
+      // A field the user may not see is not given out.
+      if (!$field->access('view', $this->currentUser)) {
         continue;
       }
 

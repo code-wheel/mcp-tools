@@ -9,9 +9,11 @@ use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Session\AccountProxyInterface;
+use Drupal\mcp_tools\Service\EntityAccess;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AdminRoles;
 use Drupal\mcp_tools\Service\AuditLogger;
+use Drupal\mcp_tools\Service\EntityReferences;
 use Drupal\mcp_tools\Service\McpClientBridge;
 use Drupal\mcp_tools\Service\OwnRoles;
 use Drupal\mcp_tools\Service\TextFormat;
@@ -50,7 +52,7 @@ class BatchService {
    *   Result with created items and any errors.
    */
   public function createMultipleContent(string $contentType, array $items): array {
-    if (!$this->accessManager->canWrite()) {
+    if (!$this->accessManager->canWrite('write', count($items))) {
       return $this->accessManager->getWriteAccessDenied();
     }
 
@@ -67,6 +69,9 @@ class BatchService {
 
     // Validate content type exists.
     $nodeType = $this->entityTypeManager->getStorage('node_type')->load($contentType);
+    if ($nodeType && ($denied = EntityAccess::createDenied('node', $contentType)) !== NULL) {
+      return $denied;
+    }
     if (!$nodeType) {
       return ['success' => FALSE, 'error' => "Content type '$contentType' not found."];
     }
@@ -114,6 +119,9 @@ class BatchService {
         $now = $this->time->getCurrentTime();
         $node->setCreatedTime($now);
         $node->setChangedTime($now);
+        if (($problem = EntityReferences::problem($node)) !== NULL) {
+          throw new \InvalidArgumentException($problem);
+        }
         $node->save();
 
         $created[] = [
@@ -161,7 +169,7 @@ class BatchService {
    *   Result with updated items and any errors.
    */
   public function updateMultipleContent(array $updates): array {
-    if (!$this->accessManager->canWrite()) {
+    if (!$this->accessManager->canWrite('write', count($updates))) {
       return $this->accessManager->getWriteAccessDenied();
     }
 
@@ -203,6 +211,10 @@ class BatchService {
 
       try {
         $node = $this->entityTypeManager->getStorage('node')->load($nid);
+        if ($node && ($denied = EntityAccess::denied($node, 'update')) !== NULL) {
+          $errors[] = ['index' => $index, 'data' => $update, 'error' => $denied['error']];
+          continue;
+        }
         if (!$node) {
           $errors[] = [
             'index' => $index,
@@ -238,6 +250,9 @@ class BatchService {
 
         $node->setNewRevision(TRUE);
         $node->setRevisionLogMessage('Batch updated via MCP Tools');
+        if (($problem = EntityReferences::problem($node)) !== NULL) {
+          throw new \InvalidArgumentException($problem);
+        }
         $node->save();
 
         $updated[] = [
@@ -284,7 +299,7 @@ class BatchService {
    *   Result with deleted items and any errors.
    */
   public function deleteMultipleContent(array $ids, bool $force = FALSE): array {
-    if (!$this->accessManager->canWrite()) {
+    if (!$this->accessManager->canWrite('delete', count($ids))) {
       return $this->accessManager->getWriteAccessDenied();
     }
 
@@ -307,6 +322,10 @@ class BatchService {
       $this->clientBridge?->progress($index + 1, count($ids), sprintf('Processing node %d of %d', $index + 1, count($ids)));
       try {
         $node = $this->entityTypeManager->getStorage('node')->load($nid);
+        if ($node && ($denied = EntityAccess::denied($node, 'delete')) !== NULL) {
+          $errors[] = ['index' => $index, 'nid' => $nid, 'error' => $denied['error']];
+          continue;
+        }
         if (!$node) {
           $errors[] = [
             'index' => $index,
@@ -384,7 +403,7 @@ class BatchService {
    *   Result with processed items and any errors.
    */
   public function publishMultiple(array $ids, bool $publish = TRUE): array {
-    if (!$this->accessManager->canWrite()) {
+    if (!$this->accessManager->canWrite('write', count($ids))) {
       return $this->accessManager->getWriteAccessDenied();
     }
 
@@ -407,6 +426,10 @@ class BatchService {
     foreach ($ids as $index => $nid) {
       try {
         $node = $this->entityTypeManager->getStorage('node')->load($nid);
+        if ($node && ($denied = EntityAccess::denied($node, 'update')) !== NULL) {
+          $errors[] = ['index' => $index, 'nid' => $nid, 'error' => $denied['error']];
+          continue;
+        }
         if (!$node) {
           $errors[] = [
             'index' => $index,
@@ -488,7 +511,7 @@ class BatchService {
    *   Result with processed users and any errors.
    */
   public function assignRoleToUsers(string $role, array $userIds): array {
-    if (!$this->accessManager->canWrite()) {
+    if (!$this->accessManager->canWrite('write', count($userIds))) {
       return $this->accessManager->getWriteAccessDenied();
     }
 
@@ -556,6 +579,10 @@ class BatchService {
 
       try {
         $user = $this->entityTypeManager->getStorage('user')->load($uid);
+        if ($user && ($denied = EntityAccess::denied($user, 'update')) !== NULL) {
+          $errors[] = ['index' => $index, 'uid' => $uid, 'error' => $denied['error']];
+          continue;
+        }
         if (!$user) {
           $errors[] = [
             'index' => $index,
@@ -633,7 +660,7 @@ class BatchService {
    *   Result with created terms and any errors.
    */
   public function createMultipleTerms(string $vocabulary, array $terms): array {
-    if (!$this->accessManager->canWrite()) {
+    if (!$this->accessManager->canWrite('write', count($terms))) {
       return $this->accessManager->getWriteAccessDenied();
     }
 
@@ -773,7 +800,7 @@ class BatchService {
    *   Result with created redirects and any errors.
    */
   public function createMultipleRedirects(array $redirects): array {
-    if (!$this->accessManager->canWrite()) {
+    if (!$this->accessManager->canWrite('write', count($redirects))) {
       return $this->accessManager->getWriteAccessDenied();
     }
 

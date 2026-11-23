@@ -6,6 +6,7 @@ namespace Drupal\mcp_tools_remote\Commands;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\user\PermissionHandlerInterface;
 use Drupal\user\Entity\Role;
 use Drupal\user\Entity\User;
 use Drupal\mcp_tools_remote\Service\ApiKeyManager;
@@ -21,6 +22,7 @@ final class McpToolsRemoteCommands extends DrushCommands {
     private readonly ApiKeyManager $apiKeyManager,
     private readonly EntityTypeManagerInterface $entityTypeManager,
     private readonly ConfigFactoryInterface $configFactory,
+    private readonly ?PermissionHandlerInterface $permissionHandler = NULL,
   ) {
     parent::__construct();
   }
@@ -145,6 +147,9 @@ final class McpToolsRemoteCommands extends DrushCommands {
     }
     // Always allow discovery so clients can list categories/tools meaningfully.
     $permissions[] = 'mcp_tools use discovery';
+    // Where tools follow Drupal's entity access (new sites), the account
+    // also needs Drupal's own permissions for what its categories do.
+    $permissions = array_merge($permissions, $this->drupalPermissionsFor($categories));
     $permissions = array_values(array_unique($permissions));
 
     foreach ($permissions as $permission) {
@@ -190,6 +195,35 @@ final class McpToolsRemoteCommands extends DrushCommands {
     $this->io()->writeln('  1) Configure IP allowlist at /admin/config/services/mcp-tools/remote');
     $this->io()->writeln('  2) Create an API key: drush mcp-tools:remote-key-create --label="Remote" --scopes=read --ttl=86400');
     $this->io()->writeln('  3) Enable the endpoint in the UI (or config) and keep keys read-only unless necessary');
+  }
+
+  /**
+   * Drupal's permissions an account needs for these categories.
+   *
+   * Content: create, edit and delete each content type there is now. Media:
+   * the same for media. Users is not granted here: editing other accounts
+   * takes "administer users", which a person gives knowingly.
+   *
+   * @return string[]
+   *   The permissions that exist on this site.
+   */
+  protected function drupalPermissionsFor(array $categories): array {
+    $wanted = [];
+    if (in_array('content', $categories, TRUE)) {
+      $wanted[] = 'access content';
+      $wanted[] = 'view own unpublished content';
+      foreach (array_keys($this->entityTypeManager->getStorage('node_type')->loadMultiple()) as $type) {
+        array_push($wanted, "create $type content", "edit any $type content", "delete any $type content");
+      }
+    }
+    if (in_array('media', $categories, TRUE)) {
+      array_push($wanted, 'view media', 'create media', 'update any media', 'delete any media');
+    }
+    if (in_array('users', $categories, TRUE)) {
+      $this->io()->note('The users tools edit other accounts. With entity access on, that takes "administer users": grant it to the role yourself if this account should do that.');
+    }
+    $known = $this->permissionHandler?->getPermissions() ?? [];
+    return array_values(array_filter($wanted, static fn(string $permission): bool => isset($known[$permission])));
   }
 
 }

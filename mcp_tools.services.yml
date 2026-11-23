@@ -205,3 +205,9 @@ services:
     class: Drupal\mcp_tools\Service\McpClientBridge
     tags:
       - { name: persist }
+
+  # Whether something answers at a link's target: the redirect and menu
+  # link tools warn when nothing does.
+  mcp_tools.link_target:
+    class: Drupal\mcp_tools\Service\LinkTarget
+    arguments: ['@path.validator']

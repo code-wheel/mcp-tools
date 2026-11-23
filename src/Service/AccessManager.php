@@ -199,11 +199,13 @@ class AccessManager implements AccessManagerInterface {
    *
    * @param string $operationType
    *   The type of operation for rate limiting: 'write', 'delete', 'structure'.
+   * @param int $items
+   *   How many items the call writes: each one counts.
    *
    * @return bool
    *   TRUE if write operations are allowed.
    */
-  public function canWrite(string $operationType = 'write'): bool {
+  public function canWrite(string $operationType = 'write', int $items = 1): bool {
     $config = $this->configFactory->get('mcp_tools.settings');
 
     // Check global read-only mode first.
@@ -218,7 +220,7 @@ class AccessManager implements AccessManagerInterface {
 
     // Check rate limit.
     if ($this->rateLimiter) {
-      $rateCheck = $this->rateLimiter->checkLimit($operationType);
+      $rateCheck = $this->rateLimiter->checkLimit($operationType, $items);
       if (!$rateCheck['allowed']) {
         // Store the rate limit error for retrieval.
         $this->lastRateLimitError = $rateCheck;

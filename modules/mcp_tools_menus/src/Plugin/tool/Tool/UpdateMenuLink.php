@@ -46,6 +46,11 @@ use Drupal\tool\TypedData\InputDefinition;
       label: new TranslatableMarkup('Title'),
       description: new TranslatableMarkup('Current link title after update.'),
     ),
+    'warning' => new OutputDefinition(
+      data_type: 'string',
+      label: new TranslatableMarkup('Warning'),
+      description: new TranslatableMarkup('Set when the link points to a path of this site where nothing answers now: no page, no path alias, no file. The link is made all the same.'),
+    ),
     'message' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),

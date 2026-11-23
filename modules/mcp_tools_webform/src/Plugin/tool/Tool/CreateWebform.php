@@ -37,7 +37,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'elements' => new InputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Elements definition'),
-      description: new TranslatableMarkup('YAML-style element definitions. Keys are element names, values are element config with #type, #title, etc.'),
+      description: new TranslatableMarkup('The form\'s elements, keyed by element name, e.g. {"email": {"#type": "email", "#title": "Email", "#required": true}}. Each needs a #type; "type" without the # works too. An element inside a fieldset goes inside it, keyed by its name.'),
       required: FALSE,
     ),
   ],

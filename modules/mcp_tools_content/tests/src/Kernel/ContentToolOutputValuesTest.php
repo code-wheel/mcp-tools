@@ -61,7 +61,9 @@ class ContentToolOutputValuesTest extends KernelTestBase {
 
     NodeType::create(['type' => 'article', 'name' => 'Article'])->save();
 
-    $this->setUpCurrentUser();
+    // An editor who may create and edit content (tools follow entity
+    // access).
+    $this->setUpCurrentUser([], ['bypass node access']);
     $this->config('mcp_tools.settings')
       ->set('access.allowed_scopes', ['read', 'write'])
       ->set('access.read_only_mode', FALSE)

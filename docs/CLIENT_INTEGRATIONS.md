@@ -117,6 +117,21 @@ not change. It also says in the server's instructions where the Drupal
 version is: asked for it, the model had a failed call in 8 of 40 runs
 before and in none of 40 after.
 
+1.0.0-beta22 was also run with seven local models, four runs each, our
+small test client, gateway mode, Ollama 0.40.17 on one RTX 5090. Tasks
+done out of twelve, one number per run: `qwen3.8:27b` 12, 12, 12, 12;
+`qwen3.6:27b` 12, 12, 12, 12; `gemma4:31b` 12, 12, 12, 12;
+`flint:40b` 11, 12, 12, 10; `mimo-v2.6:9b` 12, 11, 11, 11;
+`muse-glimmer:30b` 8, 10, 12, 8; `nemotron-3.5-lightning:30b` 8, 9, 9, 9.
+Four runs are a small sample. `muse-glimmer` sometimes wrote its tool
+call out as text, which Ollama did not turn into a call. `mimo` and
+`nemotron` sent lists and objects as JSON text, which 1.0.0-beta23
+reads as what they are.
+
+On a harder set of twelve tasks, on a site with 24 content types and 33
+items, `gpt-oss:20b` did 100 of 120 with 1.0.0-beta22 and 118 of 120
+with 1.0.0-beta23, with a fifth fewer tool calls (ten runs each).
+
 Most tasks a local model missed in these runs were not about the tools:
 Ollama answered with an error because the model's own tool call was cut
 off. A client that tells the model and lets it try again loses fewer.

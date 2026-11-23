@@ -135,6 +135,8 @@ final class DuplicateDetectorTest extends UnitTestCase {
    */
   private function createMockNode(int $id, string $title): NodeInterface {
     $node = $this->createMock(NodeInterface::class);
+    // The caller of these tests may see the node.
+    $node->method('access')->willReturn(TRUE);
     $node->method('id')->willReturn($id);
     $node->method('getTitle')->willReturn($title);
     $node->method('isPublished')->willReturn(TRUE);

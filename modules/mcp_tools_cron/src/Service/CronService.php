@@ -47,7 +47,8 @@ class CronService {
         'autorun_threshold' => $threshold,
         'threshold_human' => $this->formatDuration($threshold),
         'is_overdue' => $lastRun && (time() - $lastRun) > $threshold,
-        'cron_key' => $this->state->get('system.cron_key', ''),
+        // Not the cron key: whoever has it can run cron from outside, and
+        // this is a read tool.
         'jobs_count' => count($cronJobs),
         'jobs' => $cronJobs,
       ],

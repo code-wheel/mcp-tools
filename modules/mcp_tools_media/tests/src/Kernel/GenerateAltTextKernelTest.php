@@ -89,7 +89,9 @@ class GenerateAltTextKernelTest extends KernelTestBase {
     ]);
     $this->media->save();
 
-    $this->setUpCurrentUser([], ['mcp_tools use media']);
+    // Writing alt text is an update of the media item (tools follow entity
+    // access).
+    $this->setUpCurrentUser([], ['mcp_tools use media', 'view media', 'update any media']);
     $this->config('mcp_tools.settings')
       ->set('access.allowed_scopes', ['read', 'write'])
       ->set('access.read_only_mode', FALSE)

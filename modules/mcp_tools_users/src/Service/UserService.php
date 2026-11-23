@@ -7,6 +7,7 @@ namespace Drupal\mcp_tools_users\Service;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Password\PasswordGeneratorInterface;
 use Drupal\Core\Session\AccountInterface;
+use Drupal\mcp_tools\Service\EntityAccess;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AdminRoles;
 use Drupal\mcp_tools\Service\AuditLogger;
@@ -41,6 +42,9 @@ class UserService {
   public function createUser(string $username, string $email, array $options = []): array {
     if (!$this->accessManager->canWrite()) {
       return $this->accessManager->getWriteAccessDenied();
+    }
+    if (($denied = EntityAccess::createDenied('user')) !== NULL) {
+      return $denied;
     }
 
     // Validate input lengths to prevent abuse.
@@ -145,6 +149,9 @@ class UserService {
     }
 
     $user = $this->entityTypeManager->getStorage('user')->load($uid);
+    if ($user && ($denied = EntityAccess::denied($user, 'update')) !== NULL) {
+      return $denied;
+    }
     if (!$user) {
       return [
         'success' => FALSE,
@@ -269,6 +276,9 @@ class UserService {
     }
 
     $user = $this->entityTypeManager->getStorage('user')->load($uid);
+    if ($user && ($denied = EntityAccess::denied($user, 'update')) !== NULL) {
+      return $denied;
+    }
     if (!$user) {
       return [
         'success' => FALSE,
@@ -335,6 +345,9 @@ class UserService {
     }
 
     $user = $this->entityTypeManager->getStorage('user')->load($uid);
+    if ($user && ($denied = EntityAccess::denied($user, 'update')) !== NULL) {
+      return $denied;
+    }
     if (!$user) {
       return [
         'success' => FALSE,
@@ -403,6 +416,9 @@ class UserService {
     }
 
     $user = $this->entityTypeManager->getStorage('user')->load($uid);
+    if ($user && ($denied = EntityAccess::denied($user, 'update')) !== NULL) {
+      return $denied;
+    }
     if (!$user) {
       return [
         'success' => FALSE,

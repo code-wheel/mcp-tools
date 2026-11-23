@@ -4,6 +4,161 @@ All notable changes to the MCP Tools module will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.0.0-beta23] - 2026-11-22
+
+### Security
+
+- **The remote image fetch checks every address it is sent to, and
+  cleans an SVG whatever the server calls it.** `mcp_remote_fetch_image`
+  checked that the first address was not internal, then followed up to
+  three redirects without a check: a public server could send the fetch
+  on to 127.0.0.1 or a cloud metadata address, and what came back was
+  saved as a file. Each redirect is checked now, and the first request
+  goes to the address that was checked. An SVG was cleaned only when the
+  server sent it as `image/svg+xml`: sent as `image/png`, it was saved
+  with its scripts. The file's content now decides how it is cleaned
+  and what extension it gets.
+- **A tool may do to an entity what its user may do in Drupal.** The
+  content, media, scheduler, metatag, clone, moderation, user and batch
+  tools checked the connection's scope and the tool's permission, not
+  the entity: an editor who may edit only their own articles edited
+  anyone's through a tool. Now Drupal's own access check decides, as on
+  the site's forms. **A new site has it on. A site that updates keeps
+  what it had** until someone ticks "Tools follow Drupal entity access"
+  on the settings form: give the tool user the Drupal permissions it
+  needs first. `drush mcp-tools:remote-setup` now grants the content and
+  media permissions for the categories it sets up.
+- **No secrets where a read session or a log can see them.**
+  `mcp_config_get_diff` returned secrets raw (get_config redacted them),
+  `mcp_cron_get_status` returned the cron key, the tool log put full
+  arguments and results in the logger context (syslog and monolog keep
+  them), and the watchdog tool returned backtraces with absolute paths.
+- **New views are not open to everyone.** `mcp_create_view` saved a view
+  with no access rule: a page of users was a public list of user names.
+  A template's views listed unpublished titles at `/articles`.
+- **Read tools show only what the user may see.** Search results,
+  the content audit, the duplicate finder and the link scan gave out
+  titles of unpublished content.
+- **The JSON:API tools hold to their allowlist and to field access,**
+  and validate what they save.
+- **A new User-Agent is not a new rate limit bucket.**
+- **A batch counts each item against the write limits.** With three
+  writes a minute allowed, one batch made fifty nodes: a call counted as
+  one write. The batch tools, the content import and the redirect import
+  count their items now, and batch delete counts against the delete
+  limit. A call bigger than what is left is refused with how many items
+  fit.
+- **Our tools hold the "ask first" rule on every way in.** On a site
+  that insists on a yes, a strong call (a tool that declares itself
+  destructive, a restricted permission, an unreviewed recipe) was
+  refused by our server, our Drupal AI bridge, and MCP Server with
+  `mcp_tools_policy`. Through MCP Server's tool bridge without that
+  submodule, Tool API's own AI connector, or another module's agent,
+  our tools ran it. Tool API tells a tool who called it (the invoker).
+  Our tools now refuse such a call themselves when the caller is not a
+  person and nobody said yes. A person stays free: Drush, a form such
+  as Tool Explorer's, and the site's own code. The rule covers our 227
+  tools. Other modules' tools are theirs: that would need a place in
+  Tool API where any rule can refuse a call.
+
+### Measured
+
+On a site of 24 content types and 33 items, twelve harder tasks, the
+local model `gpt-oss:20b`, ten runs each: 1.0.0-beta22 did 100 of 120
+with 631 tool calls, this release 118 of 120 with 501.
+
+### Fixed
+
+- **Content can be counted.** `mcp_tools_get_recent_content` takes
+  `status` ("published" or "unpublished") and answers with `matching`,
+  how many items match in all, also beyond the limit. Asked how many
+  articles are published, a local model took `total` (the items in the
+  answer) for the count, and could not filter by status at all.
+- **The content type list can be asked for one field.**
+  `mcp_tools_list_content_types` takes `field` and lists only the types
+  that have it. On a site with 24 types a model read the whole list four
+  times and then asked for each type on its own: 14 calls for one
+  question.
+- **A tool name with the wrong module part runs the tool, when only one
+  can be meant.** `mcp_tools_list_field_types` for
+  `mcp_structure_list_field_types`, `mcp_tools_get_role_permissions`
+  for `mcp_structure_get_role_permissions`. With the first word after
+  `mcp_` taken off, the rest (two words at least) must end exactly one
+  real name. Where two could be meant, the closest names answer as
+  before. The same checks as for the full name.
+- **A number or a yes/no given to a text input arrives as text.** A
+  model sent `status: 1`, and the input check refused it before the
+  tool could read it. `status` takes 1, 0, true and false as well.
+- **A list or an object sent as its JSON text is read as one.** Two
+  local models sent structured inputs as a string of JSON:
+  `nemotron-3.5-lightning` its `fields` and `updates` (37 refused calls
+  in four runs), `mimo-v2.6` a permission list, which then read as one
+  permission called `["access content"]`.
+- **Tools that said "success" and changed nothing now refuse the
+  input, and say what they take.** Found with a linter of our own that
+  reads every tool's inputs: eleven list inputs did not say what an item
+  is. Six of them had a fault behind them.
+  - `mcp_configure_block` wanted its `visibility` in another shape than
+    `mcp_place_block`, and given the place tool's shape it stored the
+    wrong thing. Both now take one shape, keyed by condition:
+    `{"request_path": {"pages": "/about"}}`, `{"user_role": {"roles":
+    ["authenticated"]}}`, or `{"entity_bundle:node": {"bundles":
+    ["article"]}}` (`node_type` works too). The old shape still works.
+  - The flat shape the release took for a page, `{"pages": "/about"}`,
+    is read too (and `roles`, `bundles`). A page that is not a path (it
+    must start with `/`, or be `<front>`) is refused; `\/user` is read
+    as `/user`.
+  - Both block tools took a `settings` key the block does not have.
+    Now refused, with the settings it does have.
+  - `mcp_create_webform` and `mcp_update_webform` read only plain
+    element keys (`type`), though their descriptions and README showed
+    `#type`. Such an element was stored empty. Both are read now, every
+    property is kept, and an element with no type is refused.
+    `mcp_update_webform` takes `set_elements` and `remove_elements`, to
+    add, change or remove one element and keep the others: a local model
+    that had to send every element back to add one often could not
+    write that call.
+  - `mcp_structure_add_field` and `mcp_paragraphs_add_field` stored a
+    `target_bundles` name that does not exist, or a label. Now refused,
+    with the bundles there are.
+  - `mcp_paragraphs_add_field` failed on options given as
+    `{"value": ..., "label": ...}`. Both field tools now read
+    `allowed_values` the same way.
+  - `mcp_templates_apply` applied nothing for a `components` name that
+    is not one of its six kinds. Now refused, with the six.
+- **A reference to something that is not there is refused.**
+  `mcp_create_content`, `mcp_update_content`, `mcp_batch_create_content`
+  and `mcp_batch_update_content` saved a reference field as given. A
+  tag given by its name ("Technology"), or by an id that does not
+  exist, was saved with "success", and the page showed no tag. Drupal's
+  own reference check now runs before the save (the item exists, its
+  bundle is allowed, it may be referenced), and only that check: every
+  other value is taken as before. The answer names the field and the
+  tool that finds the ids.
+- **A redirect import says which redirects lead nowhere.**
+  `mcp_redirect_import` now gives each such redirect a `warning`, as
+  `mcp_redirect_create` does, and says how many in its message.
+- **A menu link to a path where nothing is says so.**
+  `mcp_menus_add_menu_link` and `mcp_menus_update_menu_link` stored any
+  path and said success, the same as the redirect tools did before
+  1.0.0-beta22. The link is still made, and the answer has a `warning`
+  that nothing answers there and how to find the content that was
+  meant. The redirect tools and the menu tools now ask one shared check.
+- **The transports enable on Drupal 12.** Drupal 12 no longer calls a
+  plain `hook_requirements()`. The STDIO and remote modules still had
+  one, so enabling any module failed there with "Class
+  mcp_tools_stdio_requirements does not exist". They now have the
+  install-time class and the status report hook Drupal 11.3 brought,
+  and the old function is kept, marked legacy, for Drupal 10 and early
+  11. Found by running our STDIO E2E check on Drupal 12.0.0-beta2.
+  It passes there now, and so do the HTTP check and the official JS and
+  Python clients over HTTP. Drupal 12 is still not supported: Tool API
+  does not allow it yet.
+- **An empty search says where to go.** `mcp_tools_search_content`
+  refused it with "Search query is required". It now says that the tool
+  finds content by title, and that `mcp_tools_get_recent_content` lists
+  and counts it.
+
 ## [1.0.0-beta22] - 2026-11-22
 
 ### Security

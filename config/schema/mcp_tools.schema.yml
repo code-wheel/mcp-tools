@@ -51,6 +51,9 @@ mcp_tools.settings:
         confirm_destructive_tools:
           type: boolean
           label: 'Run a destructive tool, a grant of a restricted permission or an unreviewed recipe only after the user confirmed'
+        entity_access:
+          type: boolean
+          label: 'Tools follow Drupal entity access'
     rate_limits:
       type: mapping
       label: 'Rate limits for read operations'

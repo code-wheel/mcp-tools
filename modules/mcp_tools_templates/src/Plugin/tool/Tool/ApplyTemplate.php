@@ -38,7 +38,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'components' => new InputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Components'),
-      description: new TranslatableMarkup('Specific component types to apply (content_types, vocabularies, roles, views, media_types, webforms). Default: all.'),
+      description: new TranslatableMarkup('The kinds of component to apply, e.g. ["content_types", "roles"]. The kinds: content_types, vocabularies, roles, views, media_types, webforms. Another name is refused. Default: all.'),
       required: FALSE,
     ),
   ],

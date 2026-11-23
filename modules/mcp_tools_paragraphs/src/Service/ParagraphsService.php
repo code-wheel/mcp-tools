@@ -11,6 +11,7 @@ use Drupal\field\Entity\FieldConfig;
 use Drupal\field\Entity\FieldStorageConfig;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AuditLogger;
+use Drupal\mcp_tools\Service\FieldInput;
 use Drupal\paragraphs\Entity\ParagraphsType;
 
 /**
@@ -448,6 +449,21 @@ class ParagraphsService {
     $typeConfig = self::FIELD_TYPE_DEFAULTS[$fieldType];
     $label = $settings['label'] ?? ucfirst(str_replace(['field_', '_'], ['', ' '], $fieldName));
 
+    // The list inputs, read before anything is made.
+    $allowedValues = NULL;
+    $targetBundles = [];
+    try {
+      if (in_array($typeConfig['type'], ['list_string', 'list_integer'], TRUE) && isset($settings['allowed_values'])) {
+        $allowedValues = $this->formatAllowedValues($settings['allowed_values']);
+      }
+      if ($typeConfig['type'] === 'entity_reference') {
+        $targetBundles = FieldInput::targetBundles($settings['target_bundles'] ?? NULL, (string) ($settings['target_type'] ?? 'node'), $this->entityTypeManager);
+      }
+    }
+    catch (\InvalidArgumentException $e) {
+      return ['success' => FALSE, 'error' => $e->getMessage()];
+    }
+
     try {
       // Check if field storage exists (might be used on other bundles).
       $fieldStorageId = "paragraph.$fieldName";
@@ -469,8 +485,8 @@ class ParagraphsService {
         }
 
         // Handle list allowed values.
-        if (in_array($typeConfig['type'], ['list_string', 'list_integer']) && isset($settings['allowed_values'])) {
-          $storageSettings['allowed_values'] = $this->formatAllowedValues($settings['allowed_values']);
+        if ($allowedValues !== NULL) {
+          $storageSettings['allowed_values'] = $allowedValues;
         }
 
         $fieldStorage = FieldStorageConfig::create([
@@ -489,11 +505,9 @@ class ParagraphsService {
       // Handle entity reference handler settings.
       if ($typeConfig['type'] === 'entity_reference') {
         $targetType = $settings['target_type'] ?? 'node';
-        $targetBundles = $settings['target_bundles'] ?? [];
-
         $fieldSettings['handler'] = 'default:' . $targetType;
-        if (!empty($targetBundles)) {
-          $fieldSettings['handler_settings']['target_bundles'] = array_combine($targetBundles, $targetBundles);
+        if ($targetBundles !== []) {
+          $fieldSettings['handler_settings']['target_bundles'] = $targetBundles;
         }
       }
 
@@ -706,25 +720,8 @@ class ParagraphsService {
    * @return array
    *   Formatted allowed values.
    */
-  protected function formatAllowedValues(array $values): array {
-    // Check if associative array.
-    if (array_keys($values) !== range(0, count($values) - 1)) {
-      // Already key => label format.
-      return $values;
-    }
-
-    // Convert to key => label. A number is its own key, which is what a
-    // list of numbers needs. A text gets a key made from the label.
-    $result = [];
-    foreach ($values as $value) {
-      if (is_int($value) || is_float($value)) {
-        $result[$value] = (string) $value;
-        continue;
-      }
-      $key = strtolower(preg_replace('/[^a-z0-9]+/i', '_', (string) $value));
-      $result[$key] = (string) $value;
-    }
-    return $result;
+  protected function formatAllowedValues(mixed $values): array {
+    return FieldInput::allowedValues($values);
   }
 
 }

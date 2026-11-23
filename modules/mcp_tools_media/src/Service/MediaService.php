@@ -12,6 +12,7 @@ use Drupal\Core\File\FileSystemInterface;
 use Drupal\file\Entity\File;
 use Drupal\media\Entity\Media;
 use Drupal\media\Entity\MediaType;
+use Drupal\mcp_tools\Service\EntityAccess;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AuditLogger;
 use Drupal\mcp_tools\Service\McpClientBridge;
@@ -296,6 +297,9 @@ class MediaService {
     }
 
     $mediaType = $this->entityTypeManager->getStorage('media_type')->load($bundle);
+    if ($mediaType && ($denied = EntityAccess::createDenied('media', $bundle)) !== NULL) {
+      return $denied;
+    }
     if (!$mediaType) {
       return [
         'success' => FALSE,
@@ -355,6 +359,9 @@ class MediaService {
     }
 
     $media = $this->entityTypeManager->getStorage('media')->load($mid);
+    if ($media && ($denied = EntityAccess::denied($media, 'delete')) !== NULL) {
+      return $denied;
+    }
     if (!$media) {
       return ['success' => FALSE, 'error' => "Media with ID $mid not found."];
     }
@@ -456,6 +463,9 @@ class MediaService {
     }
 
     $media = $this->entityTypeManager->getStorage('media')->load($mid);
+    if ($media && ($denied = EntityAccess::denied($media, 'update')) !== NULL) {
+      return $denied;
+    }
     if (!$media) {
       return ['success' => FALSE, 'error' => "Media $mid not found."];
     }

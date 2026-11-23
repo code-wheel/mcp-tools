@@ -146,4 +146,21 @@ final class RedirectDestinationKernelTest extends KernelTestBase {
     $this->assertStringContainsString('Nothing answers', (string) $tool->getOutputValues()['warning']);
   }
 
+  /**
+   * An import says which of its redirects lead to a path where nothing is.
+   */
+  public function testAnImportWarnsPerRedirect(): void {
+    $result = $this->service->importRedirects([
+      ['source' => 'imp-good', 'destination' => '/node/1'],
+      ['source' => 'imp-bad', 'destination' => '/news/made-up'],
+    ]);
+    $this->assertTrue($result['success']);
+    $this->assertSame(2, $result['data']['created_count'], 'Both are still made.');
+    [$good, $bad] = $result['data']['created'];
+    $this->assertArrayNotHasKey('warning', $good);
+    $this->assertArrayHasKey('warning', $bad, 'A redirect to a path where nothing is was imported without a word.');
+    $this->assertStringContainsString('/news/made-up', $bad['warning']);
+    $this->assertStringContainsString('1 of them', $result['data']['message']);
+  }
+
 }

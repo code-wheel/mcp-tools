@@ -63,7 +63,7 @@ final class NestedArgumentsKernelTest extends KernelTestBase {
 
     NodeType::create(['type' => 'article', 'name' => 'Article'])->save();
 
-    $this->setUpCurrentUser([], ['mcp_tools use content']);
+    $this->setUpCurrentUser([], ['mcp_tools use content', 'bypass node access']);
     $this->config('mcp_tools.settings')
       ->set('access.allowed_scopes', ['read', 'write'])
       ->set('access.read_only_mode', FALSE)

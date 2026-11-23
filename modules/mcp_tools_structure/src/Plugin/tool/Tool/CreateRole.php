@@ -38,7 +38,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'permissions' => new InputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Permissions'),
-      description: new TranslatableMarkup('Initial permissions to grant'),
+      description: new TranslatableMarkup('Permissions to grant, by their names, e.g. ["access content", "create article content"]. mcp_structure_get_role_permissions shows the names a role has. An unknown one is refused.'),
       required: FALSE,
     ),
   ],

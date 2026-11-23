@@ -190,4 +190,47 @@ final class SearchApiServiceTest extends UnitTestCase {
     $this->assertSame('INDEX_READ_ONLY', $result['code']);
   }
 
+  /**
+   * A result the user may not view is left out, and says how many were.
+   *
+   * Results went back with label, URL and excerpt and no access check: on
+   * an index without the content_access processor, unpublished titles.
+   */
+  public function testAResultTheUserMayNotSeeIsLeftOut(): void {
+    $item = function (string $label, bool $mayView) {
+      $entity = $this->createMock(\Drupal\Core\Entity\ContentEntityInterface::class);
+      $entity->method('label')->willReturn($label);
+      $entity->method('access')->willReturn($mayView);
+      $entity->method('getEntityTypeId')->willReturn('node');
+      $entity->method('hasLinkTemplate')->willReturn(FALSE);
+      $object = $this->createMock(\Drupal\Core\TypedData\ComplexDataInterface::class);
+      $object->method('getValue')->willReturn($entity);
+      $result = $this->createMock(\Drupal\search_api\Item\ItemInterface::class);
+      $result->method('getOriginalObject')->willReturn($object);
+      $result->method('getId')->willReturn('entity:node/' . $label);
+      $result->method('getExcerpt')->willReturn('Excerpt of ' . $label);
+      return $result;
+    };
+    $resultSet = $this->createMock(ResultSetInterface::class);
+    $resultSet->method('getResultItems')->willReturn([$item('Public', TRUE), $item('Secret draft', FALSE)]);
+    $resultSet->method('getResultCount')->willReturn(2);
+    $query = $this->createMock(QueryInterface::class);
+    $query->method('keys')->willReturnSelf();
+    $query->method('range')->willReturnSelf();
+    $query->method('execute')->willReturn($resultSet);
+    $index = $this->createMock(IndexInterface::class);
+    $index->method('status')->willReturn(TRUE);
+    $index->method('query')->willReturn($query);
+    $index->method('getField')->willReturn(NULL);
+    $this->indexStorage->method('load')->willReturn($index);
+
+    $result = $this->service->search('content', 'x');
+    $this->assertStringNotContainsString('Secret draft', json_encode($result), 'A result the user may not view was given out.');
+    $this->assertSame(['Public'], array_column($result['data']['items'], 'label'));
+    $this->assertSame(1, $result['data']['not_shown']);
+
+    // A filter on a field the index does not have is refused.
+    $this->assertFalse($this->service->search('content', 'x', ['nope' => 1])['success'], 'A filter the index cannot use was dropped.');
+  }
+
 }

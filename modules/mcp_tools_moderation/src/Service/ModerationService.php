@@ -11,6 +11,7 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Entity\RevisionableStorageInterface;
 use Drupal\Core\Entity\RevisionLogInterface;
 use Drupal\Core\Session\AccountProxyInterface;
+use Drupal\mcp_tools\Service\EntityAccess;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AuditLogger;
 
@@ -173,6 +174,9 @@ class ModerationService {
   public function getModerationState(string $entityType, int $entityId): array {
     $storage = $this->entityTypeManager->getStorage($entityType);
     $entity = $storage->load($entityId);
+    if ($entity && ($denied = EntityAccess::denied($entity, 'view')) !== NULL) {
+      return $denied;
+    }
 
     if (!$entity) {
       return ['success' => FALSE, 'error' => "Entity of type '$entityType' with ID $entityId not found."];
@@ -251,6 +255,9 @@ class ModerationService {
 
     $storage = $this->entityTypeManager->getStorage($entityType);
     $entity = $storage->load($entityId);
+    if ($entity && ($denied = EntityAccess::denied($entity, 'update')) !== NULL) {
+      return $denied;
+    }
 
     if (!$entity) {
       return ['success' => FALSE, 'error' => "Entity of type '$entityType' with ID $entityId not found."];
@@ -380,6 +387,9 @@ class ModerationService {
   public function getModerationHistory(string $entityType, int $entityId, int $limit = 50): array {
     $storage = $this->entityTypeManager->getStorage($entityType);
     $entity = $storage->load($entityId);
+    if ($entity && ($denied = EntityAccess::denied($entity, 'view')) !== NULL) {
+      return $denied;
+    }
 
     if (!$entity) {
       return ['success' => FALSE, 'error' => "Entity of type '$entityType' with ID $entityId not found."];
@@ -551,7 +561,7 @@ class ModerationService {
         // published content with a draft waiting, that is the draft.
         $revisionId = $storage instanceof RevisionableStorageInterface ? $storage->getLatestRevisionId($entityId) : NULL;
         $entity = $revisionId ? $storage->loadRevision($revisionId) : $storage->load($entityId);
-        if (!$entity) {
+        if (!$entity || !$entity->access('view')) {
           continue;
         }
         $entityData = [

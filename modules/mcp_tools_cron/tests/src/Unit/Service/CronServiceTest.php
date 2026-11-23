@@ -72,7 +72,9 @@ final class CronServiceTest extends UnitTestCase {
     $this->assertSame(1700000000, $status['data']['last_run_timestamp']);
     $this->assertSame(3600, $status['data']['autorun_threshold']);
     $this->assertSame('1 hours', $status['data']['threshold_human']);
-    $this->assertSame('cronkey', $status['data']['cron_key']);
+    // A read tool does not give the key out: it runs cron from outside.
+    $this->assertArrayNotHasKey('cron_key', $status['data']);
+    $this->assertStringNotContainsString('cronkey', json_encode($status));
     $this->assertGreaterThanOrEqual(3, $status['data']['jobs_count']);
   }
 

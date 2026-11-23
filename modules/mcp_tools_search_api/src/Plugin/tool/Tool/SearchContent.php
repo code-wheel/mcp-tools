@@ -69,6 +69,11 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
       label: new TranslatableMarkup('Has More'),
       description: new TranslatableMarkup('Whether more results exist beyond the current page.'),
     ),
+    'not_shown' => new OutputDefinition(
+      data_type: 'integer',
+      label: new TranslatableMarkup('Not shown'),
+      description: new TranslatableMarkup('Results on this page left out because this user may not view them.'),
+    ),
   ],
 )]
 class SearchContent extends McpToolsToolBase {

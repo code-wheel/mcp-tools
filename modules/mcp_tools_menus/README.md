@@ -12,6 +12,11 @@ Menu and menu link management for MCP Tools.
 | `mcp_menus_update_menu_link` | Update menu link properties |
 | `mcp_menus_delete_menu_link` | Remove menu links |
 
+A link to a path of this site where nothing answers (no page, no path
+alias, no file) is still made, because the page may come later. The
+answer then has a `warning` that says so, and how to find the content
+that was meant.
+
 ## Requirements
 
 - mcp_tools (base module)

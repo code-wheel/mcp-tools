@@ -52,15 +52,21 @@ User: "Make the sidebar block only show on article pages"
 
 AI calls: mcp_configure_block(
   block_id: "olivero_views_block__content_recent_block_1",
-  settings: {
-    visibility: {
-      node_type: {
-        bundles: ["article"]
-      }
+  visibility: {
+    "entity_bundle:node": {
+      bundles: ["article"]
     }
   }
 )
 ```
+
+Visibility is keyed by condition, the same for placing and configuring:
+`request_path` (`pages`, one path a line or a list), `user_role`
+(`roles`, a list) and `entity_bundle:node` (`bundles`, a list of content
+types). The conditions given replace the ones the block had.
+
+`settings` are the block's own settings, by name. A setting the block
+does not have is refused, and the answer names the ones it has.
 
 ### Place System Blocks
 

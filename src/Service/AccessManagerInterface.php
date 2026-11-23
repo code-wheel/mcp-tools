@@ -78,11 +78,13 @@ interface AccessManagerInterface {
    *
    * @param string $operationType
    *   The type of operation for rate limiting: 'write', 'delete', 'structure'.
+   * @param int $items
+   *   How many items the call writes: each one counts.
    *
    * @return bool
    *   TRUE if write operations are allowed.
    */
-  public function canWrite(string $operationType = 'write'): bool;
+  public function canWrite(string $operationType = 'write', int $items = 1): bool;
 
   /**
    * Check if admin operations are allowed.

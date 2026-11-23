@@ -49,13 +49,25 @@ use Drupal\tool\TypedData\InputDefinition;
     'elements' => new InputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Elements definition'),
-      description: new TranslatableMarkup('Updated YAML-style element definitions. Replaces existing elements. Use mcp_get_webform to see current elements.'),
+      description: new TranslatableMarkup('All of the form\'s elements, keyed by element name, e.g. {"email": {"#type": "email", "#title": "Email"}}. They replace the elements there were: mcp_get_webform shows them. Each needs a #type. To add or change one, use set_elements.'),
+      required: FALSE,
+    ),
+    'set_elements' => new InputDefinition(
+      data_type: 'map',
+      label: new TranslatableMarkup('Elements to add or change'),
+      description: new TranslatableMarkup('Add or change some elements and keep the others, keyed by element name, e.g. {"phone": {"#type": "tel", "#title": "Phone"}}. An element of that name is replaced, a new one is added at the end.'),
+      required: FALSE,
+    ),
+    'remove_elements' => new InputDefinition(
+      data_type: 'list',
+      label: new TranslatableMarkup('Elements to remove'),
+      description: new TranslatableMarkup('Names of elements to remove, e.g. ["phone"]. The others are kept.'),
       required: FALSE,
     ),
     'settings' => new InputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Settings'),
-      description: new TranslatableMarkup('Webform settings: confirmation_type, confirmation_message, submission_limit, etc.'),
+      description: new TranslatableMarkup('Webform settings by their names, e.g. {"confirmation_message": "Thanks", "limit_total": 100}.'),
       required: FALSE,
     ),
   ],
@@ -129,6 +141,11 @@ class UpdateWebform extends McpToolsToolBase {
     }
     if (isset($input['settings'])) {
       $updates['settings'] = $input['settings'];
+    }
+    foreach (['set_elements', 'remove_elements'] as $key) {
+      if (!empty($input[$key])) {
+        $updates[$key] = $input[$key];
+      }
     }
 
     if (empty($updates)) {

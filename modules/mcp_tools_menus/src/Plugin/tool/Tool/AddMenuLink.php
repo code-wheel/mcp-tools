@@ -91,6 +91,11 @@ use Drupal\tool\TypedData\InputDefinition;
       label: new TranslatableMarkup('Plugin ID'),
       description: new TranslatableMarkup('Internal plugin ID (menu_link_content:UUID). Use as parent value to nest links under this one.'),
     ),
+    'warning' => new OutputDefinition(
+      data_type: 'string',
+      label: new TranslatableMarkup('Warning'),
+      description: new TranslatableMarkup('Set when the link points to a path of this site where nothing answers now: no page, no path alias, no file. The link is made all the same.'),
+    ),
     'message' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),

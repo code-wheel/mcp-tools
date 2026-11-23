@@ -47,7 +47,7 @@ class ContentAuditor {
       $query = $nodeStorage->getQuery()
         ->condition('changed', $staleTimestamp, '<')
         ->condition('status', 1)
-        ->accessCheck(FALSE)
+        ->accessCheck(TRUE)
         ->range(0, 50);
 
       if (!empty($contentTypes)) {
@@ -55,7 +55,9 @@ class ContentAuditor {
       }
 
       $staleNids = $query->execute();
-      $staleNodes = $nodeStorage->loadMultiple($staleNids);
+      // Only what the caller may see: without node grant modules a query's
+      // access check does not hide unpublished content.
+      $staleNodes = array_filter($nodeStorage->loadMultiple($staleNids), static fn($node) => $node->access('view'));
 
       foreach ($staleNodes as $node) {
         $results['stale_content'][] = [
@@ -70,7 +72,7 @@ class ContentAuditor {
       // Find orphaned content (unpublished with no recent views).
       $query = $nodeStorage->getQuery()
         ->condition('status', 0)
-        ->accessCheck(FALSE)
+        ->accessCheck(TRUE)
         ->range(0, 50);
 
       if (!empty($contentTypes)) {
@@ -78,7 +80,9 @@ class ContentAuditor {
       }
 
       $orphanedNids = $query->execute();
-      $orphanedNodes = $nodeStorage->loadMultiple($orphanedNids);
+      // Only what the caller may see: without node grant modules a query's
+      // access check does not hide unpublished content.
+      $orphanedNodes = array_filter($nodeStorage->loadMultiple($orphanedNids), static fn($node) => $node->access('view'));
 
       foreach ($orphanedNodes as $node) {
         $results['orphaned_content'][] = [
@@ -105,6 +109,11 @@ class ContentAuditor {
           if (!empty($draftNids)) {
             $draftNodes = $nodeStorage->loadMultiple($draftNids);
             foreach ($draftNodes as $node) {
+              // The drafts come from a table query: only what the caller
+              // may see.
+              if (!$node->access('view')) {
+                continue;
+              }
               $results['drafts'][] = [
                 'nid' => $node->id(),
                 'title' => $node->getTitle(),

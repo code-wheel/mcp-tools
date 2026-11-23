@@ -1,6 +1,6 @@
 name: 'MCP Tools - Views'
 type: module
-description: 'Views management: create, update, delete, and configure views.'
+description: 'Views management: create, enable, disable and delete views, and add displays.'
 package: MCP Tools
 core_version_requirement: ^10.5 || ^11
 dependencies:

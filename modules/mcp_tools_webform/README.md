@@ -100,6 +100,15 @@ AI calls: mcp_get_webform_submissions(
 )
 ```
 
+## Elements
+
+Elements are keyed by name. Each one needs a `#type`. Properties can be
+written as webform's YAML has them (`#title`) or without the `#`
+(`title`): both are stored as `#title`. An element inside a fieldset
+goes inside it, keyed by its name. An element with no type is refused.
+`mcp_update_webform` replaces all elements: read them first with
+`mcp_get_webform`.
+
 ## Supported Element Types
 
 - `textfield` - Single-line text
@@ -117,5 +126,5 @@ AI calls: mcp_get_webform_submissions(
 ## Safety Features
 
 - **Submission privacy:** Sensitive submission data handled carefully
-- **Element validation:** Form elements validated before save
+- **Element validation:** an element with no type is refused before save
 - **Audit logging:** All webform operations logged

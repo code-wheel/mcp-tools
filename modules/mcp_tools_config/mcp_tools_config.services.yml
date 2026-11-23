@@ -5,6 +5,7 @@ services:
     arguments:
       - '@config.storage'
       - '@config.storage.sync'
+      - '@config.factory'
 
   mcp_tools_config.mcp_change_tracker:
     class: Drupal\mcp_tools_config\Service\McpChangeTracker

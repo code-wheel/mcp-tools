@@ -63,7 +63,7 @@ class BatchProgressNotificationKernelTest extends KernelTestBase {
 
     NodeType::create(['type' => 'article', 'name' => 'Article'])->save();
 
-    $this->setUpCurrentUser([], ['mcp_tools use batch']);
+    $this->setUpCurrentUser([], ['mcp_tools use batch', 'bypass node access']);
     $this->config('mcp_tools.settings')
       ->set('access.allowed_scopes', ['read', 'write'])
       ->set('access.read_only_mode', FALSE)

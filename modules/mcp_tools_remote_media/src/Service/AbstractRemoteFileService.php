@@ -13,7 +13,6 @@ use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AuditLogger;
 use Drupal\mcp_tools_media\Service\MediaService;
 use GuzzleHttp\ClientInterface;
-use GuzzleHttp\Exception\RequestException;
 
 /**
  * Abstract base service for fetching remote files and creating Drupal entities.
@@ -129,10 +128,22 @@ abstract class AbstractRemoteFileService {
    *   Error array if the URL resolves to a blocked IP, NULL if safe.
    */
   protected function validateNotInternalUrl(string $url): ?array {
+    $ip = $this->publicIp($url);
+    return is_array($ip) ? $ip : NULL;
+  }
+
+  /**
+   * The address a URL's host resolves to, if it is public.
+   *
+   * @return string|array
+   *   The IP, or an error array when it is private, reserved or unknown.
+   */
+  protected function publicIp(string $url): string|array {
     $host = parse_url($url, PHP_URL_HOST);
     if ($host === NULL || $host === FALSE) {
       return ['success' => FALSE, 'error' => 'Unable to parse host from URL.'];
     }
+    $host = trim($host, '[]');
 
     // Resolve hostname to IP.
     $ip = gethostbyname($host);
@@ -150,7 +161,7 @@ abstract class AbstractRemoteFileService {
       ];
     }
 
-    return NULL;
+    return $ip;
   }
 
   /**
@@ -209,19 +220,41 @@ abstract class AbstractRemoteFileService {
    *   on failure.
    */
   protected function fetchFromRemote(string $url): array {
-    try {
-      $response = $this->httpClient->get($url, [
-        'timeout' => 30,
-        'connect_timeout' => 10,
-        'allow_redirects' => ['max' => 3],
-        'headers' => [
-          'User-Agent' => 'Drupal MCP Tools Remote Media/1.0',
-        ],
-      ]);
-
-      return ['response' => $response];
+    // The address checked is the address asked: the name is not looked up
+    // again between the check and the request (DNS rebinding).
+    $ip = $this->publicIp($url);
+    if (is_array($ip)) {
+      return $ip;
     }
-    catch (RequestException $e) {
+    $host = trim((string) parse_url($url, PHP_URL_HOST), '[]');
+    $port = parse_url($url, PHP_URL_PORT) ?: (parse_url($url, PHP_URL_SCHEME) === 'https' ? 443 : 80);
+    $options = [
+      'timeout' => 30,
+      'connect_timeout' => 10,
+      // Each hop is checked as the first one was: a public server must not
+      // send the fetch on to an internal one.
+      'allow_redirects' => [
+        'max' => 3,
+        'protocols' => ['http', 'https'],
+        'on_redirect' => function ($request, $response, $uri): void {
+          $next = (string) $uri;
+          $error = $this->validateUrl($next) ?? $this->validateNotInternalUrl($next);
+          if ($error !== NULL) {
+            throw new \RuntimeException('Redirect refused: ' . $error['error']);
+          }
+        },
+      ],
+      'headers' => [
+        'User-Agent' => 'Drupal MCP Tools Remote Media/1.0',
+      ],
+    ];
+    if (!filter_var($host, FILTER_VALIDATE_IP) && defined('CURLOPT_RESOLVE')) {
+      $options['curl'] = [CURLOPT_RESOLVE => ["$host:$port:$ip"]];
+    }
+    try {
+      return ['response' => $this->httpClient->get($url, $options)];
+    }
+    catch (\Throwable $e) {
       return ['success' => FALSE, 'error' => 'HTTP request failed: ' . $e->getMessage()];
     }
   }
@@ -367,10 +400,15 @@ abstract class AbstractRemoteFileService {
     $basename = $urlPath ? basename($urlPath) : '';
     $ext = strtolower(pathinfo($basename, PATHINFO_EXTENSION));
 
+    $mimeToExt = $this->getMimeToExtMap();
+    $wanted = $mimeToExt[$mimeType] ?? 'bin';
+    $same = $ext === $wanted || ($wanted === 'jpg' && $ext === 'jpeg');
     if (empty($ext) || strlen($ext) > 5) {
-      $mimeToExt = $this->getMimeToExtMap();
-      $ext = $mimeToExt[$mimeType] ?? 'bin';
-      $basename = preg_replace('/[^a-zA-Z0-9_\\-]/', '_', $name) . '.' . $ext;
+      $basename = preg_replace('/[^a-zA-Z0-9_\\-]/', '_', $name) . '.' . $wanted;
+    }
+    elseif (!$same) {
+      // The extension follows the content.
+      $basename = pathinfo($basename, PATHINFO_FILENAME) . '.' . $wanted;
     }
 
     return preg_replace('/[^a-zA-Z0-9._-]/', '_', $basename);
@@ -547,6 +585,9 @@ abstract class AbstractRemoteFileService {
       if ($error = $this->validateContentMime($body)) {
         return $error;
       }
+      // What the file is, not what the server called it, decides how it
+      // is cleaned and named: an SVG sent as image/png was saved uncleaned.
+      $mimeType = $this->detectMimeFromContent($body) ?? $mimeType;
 
       $sanitizeResult = $this->sanitizeContent($body, $mimeType);
       if (isset($sanitizeResult['error'])) {

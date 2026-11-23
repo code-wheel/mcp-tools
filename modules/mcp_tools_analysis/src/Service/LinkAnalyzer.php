@@ -77,11 +77,13 @@ class LinkAnalyzer {
       $nodeStorage = $this->entityTypeManager->getStorage('node');
       $query = $nodeStorage->getQuery()
         ->condition('status', 1)
-        ->accessCheck(FALSE)
+        ->accessCheck(TRUE)
         ->range(0, $limit);
       $nids = $query->execute();
 
-      $nodes = $nodeStorage->loadMultiple($nids);
+      // Only what the caller may see: without node grant modules a query's
+      // access check does not hide unpublished content.
+      $nodes = array_filter($nodeStorage->loadMultiple($nids), static fn($node) => $node->access('view'));
       $linksToCheck = [];
 
       foreach ($nodes as $node) {

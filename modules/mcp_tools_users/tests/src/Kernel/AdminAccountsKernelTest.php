@@ -55,7 +55,9 @@ final class AdminAccountsKernelTest extends KernelTestBase {
     $this->users['plain'] = $this->createUser([], 'plain');
     $this->users['administrator'] = $this->createUser([], 'boss', FALSE, ['roles' => ['administrator'], 'mail' => 'boss@example.com']);
     $this->users['site_owner'] = $this->createUser([], 'owner', FALSE, ['roles' => ['site_owner'], 'mail' => 'owner@example.com']);
-    $this->setUpCurrentUser([], ['mcp_tools use users', 'mcp_tools use batch']);
+    // The users tools edit other accounts: Drupal asks "administer users"
+    // for that (tools follow entity access).
+    $this->setUpCurrentUser([], ['mcp_tools use users', 'mcp_tools use batch', 'administer users']);
     $this->config('mcp_tools.settings')
       ->set('access.allowed_scopes', ['read', 'write'])
       ->set('access.read_only_mode', FALSE)

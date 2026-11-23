@@ -1,6 +1,6 @@
 name: 'MCP Tools - Config Management'
 type: module
-description: 'MCP tools for configuration export and dry-run mode.'
+description: 'Configuration diff, export and change tracking, and a preview of what an operation would change.'
 package: MCP Tools
 core_version_requirement: ^10.5 || ^11
 lifecycle: experimental

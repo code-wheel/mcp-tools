@@ -142,6 +142,12 @@ final class ToolApiCallToolHandlerKernelTest extends KernelTestBase {
     $this->assertInstanceOf(Response::class, $extra, $extra instanceof Error ? $extra->message : '');
     $this->assertFalse($extra->result->isError, (string) $extra->result->content[0]->text);
 
+    // The module part wrong: mcp_structure_get_status is mcp_cache_get_status,
+    // the one tool whose name ends that way.
+    $module = $handler->handle((new CallToolRequest('mcp_structure_get_status', []))->withId(9), $session);
+    $this->assertInstanceOf(Response::class, $module, $module instanceof Error ? $module->message : '');
+    $this->assertFalse($module->result->isError, (string) $module->result->content[0]->text);
+
     // A name with nothing behind it stays unknown.
     $none = $handler->handle((new CallToolRequest('mcp_no_such_thing', []))->withId(4), $session);
     $this->assertInstanceOf(Error::class, $none);

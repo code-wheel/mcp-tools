@@ -484,6 +484,22 @@ class ViewsService {
   }
 
   /**
+   * The permission to see a view of a base table.
+   */
+  protected function viewPermission(string $baseTable): string {
+    return match ($baseTable) {
+      'users_field_data' => 'access user profiles',
+      'file_managed' => 'access files overview',
+      'media_field_data' => 'view media',
+      'comment_field_data' => 'access comments',
+      'node_field_data', 'taxonomy_term_field_data' => 'access content',
+      // Another table: only who may build views sees it until a person
+      // sets its access.
+      default => 'administer views',
+    };
+  }
+
+  /**
    * Build default display configuration.
    */
   protected function buildDefaultDisplay(string $baseTable, array $options): array {
@@ -507,8 +523,27 @@ class ViewsService {
         'row' => [
           'type' => 'fields',
         ],
+        // A view had no access rule, so a page of users or files was open
+        // to anonymous visitors. The permission Drupal's views wizard uses
+        // for what the view lists.
+        'access' => [
+          'type' => 'perm',
+          'options' => ['perm' => $this->viewPermission($baseTable)],
+        ],
       ],
     ];
+
+    // Only what is published, for the tables that have a status.
+    $statusTables = ['users_field_data', 'media_field_data', 'comment_field_data'];
+    if (in_array($baseTable, $statusTables, TRUE)) {
+      $display['display_options']['filters']['status'] = [
+        'id' => 'status',
+        'table' => $baseTable,
+        'field' => 'status',
+        'value' => '1',
+        'plugin_id' => 'boolean',
+      ];
+    }
 
     // Add content type filter if specified.
     if (!empty($options['content_type']) && $baseTable === 'node_field_data') {

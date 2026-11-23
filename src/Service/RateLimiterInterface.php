@@ -19,6 +19,8 @@ interface RateLimiterInterface {
    *
    * @param string $operationType
    *   The type of operation: 'write', 'delete', 'structure', 'admin'.
+   * @param int $items
+   *   How many items the call writes: each one counts.
    *
    * @return array
    *   Array with keys:
@@ -26,7 +28,7 @@ interface RateLimiterInterface {
    *   - error: string|null - Error message if not allowed.
    *   - retry_after: int|null - Seconds until retry is allowed.
    */
-  public function checkLimit(string $operationType = 'write'): array;
+  public function checkLimit(string $operationType = 'write', int $items = 1): array;
 
   /**
    * Check if an expensive read operation is allowed.

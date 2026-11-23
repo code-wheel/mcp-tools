@@ -208,6 +208,11 @@ class WebformService {
       return ['success' => FALSE, 'error' => "Webform with ID '$id' already exists."];
     }
 
+    $encoded = $this->elementProperties($elements, '');
+    if (is_string($encoded)) {
+      return ['success' => FALSE, 'error' => $encoded];
+    }
+
     try {
       $webformData = [
         'id' => $id,
@@ -215,8 +220,8 @@ class WebformService {
         'status' => 'open',
       ];
 
-      if (!empty($elements)) {
-        $webformData['elements'] = $this->encodeElements($elements);
+      if ($encoded !== []) {
+        $webformData['elements'] = Yaml::encode($encoded);
       }
 
       $webform = $this->entityTypeManager->getStorage('webform')->create($webformData);
@@ -279,7 +284,36 @@ class WebformService {
       }
 
       if (isset($updates['elements'])) {
-        $webform->set('elements', $this->encodeElements($updates['elements']));
+        $encoded = $this->elementProperties((array) $updates['elements'], '');
+        if (is_string($encoded)) {
+          return ['success' => FALSE, 'error' => $encoded];
+        }
+        $webform->set('elements', Yaml::encode($encoded));
+      }
+
+      // One element at a time: a model that had to send all of them back
+      // to add one often could not write so large a call.
+      if (isset($updates['set_elements']) || isset($updates['remove_elements'])) {
+        $elements = $webform->getElementsDecoded();
+        foreach ((array) ($updates['remove_elements'] ?? []) as $name) {
+          if (!array_key_exists((string) $name, $elements)) {
+            return [
+              'success' => FALSE,
+              'error' => "Webform '$id' has no element '$name'. Its elements: " . implode(', ', array_keys($elements)) . '.',
+            ];
+          }
+          unset($elements[(string) $name]);
+        }
+        if (isset($updates['set_elements'])) {
+          $encoded = $this->elementProperties((array) $updates['set_elements'], '');
+          if (is_string($encoded)) {
+            return ['success' => FALSE, 'error' => $encoded];
+          }
+          foreach ($encoded as $name => $element) {
+            $elements[$name] = $element;
+          }
+        }
+        $webform->set('elements', Yaml::encode($elements));
       }
 
       if (isset($updates['settings'])) {
@@ -450,46 +484,41 @@ class WebformService {
   }
 
   /**
-   * Encode elements array to YAML string.
+   * The elements with "#" property keys, as Drupal stores them, or an error.
    *
-   * @param array $elements
-   *   Elements definition.
-   *
-   * @return string
-   *   YAML encoded elements.
+   * Both ways of writing a property are taken: "#type" as webform's YAML has
+   * it, and "type". Before, only plain keys of seven names were read, and an
+   * element written with "#" keys, as the tools' descriptions said, was
+   * stored empty with "success".
    */
-  protected function encodeElements(array $elements): string {
-    $yamlElements = [];
-
+  private function elementProperties(array $elements, string $parent): array|string {
+    $out = [];
     foreach ($elements as $key => $element) {
-      $yamlElement = [];
-
-      if (isset($element['type'])) {
-        $yamlElement['#type'] = $element['type'];
+      $name = $parent . $key;
+      if (!is_array($element)) {
+        return "Element '$name' must be an object, like {\"#type\": \"textfield\", \"#title\": \"Name\"}.";
       }
-      if (isset($element['title'])) {
-        $yamlElement['#title'] = $element['title'];
+      $properties = [];
+      foreach ($element as $property => $value) {
+        $property = (string) $property;
+        // A child of a container (a fieldset) is an element of its own.
+        if (is_array($value) && (isset($value['#type']) || isset($value['type']))) {
+          $child = $this->elementProperties([$property => $value], $name . '.');
+          if (is_string($child)) {
+            return $child;
+          }
+          $properties += $child;
+          continue;
+        }
+        $property = str_starts_with($property, '#') ? $property : '#' . $property;
+        $properties[$property] = $property === '#required' ? (bool) $value : $value;
       }
-      if (isset($element['required'])) {
-        $yamlElement['#required'] = (bool) $element['required'];
+      if (!isset($properties['#type'])) {
+        return "Element '$name' has no type. Give each element one, like {\"#type\": \"email\", \"#title\": \"Email\"}.";
       }
-      if (isset($element['description'])) {
-        $yamlElement['#description'] = $element['description'];
-      }
-      if (isset($element['options'])) {
-        $yamlElement['#options'] = $element['options'];
-      }
-      if (isset($element['default_value'])) {
-        $yamlElement['#default_value'] = $element['default_value'];
-      }
-      if (isset($element['placeholder'])) {
-        $yamlElement['#placeholder'] = $element['placeholder'];
-      }
-
-      $yamlElements[$key] = $yamlElement;
+      $out[$key] = $properties;
     }
-
-    return Yaml::encode($yamlElements);
+    return $out;
   }
 
 }

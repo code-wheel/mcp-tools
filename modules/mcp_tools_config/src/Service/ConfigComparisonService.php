@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace Drupal\mcp_tools_config\Service;
 
 use Drupal\Core\Config\StorageComparer;
+use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Config\StorageInterface;
+use Drupal\mcp_tools\Service\SecretRedactor;
 use Symfony\Component\Yaml\Yaml;
 
 /**
@@ -16,7 +18,42 @@ class ConfigComparisonService {
   public function __construct(
     protected StorageInterface $activeStorage,
     protected StorageInterface $syncStorage,
+    protected ?ConfigFactoryInterface $configFactory = NULL,
   ) {}
+
+  /**
+   * A diff answer without secrets, unless the site lets them out.
+   *
+   * The get_config tool redacted them, and the diff, a read tool too, gave
+   * them raw.
+   */
+  protected function redacted(array $result): array {
+    if ($this->configFactory?->get('mcp_tools.settings')->get('output.include_sensitive') || !isset($result['data'])) {
+      return $result;
+    }
+    foreach (['active_data', 'sync_data'] as $side) {
+      if (isset($result['data'][$side]) && is_array($result['data'][$side])) {
+        $result['data'][$side] = SecretRedactor::redact($result['data'][$side]);
+      }
+    }
+    foreach ($result['data']['diff'] ?? [] as $i => $entry) {
+      if (SecretRedactor::isSensitivePath((string) $entry['path'])) {
+        foreach (['old_value', 'new_value'] as $value) {
+          if (array_key_exists($value, $entry)) {
+            $result['data']['diff'][$i][$value] = SecretRedactor::REDACTED;
+          }
+        }
+      }
+      else {
+        foreach (['old_value', 'new_value'] as $value) {
+          if (isset($entry[$value]) && is_array($entry[$value])) {
+            $result['data']['diff'][$i][$value] = SecretRedactor::redact($entry[$value]);
+          }
+        }
+      }
+    }
+    return $result;
+  }
 
   /**
    * Get configuration changes between active and sync storage.
@@ -102,6 +139,13 @@ class ConfigComparisonService {
    *   Result array with diff information.
    */
   public function getConfigDiff(string $configName): array {
+    return $this->redacted($this->rawConfigDiff($configName));
+  }
+
+  /**
+   * The diff with every value, for redacted() to clean.
+   */
+  protected function rawConfigDiff(string $configName): array {
     try {
       $activeData = $this->activeStorage->read($configName);
       $syncData = $this->syncStorage->read($configName);

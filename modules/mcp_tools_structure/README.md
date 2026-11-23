@@ -69,6 +69,10 @@ Options (`allowed_values`) are a list of labels, a list of whole
 numbers, or items like `{"value": "d", "label": "Draft"}`. Given with
 `string` or `integer`, the field is made as a list field and the answer
 says so. With any other type the call is refused.
+
+Reference fields take `target_bundles` by machine name, like
+`["tags"]`. A bundle that does not exist is refused, and the answer
+names the ones there are.
 - `email` / `telephone` - Contact fields
 
 ## Requirements

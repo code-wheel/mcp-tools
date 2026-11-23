@@ -65,10 +65,14 @@ class ElicitationConfirmationKernelTest extends KernelTestBase {
 
     NodeType::create(['type' => 'article', 'name' => 'Article'])->save();
 
-    $this->setUpCurrentUser([], ['mcp_tools use content']);
+    $this->setUpCurrentUser([], ['mcp_tools use content', 'bypass node access']);
     $this->config('mcp_tools.settings')
       ->set('access.allowed_scopes', ['read', 'write'])
       ->set('access.read_only_mode', FALSE)
+      // These tests are about the delete tool's own question and flag, on a
+      // site that does not insist on a yes (one from before 1.0.0-beta22).
+      // testASiteThatInsistsDeletesAfterAYes() is the new site.
+      ->set('access.confirm_destructive_tools', FALSE)
       ->save();
     $this->container->get('mcp_tools.access_manager')->setScopes(['read', 'write']);
   }
@@ -237,6 +241,42 @@ class ElicitationConfirmationKernelTest extends KernelTestBase {
     $storage = $this->container->get('entity_type.manager')->getStorage('node');
     $storage->resetCache([$nid]);
     $this->assertNotNull($storage->load($nid));
+  }
+
+  /**
+   * A new site, through the server as it runs: a yes lets the delete run.
+   *
+   * The site insists on a yes. The server asks, marks the call when the
+   * answer is yes, and the tool, which refuses a caller nobody asked, sees
+   * that mark and runs.
+   */
+  public function testASiteThatInsistsDeletesAfterAYes(): void {
+    $this->config('mcp_tools.settings')->set('access.confirm_destructive_tools', TRUE)->save();
+    $node = Node::create(['type' => 'article', 'title' => 'Asked', 'langcode' => 'en']);
+    $node->save();
+    $nid = (int) $node->id();
+
+    $handler = new ToolApiCallToolHandler(
+      $this->container->get('plugin.manager.tool'),
+      new NullLogger(),
+      FALSE,
+      'mcp_tools',
+      new ToolInputValidator(new ToolApiSchemaConverter(), new NullLogger()),
+      NULL,
+      NULL,
+      NULL,
+      $this->container->get('mcp_tools.access_manager'),
+      $this->container->get('mcp_tools.tool_call_context'),
+    );
+    $request = (new CallToolRequest('mcp_delete_content', ['nid' => $nid]))->withId(5);
+    $fiber = new \Fiber(fn() => $handler->handle($request, $this->buildSession(TRUE)));
+    $this->assertInstanceOf(ElicitRequest::class, $this->pumpToElicit($fiber));
+    $response = $this->finish($fiber, new Response(5, ['action' => 'accept', 'content' => ['confirm' => TRUE]]));
+
+    $this->assertTrue($response->result->structuredContent['success'], (string) $response->result->content[0]->text);
+    $storage = $this->container->get('entity_type.manager')->getStorage('node');
+    $storage->resetCache([$nid]);
+    $this->assertNull($storage->load($nid));
   }
 
 }

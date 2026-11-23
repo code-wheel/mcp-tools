@@ -64,6 +64,10 @@ abstract class McpToolsToolBase extends ToolBase {
   protected function doExecute(array $values): ExecutableResult {
     $this->toolCallContext?->enter();
     try {
+      $refusal = $this->unconfirmedFor($values);
+      if ($refusal !== NULL) {
+        return ExecutableResult::failure(self::resultMessage($refusal));
+      }
       try {
         $legacy = $this->executeLegacy($values);
       }
@@ -114,6 +118,47 @@ abstract class McpToolsToolBase extends ToolBase {
     finally {
       $this->toolCallContext?->leave();
     }
+  }
+
+  /**
+   * Invokers where a person runs the tool, or the site's own code does.
+   *
+   * No invoker is a form such as Tool Explorer's, or code calling the tool.
+   * "php" is Tool API's runner without an invoker, "drush" its command.
+   */
+  private const PERSON_INVOKERS = ['php', 'drush'];
+
+  /**
+   * Why a strong call is not run for this caller, or NULL when it may run.
+   *
+   * A new site runs a strong call (a tool that declares itself destructive,
+   * or one of ours that says so for these values) only after a person said
+   * yes. Our server and ToolPolicy hold to that. A tool of ours can also be
+   * called on ways in that are not ours: MCP Server's tool bridge without
+   * mcp_tools_policy, Tool API's own AI connector, another module's agent.
+   * Tool API tells the tool who called it (the invoker). Where that is not
+   * a person and nobody said yes, the tool refuses, so the rule holds on
+   * every way in to our tools, whatever the caller.
+   *
+   * @param array<string, mixed> $values
+   *   The values of the call.
+   */
+  private function unconfirmedFor(array $values): ?string {
+    if ($this->accessManager === NULL || !$this->accessManager->destructiveToolsNeedConfirmation() || $this->toolCallContext?->wasConfirmedByUser()) {
+      return NULL;
+    }
+    $invoker = $this->getInvoker()?->id;
+    if ($invoker === NULL || in_array($invoker, self::PERSON_INVOKERS, TRUE)) {
+      return NULL;
+    }
+    $reason = $this instanceof AsksFirstInterface ? $this->reasonToAsk($values) : NULL;
+    $destructive = $this->getPluginDefinition() instanceof ToolDefinition && $this->getPluginDefinition()->get('destructive') === TRUE;
+    if ($reason === NULL && !$destructive) {
+      return NULL;
+    }
+    $what = $reason ?? sprintf("The tool '%s' says it is destructive.", (string) $this->getPluginId());
+    return $what . sprintf(' This site runs such a call only after a person confirmed it, and this caller (%s) did not ask anyone, so nothing was run.', $invoker)
+      . ' No argument changes that: do not call it again. Tell the user what you wanted to run, so a person can do it or allow it.';
   }
 
   /**

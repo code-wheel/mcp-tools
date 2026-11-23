@@ -19,7 +19,7 @@ use Drupal\tool\TypedData\InputDefinition;
 #[Tool(
   id: 'mcp_tools_get_recent_content',
   label: new TranslatableMarkup('Get Recent Content'),
-  description: new TranslatableMarkup('Get recently created or modified content from the Drupal site.'),
+  description: new TranslatableMarkup('List content, newest first, optionally of one type and only published or only unpublished. "matching" says how many items match in all, also beyond the limit: use it to count content.'),
   operation: ToolOperation::Read,
   input_definitions: [
     'limit' => new InputDefinition(
@@ -35,6 +35,12 @@ use Drupal\tool\TypedData\InputDefinition;
       description: new TranslatableMarkup('Filter by content type machine name (e.g., "article", "page"). Leave empty for all types.'),
       required: FALSE,
     ),
+    'status' => new InputDefinition(
+      data_type: 'string',
+      label: new TranslatableMarkup('Status'),
+      description: new TranslatableMarkup('"published" or "unpublished". Leave empty for both.'),
+      required: FALSE,
+    ),
     'sort' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Sort By'),
@@ -47,7 +53,12 @@ use Drupal\tool\TypedData\InputDefinition;
     'total' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Items Returned'),
-      description: new TranslatableMarkup('Number of content items in the results.'),
+      description: new TranslatableMarkup('Number of content items in this answer, at most the limit. Not a count of the site: see matching.'),
+    ),
+    'matching' => new OutputDefinition(
+      data_type: 'integer',
+      label: new TranslatableMarkup('Matching Items'),
+      description: new TranslatableMarkup('How many items match the type and status in all, also beyond the limit.'),
     ),
     'sorted_by' => new OutputDefinition(
       data_type: 'string',
@@ -89,10 +100,21 @@ class GetRecentContent extends McpToolsToolBase {
     // Read once to avoid returning NULL when the key is absent.
     $sortInput = $input['sort'] ?? 'changed';
     $sort = in_array($sortInput, ['created', 'changed']) ? $sortInput : 'changed';
+    // "1" and "true" are what a model sends for published as well.
+    $status = strtolower(trim((string) ($input['status'] ?? '')));
+    $published = match ($status) {
+      'published', '1', 'true', 'yes' => TRUE,
+      'unpublished', '0', 'false', 'no' => FALSE,
+      '' => NULL,
+      default => 'wrong',
+    };
+    if ($published === 'wrong') {
+      return ['success' => FALSE, 'error' => 'status is "published" or "unpublished", or empty for both.'];
+    }
 
     return [
       'success' => TRUE,
-      'data' => $this->contentAnalysis->getRecentContent($limit, $type, $sort),
+      'data' => $this->contentAnalysis->getRecentContent($limit, $type, $sort, $published),
     ];
   }
 

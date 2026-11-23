@@ -66,4 +66,28 @@ final class ConfigComparisonServiceTest extends UnitTestCase {
     $this->assertSame('new_in_active', $result['data']['status']);
   }
 
+  /**
+   * The diff, a read tool, gives no secrets: get_config already did not.
+   */
+  public function testTheDiffGivesNoSecrets(): void {
+    $this->activeStorage->method('read')->willReturnMap([
+      ['mail.new', ['host' => 'smtp.example.com', 'smtp_password' => 'SECRET-1', 'credentials' => ['user' => 'u', 'value' => 'SECRET-2']]],
+      ['mail.changed', ['host' => 'b', 'api_key' => 'SECRET-NEW']],
+    ]);
+    $this->syncStorage->method('read')->willReturnMap([
+      ['mail.new', FALSE],
+      ['mail.changed', ['host' => 'a', 'api_key' => 'SECRET-OLD']],
+    ]);
+    foreach (['mail.new', 'mail.changed'] as $name) {
+      $out = json_encode($this->service->getConfigDiff($name));
+      $this->assertStringNotContainsString('SECRET', $out, "$name gave a secret: $out");
+      $this->assertStringContainsString('[REDACTED]', $out);
+    }
+    // What is not a secret is still shown, and a changed secret still
+    // shows as a change.
+    $changed = $this->service->getConfigDiff('mail.changed');
+    $this->assertContains('api_key', array_column($changed['data']['diff'], 'path'));
+    $this->assertSame('b', $changed['data']['active_data']['host']);
+  }
+
 }

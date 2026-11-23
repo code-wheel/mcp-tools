@@ -314,6 +314,28 @@ final class ComponentFactoryTest extends UnitTestCase {
     $this->assertCount(1, $result['created']);
   }
 
+  /**
+   * A template's view is not open to everyone, and lists only published.
+   */
+  public function testATemplateViewHasAccessAndAStatusFilter(): void {
+    $view = $this->getMockBuilder('\\Drupal\\views\\Entity\\View')
+      ->disableOriginalConstructor()
+      ->getMock();
+    $given = NULL;
+    $storage = $this->createMock(EntityStorageInterface::class);
+    $storage->method('load')->willReturn(NULL);
+    $storage->method('create')->willReturnCallback(function (array $values) use (&$given, $view) {
+      $given = $values;
+      return $view;
+    });
+    $this->entityTypeManager->method('getStorage')->with('view')->willReturn($storage);
+
+    $this->factory->createViews(['recent' => ['label' => 'Recent', 'display' => ['page' => '/articles']]], TRUE);
+    $options = $given['display']['default']['display_options'] ?? [];
+    $this->assertSame(['type' => 'perm', 'options' => ['perm' => 'access content']], $options['access'] ?? NULL, 'A template view at /articles had no access rule.');
+    $this->assertSame('1', $options['filters']['status']['value'] ?? NULL, 'A template view listed unpublished content.');
+  }
+
   public function testCreateViewsSkipsExisting(): void {
     $existing = $this->getMockBuilder('\\Drupal\\views\\Entity\\View')
       ->disableOriginalConstructor()

@@ -22,10 +22,17 @@ class ContentAnalysisService {
   /**
    * Get list of content types with field information.
    *
+   * @param string|null $field
+   *   Only the types that have this field (its machine name, with or
+   *   without "field_"). On a site with many types the whole list is long:
+   *   asked which types have a field, a model read it four times and then
+   *   asked for each type on its own.
+   *
    * @return array
    *   Array of content types.
    */
-  public function getContentTypes(): array {
+  public function getContentTypes(?string $field = NULL): array {
+    $wanted = $field === NULL || $field === '' ? NULL : [$field, 'field_' . preg_replace('/^field_/', '', $field)];
     $nodeTypes = $this->entityTypeManager
       ->getStorage('node_type')
       ->loadMultiple();
@@ -46,6 +53,9 @@ class ContentAnalysisService {
           'type' => $definition->getType(),
           'required' => $definition->isRequired(),
         ];
+      }
+      if ($wanted !== NULL && array_intersect($wanted, array_column($customFields, 'name')) === []) {
+        continue;
       }
 
       $types[] = [
@@ -72,26 +82,34 @@ class ContentAnalysisService {
    *   Filter by content type.
    * @param string $sort
    *   Sort by 'created' or 'changed'.
+   * @param bool|null $published
+   *   TRUE for published content only, FALSE for unpublished only.
    *
    * @return array
-   *   Array of recent content.
+   *   Array of recent content, with how many match in all.
    */
-  public function getRecentContent(int $limit = 20, ?string $type = NULL, string $sort = 'changed'): array {
+  public function getRecentContent(int $limit = 20, ?string $type = NULL, string $sort = 'changed', ?bool $published = NULL): array {
     $storage = $this->entityTypeManager->getStorage('node');
-    $query = $storage->getQuery()
-      ->accessCheck(TRUE)
-      ->sort($sort, 'DESC')
-      ->range(0, $limit);
-
-    if ($type !== NULL) {
-      $query->condition('type', $type);
-    }
-
-    $nids = $query->execute();
+    $filter = static function ($query) use ($type, $published) {
+      $query->accessCheck(TRUE);
+      if ($type !== NULL) {
+        $query->condition('type', $type);
+      }
+      if ($published !== NULL) {
+        $query->condition('status', $published ? 1 : 0);
+      }
+      return $query;
+    };
+    // How many match in all, not only how many come back: asked how many
+    // articles are published, a model took "total" (the items returned)
+    // for the answer, and could not filter by status at all.
+    $matching = (int) $filter($storage->getQuery())->count()->execute();
+    $nids = $filter($storage->getQuery())->sort($sort, 'DESC')->range(0, $limit)->execute();
 
     if (empty($nids)) {
       return [
         'total' => 0,
+        'matching' => $matching,
         'content' => [],
       ];
     }
@@ -115,6 +133,7 @@ class ContentAnalysisService {
 
     return [
       'total' => count($content),
+      'matching' => $matching,
       'sorted_by' => $sort,
       'content' => $content,
     ];

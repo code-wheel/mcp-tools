@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Drupal\mcp_tools_redirect\Service;
 
 use Drupal\Core\Entity\EntityTypeManagerInterface;
-use Drupal\Core\Path\PathValidatorInterface;
+use Drupal\mcp_tools\Service\LinkTarget;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AuditLogger;
 
@@ -18,7 +18,7 @@ class RedirectService {
     protected EntityTypeManagerInterface $entityTypeManager,
     protected AccessManager $accessManager,
     protected AuditLogger $auditLogger,
-    protected ?PathValidatorInterface $pathValidator = NULL,
+    protected ?LinkTarget $linkTarget = NULL,
   ) {}
 
   /**
@@ -366,7 +366,7 @@ class RedirectService {
    *   Import results.
    */
   public function importRedirects(array $redirects): array {
-    if (!$this->accessManager->canWrite()) {
+    if (!$this->accessManager->canWrite('write', count($redirects))) {
       return $this->accessManager->getWriteAccessDenied();
     }
 
@@ -377,6 +377,7 @@ class RedirectService {
     $created = [];
     $skipped = [];
     $errors = [];
+    $nowhere = 0;
 
     foreach ($redirects as $index => $redirectData) {
       $source = $redirectData['source'] ?? '';
@@ -435,12 +436,19 @@ class RedirectService {
         ]);
         $newRedirect->save();
 
-        $created[] = [
+        $item = [
           'index' => $index,
           'id' => $newRedirect->id(),
           'source' => $source,
           'destination' => $destination,
         ];
+        // Made either way, as one redirect is: a page can come later.
+        $warning = $this->linkTarget?->warning($this->normalizeDestination($destination), 'mcp_redirect_update');
+        if ($warning !== NULL) {
+          $item['warning'] = $warning;
+          $nowhere++;
+        }
+        $created[] = $item;
       }
       catch (\Exception $e) {
         $errors[] = [
@@ -473,7 +481,7 @@ class RedirectService {
           count($created),
           count($skipped),
           count($errors)
-        ),
+        ) . ($nowhere > 0 ? " $nowhere of them lead to a path where nothing answers now: see 'warning' in created." : ''),
       ],
     ];
   }
@@ -551,36 +559,13 @@ class RedirectService {
    *   The data, with "warning" when nothing answers at the destination.
    */
   protected function withDestinationNote(array $data, string $destination): array {
-    if ($this->destinationAnswers($destination)) {
+    $warning = $this->linkTarget?->warning($this->normalizeDestination($destination), 'mcp_redirect_update');
+    if ($warning === NULL) {
       return $data;
     }
-    $data['warning'] = "Nothing answers at '$destination' on this site now: no page, no path alias and no file."
-      . ' If a content item was meant, find it with mcp_tools_search_content and give its path, like /node/12, to mcp_redirect_update.';
-    $data['message'] .= ' ' . $data['warning'];
+    $data['warning'] = $warning;
+    $data['message'] .= ' ' . $warning;
     return $data;
-  }
-
-  /**
-   * Whether something answers at a destination, as far as this site knows.
-   *
-   * Another site is not looked at, and neither is an entity:, route: or
-   * base: address: only a path of this site.
-   */
-  protected function destinationAnswers(string $destination): bool {
-    $uri = $this->normalizeDestination($destination);
-    if ($this->pathValidator === NULL || !str_starts_with($uri, 'internal:')) {
-      return TRUE;
-    }
-    $path = (string) preg_replace('/[?#].*$/', '', substr($uri, strlen('internal:')));
-    if ($path === '' || $path === '/' || $path === '/<front>') {
-      return TRUE;
-    }
-    // A route with what it needs (a node that exists), or a path alias.
-    if ($this->pathValidator->getUrlIfValidWithoutAccessCheck($path) !== FALSE) {
-      return TRUE;
-    }
-    // A file under the web root.
-    return is_file(DRUPAL_ROOT . $path);
   }
 
   /**

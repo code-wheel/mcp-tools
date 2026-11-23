@@ -187,9 +187,27 @@ class WatchdogAnalyzer {
     try {
       $vars = @unserialize($variables, ['allowed_classes' => FALSE]);
       if (is_array($vars)) {
-        // Strip HTML tags from variables for clean output.
-        $cleanVars = array_map(fn($v) => is_string($v) ? strip_tags($v) : $v, $vars);
-        return strtr($message, $cleanVars);
+        // Strip HTML tags from variables for clean output. No backtrace,
+        // no absolute paths, no secret: a model reads this, and it went
+        // out with the site's file layout and whatever the exception held.
+        $root = defined('DRUPAL_ROOT') ? DRUPAL_ROOT . '/' : NULL;
+        $cleanVars = [];
+        foreach ($vars as $placeholder => $value) {
+          if ($placeholder === '@backtrace_string') {
+            $value = '';
+          }
+          elseif (SecretRedactor::isSensitiveKey(ltrim((string) $placeholder, '@%:'))) {
+            $value = SecretRedactor::REDACTED;
+          }
+          elseif (is_string($value)) {
+            $value = strip_tags($value);
+            if ($root !== NULL) {
+              $value = str_replace($root, '', $value);
+            }
+          }
+          $cleanVars[$placeholder] = $value;
+        }
+        return trim(strtr($message, $cleanVars));
       }
     }
     catch (\Exception) {

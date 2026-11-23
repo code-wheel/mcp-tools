@@ -41,10 +41,12 @@ class DuplicateDetector {
       // Load all nodes of this type.
       $query = $nodeStorage->getQuery()
         ->condition('type', $contentType)
-        ->accessCheck(FALSE)
+        ->accessCheck(TRUE)
         ->range(0, 500);
       $nids = $query->execute();
-      $nodes = $nodeStorage->loadMultiple($nids);
+      // Only what the caller may see: without node grant modules a query's
+      // access check does not hide unpublished content.
+      $nodes = array_filter($nodeStorage->loadMultiple($nids), static fn($node) => $node->access('view'));
 
       // Extract values for comparison.
       $items = [];
