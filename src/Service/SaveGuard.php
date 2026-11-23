@@ -38,6 +38,11 @@ final class SaveGuard {
     if (!$this->toolCallContext->isActive()) {
       return;
     }
+    // Before validate(): on PostgreSQL its lookup of a name as an id is a
+    // database error, which would let the save go on into the same error.
+    if ($entity instanceof FieldableEntityInterface && ($names = EntityReferences::nameForId($entity)) !== NULL) {
+      throw new SaveRefusedException($names);
+    }
     try {
       $now = self::violations($entity);
     }

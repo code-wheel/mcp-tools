@@ -77,4 +77,21 @@ final class JsonApiRulesKernelTest extends KernelTestBase {
     $this->assertFalse($service->listEntities('node', NULL, ['field_tags.entity.name' => 'x'])['success'], 'A filter that cannot be used was dropped.');
   }
 
+  /**
+   * A tag by name where its id goes is said as such.
+   *
+   * Drupal's validation looked the name up as an id: a generic answer, and
+   * on PostgreSQL a database error.
+   */
+  public function testANameWhereAnIdGoes(): void {
+    \Drupal\taxonomy\Entity\Vocabulary::create(['vid' => 'tags', 'name' => 'Tags'])->save();
+    \Drupal\field\Entity\FieldStorageConfig::create(['field_name' => 'field_tags', 'entity_type' => 'node', 'type' => 'entity_reference', 'cardinality' => -1, 'settings' => ['target_type' => 'taxonomy_term']])->save();
+    \Drupal\field\Entity\FieldConfig::create(['field_name' => 'field_tags', 'entity_type' => 'node', 'bundle' => 'article', 'settings' => ['handler' => 'default:taxonomy_term', 'handler_settings' => ['target_bundles' => ['tags' => 'tags']]]])->save();
+    $service = $this->container->get('mcp_tools_jsonapi.service');
+    $result = $service->createEntity('node', 'article', ['title' => 'Tagged', 'field_tags' => [['target_id' => 'Technology']]]);
+    $this->assertFalse($result['success'], 'A tag by name was saved.');
+    $this->assertStringContainsString('Give its id, not its name', $result['error']);
+    $this->assertSame(0, (int) $this->container->get('entity_type.manager')->getStorage('node')->getQuery()->accessCheck(FALSE)->count()->execute());
+  }
+
 }

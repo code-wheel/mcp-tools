@@ -35,6 +35,8 @@ final class ToolSmokeKernelTest extends KernelTestBase {
     'mcp_tools_layout_builder',
     'mcp_tools_media',
     'mcp_tools_menus',
+    'migrate',
+    'migrate_plus',
     'mcp_tools_migration',
     'mcp_tools_moderation',
     'mcp_tools_recipes',
@@ -98,7 +100,8 @@ final class ToolSmokeKernelTest extends KernelTestBase {
     );
 
     // Base module + core-only submodules provide 161 tools.
-    $this->assertCount(161, $mcpDefinitions);
+    // 162 with mcp_migration_rollback (beta25).
+    $this->assertCount(162, $mcpDefinitions);
 
     $account = $this->createMock(AccountInterface::class);
     $account->method('hasPermission')->willReturn(FALSE);

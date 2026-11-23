@@ -19,7 +19,7 @@ use Drupal\tool\TypedData\InputDefinition;
 #[Tool(
   id: 'mcp_batch_create_terms',
   label: new TranslatableMarkup('Batch Create Taxonomy Terms'),
-  description: new TranslatableMarkup('Create multiple taxonomy terms at once. Maximum 50 terms per operation.'),
+  description: new TranslatableMarkup('Create multiple taxonomy terms at once. Maximum 50 terms per operation. A name that is there already is skipped. For a whole tree in one call (a parent may be another row), a run again that updates, or an undo: mcp_migration_import_json with entity_type taxonomy_term (MCP Tools - Migration).'),
   operation: ToolOperation::Write,
   input_definitions: [
     'vocabulary' => new InputDefinition(

@@ -102,7 +102,7 @@ jobs:
       - name: Install contrib modules exercised by kernel tests
         run: |
           cd drupal
-          composer require drupal/trash:^3 drupal/paragraphs:^1.18 drupal/metatag:^2 drupal/redirect drupal/entity_clone:^2@beta drupal/pathauto drupal/simple_sitemap --no-interaction
+          composer require drupal/trash:^3 drupal/paragraphs:^1.18 drupal/metatag:^2 drupal/redirect drupal/entity_clone:^2@beta drupal/pathauto drupal/simple_sitemap drupal/migrate_plus:^6 drupal/migrate_tools:^6 --no-interaction
 
       - name: Copy module
         run: |

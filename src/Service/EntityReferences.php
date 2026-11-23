@@ -39,10 +39,42 @@ final class EntityReferences {
     if (!$entity instanceof FieldableEntityInterface) {
       return NULL;
     }
+    if (($names = self::nameForId($entity)) !== NULL) {
+      return $names;
+    }
     $problems = [];
-    // A name where an id goes: Drupal's own check would look it up as an
-    // id, and PostgreSQL refuses a text for a number with a database error.
+    foreach ($entity->validate() as $violation) {
+      if (!$violation->getConstraint() instanceof ValidReferenceConstraint) {
+        continue;
+      }
+      $field = strtok((string) $violation->getPropertyPath(), '.');
+      $problems[$field] = $field;
+    }
+    return $problems === [] ? NULL : self::describe($entity, $problems);
+  }
+
+  /**
+   * A name where an id goes, said before anything looks it up.
+   *
+   * Drupal's own reference check would look the name up as an id, and
+   * PostgreSQL refuses a text for a number with a database error. Every
+   * check that runs Drupal's validation (EntityValidation, SaveGuard) asks
+   * this first.
+   *
+   * @param \Drupal\Core\Entity\FieldableEntityInterface $entity
+   *   The entity.
+   * @param string[]|null $fieldNames
+   *   Only these fields; NULL for all.
+   *
+   * @return string|null
+   *   What is wrong, or NULL.
+   */
+  public static function nameForId(FieldableEntityInterface $entity, ?array $fieldNames = NULL): ?string {
+    $problems = [];
     foreach ($entity->getFields() as $name => $items) {
+      if ($fieldNames !== NULL && !in_array($name, $fieldNames, TRUE)) {
+        continue;
+      }
       if (!in_array($items->getFieldDefinition()->getType(), ['entity_reference', 'image', 'file'], TRUE)) {
         continue;
       }
@@ -52,16 +84,6 @@ final class EntityReferences {
           $problems[$name] = $name;
         }
       }
-    }
-    if ($problems !== []) {
-      return self::describe($entity, $problems);
-    }
-    foreach ($entity->validate() as $violation) {
-      if (!$violation->getConstraint() instanceof ValidReferenceConstraint) {
-        continue;
-      }
-      $field = strtok((string) $violation->getPropertyPath(), '.');
-      $problems[$field] = $field;
     }
     return $problems === [] ? NULL : self::describe($entity, $problems);
   }

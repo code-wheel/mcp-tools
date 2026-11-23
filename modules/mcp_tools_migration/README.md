@@ -1,277 +1,134 @@
 # MCP Tools - Migration
 
-Content import/export and migration assistance tools for Drupal.
+Import content, terms and redirects, and export content, on Drupal's
+Migrate API.
 
-## Features
+## What the import does
 
-- Import content from CSV or JSON formats
-- Export content to CSV or JSON formats
-- Validate import data before processing
-- Get field mapping information for content types
-- Track import operation status
+- Each import is a migration (migrate_plus), named by its entity type,
+  bundle and key. Run the same import again and it updates what it made.
+  It makes no copies.
+- `dry_run` says what each row would do and writes nothing.
+- Up to 1000 rows an import, 100 a call. The answer has `remaining` and
+  `done`: call again with the same rows and key until `done` is true.
+- Every entity is checked by Drupal's validation before it is saved. A row
+  that fails is reported with why, and the other rows go on.
+- A column the type does not have refuses the import, with the fields
+  there are.
+- Reference fields take ids or names, several with `|`.
+- `mcp_migration_rollback` undoes one import: it deletes what that import
+  made, and keeps what it only updated.
+- `drush migrate:import <import_id>` (migrate_tools) runs the same import.
 
 ## Installation
 
-Enable the module:
-
 ```bash
+composer require drupal/migrate_plus
 drush en mcp_tools_migration
 ```
 
-## Available Tools
+It needs migrate and migrate_plus. migrate_tools is optional, for Drush.
 
-| Tool ID | Description |
-|---------|-------------|
-| `mcp_migration_import_csv` | Import content from CSV data |
-| `mcp_migration_import_json` | Import content from JSON array |
-| `mcp_migration_validate` | Validate data before import |
-| `mcp_migration_field_mapping` | Get required/optional fields for a content type |
-| `mcp_migration_export_csv` | Export content to CSV format |
-| `mcp_migration_export_json` | Export content to JSON format |
-| `mcp_migration_import_status` | Get status of last import operation |
+## Tools
 
-## Limits
+| Tool | What it does |
+|---|---|
+| `mcp_migration_import_json` | Import rows from a JSON list |
+| `mcp_migration_import_csv` | Import rows from CSV, the first line the column names |
+| `mcp_migration_import_status` | What an import made and what failed; without `import_id`, every import |
+| `mcp_migration_rollback` | Undo one import (asks first) |
+| `mcp_migration_validate` | Check rows against a content type |
+| `mcp_migration_field_mapping` | The required and optional fields of a content type |
+| `mcp_migration_export_json` | Export content in id order, with `offset` |
+| `mcp_migration_export_csv` | The same as CSV |
 
-- **Maximum 100 items per import call** - Split larger imports into batches
-- **Maximum 100 items per export call** - Use pagination for larger exports
+## The key
 
-## CSV Format Specification
+A key is the column whose value names a row for good. A later import with
+the same key updates the row's entity.
 
-### Structure
+| Entity type | Key | When the key matches something the import did not make |
+|---|---|---|
+| `node` (the default) | Required: an id from the source, or `uuid` | With `uuid` it is updated: an export imports back as updates |
+| `taxonomy_term` | `name` when left out | The term is left as it is, and listed under `existing` |
+| `redirect` | `source` when left out | The redirect is left as it is, and listed under `existing` |
 
-- First row must contain column headers
-- Subsequent rows contain data
-- Values containing commas, quotes, or newlines should be enclosed in double quotes
-- Double quotes within values should be escaped as `""`
-
-### Required Columns
-
-- `title` (or `name`) - The content title
-
-### Example CSV
-
-```csv
-title,body,field_category,status
-"My First Article","This is the body content.",1,1
-"Second Article","Another article body.",2,0
-"Article with ""quotes""","Content with special, characters.",1,1
-```
-
-### Field Mapping
-
-You can map CSV column names to Drupal field names:
-
-```json
-{
-  "Name": "title",
-  "Description": "body",
-  "Category ID": "field_category"
-}
-```
-
-## JSON Format Specification
-
-### Structure
-
-Array of objects, each representing a content item.
-
-### Required Fields
-
-- `title` (or `name`) - The content title
-
-### Optional Fields
-
-- `status` - Publish status (1 = published, 0 = draft)
-- `field_*` - Any custom field values
-
-### Example JSON
-
-```json
-[
-  {
-    "title": "My First Article",
-    "body": "This is the body content.",
-    "field_category": 1,
-    "status": 1
-  },
-  {
-    "title": "Second Article",
-    "body": "Another article body.",
-    "field_category": 2,
-    "status": 0
-  }
-]
-```
-
-### Field Value Formats
-
-Different field types accept different value formats:
-
-| Field Type | Simple Value | Full Format |
-|------------|--------------|-------------|
-| `text_long` | `"content"` | `{"value": "content", "format": "basic_html"}` |
-| `entity_reference` | `123` | `{"target_id": 123}` |
-| `link` | `"https://example.com"` | `{"uri": "https://...", "title": "Link"}` |
-| `datetime` | `"2024-01-15"` | `{"value": "2024-01-15T10:00:00"}` |
-| `boolean` | `true` or `1` | - |
-| `integer` | `42` | - |
-
-## Usage Examples
-
-### 1. Get Field Mapping
-
-Before importing, check what fields are available:
-
-```json
-{
-  "tool": "mcp_migration_field_mapping",
-  "input": {
-    "content_type": "article"
-  }
-}
-```
-
-Response:
-
-```json
-{
-  "success": true,
-  "data": {
-    "content_type": "article",
-    "label": "Article",
-    "required": {
-      "title": {"label": "Title", "type": "string"}
-    },
-    "optional": {
-      "body": {"label": "Body", "type": "text_with_summary"},
-      "field_tags": {"label": "Tags", "type": "entity_reference"}
-    }
-  }
-}
-```
-
-### 2. Validate Import Data
-
-Check data before importing:
-
-```json
-{
-  "tool": "mcp_migration_validate",
-  "input": {
-    "content_type": "article",
-    "items": [
-      {"title": "Test Article", "body": "Content here"},
-      {"body": "Missing title"}
-    ]
-  }
-}
-```
-
-Response:
-
-```json
-{
-  "success": true,
-  "data": {
-    "valid": false,
-    "total_items": 2,
-    "error_count": 1,
-    "errors": [
-      {"row": 2, "field": "title", "message": "Title (or name) is required."}
-    ]
-  }
-}
-```
-
-### 3. Import from JSON
+## Content
 
 ```json
 {
   "tool": "mcp_migration_import_json",
   "input": {
     "content_type": "article",
+    "key": "id",
     "items": [
-      {"title": "Article 1", "body": "Content 1", "status": 1},
-      {"title": "Article 2", "body": "Content 2", "status": 0}
+      {"id": "a1", "title": "Article 1", "body": "Content 1", "field_tags": "News|Sport", "status": 1},
+      {"id": "a2", "title": "Article 2", "body": "Content 2"}
     ]
   }
 }
 ```
 
-Response:
+A new node is unpublished unless the row has `status`. The owner, ids and
+dates are never taken from a row; they are listed in `ignored_columns`.
+
+## Terms
+
+`content_type` is the vocabulary. `parent` may name another row, in any
+order, so a whole tree goes in one call:
 
 ```json
 {
-  "success": true,
-  "data": {
-    "import_id": "import_abc123",
-    "content_type": "article",
-    "total_items": 2,
-    "created_count": 2,
-    "failed_count": 0,
-    "created": [
-      {"nid": 10, "title": "Article 1", "row": 1},
-      {"nid": 11, "title": "Article 2", "row": 2}
-    ],
-    "message": "Successfully imported 2 of 2 items."
-  }
-}
-```
-
-### 4. Import from CSV
-
-```json
-{
-  "tool": "mcp_migration_import_csv",
+  "tool": "mcp_migration_import_json",
   "input": {
-    "content_type": "article",
-    "csv_data": "title,body,status\n\"First Article\",\"Body content\",1\n\"Second Article\",\"More content\",0",
-    "field_mapping": {}
+    "entity_type": "taxonomy_term",
+    "content_type": "food",
+    "items": [
+      {"name": "Apple", "parent": "Fruit"},
+      {"name": "Fruit"},
+      {"name": "Gala", "parent": "Apple"}
+    ]
   }
 }
 ```
 
-### 5. Export to JSON
+## Redirects
 
 ```json
 {
-  "tool": "mcp_migration_export_json",
+  "tool": "mcp_migration_import_json",
   "input": {
-    "content_type": "article",
-    "limit": 50
+    "entity_type": "redirect",
+    "items": [
+      {"source": "/old-page", "destination": "/node/12"},
+      {"source": "/old-news", "destination": "/news", "status_code": 302}
+    ]
   }
 }
 ```
 
-### 6. Export to CSV
+A destination that leads nowhere is made and said, under `warnings`.
 
-```json
-{
-  "tool": "mcp_migration_export_csv",
-  "input": {
-    "content_type": "article",
-    "limit": 50
-  }
-}
-```
+## CSV
 
-### 7. Check Import Status
+Values with commas, quotes or line breaks go in double quotes, and a
+double quote inside one is written `""`. `field_mapping` maps column names
+to fields, like `{"Name": "title"}`. A row with too few or too many
+columns is reported under `failed`.
 
-```json
-{
-  "tool": "mcp_migration_import_status",
-  "input": {}
-}
-```
+## Field values
+
+| Field type | Simple value | Full value |
+|---|---|---|
+| `text_long` | `"content"` | `{"value": "content", "format": "basic_html"}` |
+| `entity_reference` | `123`, `"News"`, `"News\|Sport"` | `{"target_id": 123}` |
+| `link` | `"https://example.com"` or `"/node/1"` | `{"uri": "https://...", "title": "Link"}` |
+| `datetime` | `"2024-01-15"` | `{"value": "2024-01-15T10:00:00"}` |
+| `boolean` | `true` or `1` | - |
+| `integer` | `42` | - |
 
 ## Security
 
-Import operations require write access through the MCP Tools Access Manager. All import operations are logged through the Audit Logger for tracking and compliance.
-
-## Best Practices
-
-1. **Always validate first** - Use `mcp_migration_validate` before importing to catch errors early
-2. **Use field mapping** - Check `mcp_migration_field_mapping` to understand required fields
-3. **Batch large imports** - Split imports over 100 items into multiple calls
-4. **Export before modify** - Use export tools to backup content before bulk changes
-5. **Check status** - Use `mcp_migration_import_status` to verify import completion
+Imports need write access through the MCP Tools access manager, and each
+row counts against the write limits. An undo counts each entity it
+deletes. Every import is logged by the audit logger.

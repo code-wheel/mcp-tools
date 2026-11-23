@@ -56,6 +56,8 @@ jobs:
           composer require \
             drupal/entity_clone:^2@beta \
             drupal/metatag \
+            drupal/migrate_plus:^6 \
+            drupal/migrate_tools:^6 \
             drupal/paragraphs \
             drupal/pathauto \
             drupal/redirect \

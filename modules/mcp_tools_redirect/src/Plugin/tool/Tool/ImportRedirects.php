@@ -19,7 +19,7 @@ use Drupal\tool\TypedData\InputDefinition;
 #[Tool(
   id: 'mcp_redirect_import',
   label: new TranslatableMarkup('Import Redirects'),
-  description: new TranslatableMarkup('Bulk import multiple URL redirects.'),
+  description: new TranslatableMarkup('Bulk import multiple URL redirects. A source that has a redirect already is skipped. To run a list again so that it updates, in parts of 100, with an undo: mcp_migration_import_json with entity_type redirect (MCP Tools - Migration).'),
   operation: ToolOperation::Write,
   destructive: TRUE,
   input_definitions: [

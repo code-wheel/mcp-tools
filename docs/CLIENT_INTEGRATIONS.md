@@ -98,7 +98,7 @@ your results by hand may differ.
 
 Inside the site, with Drupal AI and our `mcp_tools_ai` bridge
 (experimental): `gpt-oss:20b` did 11, 12 and 12 with 1.0.0-beta21, given
-the 72 tools of seven of our modules. All 227 do not fit a local model's
+the 72 tools of seven of our modules. All 228 do not fit a local model's
 context that way. The one miss was an error of Drupal AI itself, when
 the model called a function it had not been offered.
 

@@ -4,6 +4,11 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools_layout_builder\Service;
 
+use Drupal\Core\Plugin\Context\Context;
+use Drupal\Core\Plugin\Context\ContextDefinition;
+use Drupal\Core\Plugin\Context\EntityContext;
+use Drupal\layout_builder\LayoutTempstoreRepositoryInterface;
+use Drupal\layout_builder\SectionStorage\SectionStorageManagerInterface;
 use Drupal\Component\Uuid\UuidInterface;
 use Drupal\Core\Block\BlockManagerInterface;
 use Drupal\Core\Entity\EntityDisplayRepositoryInterface;
@@ -27,7 +32,37 @@ class LayoutBuilderService {
     protected UuidInterface $uuid,
     protected AccessManager $accessManager,
     protected AuditLogger $auditLogger,
+    protected ?LayoutTempstoreRepositoryInterface $tempstore = NULL,
+    protected ?SectionStorageManagerInterface $sectionStorageManager = NULL,
   ) {}
+
+  /**
+   * A refusal while an editor has unsaved changes to this layout.
+   *
+   * Layout Builder keeps an editor's changes in its tempstore until they
+   * save, and their save writes the whole layout back: what a tool changed
+   * in between was lost without a word.
+   *
+   * @return array|null
+   *   The refusal, or NULL when no one has unsaved changes.
+   */
+  protected function unsavedByAnEditor(object $display): ?array {
+    if ($this->tempstore === NULL || $this->sectionStorageManager === NULL) {
+      return NULL;
+    }
+    $storage = $this->sectionStorageManager->load('defaults', [
+      'display' => EntityContext::fromEntity($display),
+      'view_mode' => new Context(new ContextDefinition('string'), $display->getMode()),
+    ]);
+    if ($storage === NULL || !$this->tempstore->has($storage)) {
+      return NULL;
+    }
+    return [
+      'success' => FALSE,
+      'error' => sprintf('Someone has unsaved changes to the layout of %s.%s in the Layout Builder. Their save would overwrite this change, so nothing was changed. Ask them to save or discard theirs first.', $display->getTargetEntityTypeId(), $display->getTargetBundle()),
+      'code' => 'LAYOUT_BEING_EDITED',
+    ];
+  }
 
   /**
    * A block's configuration as Layout Builder's own form saves it.
@@ -134,6 +169,10 @@ class LayoutBuilderService {
       ];
     }
 
+    if (($unsaved = $this->unsavedByAnEditor($display)) !== NULL) {
+      return $unsaved;
+    }
+
     try {
       $display->disableLayoutBuilder();
       $display->save();
@@ -215,6 +254,10 @@ class LayoutBuilderService {
         'success' => FALSE,
         'error' => "Layout Builder is not enabled for $entityType.$bundle. Enable it first.",
       ];
+    }
+
+    if (($unsaved = $this->unsavedByAnEditor($display)) !== NULL) {
+      return $unsaved;
     }
 
     try {
@@ -364,6 +407,10 @@ class LayoutBuilderService {
       ];
     }
 
+    if (($unsaved = $this->unsavedByAnEditor($display)) !== NULL) {
+      return $unsaved;
+    }
+
     try {
       $section = new Section($layoutId);
       // Past the end, Drupal appends: the answer gave the position asked,
@@ -440,6 +487,10 @@ class LayoutBuilderService {
         'success' => FALSE,
         'error' => "Section at delta $delta not found. Available deltas: 0-" . (count($sections) - 1),
       ];
+    }
+
+    if (($unsaved = $this->unsavedByAnEditor($display)) !== NULL) {
+      return $unsaved;
     }
 
     try {
@@ -537,6 +588,10 @@ class LayoutBuilderService {
       ];
     }
 
+    if (($unsaved = $this->unsavedByAnEditor($display)) !== NULL) {
+      return $unsaved;
+    }
+
     try {
       $componentUuid = $this->uuid->generate();
       $component = new SectionComponent($componentUuid, $region, $this->blockConfiguration($blockId));
@@ -629,6 +684,10 @@ class LayoutBuilderService {
         'success' => FALSE,
         'error' => "Block with UUID '$blockUuid' not found in any section. Use mcp_layout_get to see current layout sections and blocks.",
       ];
+    }
+
+    if (($unsaved = $this->unsavedByAnEditor($display)) !== NULL) {
+      return $unsaved;
     }
 
     try {

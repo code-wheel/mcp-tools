@@ -34,8 +34,24 @@ use Drupal\tool\TypedData\InputDefinition;
       description: new TranslatableMarkup('Maximum number of items to export (default: 100, max: 100).'),
       required: FALSE,
     ),
+    'offset' => new InputDefinition(
+      data_type: 'integer',
+      label: new TranslatableMarkup('Offset'),
+      description: new TranslatableMarkup('How many nodes to skip, in id order. The answer gives next_offset while there are more.'),
+      required: FALSE,
+    ),
   ],
   output_definitions: [
+    'total' => new OutputDefinition(
+      data_type: 'integer',
+      label: new TranslatableMarkup('Total'),
+      description: new TranslatableMarkup('Nodes of the type the user may view.'),
+    ),
+    'next_offset' => new OutputDefinition(
+      data_type: 'integer',
+      label: new TranslatableMarkup('Next offset'),
+      description: new TranslatableMarkup('The offset of the next page; empty when this was the last.'),
+    ),
     'content_type' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Content Type'),
@@ -85,12 +101,13 @@ class ExportToJson extends McpToolsToolBase {
   protected function executeLegacy(array $input): array {
     $contentType = $input['content_type'] ?? '';
     $limit = isset($input['limit']) ? (int) $input['limit'] : 100;
+    $offset = (int) ($input['offset'] ?? 0);
 
     if (empty($contentType)) {
       return ['success' => FALSE, 'error' => 'Content type is required.'];
     }
 
-    return $this->migrationService->exportToJson($contentType, $limit);
+    return $this->migrationService->exportToJson($contentType, $limit, $offset);
   }
 
 }

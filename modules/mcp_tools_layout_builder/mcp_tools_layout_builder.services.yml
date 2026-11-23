@@ -9,3 +9,5 @@ services:
       - '@uuid'
       - '@mcp_tools.access_manager'
       - '@mcp_tools.audit_logger'
+      - '@layout_builder.tempstore_repository'
+      - '@plugin.manager.layout_builder.section_storage'

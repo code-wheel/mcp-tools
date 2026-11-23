@@ -6,6 +6,7 @@ namespace Drupal\mcp_tools_migration\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_migration\Service\MigrationService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Drupal\tool\TypedData\InputDefinition;
 use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
@@ -18,49 +19,61 @@ use Drupal\tool\Tool\ToolOperation;
 #[Tool(
   id: 'mcp_migration_import_status',
   label: new TranslatableMarkup('Get Import Status'),
-  description: new TranslatableMarkup('Get the status of the last import operation.'),
+  description: new TranslatableMarkup('What an import made and what failed, from its migration record. Without import_id it lists every import.'),
   operation: ToolOperation::Read,
-  input_definitions: [],
+  input_definitions: [
+    'import_id' => new InputDefinition(
+      data_type: 'string',
+      label: new TranslatableMarkup('Import ID'),
+      description: new TranslatableMarkup('The import_id an import answered with. Leave out to list the imports.'),
+      required: FALSE,
+    ),
+  ],
   output_definitions: [
     'has_import' => new OutputDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Has Import'),
-      description: new TranslatableMarkup('Whether there is a recent import record.'),
+      description: new TranslatableMarkup('Whether there is an import.'),
+    ),
+    'imports' => new OutputDefinition(
+      data_type: 'list',
+      label: new TranslatableMarkup('Imports'),
+      description: new TranslatableMarkup('Without import_id: each import with its counts.'),
     ),
     'import_id' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Import ID'),
-      description: new TranslatableMarkup('Unique identifier for the import operation.'),
+      description: new TranslatableMarkup('The import.'),
     ),
     'status' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Status'),
-      description: new TranslatableMarkup('Import status: in_progress, completed, or failed.'),
+      description: new TranslatableMarkup('Idle, or Importing while a run is going on.'),
     ),
-    'total_items' => new OutputDefinition(
+    'total_rows' => new OutputDefinition(
       data_type: 'integer',
-      label: new TranslatableMarkup('Total Items'),
-      description: new TranslatableMarkup('Total number of items in the import.'),
+      label: new TranslatableMarkup('Total rows'),
+      description: new TranslatableMarkup('Rows in the import.'),
     ),
-    'processed' => new OutputDefinition(
+    'imported' => new OutputDefinition(
       data_type: 'integer',
-      label: new TranslatableMarkup('Processed'),
-      description: new TranslatableMarkup('Number of items processed.'),
+      label: new TranslatableMarkup('Imported'),
+      description: new TranslatableMarkup('Rows that made or updated a node.'),
     ),
     'failed' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Failed'),
-      description: new TranslatableMarkup('Number of items that failed.'),
+      description: new TranslatableMarkup('Rows that failed.'),
     ),
-    'started_at' => new OutputDefinition(
-      data_type: 'string',
-      label: new TranslatableMarkup('Started At'),
-      description: new TranslatableMarkup('When the import started.'),
+    'processed' => new OutputDefinition(
+      data_type: 'integer',
+      label: new TranslatableMarkup('Processed'),
+      description: new TranslatableMarkup('Rows that have run.'),
     ),
-    'updated_at' => new OutputDefinition(
-      data_type: 'string',
-      label: new TranslatableMarkup('Updated At'),
-      description: new TranslatableMarkup('When the status was last updated.'),
+    'messages' => new OutputDefinition(
+      data_type: 'list',
+      label: new TranslatableMarkup('Messages'),
+      description: new TranslatableMarkup('Why rows failed, by key (up to 20).'),
     ),
   ],
 )]
@@ -89,7 +102,8 @@ class GetImportStatus extends McpToolsToolBase {
    * {@inheritdoc}
    */
   protected function executeLegacy(array $input): array {
-    return $this->migrationService->getImportStatus();
+    $importId = (string) ($input['import_id'] ?? '');
+    return $this->migrationService->getImportStatus($importId === '' ? NULL : $importId);
   }
 
 }

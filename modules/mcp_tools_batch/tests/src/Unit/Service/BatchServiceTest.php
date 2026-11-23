@@ -7,7 +7,6 @@ namespace Drupal\Tests\mcp_tools_batch\Unit\Service;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
-use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Component\Datetime\TimeInterface;
@@ -31,7 +30,6 @@ final class BatchServiceTest extends UnitTestCase {
       $this->createMock(EntityTypeManagerInterface::class),
       $this->createMock(EntityFieldManagerInterface::class),
       $this->createMock(AccountProxyInterface::class),
-      $this->createMock(ModuleHandlerInterface::class),
       $this->createMock(AccessManager::class),
       $this->createMock(AuditLogger::class),
       $this->createMock(TimeInterface::class),
@@ -53,7 +51,6 @@ final class BatchServiceTest extends UnitTestCase {
       $overrides['entity_type_manager'] ?? $this->createMock(EntityTypeManagerInterface::class),
       $overrides['entity_field_manager'] ?? $this->createMock(EntityFieldManagerInterface::class),
       $overrides['current_user'] ?? $this->createMock(AccountProxyInterface::class),
-      $overrides['module_handler'] ?? $this->createMock(ModuleHandlerInterface::class),
       $overrides['access_manager'] ?? $this->createMock(AccessManager::class),
       $overrides['audit_logger'] ?? $this->createMock(AuditLogger::class),
       $overrides['time'] ?? $this->mockTime(),
@@ -197,21 +194,7 @@ final class BatchServiceTest extends UnitTestCase {
     $this->assertSame('/node/123', $result['data']['created'][0]['url']);
   }
 
-  public function testCreateMultipleRedirectsFailsWhenRedirectModuleMissing(): void {
-    $accessManager = $this->createMock(AccessManager::class);
-    $accessManager->method('canWrite')->willReturn(TRUE);
-
-    $moduleHandler = $this->createMock(ModuleHandlerInterface::class);
-    $moduleHandler->method('moduleExists')->with('redirect')->willReturn(FALSE);
-
-    $service = $this->createBatchService([
-      'module_handler' => $moduleHandler,
-      'access_manager' => $accessManager,
-    ]);
-
-    $result = $service->createMultipleRedirects([['source' => '/a', 'destination' => '/b']]);
-    $this->assertFalse($result['success']);
-    $this->assertStringContainsString('Redirect module', $result['error']);
-  }
+  // The redirect import's tests: RedirectDestinationKernelTest in
+  // mcp_tools_redirect (the copy here had no tool, removed in beta25).
 
 }

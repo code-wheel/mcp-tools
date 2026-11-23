@@ -1,8 +1,10 @@
 name: 'MCP Tools - Migration'
 type: module
-description: 'Content import/migration assistance: import from CSV/JSON, export content, validate data.'
+description: 'Content import on Drupal Migrate (migrate_plus): import from CSV/JSON with a key, plan, run in parts, undo; export with an offset.'
 package: MCP Tools
 core_version_requirement: ^10.5 || ^11
 dependencies:
   - mcp_tools:mcp_tools
+  - drupal:migrate
+  - migrate_plus:migrate_plus
 lifecycle: experimental

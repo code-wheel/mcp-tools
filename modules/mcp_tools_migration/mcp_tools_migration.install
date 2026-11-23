@@ -1,0 +1,25 @@
+<?php
+
+/**
+ * @file
+ * Install and update functions for MCP Tools - Migration.
+ */
+
+declare(strict_types=1);
+
+/**
+ * Turns on Migrate and migrate_plus, which the import now runs on.
+ *
+ * A site that updates from 1.0.0-beta24 or earlier has this module on
+ * without them. When migrate_plus is downloaded, both are turned on. When it
+ * is not, the exports and the field tools keep working, and the import says
+ * what to do.
+ */
+function mcp_tools_migration_update_10001(): string {
+  $modules = \Drupal::service('extension.list.module');
+  if (!$modules->exists('migrate_plus')) {
+    return 'The import of MCP Tools - Migration now runs on Drupal Migrate and needs migrate_plus, which is not downloaded. To use the import: composer require drupal/migrate_plus, then drush en migrate migrate_plus. The exports and the field tools work without it.';
+  }
+  \Drupal::service('module_installer')->install(['migrate', 'migrate_plus']);
+  return 'Turned on migrate and migrate_plus: the import of MCP Tools - Migration runs on them now.';
+}

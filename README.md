@@ -16,7 +16,7 @@ You: "Create a blog with articles, categories, tags, and an editor role"
 AI:  Creates the content type, fields, vocabularies, role, and permissions
 ```
 
-- **227 tools:** 25 read-only tools in the base module and 202 more in 32
+- **228 tools:** 25 read-only tools in the base module and 203 more in 32
   optional submodules. They are [Tool API](https://www.drupal.org/project/tool)
   plugins.
 - **Its own MCP server:** STDIO through Drush for local work, HTTP with

@@ -7,7 +7,6 @@ namespace Drupal\mcp_tools_batch\Service;
 use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
-use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\mcp_tools\Service\EntityAccess;
 use Drupal\mcp_tools\Service\AccessManager;
@@ -20,6 +19,12 @@ use Drupal\mcp_tools\Service\TextFormat;
 
 /**
  * Service for batch/bulk operations.
+ *
+ * Many redirects at once are mcp_redirect_import
+ * (RedirectService::importRedirects, mcp_tools_redirect), tested by
+ * RedirectDestinationKernelTest::testAnImportWarnsPerRedirect. A copy that
+ * lived here had no tool and lacked its destination check; removed in
+ * beta25.
  */
 class BatchService {
 
@@ -32,7 +37,6 @@ class BatchService {
     protected EntityTypeManagerInterface $entityTypeManager,
     protected EntityFieldManagerInterface $entityFieldManager,
     protected AccountProxyInterface $currentUser,
-    protected ModuleHandlerInterface $moduleHandler,
     protected AccessManager $accessManager,
     protected AuditLogger $auditLogger,
     protected TimeInterface $time,
@@ -782,159 +786,6 @@ class BatchService {
       'errors' => $errors,
       'message' => sprintf(
         'Batch term creation complete: %d created, %d skipped, %d errors.',
-        count($created),
-        count($skipped),
-        count($errors)
-      ),
-    ]);
-  }
-
-  /**
-   * Create multiple redirects at once.
-   *
-   * @param array $redirects
-   *   Array of redirects. Each should have 'source', 'destination',
-   *   optional 'status_code', 'language'.
-   *
-   * @return array
-   *   Result with created redirects and any errors.
-   */
-  public function createMultipleRedirects(array $redirects): array {
-    if (!$this->accessManager->canWrite('write', count($redirects))) {
-      return $this->accessManager->getWriteAccessDenied();
-    }
-
-    // Check if redirect module is enabled.
-    if (!$this->moduleHandler->moduleExists('redirect')) {
-      return [
-        'success' => FALSE,
-        'error' => 'The Redirect module is not enabled. Please enable it first.',
-      ];
-    }
-
-    if (empty($redirects)) {
-      return ['success' => FALSE, 'error' => 'No redirects provided for batch creation.'];
-    }
-
-    if (count($redirects) > self::BATCH_LIMIT) {
-      return [
-        'success' => FALSE,
-        'error' => sprintf('Batch limit exceeded. Maximum %d items allowed per operation.', self::BATCH_LIMIT),
-      ];
-    }
-
-    $validStatusCodes = [301, 302, 303, 307];
-    $created = [];
-    $skipped = [];
-    $errors = [];
-
-    foreach ($redirects as $index => $redirectData) {
-      $source = $redirectData['source'] ?? '';
-      $destination = $redirectData['destination'] ?? '';
-      $statusCode = $redirectData['status_code'] ?? 301;
-      $language = $redirectData['language'] ?? NULL;
-
-      // Validate required fields.
-      if (empty($source)) {
-        $errors[] = [
-          'index' => $index,
-          'error' => 'Source path is required.',
-          'data' => $redirectData,
-        ];
-        continue;
-      }
-
-      if (empty($destination)) {
-        $errors[] = [
-          'index' => $index,
-          'error' => 'Destination is required.',
-          'data' => $redirectData,
-        ];
-        continue;
-      }
-
-      if (!in_array($statusCode, $validStatusCodes)) {
-        $errors[] = [
-          'index' => $index,
-          'error' => "Invalid status code '$statusCode'. Must be one of: " . implode(', ', $validStatusCodes),
-          'data' => $redirectData,
-        ];
-        continue;
-      }
-
-      // Normalize source path.
-      $source = ltrim($source, '/');
-
-      // Check for existing redirect.
-      $storage = $this->entityTypeManager->getStorage('redirect');
-      $query = $storage->getQuery()
-        ->accessCheck(TRUE)
-        ->condition('redirect_source__path', $source);
-
-      if ($language) {
-        $query->condition('language', $language);
-      }
-
-      $existingIds = $query->execute();
-
-      if (!empty($existingIds)) {
-        $skipped[] = [
-          'index' => $index,
-          'source' => $source,
-          'reason' => 'Redirect already exists for this source.',
-          'existing_id' => reset($existingIds),
-        ];
-        continue;
-      }
-
-      try {
-        $redirect = $storage->create([
-          'redirect_source' => [
-            'path' => $source,
-            'query' => [],
-          ],
-          'redirect_redirect' => [
-            'uri' => $this->normalizeRedirectDestination($destination),
-          ],
-          'status_code' => $statusCode,
-          'language' => $language ?? 'und',
-        ]);
-        $redirect->save();
-
-        $created[] = [
-          'index' => $index,
-          'id' => $redirect->id(),
-          'source' => $source,
-          'destination' => $destination,
-          'status_code' => $statusCode,
-        ];
-      }
-      catch (\Exception $e) {
-        $errors[] = [
-          'index' => $index,
-          'error' => $e->getMessage(),
-          'data' => $redirectData,
-        ];
-      }
-    }
-
-    $this->auditLogger->logSuccess('batch_create_redirects', 'redirect', 'bulk', [
-      'total_requested' => count($redirects),
-      'created' => count($created),
-      'skipped' => count($skipped),
-      'errors' => count($errors),
-    ]);
-
-    return $this->batchResult([
-      'total_requested' => count($redirects),
-      'created_count' => count($created),
-      'skipped_count' => count($skipped),
-      'error_count' => count($errors),
-      'created' => $created,
-      'skipped' => $skipped,
-      'errors' => $errors,
-      'message' => sprintf(
-        'Batch redirect creation complete: %d created, %d skipped, %d errors.',
         count($created),
         count($skipped),
         count($errors)

@@ -182,4 +182,5 @@ All batch operations return a consistent response format:
 4. **Launch day**: Publish multiple pieces of content simultaneously
 5. **User management**: Assign roles to multiple users after onboarding
 6. **Taxonomy setup**: Populate vocabularies with initial terms
-7. **SEO redirects**: Create multiple redirects during site restructuring
+7. **SEO redirects**: many redirects at once are `mcp_redirect_import`, in the
+   redirect submodule (MCP Tools - Redirect)

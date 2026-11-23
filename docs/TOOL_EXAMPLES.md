@@ -192,8 +192,11 @@ This page is generated. Do not edit it by hand.
 
 - `mcp_migration_field_mapping` `{"content_type":"sweep_page"}`
 - `mcp_migration_validate` `{"content_type":"sweep_page","items":[{"title":"Import one"}]}`
-- `mcp_migration_import_json` `{"content_type":"sweep_page","items":[{"title":"Import one"}]}`
-- `mcp_migration_import_csv` `{"content_type":"sweep_page","csv_data":"title\nImport two\n"}`
+- `mcp_migration_import_json` `{"content_type":"sweep_page","key":"id","items":[{"id":"one","title":"Import one"}]}`
+- `mcp_migration_import_json` `{"content_type":"sweep_page","key":"id","items":[{"id":"one","title":"Import one"}]}`
+- `mcp_migration_import_csv` `{"content_type":"sweep_page","key":"ref","csv_data":"ref,title\nr2,Import two\n"}`
+- `mcp_migration_import_status` `{"import_id":"mcp_import_sweep_page__ref"}`
+- `mcp_migration_rollback` `{"import_id":"mcp_import_sweep_page__ref"}`
 - `mcp_migration_export_csv` `{"content_type":"sweep_page","limit":5}`
 - `mcp_migration_export_json` `{"content_type":"sweep_page","limit":5}`
 

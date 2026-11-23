@@ -8,3 +8,12 @@ services:
       - '@state'
       - '@mcp_tools.access_manager'
       - '@mcp_tools.audit_logger'
+      - '@mcp_tools_migration.migrate_import'
+      - '@mcp_tools.link_target'
+  mcp_tools_migration.migrate_import:
+    class: Drupal\mcp_tools_migration\Service\MigrateImport
+    arguments:
+      - '@entity_type.manager'
+      - '@?plugin.manager.migration'
+      - '@event_dispatcher'
+      - '@keyvalue'

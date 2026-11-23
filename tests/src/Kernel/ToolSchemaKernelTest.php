@@ -34,6 +34,8 @@ final class ToolSchemaKernelTest extends KernelTestBase {
     'mcp_tools_layout_builder',
     'mcp_tools_media',
     'mcp_tools_menus',
+    'migrate',
+    'migrate_plus',
     'mcp_tools_migration',
     'mcp_tools_moderation',
     'mcp_tools_recipes',
@@ -83,7 +85,8 @@ final class ToolSchemaKernelTest extends KernelTestBase {
     );
 
     // Base module + core-only submodules provide 161 tools.
-    $this->assertCount(161, $mcpDefinitions);
+    // 162 with mcp_migration_rollback (beta25).
+    $this->assertCount(162, $mcpDefinitions);
 
     $converter = new ToolApiSchemaConverter();
     foreach ($mcpDefinitions as $pluginId => $definition) {

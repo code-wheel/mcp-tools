@@ -6,12 +6,15 @@ namespace Drupal\Tests\mcp_tools_migration\Unit\Service;
 
 use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Entity\EntityStorageInterface;
+use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Entity\Query\QueryInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\State\StateInterface;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AuditLogger;
+use Drupal\mcp_tools_migration\Service\MigrateImport;
 use Drupal\mcp_tools_migration\Service\MigrationService;
 use Drupal\Tests\UnitTestCase;
 
@@ -81,111 +84,108 @@ final class MigrationServiceTest extends UnitTestCase {
     ) extends MigrationService {
       public array $captured = [];
 
-      public function importFromJson(string $contentType, array $items): array {
+      public array $capturedErrors = [];
+
+      protected function import(string $contentType, array $items, string $key, array $options = [], array $rowErrors = []): array {
         $this->captured = $items;
+        $this->capturedErrors = $rowErrors;
         return ['success' => TRUE, 'data' => ['ok' => TRUE]];
       }
     };
 
-    $csv = "title,body\nHello,\"A,B\"\n\n";
-    $result = $service->importFromCsv('article', $csv, ['body' => 'body']);
+    $csv = "id,title,body\n1,Hello,\"A,B\"\n\n2,\"Two\nlines\",x\n3,short\n";
+    $result = $service->importFromCsv('article', $csv, ['body' => 'body'], 'id');
     $this->assertTrue($result['success']);
 
-    $this->assertSame([['title' => 'Hello', 'body' => 'A,B']], $service->captured);
+    // Rows by their number; a quoted comma and a quoted newline are values.
+    $this->assertSame([
+      1 => ['id' => '1', 'title' => 'Hello', 'body' => 'A,B'],
+      2 => ['id' => '2', 'title' => "Two\nlines", 'body' => 'x'],
+    ], $service->captured);
+    $this->assertSame([3], array_keys($service->capturedErrors), 'A short row was not reported.');
+  }
+
+  /**
+   * A service with the mocks an import needs, and a recording migration.
+   *
+   * @return array{0: \Drupal\mcp_tools_migration\Service\MigrationService, 1: object}
+   *   The service, and the record of what reached the migration.
+   */
+  private function importingService(): array {
+    $accessManager = $this->createMock(AccessManager::class);
+    $accessManager->method('canWrite')->willReturn(TRUE);
+    $nodeTypeStorage = $this->createMock(EntityStorageInterface::class);
+    $nodeTypeStorage->method('load')->with('article')->willReturn(new \stdClass());
+    $nodeType = $this->createMock(EntityTypeInterface::class);
+    $nodeType->method('getKey')->willReturnCallback(fn(string $key) => ['id' => 'nid', 'revision' => 'vid', 'bundle' => 'type', 'label' => 'title'][$key] ?? FALSE);
+    $entityTypeManager = $this->createMock(EntityTypeManagerInterface::class);
+    $entityTypeManager->method('getStorage')->with('node_type')->willReturn($nodeTypeStorage);
+    $entityTypeManager->method('getDefinition')->with('node')->willReturn($nodeType);
+    $definition = function (string $type): FieldDefinitionInterface {
+      $definition = $this->createMock(FieldDefinitionInterface::class);
+      $definition->method('getType')->willReturn($type);
+      return $definition;
+    };
+    $entityFieldManager = $this->createMock(EntityFieldManagerInterface::class);
+    $entityFieldManager->method('getFieldDefinitions')->with('node', 'article')->willReturn([
+      'title' => $definition('string'),
+      'uid' => $definition('entity_reference'),
+      'status' => $definition('boolean'),
+      'body' => $definition('string_long'),
+    ]);
+    $record = new \stdClass();
+    $record->rows = NULL;
+    $record->fields = NULL;
+    $migrate = $this->createMock(MigrateImport::class);
+    // Migrate and migrate_plus are on.
+    $migrate->method('ready')->willReturn(TRUE);
+    $migrate->method('made')->willReturn([]);
+    $migrate->method('save')->willReturnCallback(function (string $id, string $entityType, string $bundle, string $key, array $rows, array $fields) use ($record): void {
+      $record->rows = $rows;
+      $record->fields = $fields;
+    });
+    $migrate->method('run')->willReturnCallback(fn() => ['saved' => array_map('strval', array_keys($record->rows)), 'failed' => [], 'done' => TRUE, 'remaining' => 0, 'reset' => FALSE]);
+    $migrate->method('exists')->willReturn(TRUE);
+    $migrate->method('status')->willReturnCallback(fn(string $id) => ['import_id' => $id, 'imported' => count((array) $record->rows)]);
+    $service = new MigrationService($entityTypeManager, $entityFieldManager, $this->createMock(AccountProxyInterface::class), $this->state, $accessManager, $this->createMock(AuditLogger::class), $migrate);
+    return [$service, $record];
   }
 
   public function testImportFromJsonReturnsValidationErrors(): void {
-    $accessManager = $this->createMock(AccessManager::class);
-    $accessManager->method('canWrite')->willReturn(TRUE);
+    [$service, $record] = $this->importingService();
 
-    $nodeTypeStorage = $this->createMock(EntityStorageInterface::class);
-    $nodeTypeStorage->method('load')->with('article')->willReturn(new \stdClass());
-
-    $entityTypeManager = $this->createMock(EntityTypeManagerInterface::class);
-    $entityTypeManager->method('getStorage')->with('node_type')->willReturn($nodeTypeStorage);
-
-    $service = new class(
-      $entityTypeManager,
-      $this->createMock(EntityFieldManagerInterface::class),
-      $this->createMock(AccountProxyInterface::class),
-      $this->state,
-      $accessManager,
-      $this->createMock(AuditLogger::class),
-    ) extends MigrationService {
-      public function validateImport(string $contentType, array $items): array {
-        return [
-          'success' => TRUE,
-          'data' => [
-            'errors' => [['row' => 1, 'field' => 'title', 'message' => 'missing']],
-          ],
-        ];
-      }
-    };
-
-    $result = $service->importFromJson('article', [['body' => 'x']]);
-    $this->assertFalse($result['success']);
-    $this->assertNotEmpty($result['validation_errors']);
+    $result = $service->importFromJson('article', [['id' => '1', 'body' => 'x'], ['id' => '2', 'title' => 'Fine']], 'id');
+    $this->assertTrue($result['success']);
+    $this->assertSame(1, $result['data']['failed_count']);
+    $this->assertSame(1, $result['data']['failed'][0]['row']);
+    $this->assertStringContainsString('Title', $result['data']['failed'][0]['error']);
+    $this->assertSame(['2'], array_map('strval', array_keys($record->rows)), 'A row without a title reached the migration.');
   }
 
   public function testImportFromJsonCreatesNodesAndUpdatesImportStatus(): void {
-    $accessManager = $this->createMock(AccessManager::class);
-    $accessManager->method('canWrite')->willReturn(TRUE);
+    [$service, $record] = $this->importingService();
 
-    $currentUser = $this->createMock(AccountProxyInterface::class);
-    $currentUser->method('id')->willReturn(42);
-
-    $nodeTypeStorage = $this->createMock(EntityStorageInterface::class);
-    $nodeTypeStorage->method('load')->with('article')->willReturn(new \stdClass());
-
-    $node = new class() {
-      public function save(): void {}
-      public function id(): int { return 100; }
-    };
-
-    $nodeStorage = $this->createMock(EntityStorageInterface::class);
-    $nodeStorage->expects($this->once())
-      ->method('create')
-      ->with($this->callback(static function (array $values): bool {
-        return $values['type'] === 'article'
-          && $values['title'] === 'Imported'
-          && $values['uid'] === 42
-          && !array_key_exists('uid_override', $values);
-      }))
-      ->willReturn($node);
-
-    $entityTypeManager = $this->createMock(EntityTypeManagerInterface::class);
-    $entityTypeManager->method('getStorage')->willReturnMap([
-      ['node_type', $nodeTypeStorage],
-      ['node', $nodeStorage],
-    ]);
-
-    $entityFieldManager = $this->createMock(EntityFieldManagerInterface::class);
-    $entityFieldManager->method('getFieldDefinitions')->with('node', 'article')->willReturn([]);
-
-    $auditLogger = $this->createMock(AuditLogger::class);
-    $auditLogger->expects($this->once())->method('logSuccess');
-
-    $service = new class(
-      $entityTypeManager,
-      $entityFieldManager,
-      $currentUser,
-      $this->state,
-      $accessManager,
-      $auditLogger,
-    ) extends MigrationService {
-      public function validateImport(string $contentType, array $items): array {
-        return ['success' => TRUE, 'data' => ['errors' => []]];
-      }
-    };
-
-    $result = $service->importFromJson('article', [['title' => 'Imported', 'uid' => 1]]);
-    $this->assertTrue($result['success']);
+    $result = $service->importFromJson('article', [['id' => '1', 'title' => 'Imported', 'uid' => 1]], 'id');
+    $this->assertTrue($result['success'], json_encode($result));
     $this->assertSame(1, $result['data']['created_count']);
+    // The owner is never taken from a row.
+    $this->assertSame(['uid'], $result['data']['ignored_columns']);
+    $this->assertNotContains('uid', $record->fields);
+    $this->assertArrayNotHasKey('uid', $record->rows['1']);
+    $this->assertSame('Imported', $record->rows['1']['title']);
 
-    $status = $service->getImportStatus();
+    $status = $service->getImportStatus($result['data']['import_id']);
     $this->assertTrue($status['success']);
     $this->assertTrue($status['data']['has_import']);
-    $this->assertSame('completed', $status['data']['status']);
+    $this->assertSame(1, $status['data']['imported']);
+  }
+
+  public function testAnImportWithoutAKeyIsRefused(): void {
+    [$service, $record] = $this->importingService();
+    $result = $service->importFromJson('article', [['title' => 'One']]);
+    $this->assertFalse($result['success']);
+    $this->assertSame('KEY_REQUIRED', $result['code']);
+    $this->assertNull($record->rows, 'An import without a key reached the migration.');
   }
 
   public function testValidateImportReportsMissingTitleAndUnknownFields(): void {
@@ -259,7 +259,23 @@ final class MigrationServiceTest extends UnitTestCase {
     };
 
     $nodeStorage = $this->createMock(EntityStorageInterface::class);
-    $nodeStorage->method('loadByProperties')->with(['type' => 'article'])->willReturn([$node]);
+    // An entity query of the type in id order: a count, then a page.
+    $nodeStorage->method('getQuery')->willReturnCallback(function () {
+      $query = $this->createMock(QueryInterface::class);
+      $counting = FALSE;
+      foreach (['accessCheck', 'condition', 'sort', 'range'] as $method) {
+        $query->method($method)->willReturnSelf();
+      }
+      $query->method('count')->willReturnCallback(function () use ($query, &$counting) {
+        $counting = TRUE;
+        return $query;
+      });
+      $query->method('execute')->willReturnCallback(function () use (&$counting) {
+        return $counting ? 1 : [1 => 1];
+      });
+      return $query;
+    });
+    $nodeStorage->method('loadMultiple')->with([1 => 1])->willReturn([1 => $node]);
 
     $entityTypeManager = $this->createMock(EntityTypeManagerInterface::class);
     $entityTypeManager->method('getStorage')->willReturnMap([
@@ -280,6 +296,10 @@ final class MigrationServiceTest extends UnitTestCase {
     $json = $service->exportToJson('article', 5);
     $this->assertTrue($json['success']);
     $this->assertSame(123, $json['data']['items'][0]['field_tags']['target_id']);
+    $this->assertSame('uuid-1', $json['data']['items'][0]['uuid']);
+    $this->assertSame(1, $json['data']['total']);
+    $this->assertNull($json['data']['next_offset']);
+    $this->assertStringContainsString('uuid-1', $csv['data']['csv_data']);
   }
 
   public function testCsvEscapeQuotesAndEscapesValues(): void {

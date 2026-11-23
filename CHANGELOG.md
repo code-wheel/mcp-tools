@@ -4,6 +4,74 @@ All notable changes to the MCP Tools module will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.0.0-beta25] - 2026-11-23
+
+### Changed
+
+- **The import runs on Drupal's Migrate API, and needs a key.**
+  `mcp_migration_import_json` and `mcp_migration_import_csv` take `key`,
+  required: a column whose value names a row for good, such as an id
+  from the source, or `uuid`. An import with the same content type and
+  key is one migration (migrate_plus), so a second run updates what the
+  first made instead of making copies, and `drush migrate:import
+  <import_id>` (migrate_tools) runs it too. mcp_tools_migration now
+  requires migrate_plus.
+  **Updating a site that has MCP Tools - Migration on:** Composer does
+  not bring migrate_plus. Run `composer require drupal/migrate_plus`
+  before `drush updb`, and the update turns on migrate and migrate_plus.
+  Without it the site works, the exports and field tools work, and the
+  import says what to run.
+  - `dry_run` says for each row whether it would be created or updated,
+    and writes nothing.
+  - 100 rows run a call; the answer has `remaining` and `done`. Up to
+    1000 rows an import.
+  - Every node is checked by Drupal's validation before it is saved.
+  - Reference fields take ids or names, several with `|`. A name that
+    matches nothing refuses its row.
+  - `mcp_migration_import_status` reads the import's own record (made,
+    failed, why), for one `import_id` or for all.
+  - `mcp_migration_rollback` (new, asks first) deletes what one import
+    made. Nodes it only updated are kept.
+  - The exports take `offset`, go in id order, and give `uuid`,
+    `total` and `next_offset`, so an export imports back as updates.
+- **Terms and redirects go through the same import** (`entity_type`
+  `taxonomy_term` or `redirect`). Terms are keyed by name and redirects
+  by source when no key is given. A term's `parent` may name another row,
+  in any order, so a whole tree goes in one call. A term or redirect that
+  was there and not made by the import is left as it is and listed under
+  `existing`. A redirect to nowhere is made and said under `warnings`.
+  `mcp_batch_create_terms` and `mcp_redirect_import` stay for sites
+  without migrate_plus.
+
+### Fixed
+
+These all answered success:
+
+- A CSV value with a quoted comma lost its row.
+- A row with too few or too many columns was dropped without a word.
+- A column the content type does not have was dropped. It is refused
+  now, with the fields there are.
+- The same import twice made everything twice.
+- A tag given by name was stored as 0, and `1|2` as 1 only.
+- The export stopped at 100 and could not go further.
+- `mcp_redirect_import` ran any number of redirects in one request. Use
+  the import for long lists; it runs 100 a call.
+- **A tool does not change a layout someone is editing.** Layout Builder
+  keeps an editor's unsaved changes, and their save writes the whole
+  layout back, so a section or block a tool added in between was lost.
+  The layout tools now refuse with `LAYOUT_BEING_EDITED` until the editor
+  saves or discards.
+- **A name where an id goes is said as such everywhere.** JSON:API writes,
+  and every save Drupal's validation checks in a tool call, answer "give
+  its id, not its name". On PostgreSQL they answered with a database
+  error.
+
+### Removed
+
+- `BatchService::createMultipleRedirects`, which no tool called. Many
+  redirects at once are `mcp_redirect_import`, which also checks that
+  each destination leads somewhere.
+
 ## [1.0.0-beta24] - 2026-11-23
 
 ### Security

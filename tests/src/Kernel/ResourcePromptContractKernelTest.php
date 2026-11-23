@@ -33,6 +33,8 @@ final class ResourcePromptContractKernelTest extends KernelTestBase {
     'mcp_tools_layout_builder',
     'mcp_tools_media',
     'mcp_tools_menus',
+    'migrate',
+    'migrate_plus',
     'mcp_tools_migration',
     'mcp_tools_moderation',
     'mcp_tools_observability',

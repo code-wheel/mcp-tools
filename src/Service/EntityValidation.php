@@ -40,6 +40,9 @@ final class EntityValidation {
    *   The fields the call set, or NULL for all (a new entity).
    */
   public static function problem(FieldableEntityInterface $entity, ?array $fieldNames = NULL): ?string {
+    if (($names = EntityReferences::nameForId($entity, $fieldNames)) !== NULL) {
+      return $names;
+    }
     $violations = $entity->validate();
     if ($fieldNames !== NULL) {
       $violations->filterByFields(array_diff(array_keys($entity->getFieldDefinitions()), $fieldNames));

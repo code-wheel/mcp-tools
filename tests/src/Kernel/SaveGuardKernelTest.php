@@ -40,6 +40,8 @@ final class SaveGuardKernelTest extends KernelTestBase {
     $this->installSchema('node', ['node_access']);
     $this->installConfig(['system', 'filter', 'node', 'image', 'mcp_tools']);
     NodeType::create(['type' => 'page', 'name' => 'Page'])->save();
+    \Drupal\field\Entity\FieldStorageConfig::create(['field_name' => 'field_reviewer', 'entity_type' => 'node', 'type' => 'entity_reference', 'settings' => ['target_type' => 'user']])->save();
+    \Drupal\field\Entity\FieldConfig::create(['field_name' => 'field_reviewer', 'entity_type' => 'node', 'bundle' => 'page'])->save();
     $this->setUpCurrentUser([], [], TRUE);
   }
 
@@ -79,8 +81,17 @@ final class SaveGuardKernelTest extends KernelTestBase {
       $node->setTitle(str_repeat('x', 300));
       $this->assertNotNull($refused(fn() => $node->save()), 'A 300 character title was saved.');
 
-      // What validates is saved.
+      // A name where an id goes is said as such, before Drupal looks it up
+      // (on PostgreSQL that lookup is a database error, and the save went
+      // on into the same error).
+      // (The owner field cannot show it: Node::preSave makes an owner it
+      // cannot load the anonymous user, before any presave hook.)
       $node->setTitle('Changed');
+      $node->set('field_reviewer', ['target_id' => 'ann']);
+      $this->assertStringContainsString('Give its id, not its name', (string) $refused(fn() => $node->save()), 'A user name where a user id goes was not said as such.');
+      $node->set('field_reviewer', ['target_id' => (int) $user->id()]);
+
+      // What validates is saved.
       $this->assertNull($refused(fn() => $node->save()));
     }
     finally {
