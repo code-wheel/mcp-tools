@@ -11,6 +11,7 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Entity\RevisionableStorageInterface;
 use Drupal\Core\Entity\RevisionLogInterface;
 use Drupal\Core\Session\AccountProxyInterface;
+use Drupal\mcp_tools\Service\LatestRevision;
 use Drupal\mcp_tools\Service\EntityAccess;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AuditLogger;
@@ -172,8 +173,7 @@ class ModerationService {
    *   Moderation state data.
    */
   public function getModerationState(string $entityType, int $entityId): array {
-    $storage = $this->entityTypeManager->getStorage($entityType);
-    $entity = $storage->load($entityId);
+    $entity = LatestRevision::load($this->entityTypeManager, $entityType, $entityId);
     if ($entity && ($denied = EntityAccess::denied($entity, 'view')) !== NULL) {
       return $denied;
     }
@@ -253,8 +253,7 @@ class ModerationService {
       return $this->accessManager->getWriteAccessDenied();
     }
 
-    $storage = $this->entityTypeManager->getStorage($entityType);
-    $entity = $storage->load($entityId);
+    $entity = LatestRevision::load($this->entityTypeManager, $entityType, $entityId);
     if ($entity && ($denied = EntityAccess::denied($entity, 'update')) !== NULL) {
       return $denied;
     }

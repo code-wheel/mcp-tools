@@ -8,6 +8,7 @@ use Drupal\mcp_tools_layout_builder\Service\LayoutBuilderService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\mcp_tools\Tool\AsksFirstInterface;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\Attribute\Tool;
 use Drupal\tool\Tool\ToolOperation;
@@ -66,7 +67,7 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
 )]
-class AllowCustomLayouts extends McpToolsToolBase {
+class AllowCustomLayouts extends McpToolsToolBase implements AsksFirstInterface {
 
   protected const MCP_CATEGORY = 'layout_builder';
 
@@ -100,6 +101,23 @@ class AllowCustomLayouts extends McpToolsToolBase {
     }
 
     return $this->layoutBuilderService->allowCustomLayouts($entityType, $bundle, (bool) $allow);
+  }
+
+  /**
+   * {@inheritdoc}
+   *
+   * Turning custom layouts off deletes every one of them for good: Drupal
+   * drops their field. Drupal's form asks first; the tool did not.
+   */
+  public function reasonToAsk(array $arguments): ?string {
+    if (filter_var($arguments['allow'] ?? TRUE, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) !== FALSE) {
+      return NULL;
+    }
+    $count = $this->layoutBuilderService->countCustomLayouts((string) ($arguments['entity_type'] ?? 'node'), (string) ($arguments['bundle'] ?? ''));
+    if ($count === 0) {
+      return NULL;
+    }
+    return sprintf('Turning custom layouts off deletes the custom layouts of %d %s for good.', $count, $count === 1 ? 'item' : 'items');
   }
 
 }

@@ -57,4 +57,26 @@ final class TargetBundlesKernelTest extends KernelTestBase {
     $this->assertTrue($made['success'], (string) ($made['error'] ?? ''));
   }
 
+  /**
+   * A term's parent must be a term of the same vocabulary.
+   *
+   * A parent that was not there was stored; the term then dropped out of
+   * the vocabulary's tree.
+   */
+  public function testATermParentMustBeThere(): void {
+    $this->enableModules(['taxonomy']);
+    $this->installEntitySchema('taxonomy_term');
+    // Enabling a module rebuilds the container, and the scopes with it.
+    $this->container->get('mcp_tools.access_manager')->setScopes(['read', 'write']);
+    \Drupal\taxonomy\Entity\Vocabulary::create(['vid' => 'tags', 'name' => 'Tags'])->save();
+    \Drupal\taxonomy\Entity\Vocabulary::create(['vid' => 'other', 'name' => 'Other'])->save();
+    $service = $this->container->get('mcp_tools_structure.taxonomy');
+    $elsewhere = $service->createTerm('other', 'Elsewhere');
+    $this->assertTrue($elsewhere['success'], json_encode($elsewhere));
+    $this->assertFalse($service->createTerm('tags', 'Orphan', ['parent' => 99999])['success'], 'A parent that does not exist was stored.');
+    $this->assertFalse($service->createTerm('tags', 'Wrong home', ['parent' => $elsewhere['data']['tid']])['success'], 'A parent in another vocabulary was stored.');
+    $top = $service->createTerm('tags', 'Top');
+    $this->assertTrue($service->createTerm('tags', 'Child', ['parent' => $top['data']['tid']])['success']);
+  }
+
 }

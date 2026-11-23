@@ -4,6 +4,190 @@ All notable changes to the MCP Tools module will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.0.0-beta24] - 2026-11-23
+
+### Security
+
+- **Clone with references takes real field names, counts every clone,
+  and is all or nothing.** A field name that is not a reference field was
+  skipped, so the clone shared the original's references while the answer
+  said success. It is refused now with the fields there are. Each clone
+  counts against the write limits, and a failure halfway undoes the
+  clones made so far.
+- **A template counts every part it makes against the limits.**
+  `mcp_templates_apply` made dozens of content types, fields, roles and
+  views as one write. Each part counts now. A queue run still counts as
+  one: its items are the site's own queued jobs.
+- **Translation writes follow Drupal's translation access.** Where tools
+  follow entity access, creating or updating a translation also needs
+  Drupal's "create content translations" or "update content
+  translations", as its translation forms do. The tools asked only for a
+  translate permission.
+- **Two calls at once cannot both get under the write limit.** The
+  limiter read and wrote its counters in two steps. The check and the
+  count run under one lock per client now; a call that cannot get it is
+  refused as busy, not let through uncounted.
+
+### Fixed
+- **Every entity a tool saves passes Drupal's validation.** The tools
+  saved without it, so a user's email "nope", an image effect with no
+  width, or a title longer than its field was stored, and the call said
+  success. Now, during a tool call, each entity is checked before it is
+  saved: its fields, its references, its config schema. Only what the
+  save adds is refused, so a value that was wrong before does not stop
+  an unrelated change, and saves outside a tool call are not touched.
+  The answer names the field and what is wrong.
+- **The sitemap is generated when the tool says so.**
+  `mcp_sitemap_regenerate` started Simple Sitemap's form batch, which
+  nothing ran: it said "regeneration started" and no sitemap changed. It
+  now generates in Simple Sitemap's backend mode, for a few seconds a
+  call, and answers with `remaining` and `done`. `continue: true` goes
+  on where the last call stopped. A generation that cannot get its lock
+  is refused, not skipped.
+- **Alias generation reaches every entity.** `mcp_pathauto_generate`
+  took the first 500 entities in no order on every call, so on a bigger
+  site the rest never got an alias. It now goes in id order, 50 a call,
+  and answers with `next_after`, `remaining` and `done`: give `after`
+  to the next call. Each alias counts against the write limits.
+- **Search indexing does a bounded part and says when nothing
+  happened.** `mcp_search_api_index` took any limit (100000 ran the
+  whole index in one request), and answered "Indexed 0 items" with
+  success when another run held the index or the backend failed. A call
+  does at most 200 now, a server that is not available is refused, and
+  a call that indexed nothing while items wait is a failure that says
+  where to look.
+- **A queue is run as Drupal's cron runs it.** `mcp_cron_run_queue`
+  counted a worker's "requeue" or "delay" as a failure, went on after a
+  worker suspended the queue, left an item claimed for an hour after a
+  PHP error, ran as the tool user, and answered success with
+  "Processed 0" when every item failed. It now handles a queue the way
+  core's cron does, as the anonymous user, for at most 200 items and 20
+  seconds a call, and a run in which every item failed is a failure with
+  the workers' errors.
+- **The cron interval goes where Drupal reads it.**
+  `mcp_cron_update_settings` wrote `system.cron:threshold.autorun`, a
+  Drupal 7 key that nothing reads (and that has no schema), and said
+  "updated". `mcp_cron_get_status` read it. Both use Automated Cron's
+  interval now. Without Automated Cron the update is refused, and says
+  that cron then runs only from outside.
+- **The cron status says the real interval under Drush.** Drush sets
+  Automated Cron's interval to 0 in its own requests, so over the STDIO
+  server `mcp_cron_status` said cron never runs by itself. It reads the
+  stored interval, the one web requests run cron by.
+- **A hidden block label is hidden.** `label_display: "hidden"` was
+  stored as is, and Drupal shows any value that is not empty. Hidden is
+  `'0'` now; another value is refused.
+- **A menu link's parent must be there, in the same menu.** Drupal put
+  a link with an unknown parent at the top, and one with a parent in
+  another menu into that menu, while the answer named the menu asked
+  for. Both are refused, and a parent can be given by its link id.
+- **Clearing an entity's cache clears its own tags,** and is refused for
+  an entity that does not exist (it said "cleared"). A config entity
+  gets its real tag, such as `config:user.role.editor`.
+- **Turning custom layouts off asks first.** `mcp_layout_allow_custom`
+  with `allow: false` deletes every custom layout of the bundle for good
+  (Drupal drops their field), and did not ask. When there are custom
+  layouts, it now asks like a destructive tool, and says how many.
+- **Webform status and settings are webform's own.** Any status but
+  exactly "open" closed the form, "Open" too. Now open, closed or
+  scheduled, and anything else is refused. A setting webform does not
+  have was stored and did nothing; it is refused with the settings meant
+  most likely.
+- **"No security issues" is not said when Drupal could not look.**
+  `mcp_tools_check_security_updates` left out the projects Drupal could
+  not check, so a site whose update data could not be fetched read as
+  having no security issues, and a fetch that failed outright was a
+  success with the error inside. The answer now has `complete`,
+  `not_checked` and `last_checked`, and a fetch that failed is a
+  failure.
+- **Unused fields on vocabularies are found.**
+  `mcp_analysis_find_unused_fields` filtered terms on `type` (their
+  bundle key is `vid`): the query failed, the field was skipped, and the
+  answer was "All configured fields are in use". Each entity type's own
+  bundle key is used now, and a field that could not be checked is
+  listed, not skipped.
+- **The SEO check reads Metatag 2.** It read the meta tags with
+  `unserialize()`, and Metatag 2 stores JSON, so every node was
+  "missing a meta description". It asks Metatag's own manager now,
+  defaults included.
+- **An Ultimate Cron job that failed is not "executed successfully".**
+  Ultimate Cron catches what a job throws, logs it and answers FALSE,
+  as it does when it cannot get the job's lock. `mcp_ultimate_cron_run`
+  ignored the answer. It fails now, with the job's last log message.
+- **Theme settings go to an installed theme, and fit its schema.**
+  `mcp_theme_update_settings` saved settings for a theme that was not
+  installed, which made its config ahead of time and then stopped the
+  theme from being installed. And it stored any key and any value. It
+  refuses an uninstalled theme now, and settings the theme's config
+  schema does not take.
+- **A draft waiting over published content is what the tools work on.**
+  The moderation, content, metatag and media alt-text tools loaded the
+  published revision. With a newer draft waiting, `published` answered
+  "already published" and left the draft, and an edit was saved on top
+  of the published text, burying the draft. They load the newest
+  revision now, as Drupal's "Latest version" tab does. On moderated
+  content, `mcp_publish_content` and a `status` given to
+  `mcp_update_content` are refused with the moderation tool to use:
+  Content Moderation reset the status, and the tool said "published".
+- **A recipe's inputs are used.** `mcp_recipes_apply` never collected
+  them, so Drupal had none and every `${name}` placeholder was stored as
+  written. It takes `inputs` now (by name; one not given gets its
+  default), and refuses a name the recipe has no input for.
+- **A recipe that installs a theme is valid.** `mcp_recipes_validate`
+  checked every `install` entry as a module, so core's own
+  `core_recommended_front_end_theme` failed ("Required module olivero is
+  not available") and `mcp_recipes_apply` refused it. Themes count now,
+  and validation also runs Drupal's own checks
+  (`Recipe::createFromDirectory()`), the ones applying would run.
+- **Config export writes what `drush config:export` writes.**
+  `mcp_config_export` copied the raw active storage: the site's
+  `config_exclude_modules` (and config_split, config_ignore) were not
+  applied, and translations were never written. It exports through
+  Drupal's export storage now, every collection.
+- **A view Views refuses is not saved.** `mcp_create_view` and
+  `mcp_add_view_display` saved what Views itself calls broken: a page
+  display with no path, a feed with a style it cannot use. Views' own
+  check runs before the save now, and its words are the answer.
+- **A field block in a layout knows which entity it shows.**
+  `mcp_layout_add_block` saved only the block's id, so a field block had
+  no context mapping and a page of that bundle could not render it. It
+  saves the block as Layout Builder's own form does now. A section added
+  past the end answers with the position it really got.
+- **A media type is made the way Drupal's form makes it.** The template
+  tool made a media type with no source field, so nobody could add media
+  of it, and the media tool skipped the form and view displays, so the
+  add form had no file widget. Both use one builder now: the type, its
+  source field, and the displays the source prepares, undone again when
+  a step fails.
+- **A template role gets its permissions in one save.** It was saved
+  first, and a permission the site lacks then failed the second save:
+  an empty role, which a second apply skipped. The role is made with the
+  permissions the site has, and the answer names those it has not.
+- **A paragraph field a translation does not have is refused.**
+  `mcp_update_content` with `language` and `paragraphs` skipped a field
+  the paragraph does not have, counted it as updated and said success.
+  Such fields are refused now, before anything is saved.
+- **A term's parent must be a term of the same vocabulary.**
+  `mcp_structure_create_term` stored any parent id: a term whose parent
+  is not there dropped out of the vocabulary's tree and overview.
+- **Sitemap entity settings keep what was not given, in every variant.**
+  `mcp_sitemap_set_entity` filled in defaults for what it was not given
+  (setting `changefreq` alone turned indexing back on and reset the
+  priority), wrote only the first sitemap variant, and "updated" a bundle
+  that does not exist or a type Simple Sitemap does not index. Now only
+  the given settings change, in every variant, and the others are
+  refused.
+- **An image effect is added with a weight.** `mcp_image_styles_add_effect`
+  gave the effect none, which Drupal's validation refuses, so with every
+  save checked nothing was saved. It gets the next weight after the
+  effects there are, as Drupal's form does, and its id is no longer stored
+  in its settings.
+- **Content types and vocabularies without a description are saved
+  with none,** not with an empty text, which Drupal's schema refuses.
+- **Text is saved in a format the user may use.** The tools picked
+  `basic_html` whenever the site had it, also for a user who may not
+  use it, and Drupal refuses that. Such a user gets the fallback format.
+
 ## [1.0.0-beta23] - 2026-11-22
 
 ### Security

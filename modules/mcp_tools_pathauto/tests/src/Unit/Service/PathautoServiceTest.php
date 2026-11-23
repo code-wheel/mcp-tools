@@ -146,12 +146,15 @@ final class PathautoServiceTest extends UnitTestCase {
     $accessManager->method('canWrite')->willReturn(TRUE);
 
     $entityTypeDef = $this->createMock(EntityTypeInterface::class);
-    $entityTypeDef->method('getKey')->with('bundle')->willReturn('type');
+    $entityTypeDef->method('getKey')->willReturnMap([['bundle', 'type'], ['id', 'nid']]);
 
+    // A query as Drupal's is: sorted, ranged and counted.
     $query = $this->createMock(QueryInterface::class);
     $query->method('accessCheck')->willReturnSelf();
     $query->method('condition')->willReturnSelf();
+    $query->method('sort')->willReturnSelf();
     $query->method('range')->willReturnSelf();
+    $query->method('count')->willReturnSelf();
     $query->method('execute')->willReturn([]);
 
     $storage = $this->createMock(EntityStorageInterface::class);
@@ -167,7 +170,7 @@ final class PathautoServiceTest extends UnitTestCase {
     ]);
     $result = $service->generateAliases('node');
 
-    $this->assertTrue($result['success']);
+    $this->assertTrue($result['success'], json_encode($result));
     $this->assertSame(0, $result['data']['processed']);
     $this->assertStringContainsString('No entities found', $result['data']['message']);
   }

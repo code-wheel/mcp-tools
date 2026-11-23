@@ -279,8 +279,14 @@ class WebformService {
         $webform->set('description', $updates['description']);
       }
 
+      // Webform's own statuses. Any value but exactly "open" closed the form,
+      // "Open" and "true" too.
       if (isset($updates['status'])) {
-        $webform->setStatus($updates['status'] === 'open' || $updates['status'] === TRUE);
+        $status = is_bool($updates['status']) ? ($updates['status'] ? 'open' : 'closed') : strtolower(trim((string) $updates['status']));
+        if (!in_array($status, ['open', 'closed', 'scheduled'], TRUE)) {
+          return ['success' => FALSE, 'error' => "status is open, closed or scheduled, not '{$updates['status']}'."];
+        }
+        $webform->setStatus($status);
       }
 
       if (isset($updates['elements'])) {
@@ -317,6 +323,34 @@ class WebformService {
       }
 
       if (isset($updates['settings'])) {
+        // A key webform does not have was stored and did nothing: the
+        // tool's own example, submission_limit, is not one (limit_total is).
+        $known = method_exists($webform, 'getDefaultSettings') ? array_keys($webform::getDefaultSettings()) : NULL;
+        if ($known !== NULL) {
+          $unknown = array_values(array_diff(array_keys((array) $updates['settings']), $known));
+          if ($unknown !== []) {
+            // The settings that share the rarest words with what was asked:
+            // "limit" says more than "submission", which dozens have.
+            $frequency = array_count_values(array_merge(...array_map(static fn($c) => array_unique(explode('_', $c)), $known)));
+            $near = [];
+            foreach ($unknown as $key) {
+              $words = array_filter(explode('_', strtolower((string) $key)));
+              $scores = [];
+              foreach ($known as $candidate) {
+                $shared = array_intersect($words, explode('_', $candidate));
+                if ($shared !== []) {
+                  $scores[$candidate] = array_sum(array_map(static fn($w) => 1000 / $frequency[$w], $shared)) - levenshtein((string) $key, $candidate);
+                }
+              }
+              arsort($scores);
+              $near += array_combine(array_keys(array_slice($scores, 0, 5, TRUE)), array_keys(array_slice($scores, 0, 5, TRUE)));
+            }
+            return [
+              'success' => FALSE,
+              'error' => 'Webform has no setting ' . implode(', ', $unknown) . '.' . ($near ? ' Did you mean ' . implode(', ', array_slice($near, 0, 6)) . '?' : '') . ' Nothing was saved.',
+            ];
+          }
+        }
         foreach ($updates['settings'] as $key => $value) {
           $webform->setSetting($key, $value);
         }

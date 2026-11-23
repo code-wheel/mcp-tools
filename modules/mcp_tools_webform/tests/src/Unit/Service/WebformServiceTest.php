@@ -209,4 +209,57 @@ class WebformServiceTest extends UnitTestCase {
     $this->assertStringContainsString('name, email', $missing['error']);
   }
 
+  /**
+   * Status is webform's own, and a setting it does not have is refused.
+   *
+   * Any status but exactly "open" closed the form ("Open" too), and an
+   * unknown setting (the tool's own example, submission_limit) was stored
+   * and did nothing.
+   */
+  public function testStatusAndSettingsAreWebformsOwn(): void {
+    $this->accessManager->method('canWrite')->willReturn(TRUE);
+    $webform = new class() {
+      public mixed $status = NULL;
+      public array $settings = [];
+
+      public static function getDefaultSettings(): array {
+        return ['limit_total' => NULL, 'confirmation_message' => ''];
+      }
+
+      public function setStatus($status): void {
+        $this->status = $status;
+      }
+
+      public function setSetting(string $key, $value): void {
+        $this->settings[$key] = $value;
+      }
+
+      public function save(): void {}
+
+      public function id(): string {
+        return 'contact';
+      }
+
+      public function label(): string {
+        return 'Contact';
+      }
+
+      public function isOpen(): bool {
+        return $this->status === 'open';
+      }
+
+    };
+    $this->webformStorage->method('load')->willReturn($webform);
+    $service = $this->createService();
+
+    $this->assertTrue($service->updateWebform('contact', ['status' => 'Open'])['success']);
+    $this->assertSame('open', $webform->status, '"Open" closed the form.');
+    $this->assertFalse($service->updateWebform('contact', ['status' => 'sometimes'])['success']);
+
+    $unknown = $service->updateWebform('contact', ['settings' => ['submission_limit' => 1]]);
+    $this->assertFalse($unknown['success'], 'A setting webform does not have was stored.');
+    $this->assertStringContainsString('limit_total', $unknown['error']);
+    $this->assertSame([], $webform->settings);
+  }
+
 }

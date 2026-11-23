@@ -8,6 +8,7 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\metatag\MetatagManagerInterface;
 use Drupal\metatag\MetatagTagPluginManager;
 use Drupal\metatag\MetatagGroupPluginManager;
+use Drupal\mcp_tools\Service\LatestRevision;
 use Drupal\mcp_tools\Service\EntityAccess;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AuditLogger;
@@ -101,7 +102,7 @@ class MetatagService {
    */
   public function getEntityMetatags(string $entityType, int $entityId): array {
     try {
-      $entity = $this->entityTypeManager->getStorage($entityType)->load($entityId);
+      $entity = LatestRevision::load($this->entityTypeManager, $entityType, $entityId);
       if ($entity && ($denied = EntityAccess::denied($entity, 'view')) !== NULL) {
         return $denied;
       }
@@ -170,7 +171,7 @@ class MetatagService {
     }
 
     try {
-      $entity = $this->entityTypeManager->getStorage($entityType)->load($entityId);
+      $entity = LatestRevision::load($this->entityTypeManager, $entityType, $entityId);
       if ($entity && ($denied = EntityAccess::denied($entity, 'update')) !== NULL) {
         return $denied;
       }

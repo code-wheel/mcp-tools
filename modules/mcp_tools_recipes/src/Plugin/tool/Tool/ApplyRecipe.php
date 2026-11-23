@@ -30,6 +30,12 @@ use Drupal\tool\TypedData\InputDefinition;
       description: new TranslatableMarkup('The machine name (directory name) of the recipe to apply.'),
       required: TRUE,
     ),
+    'inputs' => new InputDefinition(
+      data_type: 'map',
+      label: new TranslatableMarkup('Inputs'),
+      description: new TranslatableMarkup('Values for the recipe\'s inputs, by name, e.g. {"site_name": "My site"}. An input not given gets its default. mcp_recipes_get shows a recipe\'s inputs.'),
+      required: FALSE,
+    ),
   ],
   output_definitions: [
     'recipe' => new OutputDefinition(
@@ -90,7 +96,7 @@ class ApplyRecipe extends McpToolsToolBase implements AsksFirstInterface {
       ];
     }
 
-    return $this->recipesService->applyRecipe($recipeName);
+    return $this->recipesService->applyRecipe($recipeName, (array) ($input['inputs'] ?? []));
   }
 
   /**

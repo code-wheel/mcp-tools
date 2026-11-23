@@ -187,6 +187,12 @@ class ViewsService {
       }
 
       $view = $this->entityTypeManager->getStorage('view')->create($viewConfig);
+      // Views' own check, the one its UI runs before a save: a page with no
+      // path, a feed with a style it cannot take, an attachment attached to
+      // nothing were saved as success.
+      if (($problem = $this->viewProblem($view)) !== NULL) {
+        return ['success' => FALSE, 'error' => $problem];
+      }
       $view->save();
 
       $this->auditLogger->logSuccess('create_view', 'view', $id, [
@@ -395,6 +401,14 @@ class ViewsService {
         $display['display_options']['pager'] = $pager;
       }
 
+      // Views' own check, the one its UI runs before a save: a page with no
+      // path, a feed with a style it cannot take, an attachment attached to
+      // nothing were saved as success.
+      if (($problem = $this->viewProblem($view)) !== NULL) {
+        // The view in memory has the refused display: forget it.
+        $this->entityTypeManager->getStorage('view')->resetCache([$viewId]);
+        return ['success' => FALSE, 'error' => $problem];
+      }
       $view->save();
 
       $this->auditLogger->logSuccess('add_view_display', 'view', $viewId, [
@@ -497,6 +511,22 @@ class ViewsService {
       // sets its access.
       default => 'administer views',
     };
+  }
+
+  /**
+   * What Views says is wrong with a view, or NULL.
+   */
+  protected function viewProblem(object $view): ?string {
+    if (!method_exists($view, 'getExecutable')) {
+      return NULL;
+    }
+    $errors = [];
+    foreach ($view->getExecutable()->validate() as $displayErrors) {
+      foreach ((array) $displayErrors as $error) {
+        $errors[] = strip_tags((string) $error);
+      }
+    }
+    return $errors === [] ? NULL : 'Nothing was saved: Views refuses this view. ' . implode(' ', array_unique($errors));
   }
 
   /**

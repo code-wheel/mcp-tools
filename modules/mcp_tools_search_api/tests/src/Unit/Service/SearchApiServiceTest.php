@@ -233,4 +233,35 @@ final class SearchApiServiceTest extends UnitTestCase {
     $this->assertFalse($this->service->search('content', 'x', ['nope' => 1])['success'], 'A filter the index cannot use was dropped.');
   }
 
+  /**
+   * The index call is bounded, and says so when nothing was indexed.
+   *
+   * It said "Indexed 0 items" with success when the index was locked or
+   * the backend failed, and ran a limit of 100000 in one request.
+   */
+  public function testIndexingIsBoundedAndHonest(): void {
+    $server = $this->createMock(\Drupal\search_api\ServerInterface::class);
+    $server->method('isAvailable')->willReturn(TRUE);
+    $tracker = $this->createMock(TrackerInterface::class);
+    $tracker->method('getTotalItemsCount')->willReturn(500);
+    $tracker->method('getIndexedItemsCount')->willReturn(0);
+    $index = $this->createMock(IndexInterface::class);
+    $index->method('status')->willReturn(TRUE);
+    $index->method('isReadOnly')->willReturn(FALSE);
+    $index->method('hasValidServer')->willReturn(TRUE);
+    $index->method('getServerInstance')->willReturn($server);
+    $index->method('getTrackerInstance')->willReturn($tracker);
+    $asked = NULL;
+    $index->method('indexItems')->willReturnCallback(function (int $limit) use (&$asked) {
+      $asked = $limit;
+      return 0;
+    });
+    $this->indexStorage->method('load')->willReturn($index);
+
+    $result = $this->service->indexItems('content', 100000);
+    $this->assertSame(200, $asked, 'A limit of 100000 was run in one request.');
+    $this->assertFalse($result['success'], 'Nothing was indexed and the call said success.');
+    $this->assertSame('NOTHING_INDEXED', $result['code']);
+  }
+
 }

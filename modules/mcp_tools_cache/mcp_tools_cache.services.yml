@@ -13,3 +13,4 @@ services:
       - '@kernel'
       - '@plugin.manager.menu.link'
       - '@service_container'
+      - '@entity_type.manager'

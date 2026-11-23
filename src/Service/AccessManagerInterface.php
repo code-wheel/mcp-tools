@@ -91,11 +91,13 @@ interface AccessManagerInterface {
    *
    * @param string $operationType
    *   The type of operation for rate limiting: 'admin', 'structure'.
+   * @param int $items
+   *   How many items the call writes: each one counts.
    *
    * @return bool
    *   TRUE if admin operations are allowed.
    */
-  public function canAdmin(string $operationType = 'structure'): bool;
+  public function canAdmin(string $operationType = 'structure', int $items = 1): bool;
 
   /**
    * Check if a specific scope is available.

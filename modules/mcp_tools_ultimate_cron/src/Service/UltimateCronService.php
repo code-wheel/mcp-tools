@@ -151,11 +151,22 @@ class UltimateCronService {
         ];
       }
 
-      // Run the job.
-      $job->run();
+      // Run the job. Ultimate Cron catches what the job throws, logs it and
+      // answers FALSE, as it does when it cannot get the lock: the tool
+      // said "executed successfully" either way.
+      $ran = $job->run();
 
       $endTime = microtime(TRUE);
       $duration = round($endTime - $startTime, 2);
+      if ($ran === FALSE) {
+        $entry = method_exists($job, 'loadLatestLogEntry') ? $job->loadLatestLogEntry() : NULL;
+        $why = $entry !== NULL && isset($entry->message) ? strip_tags((string) $entry->message) : '';
+        return [
+          'success' => FALSE,
+          'error' => "Job '$id' did not run through" . ($why !== '' ? ": $why" : ': it could not get its lock, or it failed (see mcp_ultimate_cron_logs).'),
+          'code' => 'EXECUTION_FAILED',
+        ];
+      }
 
       return [
         'success' => TRUE,

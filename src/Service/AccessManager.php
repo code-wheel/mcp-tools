@@ -260,11 +260,13 @@ class AccessManager implements AccessManagerInterface {
    *
    * @param string $operationType
    *   The type of operation for rate limiting: 'admin', 'structure'.
+   * @param int $items
+   *   How many items the call writes: each one counts.
    *
    * @return bool
    *   TRUE if admin operations are allowed.
    */
-  public function canAdmin(string $operationType = 'structure'): bool {
+  public function canAdmin(string $operationType = 'structure', int $items = 1): bool {
     $config = $this->configFactory->get('mcp_tools.settings');
 
     // Check global read-only mode first.
@@ -280,7 +282,7 @@ class AccessManager implements AccessManagerInterface {
     // SECURITY: Apply rate limiting to admin operations too.
     // Admin operations should have the same abuse prevention as writes.
     if ($this->rateLimiter) {
-      $rateCheck = $this->rateLimiter->checkLimit($operationType);
+      $rateCheck = $this->rateLimiter->checkLimit($operationType, $items);
       if (!$rateCheck['allowed']) {
         $this->lastRateLimitError = $rateCheck;
         return FALSE;

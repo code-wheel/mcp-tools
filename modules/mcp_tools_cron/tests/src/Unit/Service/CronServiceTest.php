@@ -29,6 +29,7 @@ final class CronServiceTest extends UnitTestCase {
       $overrides['module_handler'] ?? $this->createMock(ModuleHandlerInterface::class),
       $overrides['queue_worker_manager'] ?? $this->createMock(QueueWorkerManagerInterface::class),
       $overrides['queue_factory'] ?? $this->createMock(QueueFactory::class),
+      $overrides['account_switcher'] ?? NULL,
     );
   }
 
@@ -39,13 +40,16 @@ final class CronServiceTest extends UnitTestCase {
       ['system.cron_key', '', 'cronkey'],
     ]);
 
+    // The setting Drupal runs cron by: Automated Cron's interval.
     $cronConfig = $this->createMock(ImmutableConfig::class);
-    $cronConfig->method('get')->with('threshold.autorun')->willReturn(3600);
+    // Stored, not as overridden: Drush overrides it to 0 in its requests.
+    $cronConfig->method('getOriginal')->with('interval', FALSE)->willReturn(3600);
 
     $configFactory = $this->createMock(ConfigFactoryInterface::class);
-    $configFactory->method('get')->with('system.cron')->willReturn($cronConfig);
+    $configFactory->method('get')->with('automated_cron.settings')->willReturn($cronConfig);
 
     $moduleHandler = $this->createMock(ModuleHandlerInterface::class);
+    $moduleHandler->method('moduleExists')->with('automated_cron')->willReturn(TRUE);
     $moduleHandler->method('invokeAllWith')->with(
       'cron',
       $this->isType('callable'),
@@ -149,15 +153,19 @@ final class CronServiceTest extends UnitTestCase {
   }
 
   public function testUpdateSettingsValidatesAndSavesThreshold(): void {
+    // The setting Drupal runs cron by is Automated Cron's interval; the tool
+    // wrote system.cron:threshold.autorun, which nothing reads.
     $editable = $this->createMock(Config::class);
-    $editable->method('get')->with('threshold.autorun')->willReturn(100);
-    $editable->expects($this->once())->method('set')->with('threshold.autorun', 200)->willReturnSelf();
+    $editable->method('get')->with('interval')->willReturn(100);
+    $editable->expects($this->once())->method('set')->with('interval', 200)->willReturnSelf();
     $editable->expects($this->once())->method('save');
 
     $configFactory = $this->createMock(ConfigFactoryInterface::class);
-    $configFactory->method('getEditable')->with('system.cron')->willReturn($editable);
+    $configFactory->method('getEditable')->with('automated_cron.settings')->willReturn($editable);
+    $moduleHandler = $this->createMock(ModuleHandlerInterface::class);
+    $moduleHandler->method('moduleExists')->with('automated_cron')->willReturn(TRUE);
 
-    $service = $this->createService(['config_factory' => $configFactory]);
+    $service = $this->createService(['config_factory' => $configFactory, 'module_handler' => $moduleHandler]);
 
     $invalid = $service->updateSettings(-1);
     $this->assertFalse($invalid['success']);
@@ -181,6 +189,48 @@ final class CronServiceTest extends UnitTestCase {
 
     $this->assertTrue($result['success']);
     $this->assertSame(32, strlen($result['new_key']));
+  }
+
+  /**
+   * A queue is run as core's cron runs it, and a run where all failed fails.
+   *
+   * Every exception was a failure (a requeue too), an \\Error left its
+   * item claimed, and ten failures answered success with "Processed 0".
+   */
+  public function testRunQueueAsCronDoes(): void {
+    $manager = $this->createMock(QueueWorkerManagerInterface::class);
+    $manager->method('getDefinitions')->willReturn(['foo' => ['title' => 'Foo', 'cron' => ['time' => 5]]]);
+    $worker = $this->createMock(QueueWorkerInterface::class);
+    $worker->method('processItem')->willReturnCallback(function ($data): void {
+      match ($data) {
+        'requeue' => throw new \Drupal\Core\Queue\RequeueException(),
+        'error' => throw new \Error('Broken worker'),
+        'suspend' => throw new \Drupal\Core\Queue\SuspendQueueException('Service down'),
+        default => NULL,
+      };
+    });
+    $manager->method('createInstance')->willReturn($worker);
+    $run = function (array $data) use ($manager): array {
+      $queue = $this->createMock(QueueInterface::class);
+      $items = array_map(fn($d) => (object) ['data' => $d], $data);
+      $queue->method('claimItem')->willReturnOnConsecutiveCalls(...[...$items, FALSE]);
+      $queue->method('numberOfItems')->willReturn(count($data));
+      $factory = $this->createMock(QueueFactory::class);
+      $factory->method('get')->willReturn($queue);
+      return $this->createService(['queue_worker_manager' => $manager, 'queue_factory' => $factory])->runQueue('foo', 10);
+    };
+
+    $mixed = $run(['ok', 'requeue', 'ok']);
+    $this->assertTrue($mixed['success']);
+    $this->assertSame([2, 0, 1], [$mixed['processed'], $mixed['failed'], $mixed['requeued'] ?? NULL], 'A requeue was counted as a failure.');
+
+    $broken = $run(['error', 'error']);
+    $this->assertFalse($broken['success'], 'Every item failed and the run said success.');
+    $this->assertStringContainsString('Broken worker', $broken['error']);
+
+    $suspended = $run(['ok', 'suspend', 'ok']);
+    $this->assertTrue($suspended['suspended'] ?? FALSE);
+    $this->assertSame(1, $suspended['processed'], 'The queue went on after the worker suspended it.');
   }
 
 }

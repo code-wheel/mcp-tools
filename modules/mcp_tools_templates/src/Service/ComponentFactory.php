@@ -5,7 +5,10 @@ declare(strict_types=1);
 namespace Drupal\mcp_tools_templates\Service;
 
 use Symfony\Component\Yaml\Yaml;
+use Drupal\Core\Entity\EntityDisplayRepositoryInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\mcp_tools\Service\MediaTypeBuilder;
+use Drupal\user\PermissionHandlerInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -19,6 +22,8 @@ class ComponentFactory {
   public function __construct(
     protected EntityTypeManagerInterface $entityTypeManager,
     protected LoggerInterface $logger,
+    protected ?EntityDisplayRepositoryInterface $displayRepository = NULL,
+    protected ?PermissionHandlerInterface $permissionHandler = NULL,
   ) {}
 
   /**
@@ -94,21 +99,27 @@ class ComponentFactory {
           }
         }
 
+        // The permissions the site has, in one save. The role was saved
+        // first and a permission the site lacks then failed the second save:
+        // an empty role, which a second apply skipped.
+        $known = $this->permissionHandler?->getPermissions();
+        $wanted = (array) ($config['permissions'] ?? []);
+        $missing = $known === NULL ? [] : array_values(array_filter($wanted, static fn($p) => !isset($known[$p])));
         $role = $storage->create([
           'id' => $roleId,
           'label' => $config['label'],
         ]);
+        foreach (array_diff($wanted, $missing) as $permission) {
+          $role->grantPermission($permission);
+        }
         $role->save();
 
-        // Grant permissions.
-        if (!empty($config['permissions'])) {
-          foreach ($config['permissions'] as $permission) {
-            $role->grantPermission($permission);
-          }
-          $role->save();
+        $item = ['type' => 'role', 'id' => $roleId, 'label' => $config['label']];
+        if ($missing !== []) {
+          $item['not_granted'] = $missing;
+          $item['note'] = 'This site has no ' . implode(', ', $missing) . ' (a module or a text format is missing).';
         }
-
-        $created[] = ['type' => 'role', 'id' => $roleId, 'label' => $config['label']];
+        $created[] = $item;
       }
       catch (\Exception $e) {
         $errors[] = ['type' => 'role', 'id' => $roleId, 'error' => $e->getMessage()];
@@ -359,13 +370,9 @@ class ComponentFactory {
           }
         }
 
-        $mediaType = $storage->create([
-          'id' => $typeId,
-          'label' => $config['label'],
-          'description' => $config['description'] ?? '',
-          'source' => $config['source'] ?? 'image',
-        ]);
-        $mediaType->save();
+        // With its source field and displays: the type alone could not
+        // take any media.
+        MediaTypeBuilder::create($this->entityTypeManager, $this->displayRepository, $typeId, $config['label'], $config['source'] ?? 'image', (string) ($config['description'] ?? ''));
 
         $created[] = ['type' => 'media_type', 'id' => $typeId, 'label' => $config['label']];
       }

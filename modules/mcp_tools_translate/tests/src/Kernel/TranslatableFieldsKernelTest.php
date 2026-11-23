@@ -98,7 +98,8 @@ final class TranslatableFieldsKernelTest extends KernelTestBase {
 
     // The first user is uid 1 and passes every permission check.
     $this->createUser();
-    $this->setUpCurrentUser([], ['translate article node', 'translate any entity']);
+    // A translator as Drupal's forms want one (tools follow entity access).
+    $this->setUpCurrentUser([], ['translate article node', 'translate any entity', 'create content translations', 'update content translations']);
     $this->config('mcp_tools.settings')
       ->set('access.allowed_scopes', ['read', 'write'])
       ->set('access.read_only_mode', FALSE)

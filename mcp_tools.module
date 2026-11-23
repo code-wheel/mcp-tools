@@ -7,6 +7,7 @@
 
 declare(strict_types=1);
 
+use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Routing\RouteMatchInterface;
 
 /**
@@ -26,6 +27,20 @@ function mcp_tools_tool_info_alter(array &$definitions): void {
     foreach ($definition->getOutputDefinitions() as $output) {
       $output->setRequired(FALSE);
     }
+  }
+}
+
+/**
+ * Implements hook_entity_presave().
+ *
+ * During a tool call, an entity is saved only if it passes Drupal's own
+ * validation: the tools saved without it.
+ */
+function mcp_tools_entity_presave(EntityInterface $entity): void {
+  // No tool call can run before its context exists: every other save on
+  // the site stops here, without building a service.
+  if (\Drupal::getContainer()->initialized('mcp_tools.tool_call_context')) {
+    \Drupal::service('mcp_tools.save_guard')->check($entity);
   }
 }
 

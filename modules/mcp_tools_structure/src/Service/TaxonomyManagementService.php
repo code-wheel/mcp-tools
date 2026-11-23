@@ -198,7 +198,8 @@ class TaxonomyManagementService {
       $vocabulary = $this->entityTypeManager->getStorage('taxonomy_vocabulary')->create([
         'vid' => $id,
         'name' => $label,
-        'description' => $description,
+        // No value is NULL: Drupal's schema refuses an empty text here.
+        'description' => $description !== '' ? $description : NULL,
       ]);
       $vocabulary->save();
 
@@ -285,9 +286,18 @@ class TaxonomyManagementService {
         'weight' => $options['weight'] ?? 0,
       ];
 
-      // Handle parent term.
-      if (isset($options['parent'])) {
-        $termData['parent'] = ['target_id' => $options['parent']];
+      // Handle parent term. A parent that is not there, or is in another
+      // vocabulary, was stored: the term then dropped out of the tree and the
+      // vocabulary's overview.
+      if (isset($options['parent']) && (string) $options['parent'] !== '0') {
+        $parent = $this->entityTypeManager->getStorage('taxonomy_term')->load($options['parent']);
+        if ($parent === NULL || $parent->bundle() !== $vocabulary) {
+          return [
+            'success' => FALSE,
+            'error' => "There is no term {$options['parent']} in vocabulary '$vocabulary' to be the parent. mcp_structure_get_vocabulary lists its terms.",
+          ];
+        }
+        $termData['parent'] = ['target_id' => $parent->id()];
       }
 
       // Use getCurrentTime() to avoid frozen REQUEST_TIME in server mode.

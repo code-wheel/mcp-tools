@@ -129,4 +129,15 @@ final class BlockInputsKernelTest extends KernelTestBase {
     $this->assertStringNotContainsString('provider', explode('Its settings are:', $id['error'])[1]);
   }
 
+  /**
+   * A hidden label is hidden: Drupal shows any label_display not empty.
+   */
+  public function testAHiddenLabelIsHidden(): void {
+    $service = $this->container->get('mcp_tools_blocks.block');
+    $this->assertTrue($service->placeBlock('system_powered_by_block', 'content', ['id' => 'quiet', 'label' => 'Shh', 'label_display' => 'hidden'])['success']);
+    $this->container->get('entity_type.manager')->getStorage('block')->resetCache(['quiet']);
+    $this->assertSame('0', \Drupal\block\Entity\Block::load('quiet')->get('settings')['label_display'], 'label_display "hidden" was stored as a value Drupal shows.');
+    $this->assertFalse($service->configureBlock('quiet', ['label_display' => 'sometimes'])['success']);
+  }
+
 }

@@ -17,6 +17,16 @@ use Drupal\Core\Entity\EntityTypeManagerInterface;
 final class TextFormat {
 
   /**
+   * Whether the current user may use a format (TRUE where no one can ask).
+   */
+  private static function mayUse(object $format): bool {
+    if (!\Drupal::hasContainer() || !method_exists($format, 'access')) {
+      return TRUE;
+    }
+    return (bool) $format->access('use');
+  }
+
+  /**
    * Picks a format the site has.
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
@@ -25,9 +35,10 @@ final class TextFormat {
    *   The format the caller named, if it named one.
    *
    * @return string
-   *   The format that was asked for when the site has it and it is enabled.
-   *   Else "basic_html" when the site has that, as before. Else the site's
-   *   fallback format, which every site has and every user may use.
+   *   The format that was asked for when the site has it, it is enabled and
+   *   the user may use it. Else "basic_html" on the same terms, as before.
+   *   Else the site's fallback format, which every site has and every user
+   *   may use.
    */
   public static function resolve(EntityTypeManagerInterface $entityTypeManager, ?string $asked = NULL): string {
     // Without the filter module there are no formats to choose from.
@@ -37,7 +48,8 @@ final class TextFormat {
     $storage = $entityTypeManager->getStorage('filter_format');
     foreach (array_filter([$asked, 'basic_html']) as $id) {
       $format = $storage->load($id);
-      if ($format !== NULL && $format->status()) {
+      // Only a format the user may use: Drupal refuses another on save.
+      if ($format !== NULL && $format->status() && self::mayUse($format)) {
         return $id;
       }
     }

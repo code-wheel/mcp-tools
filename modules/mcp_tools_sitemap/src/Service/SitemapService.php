@@ -6,6 +6,7 @@ namespace Drupal\mcp_tools_sitemap\Service;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Lock\LockBackendInterface;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AuditLogger;
 use Drupal\simple_sitemap\Manager\Generator;
@@ -23,6 +24,7 @@ class SitemapService {
     protected QueueWorker $queueWorker,
     protected AccessManager $accessManager,
     protected AuditLogger $auditLogger,
+    protected ?LockBackendInterface $lock = NULL,
   ) {}
 
   /**
@@ -281,16 +283,26 @@ class SitemapService {
    *
    * @param string|null $variant
    *   Optional variant to regenerate. NULL for all.
+   * @param bool $continue
+   *   Go on with what is queued, instead of queueing all again.
    *
    * @return array
    *   Result of the operation.
    */
-  public function regenerate(?string $variant = NULL): array {
+  public function regenerate(?string $variant = NULL, bool $continue = FALSE): array {
     if (!$this->accessManager->canWrite()) {
       return $this->accessManager->getWriteAccessDenied();
     }
+    // Simple Sitemap skips a generation it cannot lock, without a word.
+    if ($this->lock !== NULL && !$this->lock->lockMayBeAvailable(QueueWorker::LOCK_ID)) {
+      return [
+        'success' => FALSE,
+        'error' => 'Another sitemap generation is running. Call again in a minute with continue: true.',
+      ];
+    }
 
     try {
+      $sitemap = NULL;
       if ($variant) {
         $sitemap = $this->loadSitemap($variant);
         if (!$sitemap) {
@@ -299,31 +311,39 @@ class SitemapService {
             'error' => "Sitemap variant '$variant' not found.",
           ];
         }
-        $this->generator->setSitemaps($sitemap)->rebuildQueue()->generate();
-        $message = "Sitemap '$variant' regeneration started.";
       }
-      else {
-        $this->generator->setSitemaps()->rebuildQueue()->generate();
-        $message = 'All sitemap variants regeneration started.';
+      // Go on with what is queued, or start over.
+      $queued = (int) ($this->queueWorker->getQueuedElementCount(TRUE) ?? 0);
+      $sitemap ? $this->generator->setSitemaps($sitemap) : $this->generator->setSitemaps();
+      if (!$continue || $queued === 0) {
+        $this->generator->rebuildQueue();
       }
+      // The backend mode generates for a bounded time in this request. The
+      // form mode, used before, only set up a batch nothing ran: the tool
+      // said "started" and no sitemap changed.
+      $this->generator->generate(QueueWorker::GENERATE_TYPE_BACKEND);
 
       $this->auditLogger->logSuccess('regenerate_sitemap', 'sitemap', $variant ?? 'all', [
         'variant' => $variant ?? 'all',
       ]);
 
-      // Get queue status after starting regeneration.
-      $queueTotal = (int) ($this->queueWorker->getInitialElementCount() ?? 0);
-      $queueRemaining = (int) ($this->queueWorker->getQueuedElementCount() ?? 0);
+      $total = (int) ($this->queueWorker->getInitialElementCount() ?? 0);
+      $remaining = (int) ($this->queueWorker->getQueuedElementCount(TRUE) ?? 0);
+      $done = $remaining === 0;
 
       return [
         'success' => TRUE,
         'data' => [
           'variant' => $variant ?? 'all',
           'queue_status' => [
-            'total' => $queueTotal,
-            'processed' => max(0, $queueTotal - $queueRemaining),
+            'total' => $total,
+            'processed' => max(0, $total - $remaining),
           ],
-          'message' => $message,
+          'remaining' => $remaining,
+          'done' => $done,
+          'message' => $done
+            ? sprintf('Sitemap %s generated: %d elements.', $variant ? "'$variant'" : 'variants', $total)
+            : sprintf('Part generated: %d of %d elements are left. Call again with continue: true until done is true.', $remaining, $total),
         ],
       ];
     }
@@ -443,27 +463,29 @@ class SitemapService {
         ];
       }
 
-      // Build settings array with defaults.
-      $bundleSettings = [
-        'index' => $settings['index'] ?? TRUE,
-        'priority' => $settings['priority'] ?? '0.5',
-        'changefreq' => $settings['changefreq'] ?? '',
-        'include_images' => $settings['include_images'] ?? FALSE,
-      ];
+      // Only what was given: the rest stays as it is. Defaults filled in for
+      // what was not given turned indexing on and reset the priority.
+      $bundleSettings = array_intersect_key($settings, array_flip(['index', 'priority', 'changefreq', 'include_images']));
+      if ($bundleSettings === []) {
+        return ['success' => FALSE, 'error' => 'Give at least one of index, priority, changefreq, include_images.'];
+      }
 
       // Validate priority.
       $validPriorities = ['0.0', '0.1', '0.2', '0.3', '0.4', '0.5', '0.6', '0.7', '0.8', '0.9', '1.0'];
-      if (!in_array($bundleSettings['priority'], $validPriorities, TRUE)) {
-        return [
-          'success' => FALSE,
-          'error' => 'Invalid priority. Must be between 0.0 and 1.0.',
-          'valid_priorities' => $validPriorities,
-        ];
+      if (isset($bundleSettings['priority'])) {
+        $bundleSettings['priority'] = number_format((float) $bundleSettings['priority'], 1, '.', '');
+        if (!in_array($bundleSettings['priority'], $validPriorities, TRUE)) {
+          return [
+            'success' => FALSE,
+            'error' => 'Invalid priority. Must be between 0.0 and 1.0.',
+            'valid_priorities' => $validPriorities,
+          ];
+        }
       }
 
       // Validate changefreq.
       $validChangefreq = ['', 'always', 'hourly', 'daily', 'weekly', 'monthly', 'yearly', 'never'];
-      if (!in_array($bundleSettings['changefreq'], $validChangefreq, TRUE)) {
+      if (isset($bundleSettings['changefreq']) && !in_array($bundleSettings['changefreq'], $validChangefreq, TRUE)) {
         return [
           'success' => FALSE,
           'error' => 'Invalid changefreq value.',
@@ -471,8 +493,24 @@ class SitemapService {
         ];
       }
 
-      // Apply settings for all variants via the entity manager.
-      $this->generator->entityManager()->setSitemaps()->setBundleSettings($entityType, $bundle, $bundleSettings);
+      // Simple Sitemap does nothing, without a word, for a type it does not
+      // index, and does not check the bundle.
+      $entityManager = $this->generator->entityManager();
+      if ($entityManager->setSitemaps()->getBundleSettings($entityType, $bundle) === []) {
+        return ['success' => FALSE, 'error' => "Simple Sitemap does not index $entityType."];
+      }
+      $bundleEntityType = $entityTypeDefinition->getBundleEntityType();
+      if ($bundleEntityType !== NULL && !$this->entityTypeManager->getStorage($bundleEntityType)->load($bundle)) {
+        return ['success' => FALSE, 'error' => "$entityType has no bundle '$bundle'."];
+      }
+
+      // Every variant: Simple Sitemap writes only the first it is given.
+      $applied = [];
+      foreach ($this->loadSitemaps() as $variant => $sitemap) {
+        $entityManager->setSitemaps($sitemap)->setBundleSettings($entityType, $bundle, $bundleSettings);
+        $applied[$variant] = $entityManager->getBundleSettings($entityType, $bundle)[$variant] ?? NULL;
+      }
+      $entityManager->setSitemaps();
 
       $this->auditLogger->logSuccess('set_entity_sitemap_settings', $entityType, $bundle, [
         'settings' => $bundleSettings,
@@ -484,7 +522,8 @@ class SitemapService {
           'entity_type' => $entityType,
           'bundle' => $bundle,
           'settings' => $bundleSettings,
-          'message' => "Sitemap settings for $entityType:$bundle updated successfully.",
+          'variants' => $applied,
+          'message' => sprintf('Sitemap settings for %s:%s updated in %d variant(s): %s.', $entityType, $bundle, count($applied), implode(', ', array_keys($applied))),
         ],
       ];
     }

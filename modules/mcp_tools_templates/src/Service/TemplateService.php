@@ -574,6 +574,17 @@ class TemplateService {
     if ($template === NULL) {
       return $this->templateNotFoundError($id);
     }
+    // Every part a template makes counts against the limits, not the one
+    // call: the first counted above, the rest here.
+    $parts = 0;
+    foreach ((array) ($template['components'] ?? []) as $kind => $items) {
+      if (empty($options['components']) || in_array($kind, (array) $options['components'], TRUE)) {
+        $parts += count((array) $items);
+      }
+    }
+    if ($parts > 1 && !$this->accessManager->canAdmin('structure', $parts - 1)) {
+      return $this->accessManager->getWriteAccessDenied();
+    }
     $components = $template['components'];
     $skipExisting = $options['skip_existing'] ?? TRUE;
     $componentFilter = $options['components'] ?? NULL;

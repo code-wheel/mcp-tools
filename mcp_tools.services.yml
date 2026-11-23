@@ -21,6 +21,7 @@ services:
       - '@state'
       - '@request_stack'
       - '@private_key'
+      - '@lock'
 
   # Shared Audit Logger for all MCP write submodules
   mcp_tools.audit_logger:
@@ -77,6 +78,7 @@ services:
       - '@update.manager'
       - '@update.processor'
       - '@extension.list.module'
+      - '@state'
 
   mcp_tools.watchdog_analyzer:
     class: Drupal\mcp_tools\Service\WatchdogAnalyzer
@@ -211,3 +213,9 @@ services:
   mcp_tools.link_target:
     class: Drupal\mcp_tools\Service\LinkTarget
     arguments: ['@path.validator']
+
+  # Drupal's validation of every entity a tool call saves (from
+  # hook_entity_presave). Only what the save adds is refused.
+  mcp_tools.save_guard:
+    class: Drupal\mcp_tools\Service\SaveGuard
+    arguments: ['@mcp_tools.tool_call_context']

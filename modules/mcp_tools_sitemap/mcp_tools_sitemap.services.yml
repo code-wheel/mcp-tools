@@ -8,3 +8,4 @@ services:
       - '@simple_sitemap.queue_worker'
       - '@mcp_tools.access_manager'
       - '@mcp_tools.audit_logger'
+      - '@lock'

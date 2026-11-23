@@ -8,6 +8,8 @@ services:
     arguments:
       - '@entity_type.manager'
       - '@logger.channel.mcp_tools_templates'
+      - '@entity_display.repository'
+      - '@user.permissions'
 
   mcp_tools_templates.template:
     class: Drupal\mcp_tools_templates\Service\TemplateService

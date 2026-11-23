@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Drupal\mcp_tools_entity_clone\Service;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\Database\Connection;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Entity\FieldableEntityInterface;
@@ -35,6 +36,7 @@ class EntityCloneService {
     protected ConfigFactoryInterface $configFactory,
     protected AccessManager $accessManager,
     protected AuditLogger $auditLogger,
+    protected ?Connection $database = NULL,
   ) {}
 
   /**
@@ -156,6 +158,8 @@ class EntityCloneService {
    *   Result with success status and cloned entities data.
    */
   public function cloneWithReferences(string $entityType, string|int $entityId, array $referenceFields = []): array {
+    // The clone itself counts here, before anything is read; the clones of
+    // its references below, once their number is known.
     if (!$this->accessManager->canWrite()) {
       return $this->accessManager->getWriteAccessDenied();
     }
@@ -190,6 +194,33 @@ class EntityCloneService {
       ];
     }
 
+    // A field name that was not a reference field of the entity was
+    // skipped: the clone shared the original's references, and the answer
+    // said success.
+    $references = [];
+    foreach ($referenceFields as $fieldName) {
+      $type = $entity->hasField($fieldName) ? $entity->get($fieldName)->getFieldDefinition()->getType() : NULL;
+      if (!in_array($type, ['entity_reference', 'entity_reference_revisions'], TRUE)) {
+        $isReference = static fn($d) => in_array($d->getType(), ['entity_reference', 'entity_reference_revisions'], TRUE)
+          && !$d->getFieldStorageDefinition()->isBaseField();
+        $fields = array_keys(array_filter($entity->getFieldDefinitions(), $isReference));
+        return [
+          'success' => FALSE,
+          'error' => "'$fieldName' is not a reference field of this $entityType. Its reference fields: " . (implode(', ', $fields) ?: 'none') . '.',
+        ];
+      }
+      foreach ($entity->get($fieldName)->referencedEntities() as $referenced) {
+        $references[$referenced->getEntityTypeId() . ':' . $referenced->id()] = TRUE;
+      }
+    }
+    // Each entity it makes counts against the write limits.
+    if ($references !== [] && !$this->accessManager->canWrite('write', count($references))) {
+      return $this->accessManager->getWriteAccessDenied();
+    }
+
+    // All of it or none: a failure halfway left clones of the references
+    // behind, each saved on its own.
+    $transaction = $this->database?->startTransaction();
     try {
       $clonedReferences = [];
       $referenceMapping = [];
@@ -312,6 +343,9 @@ class EntityCloneService {
       ];
     }
     catch (\Exception $e) {
+      if ($transaction !== NULL) {
+        $transaction->rollBack();
+      }
       $this->auditLogger->logFailure('clone_with_references', $entityType, (string) $entityId, [
         'error' => $e->getMessage(),
       ]);

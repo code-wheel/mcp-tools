@@ -217,8 +217,19 @@ class ContentToolOutputValuesTest extends KernelTestBase {
     $this->assertSame('Another text', $item->value);
     $this->assertNotNull(FilterFormat::load((string) $item->format));
 
-    // A site that has basic_html gets it, as before.
+    // A site that has basic_html, and a user who may not use it, gets the
+    // fallback format: Drupal would refuse basic_html for that user.
     FilterFormat::create(['format' => 'basic_html', 'name' => 'Basic HTML'])->save();
+    $tool = $manager->createInstance('mcp_create_content');
+    $tool->setInputValue('type', 'article');
+    $tool->setInputValue('title', 'Not for me');
+    $tool->setInputValue('fields', ['body' => 'The text']);
+    $tool->execute();
+    $this->assertTrue($tool->getResult()->isSuccess(), (string) $tool->getResult()->getMessage());
+    $this->assertSame('plain_text', Node::load($tool->getOutputValues()['nid'])->get('body')->format);
+
+    // A user who may use it gets it, as before.
+    $this->setUpCurrentUser([], ['bypass node access', 'use text format basic_html']);
     $tool = $manager->createInstance('mcp_create_content');
     $tool->setInputValue('type', 'article');
     $tool->setInputValue('title', 'With basic_html');

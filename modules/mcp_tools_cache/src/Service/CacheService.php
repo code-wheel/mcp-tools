@@ -9,6 +9,7 @@ use Drupal\Core\Cache\CacheFactoryInterface;
 use Drupal\Core\Cache\CacheTagsInvalidatorInterface;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\DrupalKernelInterface;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Menu\MenuLinkManagerInterface;
 use Drupal\Core\Routing\RouteBuilderInterface;
@@ -48,6 +49,7 @@ class CacheService {
     protected DrupalKernelInterface $kernel,
     protected MenuLinkManagerInterface $menuLinkManager,
     protected ContainerInterface $container,
+    protected ?EntityTypeManagerInterface $entityTypeManager = NULL,
   ) {}
 
   /**
@@ -175,10 +177,22 @@ class CacheService {
    *   Result of the operation.
    */
   public function clearEntityCache(string $entityType, string|int $entityId): array {
-    $tags = [
-      "{$entityType}:{$entityId}",
-      "{$entityType}_list",
-    ];
+    // The entity's own tags: "view:frontpage" cleared nothing for a config
+    // entity (its tag is config:views.view.frontpage), and an entity that
+    // does not exist was "cleared".
+    $entity = NULL;
+    if ($this->entityTypeManager?->hasDefinition($entityType)) {
+      $entity = $this->entityTypeManager->getStorage($entityType)->load($entityId);
+    }
+    elseif ($this->entityTypeManager !== NULL) {
+      return ['success' => FALSE, 'error' => "There is no entity type '$entityType'."];
+    }
+    if ($this->entityTypeManager !== NULL && $entity === NULL) {
+      return ['success' => FALSE, 'error' => "There is no $entityType $entityId."];
+    }
+    $tags = $entity !== NULL
+      ? array_values(array_unique(array_merge($entity->getCacheTagsToInvalidate(), $entity->getEntityType()->getListCacheTags())))
+      : ["{$entityType}:{$entityId}", "{$entityType}_list"];
 
     $this->cacheTagsInvalidator->invalidateTags($tags);
 

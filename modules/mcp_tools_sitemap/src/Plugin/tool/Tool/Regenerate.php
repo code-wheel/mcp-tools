@@ -29,6 +29,13 @@ use Drupal\tool\TypedData\InputDefinition;
       description: new TranslatableMarkup('Optional: specific sitemap variant to regenerate. If not provided, all variants will be regenerated.'),
       required: FALSE,
     ),
+    'continue' => new InputDefinition(
+      data_type: 'boolean',
+      label: new TranslatableMarkup('Continue'),
+      description: new TranslatableMarkup('true to go on where the last call stopped. A big site takes several calls: each generates for a few seconds and says how much is left.'),
+      required: FALSE,
+      default_value: FALSE,
+    ),
   ],
   output_definitions: [
     'variant' => new OutputDefinition(
@@ -39,12 +46,22 @@ use Drupal\tool\TypedData\InputDefinition;
     'queue_status' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Queue Status'),
-      description: new TranslatableMarkup('Queue information: items_queued, estimated_time. Generation happens via cron. Use mcp_sitemap_status to check progress.'),
+      description: new TranslatableMarkup('Queue information: total and processed. Use mcp_sitemap_status to check progress.'),
+    ),
+    'remaining' => new OutputDefinition(
+      data_type: 'integer',
+      label: new TranslatableMarkup('Remaining'),
+      description: new TranslatableMarkup('Elements still to generate. Call again with continue: true while it is above 0.'),
+    ),
+    'done' => new OutputDefinition(
+      data_type: 'boolean',
+      label: new TranslatableMarkup('Done'),
+      description: new TranslatableMarkup('Whether the sitemap is generated in full.'),
     ),
     'message' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),
-      description: new TranslatableMarkup('Human-readable confirmation. Note: regeneration is queued and completes during cron runs.'),
+      description: new TranslatableMarkup('Human-readable result: generated, or how much is left.'),
     ),
   ],
 )]
@@ -75,7 +92,8 @@ class Regenerate extends McpToolsToolBase {
    */
   protected function executeLegacy(array $input): array {
     $variant = $input['variant'] ?? NULL;
-    return $this->sitemapService->regenerate($variant);
+    $continue = (bool) ($input['continue'] ?? FALSE);
+    return $this->sitemapService->regenerate($variant, $continue);
   }
 
 }

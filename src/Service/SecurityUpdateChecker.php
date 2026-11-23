@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Drupal\mcp_tools\Service;
 
 use Drupal\Core\Extension\ModuleExtensionList;
+use Drupal\Core\State\StateInterface;
 use Drupal\update\UpdateManagerInterface;
 use Drupal\update\UpdateProcessorInterface;
 
@@ -35,12 +36,17 @@ class SecurityUpdateChecker {
     -3 => 'not_fetched',
   // UPDATE_FETCH_PENDING.
     -4 => 'fetch_pending',
+  // UPDATE_NOT_FETCHED.
+    -3 => 'not_fetched',
+  // UPDATE_FETCH_PENDING.
+    -4 => 'fetch_pending',
   ];
 
   public function __construct(
     protected UpdateManagerInterface $updateManager,
     protected UpdateProcessorInterface $updateProcessor,
     protected ModuleExtensionList $moduleExtensionList,
+    protected ?StateInterface $state = NULL,
   ) {}
 
   /**
@@ -65,9 +71,16 @@ class SecurityUpdateChecker {
     }
 
     $updates = [];
+    // A project Drupal could not check is not a project without issues:
+    // "no security issues" also meant "could not look".
+    $unchecked = [];
     foreach ($projectData as $name => $project) {
       $status = $project['status'] ?? -2;
       $statusLabel = self::STATUS_LABELS[$status] ?? 'unknown';
+      if ($status < 0) {
+        $unchecked[] = $name;
+        continue;
+      }
 
       // Skip if current and we're looking for updates.
       if ($status === 5) {
@@ -105,10 +118,15 @@ class SecurityUpdateChecker {
 
     $securityCount = count(array_filter($updates, fn($u) => $u['is_security_update']));
 
+    $lastCheck = (int) ($this->state?->get('update.last_check', 0) ?? 0);
     return [
       'total_updates' => count($updates),
       'security_updates' => $securityCount,
       'has_security_issues' => $securityCount > 0,
+      'complete' => $unchecked === [],
+      'not_checked' => $unchecked,
+      'last_checked' => $lastCheck ? date('c', $lastCheck) : NULL,
+      'note' => $unchecked === [] ? NULL : sprintf('%d of %d projects could not be checked (%s): for them this says nothing. Run the update check again (drush update:status, or the Available updates page).', count($unchecked), count($projectData), implode(', ', array_slice($unchecked, 0, 10))),
       'updates' => $updates,
     ];
   }

@@ -15,6 +15,7 @@ services:
       - '@state'
       - '@current_user'
       - '@logger.channel.mcp_tools_recipes'
+      - '@extension.list.theme'
 
   # For the hook class, which Drupal builds by the types it asks for.
   Drupal\mcp_tools_recipes\Service\RecipesService: '@mcp_tools_recipes.recipes'

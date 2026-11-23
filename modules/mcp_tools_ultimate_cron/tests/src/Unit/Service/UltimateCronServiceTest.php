@@ -216,4 +216,45 @@ final class UltimateCronServiceTest extends UnitTestCase {
     return $select;
   }
 
+  /**
+   * A job that did not run through is not "executed successfully".
+   *
+   * Ultimate Cron catches what a job throws and answers FALSE; the tool
+   * ignored the answer.
+   */
+  public function testAFailedRunIsAFailure(): void {
+    $job = new class() {
+
+      public function id(): string {
+        return 'broken';
+      }
+
+      public function label(): string {
+        return 'Broken';
+      }
+
+      public function status(): bool {
+        return TRUE;
+      }
+
+      public function isLocked(): bool {
+        return FALSE;
+      }
+
+      public function run(): bool {
+        return FALSE;
+      }
+
+      public function loadLatestLogEntry(): object {
+        return (object) ['message' => 'RuntimeException: The feed is down'];
+      }
+
+    };
+    $jobStorage = $this->createMock(EntityStorageInterface::class);
+    $jobStorage->method('load')->willReturn($job);
+    $result = $this->createService(['job_storage' => $jobStorage])->runJob('broken');
+    $this->assertFalse($result['success'], 'A job that failed was "executed successfully".');
+    $this->assertStringContainsString('The feed is down', $result['error']);
+  }
+
 }

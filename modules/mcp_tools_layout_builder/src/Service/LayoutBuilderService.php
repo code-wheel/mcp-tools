@@ -30,6 +30,31 @@ class LayoutBuilderService {
   ) {}
 
   /**
+   * A block's configuration as Layout Builder's own form saves it.
+   *
+   * Only the id was saved. A field block needs its context mapping (the
+   * entity the layout is of): without it the block cannot get its context,
+   * and a page of that bundle may fail to render.
+   */
+  protected function blockConfiguration(string $blockId): array {
+    $plugin = $this->blockManager->createInstance($blockId);
+    $configuration = ['id' => $blockId, 'label_display' => '0'] + $plugin->getConfiguration();
+    $known = [
+      'entity' => 'layout_builder.entity',
+      'view_mode' => 'view_mode',
+      'user' => '@user.current_user_context:current_user',
+    ];
+    if (method_exists($plugin, 'getContextDefinitions')) {
+      foreach (array_keys($plugin->getContextDefinitions()) as $name) {
+        if (isset($known[$name])) {
+          $configuration['context_mapping'][$name] = $known[$name];
+        }
+      }
+    }
+    return $configuration;
+  }
+
+  /**
    * Enable Layout Builder for a content type.
    *
    * @param string $entityType
@@ -138,6 +163,25 @@ class LayoutBuilderService {
         'error' => 'Failed to disable Layout Builder: ' . $e->getMessage(),
       ];
     }
+  }
+
+  /**
+   * How many items of a bundle have a custom layout now.
+   */
+  public function countCustomLayouts(string $entityType, string $bundle): int {
+    $display = $this->loadDisplay($entityType, $bundle);
+    if (!$display || !$display->isLayoutBuilderEnabled() || !$display->isOverridable()) {
+      return 0;
+    }
+    $definition = $this->entityTypeManager->getDefinition($entityType, FALSE);
+    if ($definition === NULL) {
+      return 0;
+    }
+    $query = $this->entityTypeManager->getStorage($entityType)->getQuery()->accessCheck(FALSE)->exists('layout_builder__layout');
+    if ($bundleKey = $definition->getKey('bundle')) {
+      $query->condition($bundleKey, $bundle);
+    }
+    return (int) $query->count()->execute();
   }
 
   /**
@@ -322,6 +366,9 @@ class LayoutBuilderService {
 
     try {
       $section = new Section($layoutId);
+      // Past the end, Drupal appends: the answer gave the position asked,
+      // and the next call with it found nothing there.
+      $delta = max(0, min($delta, count($display->getSections())));
       $display->insertSection($delta, $section);
       $display->save();
 
@@ -492,7 +539,7 @@ class LayoutBuilderService {
 
     try {
       $componentUuid = $this->uuid->generate();
-      $component = new SectionComponent($componentUuid, $region, ['id' => $blockId]);
+      $component = new SectionComponent($componentUuid, $region, $this->blockConfiguration($blockId));
       // The section is the object the display holds, so the change is in
       // the display already. setSection() is protected on Drupal 10.
       $section->appendComponent($component);

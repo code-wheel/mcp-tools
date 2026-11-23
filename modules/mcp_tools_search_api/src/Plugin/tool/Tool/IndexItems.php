@@ -33,7 +33,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'limit' => new InputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Limit'),
-      description: new TranslatableMarkup('Maximum number of items to index (default: 100).'),
+      description: new TranslatableMarkup('Items to index in this call (default 100, at most 200). Call again while remaining is above 0.'),
       required: FALSE,
     ),
   ],

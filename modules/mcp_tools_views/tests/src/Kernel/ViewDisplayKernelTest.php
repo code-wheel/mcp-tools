@@ -69,4 +69,25 @@ final class ViewDisplayKernelTest extends KernelTestBase {
     $this->assertNotSame('Sweep block', $executable->getTitle());
   }
 
+  /**
+   * A display Views refuses is not saved.
+   *
+   * A page display with no path was saved as success: Views itself says
+   * "path is undefined", and the page cannot be reached.
+   */
+  public function testADisplayViewsRefusesIsNotSaved(): void {
+    $this->installSchema('dblog', ['watchdog']);
+    $this->installEntitySchema('user');
+    $this->installEntitySchema('node');
+    $this->installConfig(['system', 'mcp_tools']);
+    $this->container->get('mcp_tools.access_manager')->setScopes(['read', 'write']);
+    $service = $this->container->get('mcp_tools_views.views');
+    $made = $service->createView('probe_refused', 'Probe', 'node_field_data');
+    $this->assertTrue($made['success'], json_encode($made));
+    $result = $service->addDisplay('probe_refused', 'page', []);
+    $this->assertFalse($result['success'], 'A page display with no path was saved: ' . json_encode($result));
+    $this->container->get('entity_type.manager')->getStorage('view')->resetCache();
+    $this->assertCount(1, \Drupal\views\Views::getView('probe_refused')->storage->get('display'), 'The refused display was kept.');
+  }
+
 }

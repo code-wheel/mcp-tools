@@ -217,11 +217,17 @@ class ImageStyleService {
       ];
     }
 
-    // Add effect configuration.
-    $configuration['id'] = $effectId;
+    // As Drupal's image style form adds one: after the effects there are,
+    // with the settings as its data. The effect had no weight, which
+    // Drupal's validation refuses.
+    $weight = 0;
+    foreach ($style->getEffects() as $effect) {
+      $weight = max($weight, $effect->getWeight() + 1);
+    }
     $effectConfig = [
       'id' => $effectId,
       'data' => $configuration,
+      'weight' => $weight,
     ];
 
     $uuid = $style->addImageEffect($effectConfig);

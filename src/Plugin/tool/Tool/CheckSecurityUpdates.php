@@ -46,6 +46,26 @@ use Drupal\tool\TypedData\InputDefinition;
       label: new TranslatableMarkup('Has Security Issues'),
       description: new TranslatableMarkup('True if any security updates are available.'),
     ),
+    'complete' => new OutputDefinition(
+      data_type: 'boolean',
+      label: new TranslatableMarkup('Complete'),
+      description: new TranslatableMarkup('Whether every project was checked. If not, no security issue found means nothing for the projects in not_checked.'),
+    ),
+    'not_checked' => new OutputDefinition(
+      data_type: 'list',
+      label: new TranslatableMarkup('Not checked'),
+      description: new TranslatableMarkup('Projects Drupal could not check (not fetched, pending, unknown).'),
+    ),
+    'last_checked' => new OutputDefinition(
+      data_type: 'string',
+      label: new TranslatableMarkup('Last checked'),
+      description: new TranslatableMarkup('When Drupal last fetched update data (ISO 8601), or null.'),
+    ),
+    'note' => new OutputDefinition(
+      data_type: 'string',
+      label: new TranslatableMarkup('Note'),
+      description: new TranslatableMarkup('Set when the answer is not complete, and what to do.'),
+    ),
     'updates' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Update Details'),
@@ -78,9 +98,14 @@ class CheckSecurityUpdates extends McpToolsToolBase {
   protected function executeLegacy(array $input): array {
     $securityOnly = $input['security_only'] ?? TRUE;
 
+    $data = $this->securityChecker->getAvailableUpdates($securityOnly);
+    // A check that could not fetch anything is not "no updates".
+    if (isset($data['error'])) {
+      return ['success' => FALSE, 'error' => $data['error']];
+    }
     return [
       'success' => TRUE,
-      'data' => $this->securityChecker->getAvailableUpdates($securityOnly),
+      'data' => $data,
     ];
   }
 

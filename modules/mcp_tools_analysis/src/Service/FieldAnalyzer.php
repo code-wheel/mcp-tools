@@ -24,6 +24,7 @@ class FieldAnalyzer {
   public function findUnusedFields(): array {
     try {
       $unusedFields = [];
+      $notChecked = [];
       $fieldConfigStorage = $this->entityTypeManager->getStorage('field_config');
       $fieldConfigs = $fieldConfigStorage->loadMultiple();
 
@@ -44,11 +45,11 @@ class FieldAnalyzer {
             ->accessCheck(FALSE)
             ->range(0, 1);
 
-          if ($entityType === 'node' || $entityType === 'taxonomy_term' || $entityType === 'media') {
-            $query->condition('type', $bundle);
-          }
-          elseif ($entityType === 'paragraph') {
-            $query->condition('type', $bundle);
+          // Each type's own bundle key: a term's is "vid", and the query on
+          // "type" threw, so every term field read as in use. A comment or
+          // block_content field was not limited to its bundle at all.
+          if ($bundleKey = $storage->getEntityType()?->getKey('bundle')) {
+            $query->condition($bundleKey, $bundle);
           }
 
           $count = $query->count()->execute();
@@ -64,7 +65,9 @@ class FieldAnalyzer {
           }
         }
         catch (\Exception $e) {
-          // Skip fields that can't be queried.
+          // Said, not skipped: a field that could not be checked is not one
+          // in use.
+          $notChecked[] = "$entityType.$bundle.$fieldName";
           continue;
         }
       }
@@ -75,8 +78,11 @@ class FieldAnalyzer {
         $suggestions[] = 'Before deleting, verify the field is not used in views or templates.';
         $suggestions[] = 'Use drush field:delete to remove fields safely.';
       }
-      else {
+      elseif ($notChecked === []) {
         $suggestions[] = 'All configured fields are in use.';
+      }
+      if ($notChecked !== []) {
+        $suggestions[] = count($notChecked) . ' fields could not be checked: ' . implode(', ', array_slice($notChecked, 0, 10)) . '.';
       }
 
       return [
@@ -84,6 +90,7 @@ class FieldAnalyzer {
         'data' => [
           'unused_fields' => $unusedFields,
           'unused_count' => count($unusedFields),
+          'not_checked' => $notChecked,
           'suggestions' => $suggestions,
         ],
       ];

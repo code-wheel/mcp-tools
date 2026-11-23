@@ -6,15 +6,17 @@ namespace Drupal\mcp_tools_media\Service;
 
 use Mcp\Schema\Content\ImageContent;
 use Drupal\Component\Datetime\TimeInterface;
+use Drupal\Core\Entity\EntityDisplayRepositoryInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\File\FileExists;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\file\Entity\File;
 use Drupal\media\Entity\Media;
-use Drupal\media\Entity\MediaType;
+use Drupal\mcp_tools\Service\LatestRevision;
 use Drupal\mcp_tools\Service\EntityAccess;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AuditLogger;
+use Drupal\mcp_tools\Service\MediaTypeBuilder;
 use Drupal\mcp_tools\Service\McpClientBridge;
 
 /**
@@ -60,6 +62,7 @@ class MediaService {
     protected AuditLogger $auditLogger,
     protected TimeInterface $time,
     protected ?McpClientBridge $clientBridge = NULL,
+    protected ?EntityDisplayRepositoryInterface $displayRepository = NULL,
   ) {}
 
   /**
@@ -80,24 +83,9 @@ class MediaService {
     $sourcePlugin = ['audio' => 'audio_file', 'video' => 'video_file'][$sourcePlugin] ?? $sourcePlugin;
 
     try {
-      $mediaType = MediaType::create([
-        'id' => $id,
-        'label' => $label,
-        'source' => $sourcePlugin,
-      ]);
-      $mediaType->save();
-
-      // Create source field for the media type.
-      $source = $mediaType->getSource();
-      $sourceField = $source->createSourceField($mediaType);
-      $sourceField->getFieldStorageDefinition()->save();
-      $sourceField->save();
-
-      // Set the source field configuration.
-      $mediaType->set('source_configuration', [
-        'source_field' => $sourceField->getName(),
-      ]);
-      $mediaType->save();
+      // The type, its source field and the displays, as the media type form
+      // makes them; undone when a step fails.
+      $mediaType = MediaTypeBuilder::create($this->entityTypeManager, $this->displayRepository, $id, $label, $sourcePlugin);
 
       $this->auditLogger->logSuccess('create_media_type', 'media_type', $id, [
         'label' => $label,
@@ -110,7 +98,7 @@ class MediaService {
           'id' => $id,
           'label' => $label,
           'source_plugin' => $sourcePlugin,
-          'source_field' => $sourceField->getName(),
+          'source_field' => $mediaType->get('source_configuration')['source_field'] ?? NULL,
           'message' => "Media type '$label' created successfully.",
         ],
       ];
@@ -462,7 +450,7 @@ class MediaService {
       ];
     }
 
-    $media = $this->entityTypeManager->getStorage('media')->load($mid);
+    $media = LatestRevision::load($this->entityTypeManager, 'media', $mid);
     if ($media && ($denied = EntityAccess::denied($media, 'update')) !== NULL) {
       return $denied;
     }

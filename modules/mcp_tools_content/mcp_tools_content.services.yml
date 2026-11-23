@@ -9,3 +9,4 @@ services:
       - '@mcp_tools.audit_logger'
       - '@datetime.time'
       - '@module_handler'
+      - '@?content_moderation.moderation_information'

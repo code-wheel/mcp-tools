@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools_config\Service;
 
+use Drupal\Core\Config\StorageCopyTrait;
 use Drupal\Core\Config\StorageInterface;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AuditLogger;
@@ -16,6 +17,8 @@ use Drupal\mcp_tools\Service\AuditLogger;
  */
 class ConfigManagementService {
 
+  use StorageCopyTrait;
+
   public function __construct(
     protected StorageInterface $activeStorage,
     protected StorageInterface $syncStorage,
@@ -24,6 +27,7 @@ class ConfigManagementService {
     protected ConfigComparisonService $configComparisonService,
     protected McpChangeTracker $mcpChangeTracker,
     protected OperationPreviewService $operationPreviewService,
+    protected ?StorageInterface $exportStorage = NULL,
   ) {}
 
   /**
@@ -74,39 +78,25 @@ class ConfigManagementService {
         ];
       }
 
-      // Export all configuration from active to sync storage.
-      $exported = 0;
+      // What drush config:export writes: the export storage, with the site's
+      // rules applied (config_exclude_modules, config_split, config_ignore),
+      // every collection (translations too), and what is gone removed. The
+      // raw active storage was copied, default collection only.
+      $source = $this->exportStorage ?? $this->activeStorage;
       $errors = [];
-
-      // Get all config names from active storage.
-      $activeNames = $this->activeStorage->listAll();
-
-      foreach ($activeNames as $name) {
-        $data = $this->activeStorage->read($name);
-        if ($data !== FALSE) {
-          try {
-            $this->syncStorage->write($name, $data);
-            $exported++;
-          }
-          catch (\Exception $e) {
-            $errors[] = sprintf('%s: %s', $name, $e->getMessage());
-          }
-        }
-      }
-
-      // Delete configs from sync that don't exist in active.
-      $syncNames = $this->syncStorage->listAll();
-      $toDelete = array_diff($syncNames, $activeNames);
+      $exported = 0;
       $deleted = 0;
-
-      foreach ($toDelete as $name) {
-        try {
-          $this->syncStorage->delete($name);
-          $deleted++;
-        }
-        catch (\Exception $e) {
-          $errors[] = sprintf('Delete %s: %s', $name, $e->getMessage());
-        }
+      foreach (array_merge([StorageInterface::DEFAULT_COLLECTION], $source->getAllCollectionNames()) as $collection) {
+        $exported += count($source->createCollection($collection)->listAll());
+      }
+      foreach (array_merge([StorageInterface::DEFAULT_COLLECTION], $this->syncStorage->getAllCollectionNames()) as $collection) {
+        $deleted += count(array_diff($this->syncStorage->createCollection($collection)->listAll(), $source->createCollection($collection)->listAll()));
+      }
+      try {
+        self::replaceStorageContents($source, $this->syncStorage);
+      }
+      catch (\Exception $e) {
+        $errors[] = $e->getMessage();
       }
 
       $this->auditLogger->logSuccess('export_config', 'config', 'all', [

@@ -7,6 +7,7 @@ namespace Drupal\Tests\mcp_tools_image_styles\Unit\Service;
 use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\image\ImageEffectInterface;
+use Drupal\image\ImageEffectPluginCollection;
 use Drupal\image\ImageEffectManager;
 use Drupal\image\ImageStyleInterface;
 use Drupal\mcp_tools_image_styles\Service\ImageStyleService;
@@ -83,6 +84,10 @@ final class ImageStyleServiceTest extends UnitTestCase {
     $style = $this->createMock(ImageStyleInterface::class);
     $style->method('addImageEffect')->willReturn('uuid-1');
     $style->expects($this->exactly(2))->method('save');
+    // A style always has an effect collection; this one has no effects yet.
+    $collection = $this->createMock(ImageEffectPluginCollection::class);
+    $collection->method('getIterator')->willReturn(new \ArrayIterator([]));
+    $style->method('getEffects')->willReturn($collection);
 
     $effect = $this->createMock(ImageEffectInterface::class);
     $effect->method('label')->willReturn('Scale');

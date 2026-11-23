@@ -218,8 +218,9 @@ class ContentTypeService {
       $nodeType = $this->entityTypeManager->getStorage('node_type')->create([
         'type' => $id,
         'name' => $label,
-        'description' => $options['description'] ?? '',
-        'help' => $options['help'] ?? '',
+        // No value is NULL: Drupal's schema refuses an empty text here.
+        'description' => ($options['description'] ?? '') !== '' ? $options['description'] : NULL,
+        'help' => ($options['help'] ?? '') !== '' ? $options['help'] : NULL,
         'new_revision' => $options['new_revision'] ?? TRUE,
         'preview_mode' => $options['preview_mode'] ?? DRUPAL_OPTIONAL,
         'display_submitted' => $options['display_submitted'] ?? TRUE,

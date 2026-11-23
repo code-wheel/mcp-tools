@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Drupal\mcp_tools_theme\Service;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\Config\TypedConfigManagerInterface;
 use Drupal\Core\Extension\ThemeExtensionList;
 use Drupal\Core\Extension\ThemeHandlerInterface;
 use Drupal\Core\Extension\ThemeInstallerInterface;
@@ -25,6 +26,7 @@ class ThemeService {
     protected AccessManager $accessManager,
     protected AuditLogger $auditLogger,
     protected ThemeInstallerInterface $themeInstaller,
+    protected ?TypedConfigManagerInterface $typedConfig = NULL,
   ) {}
 
   /**
@@ -313,9 +315,15 @@ class ThemeService {
     if (!$validationResult['valid']) {
       return ['success' => FALSE, 'error' => $validationResult['error']];
     }
+    // Settings of a theme that is not installed made config of its own,
+    // and installing the theme later failed on it.
+    if (!$this->themeHandler->themeExists($theme)) {
+      return ['success' => FALSE, 'error' => "Theme '$theme' is not installed. Enable it first (mcp_theme_enable)."];
+    }
 
     try {
       $config = $this->configFactory->getEditable("$theme.settings");
+      $before = $this->settingsViolations("$theme.settings", $config->getRawData());
       $updatedKeys = [];
 
       foreach ($settings as $key => $value) {
@@ -332,6 +340,15 @@ class ThemeService {
         }
       }
 
+      // The theme's own schema, as Drupal's form keeps to it: a key it does
+      // not have, or a value of the wrong type, was stored.
+      $new = array_diff($this->settingsViolations("$theme.settings", $config->getRawData()), $before);
+      if ($new !== []) {
+        return [
+          'success' => FALSE,
+          'error' => "Nothing was saved: the settings do not fit theme '$theme'. " . implode(' ', $new),
+        ];
+      }
       $config->save();
 
       $this->auditLogger->logSuccess('update_theme_settings', 'theme', $theme, [
@@ -493,6 +510,23 @@ class ThemeService {
       ]);
       return ['success' => FALSE, 'error' => 'Failed to disable theme: ' . $e->getMessage()];
     }
+  }
+
+  /**
+   * What is wrong with settings by the config schema, as lines.
+   *
+   * @return string[]
+   *   One line a violation; none where there is no typed config.
+   */
+  protected function settingsViolations(string $name, array $data): array {
+    if ($this->typedConfig === NULL || !$this->typedConfig->hasConfigSchema($name)) {
+      return [];
+    }
+    $lines = [];
+    foreach ($this->typedConfig->createFromNameAndData($name, $data)->validate() as $violation) {
+      $lines[] = $violation->getPropertyPath() . ': ' . strip_tags((string) $violation->getMessage());
+    }
+    return $lines;
   }
 
   /**

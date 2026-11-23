@@ -76,4 +76,22 @@ final class MenuLinkTargetKernelTest extends KernelTestBase {
     $this->assertArrayNotHasKey('warning', $updated['data'], 'A change of the title is not a change of the target.');
   }
 
+  /**
+   * A parent must exist and be in the same menu.
+   *
+   * Drupal put a link with an unknown parent at the top, and one with a
+   * parent in another menu into that menu; the answer named the menu
+   * that was asked.
+   */
+  public function testAParentMustBeThere(): void {
+    $service = $this->container->get('mcp_tools_menus.menu');
+    $this->container->get('entity_type.manager')->getStorage('menu')->create(['id' => 'probe_menu', 'label' => 'Probe menu'])->save();
+    $top = $service->addMenuLink('main', 'Top', '/node/1');
+    $this->assertFalse($service->addMenuLink('main', 'Child', '/node/1', ['parent' => '999'])['success'], 'A parent that does not exist was taken.');
+    $this->assertFalse($service->addMenuLink('probe_menu', 'Child', '/node/1', ['parent' => $top['data']['plugin_id']])['success'], 'A parent in another menu was taken.');
+    $child = $service->addMenuLink('main', 'Child', '/node/1', ['parent' => (string) $top['data']['id']]);
+    $this->assertTrue($child['success'], (string) ($child['error'] ?? ''));
+    $this->assertSame($top['data']['plugin_id'], \Drupal\menu_link_content\Entity\MenuLinkContent::load($child['data']['id'])->getParentId());
+  }
+
 }

@@ -10,6 +10,7 @@ use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Session\AccountProxyInterface;
+use Drupal\mcp_tools\Service\LatestRevision;
 use Drupal\mcp_tools\Service\EntityAccess;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AuditLogger;
@@ -31,6 +32,7 @@ class ContentService {
     protected AuditLogger $auditLogger,
     protected TimeInterface $time,
     protected ModuleHandlerInterface $moduleHandler,
+    protected ?object $moderationInformation = NULL,
   ) {}
 
   /**
@@ -164,7 +166,7 @@ class ContentService {
       return $this->accessManager->getWriteAccessDenied();
     }
 
-    $node = $this->entityTypeManager->getStorage('node')->load($nid);
+    $node = LatestRevision::load($this->entityTypeManager, 'node', $nid);
     if ($node && ($denied = EntityAccess::denied($node, 'update')) !== NULL) {
       return $denied;
     }
@@ -187,6 +189,13 @@ class ContentService {
           . " Pass language (a language code such as 'fr') to update a translation's paragraphs, or set the"
           . ' paragraph reference field itself (e.g. field_paragraphs) to replace the'
           . ' composition in the source language.',
+      ];
+    }
+    if (array_key_exists('status', $updates) && $this->moderationInformation !== NULL && $this->moderationInformation->isModeratedEntity($node)) {
+      return [
+        'success' => FALSE,
+        'error' => "Content $nid is under a moderation workflow: its state decides whether it is published. Leave status out, and use mcp_moderation_set_state for that. Nothing was saved.",
+        'code' => 'MODERATED',
       ];
     }
     $unknown = [];
@@ -497,7 +506,7 @@ class ContentService {
       return $this->accessManager->getWriteAccessDenied();
     }
 
-    $node = $this->entityTypeManager->getStorage('node')->load($nid);
+    $node = LatestRevision::load($this->entityTypeManager, 'node', $nid);
     if ($node && ($denied = EntityAccess::denied($node, 'update')) !== NULL) {
       return $denied;
     }
@@ -506,6 +515,15 @@ class ContentService {
         'success' => FALSE,
         'error' => "Content with ID $nid not found."
           . " Use mcp_tools_search_content to find content by title or mcp_tools_get_recent_content to browse.",
+      ];
+    }
+    // Content Moderation sets the status from the moderation state on save:
+    // the tool said "published" and the node stayed a draft.
+    if ($this->moderationInformation !== NULL && $this->moderationInformation->isModeratedEntity($node)) {
+      return [
+        'success' => FALSE,
+        'error' => sprintf("Content %d is under the moderation workflow '%s': its state decides whether it is published. Use mcp_moderation_set_state with the state to go to (mcp_moderation_get_workflow lists them).", $nid, $this->moderationInformation->getWorkflowForEntity($node)?->id() ?? ''),
+        'code' => 'MODERATED',
       ];
     }
 

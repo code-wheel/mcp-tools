@@ -8,3 +8,4 @@ services:
       - '@module_handler'
       - '@plugin.manager.queue_worker'
       - '@queue'
+      - '@account_switcher'

@@ -41,6 +41,13 @@ use Drupal\tool\TypedData\InputDefinition;
       required: FALSE,
       default_value: FALSE,
     ),
+    'after' => new InputDefinition(
+      data_type: 'integer',
+      label: new TranslatableMarkup('After'),
+      description: new TranslatableMarkup('Start after this entity id: the next_after of the last call. A call does at most 50; call again until done is true.'),
+      required: FALSE,
+      default_value: 0,
+    ),
   ],
   output_definitions: [
     'entity_type' => new OutputDefinition(
@@ -72,6 +79,21 @@ use Drupal\tool\TypedData\InputDefinition;
       data_type: 'integer',
       label: new TranslatableMarkup('Skipped'),
       description: new TranslatableMarkup('Number of entities skipped (already have aliases when update=false, or no pattern configured).'),
+    ),
+    'next_after' => new OutputDefinition(
+      data_type: 'integer',
+      label: new TranslatableMarkup('Next after'),
+      description: new TranslatableMarkup('Give this as after to the next call.'),
+    ),
+    'remaining' => new OutputDefinition(
+      data_type: 'integer',
+      label: new TranslatableMarkup('Remaining'),
+      description: new TranslatableMarkup('Entities still to do after this call.'),
+    ),
+    'done' => new OutputDefinition(
+      data_type: 'boolean',
+      label: new TranslatableMarkup('Done'),
+      description: new TranslatableMarkup('Whether every entity has been processed.'),
     ),
     'message' => new OutputDefinition(
       data_type: 'string',
@@ -114,7 +136,7 @@ class GenerateAliases extends McpToolsToolBase {
       return ['success' => FALSE, 'error' => 'Entity type is required.'];
     }
 
-    return $this->pathautoService->generateAliases($entityType, $bundle, (bool) $update);
+    return $this->pathautoService->generateAliases($entityType, $bundle, (bool) $update, (int) ($input['after'] ?? 0));
   }
 
 }

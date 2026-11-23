@@ -207,9 +207,22 @@ final class ComponentFactoryTest extends UnitTestCase {
   }
 
   public function testCreateMediaTypesCreatesNew(): void {
+    // A media type as Drupal's is: its source makes the source field.
+    $fieldStorage = $this->createMock(\Drupal\Core\Field\FieldStorageDefinitionInterface::class);
+    $field = $this->getMockBuilder('\\Drupal\\field\\Entity\\FieldConfig')->disableOriginalConstructor()->getMock();
+    $field->method('getName')->willReturn('field_media_document');
+    $field->method('getFieldStorageDefinition')->willReturn($this->getMockBuilder('\\Drupal\\field\\Entity\\FieldStorageConfig')->disableOriginalConstructor()->getMock());
+    $source = $this->createMock(\Drupal\media\MediaSourceInterface::class);
+    $source->method('createSourceField')->willReturn($field);
     $mediaType = $this->getMockBuilder('\\Drupal\\media\\Entity\\MediaType')
       ->disableOriginalConstructor()
       ->getMock();
+    $mediaType->method('getSource')->willReturn($source);
+    $set = [];
+    $mediaType->method('set')->willReturnCallback(function ($key, $value) use (&$set, $mediaType) {
+      $set[$key] = $value;
+      return $mediaType;
+    });
 
     $storage = $this->createMock(EntityStorageInterface::class);
     $storage->method('load')->willReturn(NULL);
@@ -223,8 +236,10 @@ final class ComponentFactoryTest extends UnitTestCase {
       'document' => ['label' => 'Document', 'source' => 'file'],
     ], TRUE);
 
-    $this->assertCount(1, $result['created']);
+    $this->assertCount(1, $result['created'], json_encode($result['errors']));
     $this->assertSame('media_type', $result['created'][0]['type']);
+    // The type alone could take no media: it has its source field now.
+    $this->assertSame(['source_field' => 'field_media_document'], $set['source_configuration'] ?? NULL);
   }
 
   public function testCreateWebformsModuleNotInstalled(): void {

@@ -6,6 +6,7 @@ namespace Drupal\mcp_tools\Service;
 
 use CodeWheel\McpErrorCodes\ErrorCode;
 use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\Lock\LockBackendInterface;
 use Drupal\Core\PrivateKey;
 use Drupal\Core\State\StateInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -45,6 +46,7 @@ class RateLimiter implements RateLimiterInterface {
     protected StateInterface $state,
     protected RequestStack $requestStack,
     protected ?PrivateKey $privateKey = NULL,
+    protected ?LockBackendInterface $lock = NULL,
   ) {}
 
   /**
@@ -78,6 +80,32 @@ class RateLimiter implements RateLimiterInterface {
     $clientId = $this->getClientIdentifier();
     $now = time();
 
+    // One check and count at a time per client: the counters are read and
+    // written in two steps, and two calls at once both got under the limit.
+    $lockName = 'mcp_tools_rate_limit:' . $clientId;
+    if ($this->lock !== NULL && !$this->lock->acquire($lockName, 5)) {
+      $this->lock->wait($lockName, 1);
+      if (!$this->lock->acquire($lockName, 5)) {
+        return [
+          'allowed' => FALSE,
+          'error' => 'Rate limit: another call of this client is being counted. Try again in a second.',
+          'retry_after' => 1,
+          'code' => ErrorCode::RATE_LIMIT_EXCEEDED,
+        ];
+      }
+    }
+    try {
+      return $this->checkAndRecord($clientId, $operationType, $now, $items);
+    }
+    finally {
+      $this->lock?->release($lockName);
+    }
+  }
+
+  /**
+   * The check and the count of checkLimit(), under its lock.
+   */
+  protected function checkAndRecord(string $clientId, string $operationType, int $now, int $items): array {
     // Always enforce the global write limits for *all* operation types.
     $minuteCheck = $this->checkWindow($clientId, 'minute', 60, 'write', $now, $items);
     if (!$minuteCheck['allowed']) {

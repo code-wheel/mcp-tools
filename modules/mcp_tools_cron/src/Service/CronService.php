@@ -10,11 +10,27 @@ use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Queue\QueueFactory;
 use Drupal\Core\Queue\QueueWorkerManagerInterface;
 use Drupal\Core\State\StateInterface;
+use Drupal\Core\Queue\DelayableQueueInterface;
+use Drupal\Core\Queue\DelayedRequeueException;
+use Drupal\Core\Queue\RequeueException;
+use Drupal\Core\Queue\SuspendQueueException;
+use Drupal\Core\Session\AccountSwitcherInterface;
+use Drupal\Core\Session\AnonymousUserSession;
 
 /**
  * Service for cron management operations.
  */
 class CronService {
+
+  /**
+   * Items a queue run does at most.
+   */
+  public const QUEUE_LIMIT = 200;
+
+  /**
+   * Seconds a queue run takes at most.
+   */
+  public const QUEUE_SECONDS = 20;
 
   public function __construct(
     protected CronInterface $cron,
@@ -23,6 +39,7 @@ class CronService {
     protected ModuleHandlerInterface $moduleHandler,
     protected QueueWorkerManagerInterface $queueWorkerManager,
     protected QueueFactory $queueFactory,
+    protected ?AccountSwitcherInterface $accountSwitcher = NULL,
   ) {}
 
   /**
@@ -33,8 +50,13 @@ class CronService {
    */
   public function getCronStatus(): array {
     $lastRun = $this->state->get('system.cron_last', 0);
-    $config = $this->configFactory->get('system.cron');
-    $threshold = $config->get('threshold.autorun') ?? 10800;
+    // How often Drupal runs cron itself: Automated Cron's interval. The
+    // tool read system.cron:threshold.autorun, a Drupal 7 key nothing reads.
+    // The stored value: Drush overrides it to 0 in its own requests (the
+    // STDIO server), and web requests run cron by the stored one.
+    $threshold = $this->moduleHandler->moduleExists('automated_cron')
+      ? (int) ($this->configFactory->get('automated_cron.settings')->getOriginal('interval', FALSE) ?? 10800)
+      : 0;
 
     $cronJobs = $this->getCronJobs();
 
@@ -123,35 +145,75 @@ class CronService {
 
     $queue = $this->queueFactory->get($queueName);
     $worker = $this->queueWorkerManager->createInstance($queueName);
+    $limit = max(1, min($limit, self::QUEUE_LIMIT));
+    // The time core's cron gives this queue, at most QUEUE_SECONDS.
+    $seconds = min((int) ($definitions[$queueName]['cron']['time'] ?? self::QUEUE_SECONDS), self::QUEUE_SECONDS);
+    $end = microtime(TRUE) + max(1, $seconds);
 
     $processed = 0;
     $failed = 0;
+    $requeued = 0;
+    $suspended = NULL;
+    $errors = [];
     $startTime = microtime(TRUE);
-
-    while ($processed < $limit && ($item = $queue->claimItem())) {
-      try {
-        $worker->processItem($item->data);
-        $queue->deleteItem($item);
-        $processed++;
-      }
-      catch (\Exception $e) {
-        $queue->releaseItem($item);
-        $failed++;
-        if ($failed >= 10) {
+    // Workers run as cron runs them: as the anonymous user.
+    $this->accountSwitcher?->switchTo(new AnonymousUserSession());
+    try {
+      while ($processed + $failed < $limit && microtime(TRUE) < $end && ($item = $queue->claimItem(max(1, $seconds)))) {
+        // As core's cron handles a queue: requeue, delay and suspend are the
+        // worker's own answers, not failures.
+        try {
+          $worker->processItem($item->data);
+          $queue->deleteItem($item);
+          $processed++;
+        }
+        catch (DelayedRequeueException $e) {
+          if ($queue instanceof DelayableQueueInterface) {
+            $queue->delayItem($item, $e->getDelay());
+          }
+          $requeued++;
+        }
+        catch (RequeueException) {
+          $queue->releaseItem($item);
+          $requeued++;
+        }
+        catch (SuspendQueueException $e) {
+          $queue->releaseItem($item);
+          $suspended = $e->getMessage() ?: 'The worker suspended the queue.';
           break;
+        }
+        catch (\Throwable $e) {
+          // An \Error too: it left the item claimed for its lease before.
+          $queue->releaseItem($item);
+          $failed++;
+          $errors[] = $e->getMessage();
+          if ($failed >= 10) {
+            break;
+          }
         }
       }
     }
+    finally {
+      $this->accountSwitcher?->switchBack();
+    }
 
     $duration = round(microtime(TRUE) - $startTime, 2);
-    $remaining = $queue->numberOfItems();
+    $remaining = (int) $queue->numberOfItems();
+    $allFailed = $processed === 0 && $failed > 0;
+    $message = "Processed $processed items from queue '$queueName'"
+      . ($failed ? ", $failed failed" : '') . ($requeued ? ", $requeued put back by the worker" : '') . '.'
+      . ($suspended !== NULL ? " The worker suspended the queue: $suspended" : '')
+      . ($remaining > 0 && $suspended === NULL && !$allFailed ? " $remaining are left: call again." : '');
 
     return [
-      'success' => TRUE,
-      'message' => "Processed $processed items from queue '$queueName'.",
+      'success' => !$allFailed,
+      'message' => $message,
+      'error' => $allFailed ? "Every item of queue '$queueName' that was tried failed: " . implode(' | ', array_unique(array_slice($errors, 0, 3))) : NULL,
       'queue' => $queueName,
       'processed' => $processed,
       'failed' => $failed,
+      'requeued' => $requeued,
+      'suspended' => $suspended !== NULL,
       'remaining' => $remaining,
       'duration_seconds' => $duration,
     ];
@@ -167,7 +229,6 @@ class CronService {
    *   Result of the update.
    */
   public function updateSettings(?int $threshold = NULL): array {
-    $config = $this->configFactory->getEditable('system.cron');
     $changes = [];
 
     if ($threshold !== NULL) {
@@ -178,8 +239,18 @@ class CronService {
           'code' => 'VALIDATION_ERROR',
         ];
       }
-      $oldThreshold = $config->get('threshold.autorun');
-      $config->set('threshold.autorun', $threshold);
+      // The tool wrote system.cron:threshold.autorun, a Drupal 7 key that
+      // nothing reads, and said "updated".
+      if (!$this->moduleHandler->moduleExists('automated_cron')) {
+        return [
+          'success' => FALSE,
+          'error' => 'Automated Cron is not enabled, so Drupal runs cron only from outside (a crontab, drush cron). Enable the automated_cron module to have Drupal run it every so often.',
+          'code' => 'MODULE_NOT_ENABLED',
+        ];
+      }
+      $config = $this->configFactory->getEditable('automated_cron.settings');
+      $oldThreshold = $config->get('interval');
+      $config->set('interval', $threshold);
       $changes['threshold'] = [
         'old' => $oldThreshold,
         'new' => $threshold,

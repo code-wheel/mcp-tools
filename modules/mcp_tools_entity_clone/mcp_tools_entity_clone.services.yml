@@ -7,3 +7,4 @@ services:
       - '@config.factory'
       - '@mcp_tools.access_manager'
       - '@mcp_tools.audit_logger'
+      - '@database'

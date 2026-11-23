@@ -170,6 +170,10 @@ final class LayoutBuilderServiceTest extends UnitTestCase {
 
     $blockManager = $this->createMock(BlockManagerInterface::class);
     $blockManager->method('hasDefinition')->with('system_powered_by_block')->willReturn(TRUE);
+    // A block manager makes the plugin, as Drupal's does.
+    $plugin = $this->createMock(\Drupal\Core\Block\BlockPluginInterface::class);
+    $plugin->method('getConfiguration')->willReturn(['id' => 'system_powered_by_block', 'label' => 'Powered by', 'provider' => 'system']);
+    $blockManager->method('createInstance')->willReturn($plugin);
 
     $uuid = $this->createMock(UuidInterface::class);
     $uuid->method('generate')->willReturn('uuid-123');

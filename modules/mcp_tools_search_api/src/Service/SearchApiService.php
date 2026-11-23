@@ -13,6 +13,11 @@ use Drupal\search_api\IndexInterface;
  */
 class SearchApiService {
 
+  /**
+   * Items one indexing call does at most.
+   */
+  public const INDEX_LIMIT = 200;
+
   public function __construct(
     protected EntityTypeManagerInterface $entityTypeManager,
   ) {}
@@ -238,14 +243,36 @@ class SearchApiService {
       ];
     }
 
+    // A call indexes a bounded part: a limit of 100000 ran the whole index
+    // in one request.
+    $limit = max(1, min($limit, self::INDEX_LIMIT));
+    $server = $index->hasValidServer() ? $index->getServerInstance() : NULL;
+    if ($server === NULL || !$server->isAvailable()) {
+      return [
+        'success' => FALSE,
+        'error' => "The search server of index '$id' is not available. Nothing was indexed.",
+        'code' => 'SERVER_UNAVAILABLE',
+      ];
+    }
+
     try {
       $indexed = $index->indexItems($limit);
       $tracker = $index->getTrackerInstance();
       $remaining = $tracker->getTotalItemsCount() - $tracker->getIndexedItemsCount();
+      // Search API answers 0 when another run holds the index or the
+      // backend failed, and only logs why.
+      if ($indexed === 0 && $remaining > 0) {
+        return [
+          'success' => FALSE,
+          'error' => "Nothing was indexed on index '$id', and $remaining items are waiting. Another indexing run may hold it, or the backend failed: see the site log (mcp_tools_analyze_watchdog), then call again.",
+          'code' => 'NOTHING_INDEXED',
+          'remaining' => $remaining,
+        ];
+      }
 
       return [
         'success' => TRUE,
-        'message' => "Indexed $indexed items on index '$id'.",
+        'message' => "Indexed $indexed items on index '$id'." . ($remaining > 0 ? " $remaining are left: call again." : ' The index is complete.'),
         'index_id' => $id,
         'items_indexed' => $indexed,
         'remaining' => $remaining,

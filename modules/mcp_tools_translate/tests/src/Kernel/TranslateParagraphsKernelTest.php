@@ -108,7 +108,8 @@ class TranslateParagraphsKernelTest extends KernelTestBase {
     $this->container->get('content_translation.manager')->setEnabled('node', 'article', TRUE);
     $this->container->get('content_translation.manager')->setEnabled('paragraph', 'text_block', TRUE);
 
-    $this->setUpCurrentUser([], ['translate article node']);
+    // A translator as Drupal's forms want one (tools follow entity access).
+    $this->setUpCurrentUser([], ['translate article node', 'create content translations', 'update content translations']);
     $this->config('mcp_tools.settings')
       ->set('access.allowed_scopes', ['read', 'write'])
       ->set('access.read_only_mode', FALSE)
@@ -229,6 +230,25 @@ class TranslateParagraphsKernelTest extends KernelTestBase {
     $node->save();
 
     return [$node, $paragraph];
+  }
+
+  /**
+   * A paragraph field that does not exist is refused, nothing saved.
+   *
+   * It was skipped, counted as updated, and the call said success.
+   */
+  public function testAnUnknownParagraphFieldIsRefused(): void {
+    [$node, $paragraph] = $this->createNodeWithParagraph();
+    $paragraph->addTranslation('fr', ['field_text' => ['value' => '<p>FR</p>', 'format' => 'plain_text']])->save();
+    $node->addTranslation('fr', ['title' => 'FR titre'])->save();
+    $result = $this->translationService->updateTranslation((int) $node->id(), 'fr', [
+      'title' => 'FR changé',
+      'paragraphs' => [(string) $paragraph->id() => ['field_txt' => 'typo']],
+    ]);
+    $this->assertFalse($result['success'], 'A field the paragraph does not have was counted as updated: ' . json_encode($result));
+    $this->assertStringContainsString('field_txt', $result['error']);
+    $this->container->get('entity_type.manager')->getStorage('node')->resetCache([$node->id()]);
+    $this->assertSame('FR titre', \Drupal\node\Entity\Node::load($node->id())->getTranslation('fr')->label(), 'The node was saved all the same.');
   }
 
 }

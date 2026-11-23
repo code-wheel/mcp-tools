@@ -15,6 +15,11 @@ use Drupal\pathauto\PathautoGeneratorInterface;
  */
 class PathautoService {
 
+  /**
+   * Entities a call of generateAliases() does at most.
+   */
+  public const GENERATE_SIZE = 50;
+
   public function __construct(
     protected EntityTypeManagerInterface $entityTypeManager,
     protected PathautoGeneratorInterface $pathautoGenerator,
@@ -321,80 +326,63 @@ class PathautoService {
    *   Optional bundle to limit generation.
    * @param bool $update
    *   Whether to update existing aliases (default: FALSE, only create missing).
+   * @param int $after
+   *   Start after this entity id (the next_after of the last call).
+   * @param int $size
+   *   Entities to do in this call, at most GENERATE_SIZE.
    *
    * @return array
    *   Result array.
    */
-  public function generateAliases(string $entityType, ?string $bundle = NULL, bool $update = FALSE): array {
-    if (!$this->accessManager->canWrite()) {
-      return $this->accessManager->getWriteAccessDenied();
-    }
-
+  public function generateAliases(string $entityType, ?string $bundle = NULL, bool $update = FALSE, int $after = 0, int $size = self::GENERATE_SIZE): array {
+    $size = max(1, min($size, self::GENERATE_SIZE));
     try {
       // Validate entity type.
       $entityTypeDefinition = $this->entityTypeManager->getDefinition($entityType, FALSE);
       if (!$entityTypeDefinition) {
         return ['success' => FALSE, 'error' => "Invalid entity type '$entityType'."];
       }
-
+      $idKey = (string) $entityTypeDefinition->getKey('id');
       $storage = $this->entityTypeManager->getStorage($entityType);
-      $query = $storage->getQuery()->accessCheck(TRUE);
-
-      if ($bundle) {
-        $bundleKey = $entityTypeDefinition->getKey('bundle');
-        if ($bundleKey) {
-          $query->condition($bundleKey, $bundle);
-        }
+      // In id order from a cursor: the first 500 in no order were done
+      // every time, and an entity past them never got its alias.
+      $query = fn() => $storage->getQuery()->accessCheck(TRUE)->condition($idKey, $after, '>');
+      $part = $query();
+      if ($bundle && ($bundleKey = $entityTypeDefinition->getKey('bundle'))) {
+        $part->condition($bundleKey, $bundle);
       }
-
-      // Limit to prevent timeout.
-      $query->range(0, 500);
-      $ids = $query->execute();
-
-      if (empty($ids)) {
-        return [
-          'success' => TRUE,
-          'data' => [
-            'entity_type' => $entityType,
-            'bundle' => $bundle,
-            'processed' => 0,
-            'created' => 0,
-            'updated' => 0,
-            'skipped' => 0,
-            'message' => 'No entities found to process.',
-          ],
-        ];
+      $ids = array_values($part->sort($idKey)->range(0, $size)->execute());
+      if (!$this->accessManager->canWrite('write', max(1, count($ids)))) {
+        return $this->accessManager->getWriteAccessDenied();
       }
-
-      $entities = $storage->loadMultiple($ids);
 
       $created = 0;
       $updated = 0;
       $skipped = 0;
-
-      foreach ($entities as $entity) {
-        $op = $update ? 'update' : 'insert';
-        $result = $this->pathautoGenerator->updateEntityAlias($entity, $op);
-
+      foreach ($ids === [] ? [] : $storage->loadMultiple($ids) as $entity) {
+        $result = $this->pathautoGenerator->updateEntityAlias($entity, $update ? 'update' : 'insert');
         if ($result) {
-          if ($update) {
-            $updated++;
-          }
-          else {
-            $created++;
-          }
+          $update ? $updated++ : $created++;
         }
         else {
           $skipped++;
         }
       }
 
+      $next = $ids === [] ? $after : (int) end($ids);
+      $rest = $query()->condition($idKey, $next, '>');
+      if ($bundle && ($bundleKey = $entityTypeDefinition->getKey('bundle'))) {
+        $rest->condition($bundleKey, $bundle);
+      }
+      $remaining = (int) $rest->count()->execute();
+
       $this->auditLogger->logSuccess('generate_aliases', $entityType, $bundle ?? 'all', [
-        'processed' => count($entities),
+        'processed' => count($ids),
         'created' => $created,
         'updated' => $updated,
         'skipped' => $skipped,
         'update_mode' => $update,
+        'after' => $after,
       ]);
 
       return [
@@ -402,17 +390,21 @@ class PathautoService {
         'data' => [
           'entity_type' => $entityType,
           'bundle' => $bundle,
-          'processed' => count($entities),
+          'processed' => count($ids),
           'created' => $created,
           'updated' => $updated,
           'skipped' => $skipped,
+          'next_after' => $next,
+          'remaining' => $remaining,
+          'done' => $remaining === 0,
           'message' => sprintf(
-            'Processed %d entities: %d aliases %s, %d skipped.',
-            count($entities),
+            'Processed %d entities: %d aliases %s, %d skipped. %s',
+            count($ids),
             $update ? $updated : $created,
             $update ? 'updated' : 'created',
-            $skipped
-          ),
+            $skipped,
+            $remaining === 0 ? 'All done.' : "$remaining are left: call again with after: $next."
+          ) . ($ids === [] && $after === 0 ? ' No entities found to process.' : ''),
         ],
       ];
     }

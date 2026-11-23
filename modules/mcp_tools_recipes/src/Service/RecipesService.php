@@ -8,6 +8,7 @@ use Drupal\Core\Recipe\RecipeRunner;
 use Drupal\Core\Recipe\Recipe;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Extension\ModuleExtensionList;
+use Drupal\Core\Extension\ThemeExtensionList;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\State\StateInterface;
@@ -55,6 +56,7 @@ class RecipesService {
     protected StateInterface $state,
     protected AccountProxyInterface $currentUser,
     protected LoggerInterface $logger,
+    protected ?ThemeExtensionList $themeExtensionList = NULL,
   ) {}
 
   /**
@@ -246,15 +248,28 @@ class RecipesService {
         $errors[] = 'Recipe is missing required "name" field.';
       }
 
-      // Validate module dependencies.
-      if (!empty($recipeData['install'])) {
-        foreach ($recipeData['install'] as $module) {
-          if (!$this->moduleExtensionList->exists($module)) {
-            $errors[] = sprintf('Required module "%s" is not available.', $module);
+      // Every install entry was checked as a module, so a core recipe that
+      // installs a theme failed. A theme counts now.
+      $themes = $this->themeExtensionList;
+      foreach ((array) ($recipeData['install'] ?? []) as $extension) {
+        if ($this->moduleExtensionList->exists($extension)) {
+          if (!$this->moduleExtensionList->get($extension)->status) {
+            $warnings[] = sprintf('Module "%s" is not currently enabled but will be installed.', $extension);
           }
-          elseif (!$this->moduleExtensionList->get($module)->status) {
-            $warnings[] = sprintf('Module "%s" is not currently enabled but will be installed.', $module);
-          }
+        }
+        elseif ($themes === NULL || !$themes->exists($extension)) {
+          $errors[] = sprintf('Required module "%s" is not available.', $extension);
+        }
+      }
+      // Then Drupal's own checks, the ones it runs before it applies a
+      // recipe: the file's constraints, the recipes it needs, config actions.
+      // They need a site; a service the site built has the theme list.
+      if ($errors === [] && $this->themeExtensionList !== NULL) {
+        try {
+          Recipe::createFromDirectory($recipePath);
+        }
+        catch (\Throwable $e) {
+          $errors[] = $e->getMessage();
         }
       }
 
@@ -324,11 +339,13 @@ class RecipesService {
    *
    * @param string $recipeName
    *   The recipe name/directory.
+   * @param array $inputs
+   *   Values for the recipe's inputs, by name; others get their default.
    *
    * @return array
    *   Result array indicating success or failure.
    */
-  public function applyRecipe(string $recipeName): array {
+  public function applyRecipe(string $recipeName, array $inputs = []): array {
     if (!$this->isRecipesSupported()) {
       return $this->getUnsupportedVersionError();
     }
@@ -393,6 +410,18 @@ class RecipesService {
     try {
       // Load and apply the recipe using Drupal's RecipeRunner.
       $recipe = Recipe::createFromDirectory($recipePath);
+      // The recipe's inputs, from the call or their defaults. Without this
+      // Drupal had none, and ${name} placeholders were stored as written.
+      if (isset($recipe->input) && method_exists($recipe->input, 'collectAll')) {
+        $collector = new ToolInputCollector($inputs);
+        $recipe->input->collectAll($collector);
+        if (($unused = $collector->unused()) !== []) {
+          return [
+            'success' => FALSE,
+            'error' => sprintf('Recipe "%s" has no input %s. Its inputs: %s. Nothing was applied.', $recipeName, implode(', ', $unused), implode(', ', $collector->asked) ?: 'none'),
+          ];
+        }
+      }
       RecipeRunner::processRecipe($recipe);
 
       // Track applied recipe.

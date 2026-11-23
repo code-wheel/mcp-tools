@@ -193,7 +193,7 @@ class ContentTranslationService {
     if ($notEnabled !== NULL) {
       return $notEnabled;
     }
-    $denied = $this->translationAccess->checkTranslateAccess($node);
+    $denied = $this->translationAccess->checkTranslateAccess($node, 'create');
     if ($denied !== NULL) {
       return $denied;
     }
@@ -324,7 +324,7 @@ class ContentTranslationService {
     if (!$node) {
       return ['success' => FALSE, 'error' => "Node $nid not found."];
     }
-    $denied = $this->translationAccess->checkTranslateAccess($node);
+    $denied = $this->translationAccess->checkTranslateAccess($node, 'update');
     if ($denied !== NULL) {
       return $denied;
     }
@@ -438,6 +438,24 @@ class ContentTranslationService {
           $translation->set($fieldName, $this->normalizeFieldValue($fieldName, $value, $definitions, $translation, TRUE));
         }
         $updatedFields[] = $fieldName;
+      }
+
+      // Paragraph fields are checked before anything is saved, as node fields
+      // are: an unknown one was skipped and still counted as updated.
+      $wrong = [];
+      foreach ($paragraphUpdates as $pid => $fieldValues) {
+        $definitions = $this->entityFieldManager->getFieldDefinitions('paragraph', $pidMap[(string) $pid]->bundle());
+        foreach (array_keys((array) $fieldValues) as $fieldName) {
+          if (!isset($definitions[$fieldName])) {
+            $wrong[] = "paragraph $pid has no field $fieldName";
+          }
+          elseif (!$definitions[$fieldName]->isTranslatable()) {
+            $wrong[] = "$fieldName of paragraph $pid is not translatable";
+          }
+        }
+      }
+      if ($wrong !== []) {
+        return ['success' => FALSE, 'error' => 'Nothing was saved: ' . implode('; ', $wrong) . '.'];
       }
 
       $translation->setNewRevision(TRUE);

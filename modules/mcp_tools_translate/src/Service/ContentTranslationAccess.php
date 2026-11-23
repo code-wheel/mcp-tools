@@ -8,6 +8,7 @@ use Drupal\content_translation\ContentTranslationManagerInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\mcp_tools\Service\AuditLogger;
+use Drupal\mcp_tools\Service\EntityAccess;
 use Drupal\node\NodeInterface;
 
 /**
@@ -78,12 +79,28 @@ class ContentTranslationAccess {
    *
    * @param \Drupal\node\NodeInterface $node
    *   The node to be translated.
+   * @param string|null $operation
+   *   'create' or 'update' for a write, which Drupal's translation handler
+   *   decides where tools follow entity access; NULL for a read.
    *
    * @return array<string, mixed>|null
    *   A legacy MCP error result when access is denied, NULL when allowed.
    */
-  public function checkTranslateAccess(NodeInterface $node): ?array {
+  public function checkTranslateAccess(NodeInterface $node, ?string $operation = NULL): ?array {
     $entityTypeId = $node->getEntityTypeId();
+    // Where tools follow entity access, Drupal's translation handler decides
+    // a write, as its translation forms do: it also asks "create content
+    // translations" or "update content translations", which this did not.
+    if ($operation !== NULL && EntityAccess::applies() && $this->entityTypeManager->hasHandler($entityTypeId, 'translation')) {
+      $handler = $this->entityTypeManager->getHandler($entityTypeId, 'translation');
+      if (method_exists($handler, 'getTranslationAccess') && !$handler->getTranslationAccess($node, $operation)->isAllowed()) {
+        return [
+          'success' => FALSE,
+          'error' => sprintf("Access denied: this user may not %s translations of '%s' content (Drupal asks for \"%s content translations\" and a translate permission).", $operation, $node->bundle(), $operation),
+          'code' => 'ACCESS_DENIED',
+        ];
+      }
+    }
     $permission = $node->getEntityType()->getPermissionGranularity() === 'bundle'
       ? "translate {$node->bundle()} {$entityTypeId}"
       : "translate {$entityTypeId}";

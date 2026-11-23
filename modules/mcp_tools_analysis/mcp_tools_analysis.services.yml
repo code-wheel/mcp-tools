@@ -19,6 +19,7 @@ services:
     arguments:
       - '@entity_type.manager'
       - '@module_handler'
+      - '@?metatag.manager'
 
   mcp_tools_analysis.security_auditor:
     class: Drupal\mcp_tools_analysis\Service\SecurityAuditor

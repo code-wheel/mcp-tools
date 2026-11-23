@@ -82,7 +82,8 @@ class ContentTranslationServiceKernelTest extends KernelTestBase {
       'translatable' => TRUE,
     ])->save();
 
-    $this->setUpCurrentUser([], ['translate article node']);
+    // A translator as Drupal's forms want one (tools follow entity access).
+    $this->setUpCurrentUser([], ['translate article node', 'create content translations', 'update content translations']);
     $this->config('mcp_tools.settings')
       ->set('access.allowed_scopes', ['read', 'write'])
       ->set('access.read_only_mode', FALSE)
@@ -279,6 +280,21 @@ class ContentTranslationServiceKernelTest extends KernelTestBase {
     $storage->resetCache([$nid]);
     $node = $storage->load($nid);
     return $node instanceof NodeInterface ? $node : NULL;
+  }
+
+  /**
+   * A translator without "create content translations" is refused.
+   *
+   * The tool asked only for a translate permission; Drupal's translation
+   * form also asks for this one.
+   */
+  public function testCreatingATranslationTakesDrupalsPermission(): void {
+    $node = \Drupal\node\Entity\Node::create(['type' => 'article', 'title' => 'Source', 'langcode' => 'en']);
+    $node->save();
+    $this->setUpCurrentUser([], ['translate article node']);
+    $result = $this->container->get('mcp_tools_translate.translation')->translateContent((int) $node->id(), 'fr', ['title' => 'Titre']);
+    $this->assertFalse($result['success'], 'A translation was made without "create content translations".');
+    $this->assertFalse(\Drupal\node\Entity\Node::load($node->id())->hasTranslation('fr'));
   }
 
 }

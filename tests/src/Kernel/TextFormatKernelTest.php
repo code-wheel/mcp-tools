@@ -47,6 +47,11 @@ final class TextFormatKernelTest extends KernelTestBase {
     // for and exists is taken.
     FilterFormat::create(['format' => 'basic_html', 'name' => 'Basic HTML'])->save();
     FilterFormat::create(['format' => 'rich', 'name' => 'Rich'])->save();
+    // Only a format the user may use: Drupal refuses another on save.
+    $this->assertSame($fallback, TextFormat::resolve($manager, 'rich'), 'A format the user may not use was picked.');
+    $this->installEntitySchema('user');
+    $this->installSchema('dblog', ['watchdog']);
+    $this->setUpCurrentUser([], ['use text format basic_html', 'use text format rich']);
     $this->assertSame('basic_html', TextFormat::resolve($manager));
     $this->assertSame('rich', TextFormat::resolve($manager, 'rich'));
     $this->assertSame('basic_html', TextFormat::resolve($manager, 'gone'));

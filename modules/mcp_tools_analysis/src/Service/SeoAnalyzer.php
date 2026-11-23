@@ -22,7 +22,35 @@ class SeoAnalyzer {
   public function __construct(
     protected EntityTypeManagerInterface $entityTypeManager,
     protected ModuleHandlerInterface $moduleHandler,
+    protected ?object $metatagManager = NULL,
   ) {}
+
+  /**
+   * The meta description an entity gets, or NULL.
+   *
+   * Metatag's own manager, with the global and bundle defaults: the field
+   * alone was read with unserialize(), and Metatag 2 stores JSON, so every
+   * node was "missing a meta description".
+   */
+  protected function metaDescription(object $entity): ?string {
+    if ($this->metatagManager !== NULL && method_exists($this->metatagManager, 'tagsFromEntityWithDefaults')) {
+      $tags = $this->metatagManager->tagsFromEntityWithDefaults($entity);
+      $description = $tags['description'] ?? NULL;
+      return is_string($description) && trim($description) !== '' ? $description : NULL;
+    }
+    if (!method_exists($entity, 'hasField') || !$entity->hasField('field_metatag')) {
+      return NULL;
+    }
+    $raw = $entity->get('field_metatag')->value;
+    if (!is_string($raw) || $raw === '' || strlen($raw) > self::MAX_SERIALIZED_METATAG_BYTES) {
+      return NULL;
+    }
+    $data = json_decode($raw, TRUE);
+    if (!is_array($data)) {
+      $data = @unserialize($raw, ['allowed_classes' => FALSE]);
+    }
+    return is_array($data) && !empty($data['description']) ? (string) $data['description'] : NULL;
+  }
 
   /**
    * Analyze SEO for a specific entity.
@@ -69,23 +97,18 @@ class SeoAnalyzer {
 
       // Check for meta tags if metatag module is enabled.
       $hasMetaDescription = FALSE;
-      if ($this->moduleHandler->moduleExists('metatag') && $entity->hasField('field_metatag')) {
-        $metatag = $entity->get('field_metatag')->value;
-        if (!empty($metatag)) {
-          if (is_string($metatag) && strlen($metatag) <= self::MAX_SERIALIZED_METATAG_BYTES) {
-            $metatagData = @unserialize($metatag, ['allowed_classes' => FALSE]);
-            if (is_array($metatagData) && !empty($metatagData['description'])) {
-              $hasMetaDescription = TRUE;
-              $descLength = strlen((string) $metatagData['description']);
-              if ($descLength < 120 || $descLength > 160) {
-                $issues[] = [
-                  'type' => 'meta_description_length',
-                  'severity' => 'info',
-                  'message' => "Meta description length ({$descLength}) not optimal. Recommended: 120-160 characters.",
-                ];
-                $score -= 5;
-              }
-            }
+      if ($this->moduleHandler->moduleExists('metatag')) {
+        $description = $this->metaDescription($entity);
+        if ($description !== NULL) {
+          $hasMetaDescription = TRUE;
+          $descLength = strlen($description);
+          if ($descLength < 120 || $descLength > 160) {
+            $issues[] = [
+              'type' => 'meta_description_length',
+              'severity' => 'info',
+              'message' => "Meta description length ({$descLength}) not optimal. Recommended: 120-160 characters.",
+            ];
+            $score -= 5;
           }
         }
       }

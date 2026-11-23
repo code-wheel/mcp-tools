@@ -243,4 +243,46 @@ final class RecipeReviewKernelTest extends KernelTestBase {
     $this->assertStringNotContainsString('unreviewed', (string) end($started));
   }
 
+  /**
+   * A recipe's inputs are collected: given, or their default.
+   *
+   * The tool never collected them, and ${name} was stored as written.
+   */
+  public function testInputsAreCollected(): void {
+    $this->installConfig(['system']);
+    mkdir($this->recipeRoot . '/recipes/named');
+    file_put_contents($this->recipeRoot . '/recipes/named/recipe.yml', Yaml::encode([
+      'name' => 'Named',
+      'type' => 'Site',
+      'input' => [
+        'site_name' => [
+          'data_type' => 'string',
+          'description' => 'The name of the site.',
+          'default' => ['source' => 'value', 'value' => 'Default name'],
+        ],
+      ],
+      'config' => ['actions' => ['system.site' => ['simpleConfigUpdate' => ['name' => '${site_name}']]]],
+    ]));
+    $service = $this->service();
+
+    $applied = $service->applyRecipe('named', ['site_name' => 'Given name']);
+    $this->assertTrue($applied['success'], json_encode($applied));
+    $this->assertSame('Given name', $this->config('system.site')->get('name'), 'The input was not used: the placeholder was stored as written.');
+
+    $this->assertFalse($service->applyRecipe('named', ['site_nmae' => 'Typo'])['success'], 'An input the recipe does not have was taken.');
+  }
+
+  /**
+   * A core recipe that installs a theme is valid.
+   *
+   * Every install entry was checked as a module: core's
+   * core_recommended_front_end_theme failed with "Required module olivero
+   * is not available", and apply refused it.
+   */
+  public function testACoreRecipeThatInstallsAThemeIsValid(): void {
+    $result = $this->container->get('mcp_tools_recipes.recipes')->validateRecipe('core_recommended_front_end_theme');
+    $this->assertTrue($result['success'], json_encode($result));
+    $this->assertTrue($result['data']['valid'] ?? FALSE, 'A core recipe that installs a theme was not valid: ' . json_encode($result['data']['errors'] ?? []));
+  }
+
 }

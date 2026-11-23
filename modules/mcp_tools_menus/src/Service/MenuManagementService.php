@@ -252,9 +252,28 @@ class MenuManagementService {
         'description' => $options['description'] ?? '',
       ];
 
-      // Handle parent link.
+      // Handle parent link. Drupal puts a link whose parent it does not know
+      // at the top, and one whose parent is in another menu into that menu;
+      // the answer named the menu that was asked.
       if (!empty($options['parent'])) {
-        $linkData['parent'] = $options['parent'];
+        $parent = (string) $options['parent'];
+        if (ctype_digit($parent) && ($parentLink = $this->entityTypeManager->getStorage('menu_link_content')->load((int) $parent))) {
+          $parent = $parentLink->getPluginId();
+        }
+        if (!$this->menuLinkManager->hasDefinition($parent)) {
+          return [
+            'success' => FALSE,
+            'error' => "There is no menu link '$parent' to be the parent. Give the plugin_id of a link of '$menuName' (mcp_tools_get_menu_tree shows them), or its id.",
+          ];
+        }
+        $parentMenu = $this->menuLinkManager->getDefinition($parent)['menu_name'] ?? NULL;
+        if ($parentMenu !== $menuName) {
+          return [
+            'success' => FALSE,
+            'error' => "The parent '$parent' is in menu '$parentMenu', not '$menuName'.",
+          ];
+        }
+        $linkData['parent'] = $parent;
       }
 
       $menuLink = MenuLinkContent::create($linkData);

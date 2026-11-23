@@ -27,6 +27,7 @@ final class SitemapServiceTest extends UnitTestCase {
       $overrides['queue_worker'] ?? $this->createMock(QueueWorker::class),
       $overrides['access_manager'] ?? $this->createMock(AccessManager::class),
       $overrides['audit_logger'] ?? $this->createMock(AuditLogger::class),
+      $overrides['lock'] ?? NULL,
     );
   }
 
@@ -254,6 +255,52 @@ final class SitemapServiceTest extends UnitTestCase {
       }
 
     };
+  }
+
+  /**
+   * Regenerate generates in this request, and says what is left.
+   *
+   * It called generate() in the form mode, which only set up a batch that
+   * nothing ran: "regeneration started", and no sitemap changed.
+   */
+  public function testRegenerateGeneratesAndSaysWhatIsLeft(): void {
+    $access = $this->createMock(AccessManager::class);
+    $access->method('canWrite')->willReturn(TRUE);
+    $generator = $this->createMock(Generator::class);
+    $generator->method('setSitemaps')->willReturnSelf();
+    $generator->method('rebuildQueue')->willReturnSelf();
+    $generator->expects($this->once())->method('generate')->with(QueueWorker::GENERATE_TYPE_BACKEND)->willReturnSelf();
+    $queue = $this->createMock(QueueWorker::class);
+    $queue->method('getQueuedElementCount')->willReturnOnConsecutiveCalls(0, 40);
+    $queue->method('getInitialElementCount')->willReturn(100);
+
+    $result = $this->createService(['access_manager' => $access, 'generator' => $generator, 'queue_worker' => $queue])->regenerate();
+    $this->assertTrue($result['success']);
+    $this->assertSame(40, $result['data']['remaining'], 'The answer did not say how much is left.');
+    $this->assertFalse($result['data']['done']);
+    $this->assertStringContainsString('continue: true', $result['data']['message']);
+  }
+
+  /**
+   * Continue goes on with the queue, and a held lock is refused.
+   */
+  public function testContinueKeepsTheQueueAndALockIsRefused(): void {
+    $access = $this->createMock(AccessManager::class);
+    $access->method('canWrite')->willReturn(TRUE);
+    $generator = $this->createMock(Generator::class);
+    $generator->method('setSitemaps')->willReturnSelf();
+    $generator->expects($this->never())->method('rebuildQueue');
+    $generator->method('generate')->willReturnSelf();
+    $queue = $this->createMock(QueueWorker::class);
+    $queue->method('getQueuedElementCount')->willReturnOnConsecutiveCalls(40, 0);
+    $queue->method('getInitialElementCount')->willReturn(100);
+    $result = $this->createService(['access_manager' => $access, 'generator' => $generator, 'queue_worker' => $queue])->regenerate(NULL, TRUE);
+    $this->assertTrue($result['data']['done']);
+
+    $lock = $this->createMock(\Drupal\Core\Lock\LockBackendInterface::class);
+    $lock->method('lockMayBeAvailable')->willReturn(FALSE);
+    $held = $this->createService(['access_manager' => $access, 'lock' => $lock])->regenerate();
+    $this->assertFalse($held['success'], 'A generation that could not lock said success.');
   }
 
 }

@@ -462,4 +462,29 @@ class RateLimiterTest extends UnitTestCase {
     $this->assertSame($first, $limiter->exposedClientIdentifier(), 'A new User-Agent was a new rate limit bucket.');
   }
 
+  /**
+   * The check and the count run under a lock per client.
+   *
+   * Two calls at once read the same count and both got under the limit.
+   */
+  public function testTheCountIsTakenUnderALock(): void {
+    $this->config->method('get')->willReturnMap([
+      ['rate_limiting.enabled', TRUE],
+      ['rate_limiting.max_writes_per_minute', 30],
+      ['rate_limiting.max_writes_per_hour', 500],
+    ]);
+    $this->state->method('get')->willReturn(['count' => 0, 'window_start' => time()]);
+    $lock = $this->createMock(\Drupal\Core\Lock\LockBackendInterface::class);
+    $lock->expects($this->once())->method('acquire')->with($this->stringStartsWith('mcp_tools_rate_limit:'))->willReturn(TRUE);
+    $lock->expects($this->once())->method('release');
+    $limiter = new RateLimiter($this->configFactory, $this->state, $this->requestStack, NULL, $lock);
+    $this->assertTrue($limiter->checkLimit('write')['allowed']);
+
+    // A lock that stays taken is a refusal, not a call let through uncounted.
+    $busy = $this->createMock(\Drupal\Core\Lock\LockBackendInterface::class);
+    $busy->method('acquire')->willReturn(FALSE);
+    $limiter = new RateLimiter($this->configFactory, $this->state, $this->requestStack, NULL, $busy);
+    $this->assertFalse($limiter->checkLimit('write')['allowed']);
+  }
+
 }

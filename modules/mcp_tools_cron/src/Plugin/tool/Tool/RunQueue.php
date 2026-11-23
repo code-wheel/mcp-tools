@@ -49,6 +49,16 @@ use Drupal\tool\TypedData\InputDefinition;
       label: new TranslatableMarkup('Items processed'),
       description: new TranslatableMarkup('Number of queue items processed in this run.'),
     ),
+    'failed' => new OutputDefinition(
+      data_type: 'integer',
+      label: new TranslatableMarkup('Failed'),
+      description: new TranslatableMarkup('Items whose worker failed; they are put back in the queue.'),
+    ),
+    'suspended' => new OutputDefinition(
+      data_type: 'boolean',
+      label: new TranslatableMarkup('Suspended'),
+      description: new TranslatableMarkup('Whether the worker stopped the queue for now (its service is down, for example).'),
+    ),
     'remaining' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Items remaining'),

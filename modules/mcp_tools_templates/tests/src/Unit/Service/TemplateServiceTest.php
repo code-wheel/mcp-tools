@@ -313,4 +313,27 @@ final class TemplateServiceTest extends UnitTestCase {
     );
   }
 
+  /**
+   * Every part a template makes counts against the limits.
+   *
+   * An apply that made dozens of things counted as one.
+   */
+  public function testEveryPartCounts(): void {
+    $calls = [];
+    // The first check passes, the count of the rest does not.
+    $first = TRUE;
+    $accessManager = $this->createMock(AccessManager::class);
+    $accessManager->method('canAdmin')->willReturnCallback(function (string $type = 'structure', int $items = 1) use (&$calls, &$first) {
+      $calls[] = $items;
+      $allowed = $first;
+      $first = FALSE;
+      return $allowed;
+    });
+    $accessManager->method('getWriteAccessDenied')->willReturn(['success' => FALSE, 'error' => 'Rate limit']);
+
+    $result = $this->createService(accessManager: $accessManager)->applyTemplate('blog');
+    $this->assertFalse($result['success'], 'The rest of the template was not counted.');
+    $this->assertGreaterThan(1, $calls[1] ?? 0, 'The parts of the template were counted as one: ' . json_encode($calls));
+  }
+
 }

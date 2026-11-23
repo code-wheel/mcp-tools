@@ -16,6 +16,11 @@ use Drupal\mcp_tools\Service\AuditLogger;
  */
 class BlockService {
 
+  /**
+   * The refusal of a label_display that is not one.
+   */
+  private const LABEL_DISPLAY_ERROR = 'label_display is "visible" or "hidden".';
+
   public function __construct(
     protected EntityTypeManagerInterface $entityTypeManager,
     protected BlockManagerInterface $blockManager,
@@ -110,7 +115,11 @@ class BlockService {
       // Set label if provided.
       if (isset($options['label'])) {
         $blockConfig['settings']['label'] = $options['label'];
-        $blockConfig['settings']['label_display'] = $options['label_display'] ?? 'visible';
+        $display = $this->labelDisplay($options['label_display'] ?? 'visible');
+        if ($display === NULL) {
+          return ['success' => FALSE, 'error' => self::LABEL_DISPLAY_ERROR];
+        }
+        $blockConfig['settings']['label_display'] = $display;
       }
 
       // Add visibility conditions if provided.
@@ -264,7 +273,10 @@ class BlockService {
         }
 
         if (isset($config['label_display'])) {
-          $settings['label_display'] = $config['label_display'];
+          $settings['label_display'] = $this->labelDisplay($config['label_display']);
+          if ($settings['label_display'] === NULL) {
+            return ['success' => FALSE, 'error' => self::LABEL_DISPLAY_ERROR];
+          }
           $updated[] = 'label_display';
         }
 
@@ -541,6 +553,23 @@ class BlockService {
       $conditions[$id] = $conditionConfig;
     }
     return $conditions;
+  }
+
+  /**
+   * Drupal's value for showing the label, or NULL when it cannot be read.
+   *
+   * Drupal shows a label when label_display is not empty: "hidden" showed
+   * it. Hidden is '0'.
+   */
+  protected function labelDisplay(mixed $given): ?string {
+    if (is_bool($given) || is_int($given)) {
+      return $given ? 'visible' : '0';
+    }
+    return match (strtolower(trim((string) $given))) {
+      'visible', 'show', 'true', 'yes', '1' => 'visible',
+      'hidden', 'hide', 'false', 'no', '0', '' => '0',
+      default => NULL,
+    };
   }
 
   /**
