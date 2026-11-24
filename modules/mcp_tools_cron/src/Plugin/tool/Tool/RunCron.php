@@ -24,6 +24,18 @@ use Drupal\tool\Tool\ToolOperation;
   operation: ToolOperation::Write,
   input_definitions: [],
   output_definitions: [
+    'previous_run' => new OutputDefinition(
+      data_type: 'string',
+      label: new TranslatableMarkup('Previous run'),
+      description: new TranslatableMarkup('When cron ran before this run.'),
+      required: FALSE,
+    ),
+    'current_run' => new OutputDefinition(
+      data_type: 'string',
+      label: new TranslatableMarkup('This run'),
+      description: new TranslatableMarkup('When this run ended.'),
+      required: FALSE,
+    ),
     'success' => new OutputDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Success status'),

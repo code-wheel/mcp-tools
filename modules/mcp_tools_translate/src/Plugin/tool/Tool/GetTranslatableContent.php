@@ -30,6 +30,12 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
     ),
   ],
   output_definitions: [
+    'type' => new OutputDefinition(
+      data_type: 'string',
+      label: new TranslatableMarkup('Content type'),
+      description: new TranslatableMarkup('The content type of the node.'),
+      required: FALSE,
+    ),
     'nid' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Node ID'),

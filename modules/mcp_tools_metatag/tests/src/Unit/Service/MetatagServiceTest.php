@@ -155,4 +155,42 @@ final class MetatagServiceTest extends UnitTestCase {
     $this->assertCount(2, $result['data']['all_tags']);
   }
 
+  /**
+   * Each tag is described once, in plain text; a group gives its slice.
+   *
+   * On the full site the list was 19,166 characters: every tag twice (in
+   * by_group and in all_tags), each with its group again, a sort weight,
+   * and false flags. by_group now names its tags by id.
+   */
+  public function testTagsAreDescribedOnceAndCanBeAskedForByGroup(): void {
+    $tagPluginManager = $this->createMock(MetatagTagPluginManager::class);
+    $tagPluginManager->method('getDefinitions')->willReturn([
+      'robots' => ['label' => 'Robots', 'description' => 'Tell <a href="https://example.com">search engines</a> what to do.', 'group' => 'advanced', 'weight' => 2, 'type' => 'string', 'secure' => FALSE, 'multiple' => TRUE],
+      'title' => ['label' => 'Page title', 'group' => 'basic', 'weight' => 0, 'type' => 'label', 'secure' => FALSE, 'multiple' => FALSE],
+      'canonical_url' => ['label' => 'Canonical URL', 'description' => 'The preferred URL.', 'group' => 'advanced', 'weight' => 1, 'type' => 'uri'],
+    ]);
+    $groupPluginManager = $this->createMock(MetatagGroupPluginManager::class);
+    $groupPluginManager->method('getDefinitions')->willReturn([
+      'basic' => ['label' => 'Basic tags'],
+      'advanced' => ['label' => 'Advanced'],
+    ]);
+    $service = $this->createService(['tag_plugin_manager' => $tagPluginManager, 'group_plugin_manager' => $groupPluginManager]);
+
+    $all = $service->listAvailableTags()['data'];
+    $this->assertSame(['id' => 'robots', 'label' => 'Robots', 'description' => 'Tell search engines what to do.', 'group' => 'advanced', 'type' => 'string', 'multiple' => TRUE], $all['all_tags'][0]);
+    $this->assertSame(['id' => 'title', 'label' => 'Page title', 'group' => 'basic', 'type' => 'label'], $all['all_tags'][1]);
+    // Groups name their tags, in weight order.
+    $this->assertSame(['group_id' => 'advanced', 'group_label' => 'Advanced', 'tags' => ['canonical_url', 'robots']], $all['by_group'][0]);
+
+    $advanced = $service->listAvailableTags('advanced')['data'];
+    $this->assertSame(['robots', 'canonical_url'], array_column($advanced['all_tags'], 'id'));
+    $this->assertCount(1, $advanced['by_group']);
+    $this->assertSame(3, $advanced['total']);
+    $this->assertSame(2, $advanced['matching']);
+
+    $unknown = $service->listAvailableTags('opengraph');
+    $this->assertFalse($unknown['success']);
+    $this->assertStringContainsString('advanced, basic', $unknown['error']);
+  }
+
 }

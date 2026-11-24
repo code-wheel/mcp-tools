@@ -52,12 +52,12 @@ use Drupal\tool\TypedData\InputDefinition;
     'total' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Results'),
-      description: new TranslatableMarkup('Total number of matching content items.'),
+      description: new TranslatableMarkup('Number of matching content items. results holds up to limit of them, the newest first.'),
     ),
     'results' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Search Results'),
-      description: new TranslatableMarkup('Array of matching nodes with nid, title, type, status (published/unpublished), created, and changed timestamps.'),
+      description: new TranslatableMarkup('Array of matching nodes with id (the nid), uuid, title, type, language, status (published/unpublished), changed, and url.'),
     ),
   ],
 )]

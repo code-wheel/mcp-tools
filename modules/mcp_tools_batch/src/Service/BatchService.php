@@ -13,6 +13,7 @@ use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AdminRoles;
 use Drupal\mcp_tools\Service\AuditLogger;
 use Drupal\mcp_tools\Service\EntityReferences;
+use Drupal\mcp_tools\Service\FieldValue;
 use Drupal\mcp_tools\Service\McpClientBridge;
 use Drupal\mcp_tools\Service\OwnRoles;
 use Drupal\mcp_tools\Service\TermParent;
@@ -106,15 +107,13 @@ class BatchService {
           'status' => $item['status'] ?? 0,
         ];
 
-        // Process fields.
+        // Process fields. A name the type does not have refuses the item.
         if (!empty($item['fields'])) {
+          if (($why = FieldValue::unknown($fieldDefinitions, array_keys($item['fields']), "node $contentType")) !== NULL) {
+            throw new \InvalidArgumentException($why);
+          }
           foreach ($item['fields'] as $fieldName => $value) {
-            if (!str_starts_with($fieldName, 'field_') && !in_array($fieldName, ['body'])) {
-              $checkName = 'field_' . $fieldName;
-              if (isset($fieldDefinitions[$checkName])) {
-                $fieldName = $checkName;
-              }
-            }
+            $fieldName = (string) FieldValue::fieldName($fieldDefinitions, (string) $fieldName);
             $nodeData[$fieldName] = $this->normalizeFieldValue($fieldName, $value, $fieldDefinitions);
           }
         }
@@ -242,10 +241,15 @@ class BatchService {
 
         $fieldDefinitions = $this->entityFieldManager->getFieldDefinitions('node', $node->bundle());
 
+        // A name the type does not have was skipped, and the update said
+        // success.
+        if (($why = FieldValue::unknown($fieldDefinitions, array_keys($fields), "node $nid ({$node->bundle()})")) !== NULL) {
+          $errors[] = ['index' => $index, 'data' => $update, 'error' => $why];
+          continue;
+        }
         $given = [];
         foreach (array_keys($fields) as $fieldName) {
-          $fieldName = (string) $fieldName;
-          $given[] = !isset($fieldDefinitions[$fieldName]) && isset($fieldDefinitions['field_' . $fieldName]) ? 'field_' . $fieldName : $fieldName;
+          $given[] = (string) FieldValue::fieldName($fieldDefinitions, (string) $fieldName);
         }
         if (($denied = EntityAccess::fieldsDenied($node, $given)) !== NULL) {
           $errors[] = ['index' => $index, 'data' => $update, 'error' => $denied['error']];
@@ -262,16 +266,8 @@ class BatchService {
             continue;
           }
 
-          if (!str_starts_with($fieldName, 'field_') && !in_array($fieldName, ['body'])) {
-            $checkName = 'field_' . $fieldName;
-            if (isset($fieldDefinitions[$checkName])) {
-              $fieldName = $checkName;
-            }
-          }
-
-          if ($node->hasField($fieldName)) {
-            $node->set($fieldName, $this->normalizeFieldValue($fieldName, $value, $fieldDefinitions));
-          }
+          $fieldName = (string) FieldValue::fieldName($fieldDefinitions, (string) $fieldName);
+          $node->set($fieldName, $this->normalizeFieldValue($fieldName, $value, $fieldDefinitions));
         }
 
         $node->setNewRevision(TRUE);
@@ -846,17 +842,7 @@ class BatchService {
     if (!isset($fieldDefinitions[$fieldName])) {
       return $value;
     }
-
-    $fieldType = $fieldDefinitions[$fieldName]->getType();
-
-    return match ($fieldType) {
-      'text_long', 'text_with_summary' => TextFormat::fieldValue($this->entityTypeManager, $value),
-      'entity_reference' => is_array($value) ? $value : ['target_id' => $value],
-      'image', 'file' => is_array($value) ? $value : ['target_id' => $value],
-      'link' => is_array($value) ? $value : ['uri' => $value],
-      'datetime' => is_array($value) ? $value : ['value' => $value],
-      default => $value,
-    };
+    return FieldValue::normalize($this->entityTypeManager, $fieldDefinitions[$fieldName], $value, $this->entityFieldManager);
   }
 
   /**

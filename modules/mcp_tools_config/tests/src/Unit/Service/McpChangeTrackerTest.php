@@ -80,6 +80,26 @@ final class McpChangeTrackerTest extends UnitTestCase {
     $this->assertSame(2, $result['data']['total']);
   }
 
+  /**
+   * Each change is given once, with a time a reader can read.
+   *
+   * On the full site the answer was 9,242 characters: every change twice
+   * (in by_operation and in changes), and each time twice, as a number and
+   * as text. by_operation now names the config of each operation.
+   */
+  public function testEachChangeIsGivenOnce(): void {
+    $this->state->method('get')->willReturn([
+      ['config_name' => 'system.site', 'operation' => 'update', 'timestamp' => 1795501137],
+      ['config_name' => 'views.view.content', 'operation' => 'create', 'timestamp' => 1795501130],
+      ['config_name' => 'system.menu.main', 'operation' => 'update', 'timestamp' => 1795501135],
+    ]);
+
+    $data = $this->tracker->getMcpChanges()['data'];
+
+    $this->assertSame(['config_name' => 'system.site', 'operation' => 'update', 'time' => '2026-11-24T06:18:57+00:00'], $data['changes'][0]);
+    $this->assertSame(['update' => ['system.site', 'system.menu.main'], 'create' => ['views.view.content']], $data['by_operation']);
+  }
+
   public function testGetTrackedChangesFiltersEmpty(): void {
     $this->state->method('get')->willReturn([]);
 

@@ -72,6 +72,12 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
+    'page_path' => new OutputDefinition(
+      data_type: 'string',
+      label: new TranslatableMarkup('Page path'),
+      description: new TranslatableMarkup('The path of the view page, when it has one.'),
+      required: FALSE,
+    ),
     'id' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('View ID'),

@@ -30,6 +30,18 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
+    'source_url' => new OutputDefinition(
+      data_type: 'string',
+      label: new TranslatableMarkup('Source URL'),
+      description: new TranslatableMarkup('The source path as a URL of the site.'),
+      required: FALSE,
+    ),
+    'created' => new OutputDefinition(
+      data_type: 'string',
+      label: new TranslatableMarkup('Created'),
+      description: new TranslatableMarkup('When the redirect was made.'),
+      required: FALSE,
+    ),
     'id' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Redirect ID'),

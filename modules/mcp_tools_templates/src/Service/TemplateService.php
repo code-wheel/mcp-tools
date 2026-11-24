@@ -665,7 +665,17 @@ class TemplateService {
       $success,
     );
 
-    return [
+    // A failed tool's data does not reach the model, which then got "Tool
+    // execution failed." and could not tell what was made: said here.
+    $error = $success ? [] : ['error' => sprintf(
+      'Template "%s" applied in part: %d components made, %d not: %s. The ones made stay; run it again to retry the others (with skip_existing on, the default, made ones are skipped).',
+      $template['label'],
+      count($created),
+      count($errors),
+      implode(' ', array_map(fn($e) => "{$e['type']} '{$e['id']}': {$e['error']}", $errors)),
+    )];
+
+    return $error + [
       'success' => $success,
       'data' => [
         'template' => $id,

@@ -469,11 +469,9 @@ abstract class AbstractRemoteFileService {
 
     return [
       'fid' => $fid,
-      'uuid' => $file->uuid(),
       'filename' => $safeFilename,
       'uri' => $uri,
       'url' => $file->createFileUrl(FALSE),
-      'mime' => $mimeType,
     ];
   }
 

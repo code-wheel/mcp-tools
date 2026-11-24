@@ -72,7 +72,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'revisions' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Revisions'),
-      description: new TranslatableMarkup('Array of revisions with id, state, author, message, and timestamp.'),
+      description: new TranslatableMarkup('Array of revisions with revision_id, moderation_state, moderation_state_label, is_published, is_current, revision_log, revision_created, and revision_user.'),
     ),
   ],
 )]

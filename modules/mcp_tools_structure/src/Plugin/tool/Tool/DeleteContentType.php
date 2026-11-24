@@ -38,6 +38,12 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
+    'deleted_content' => new OutputDefinition(
+      data_type: 'integer',
+      label: new TranslatableMarkup('Content deleted'),
+      description: new TranslatableMarkup('Number of content items deleted with the type (with force).'),
+      required: FALSE,
+    ),
     'id' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Deleted Content Type ID'),

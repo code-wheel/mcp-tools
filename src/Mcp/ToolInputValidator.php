@@ -51,7 +51,7 @@ class ToolInputValidator {
     // Cast to object before normalizing: an empty PHP array encodes to "[]"
     // (JSON array), which fails validation against {"type": "object"}. Tools
     // with only optional inputs are legitimately called with no arguments.
-    $data = $this->normalizeForValidation((object) $arguments);
+    $data = $this->emptyObjects($this->normalizeForValidation((object) $arguments), $schemaObject);
 
     $result = $this->validator->validate($data, $schemaObject);
     if ($result->isValid()) {
@@ -95,6 +95,33 @@ class ToolInputValidator {
     }
 
     return $errors;
+  }
+
+  /**
+   * An empty object given where an object is wanted, as an object again.
+   *
+   * JSON {} is an empty PHP array, and it comes back as [] here. Inside the
+   * arguments too: "updates": {} was refused with "The data (array) must
+   * match the type: object", and a model then sent [{}], taking an empty
+   * change for a fault in its shape. The tool now gets it and says what is
+   * wrong.
+   */
+  private function emptyObjects(mixed $data, mixed $schema): mixed {
+    if (!is_object($schema)) {
+      return $data;
+    }
+    $types = (array) ($schema->type ?? []);
+    if ($data === [] && in_array('object', $types, TRUE) && !in_array('array', $types, TRUE)) {
+      return new \stdClass();
+    }
+    if (is_object($data) && isset($schema->properties) && is_object($schema->properties)) {
+      foreach (get_object_vars($schema->properties) as $name => $property) {
+        if (property_exists($data, $name)) {
+          $data->{$name} = $this->emptyObjects($data->{$name}, $property);
+        }
+      }
+    }
+    return $data;
   }
 
   /**

@@ -374,9 +374,11 @@ class ToolApiCallToolHandler implements RequestHandlerInterface {
       'data' => $output,
     ];
 
+    // The message, then the data: the message and "success" were given a
+    // second time inside the JSON. The structured content keeps all three.
     $text = $message;
     if (!empty($output)) {
-      $text .= "\n" . json_encode($structured, JSON_PRETTY_PRINT);
+      $text .= "\n" . json_encode($output, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
     }
 
     $callToolResult = new CallToolResult([new TextContent($text)], !$result->isSuccess(), $structured);

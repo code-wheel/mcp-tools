@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools_structure\Service;
 
+use Drupal\Core\Entity\EntityDisplayRepositoryInterface;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Field\FieldTypePluginManagerInterface;
@@ -22,6 +23,7 @@ class FieldService {
     protected FieldTypePluginManagerInterface $fieldTypeManager,
     protected AccessManager $accessManager,
     protected AuditLogger $auditLogger,
+    protected EntityDisplayRepositoryInterface $displays,
   ) {}
 
   /**
@@ -248,23 +250,17 @@ class FieldService {
       ]);
       $field->save();
 
-      // Configure form display.
-      $this->configureFormDisplay(
-        $entityType,
-        $bundle,
-        $fieldName,
-        $typeConfig['widget'],
-        $options['widget_settings'] ?? []
-      );
-
-      // Configure view display.
-      $this->configureViewDisplay(
-        $entityType,
-        $bundle,
-        $fieldName,
-        $typeConfig['formatter'],
-        $options['formatter_settings'] ?? []
-      );
+      // The default displays, made when there are none.
+      $this->displays->getFormDisplay($entityType, $bundle)
+        ->setComponent($fieldName, ['type' => $typeConfig['widget'], 'settings' => $options['widget_settings'] ?? []])
+        ->save();
+      $this->displays->getViewDisplay($entityType, $bundle)
+        ->setComponent($fieldName, [
+          'type' => $typeConfig['formatter'],
+          'settings' => $options['formatter_settings'] ?? [],
+          'label' => 'above',
+        ])
+        ->save();
 
       $this->auditLogger->logSuccess('add_field', 'field_config', "$entityType.$bundle.$fieldName", [
         'field_type' => $fieldType,
@@ -284,7 +280,6 @@ class FieldService {
           'entity_type' => $entityType,
           'bundle' => $bundle,
           'field_type' => $fieldType,
-          'label' => $label,
           'message' => $message,
         ],
       ];
@@ -362,69 +357,6 @@ class FieldService {
         'error' => 'Failed to delete field: ' . $e->getMessage(),
       ];
     }
-  }
-
-  /**
-   * Configure form display for a field.
-   */
-  protected function configureFormDisplay(
-    string $entityType,
-    string $bundle,
-    string $fieldName,
-    string $widget,
-    array $settings = [],
-  ): void {
-    $formDisplay = $this->entityTypeManager
-      ->getStorage('entity_form_display')
-      ->load("$entityType.$bundle.default");
-
-    if (!$formDisplay) {
-      $formDisplay = $this->entityTypeManager
-        ->getStorage('entity_form_display')
-        ->create([
-          'targetEntityType' => $entityType,
-          'bundle' => $bundle,
-          'mode' => 'default',
-          'status' => TRUE,
-        ]);
-    }
-
-    $formDisplay->setComponent($fieldName, [
-      'type' => $widget,
-      'settings' => $settings,
-    ])->save();
-  }
-
-  /**
-   * Configure view display for a field.
-   */
-  protected function configureViewDisplay(
-    string $entityType,
-    string $bundle,
-    string $fieldName,
-    string $formatter,
-    array $settings = [],
-  ): void {
-    $viewDisplay = $this->entityTypeManager
-      ->getStorage('entity_view_display')
-      ->load("$entityType.$bundle.default");
-
-    if (!$viewDisplay) {
-      $viewDisplay = $this->entityTypeManager
-        ->getStorage('entity_view_display')
-        ->create([
-          'targetEntityType' => $entityType,
-          'bundle' => $bundle,
-          'mode' => 'default',
-          'status' => TRUE,
-        ]);
-    }
-
-    $viewDisplay->setComponent($fieldName, [
-      'type' => $formatter,
-      'settings' => $settings,
-      'label' => 'above',
-    ])->save();
   }
 
 }

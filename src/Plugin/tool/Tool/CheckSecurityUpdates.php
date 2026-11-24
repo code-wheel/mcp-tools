@@ -69,7 +69,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'updates' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Update Details'),
-      description: new TranslatableMarkup('Array of updates with name, installed_version, recommended_version, security (bool), and link to release notes.'),
+      description: new TranslatableMarkup('Array of updates with name, current_version, recommended_version, security (bool), and link to release notes.'),
     ),
   ],
 )]

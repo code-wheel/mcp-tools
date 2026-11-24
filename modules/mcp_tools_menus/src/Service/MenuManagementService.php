@@ -256,22 +256,9 @@ class MenuManagementService {
       // at the top, and one whose parent is in another menu into that menu;
       // the answer named the menu that was asked.
       if (!empty($options['parent'])) {
-        $parent = (string) $options['parent'];
-        if (ctype_digit($parent) && ($parentLink = $this->entityTypeManager->getStorage('menu_link_content')->load((int) $parent))) {
-          $parent = $parentLink->getPluginId();
-        }
-        if (!$this->menuLinkManager->hasDefinition($parent)) {
-          return [
-            'success' => FALSE,
-            'error' => "There is no menu link '$parent' to be the parent. Give the plugin_id of a link of '$menuName' (mcp_tools_get_menu_tree shows them), or its id.",
-          ];
-        }
-        $parentMenu = $this->menuLinkManager->getDefinition($parent)['menu_name'] ?? NULL;
-        if ($parentMenu !== $menuName) {
-          return [
-            'success' => FALSE,
-            'error' => "The parent '$parent' is in menu '$parentMenu', not '$menuName'.",
-          ];
+        $parent = $this->parent((string) $options['parent'], $menuName);
+        if (is_array($parent)) {
+          return $parent;
         }
         $linkData['parent'] = $parent;
       }
@@ -290,7 +277,6 @@ class MenuManagementService {
         'uuid' => $menuLink->uuid(),
         'title' => $title,
         'menu' => $menuName,
-        'uri' => $uri,
         'plugin_id' => $menuLink->getPluginId(),
         'message' => "Menu link '$title' added to '$menuName'.",
       ];
@@ -336,9 +322,34 @@ class MenuManagementService {
       ];
     }
 
+    // A key the tool does not read was ignored, and the answer said the
+    // link was updated: "parent" and "enabled" among them.
+    $keys = ['title', 'uri', 'weight', 'expanded', 'enabled', 'parent', 'description'];
+    $unknown = array_diff(array_keys($updates), $keys);
+    if ($unknown !== []) {
+      return [
+        'success' => FALSE,
+        'error' => 'updates takes ' . implode(', ', $keys) . ', not ' . implode(', ', $unknown) . '. Nothing was changed.',
+      ];
+    }
+
     try {
       if (isset($updates['title'])) {
         $menuLink->set('title', $updates['title']);
+      }
+      if (isset($updates['enabled'])) {
+        $menuLink->set('enabled', (bool) $updates['enabled']);
+      }
+      if (array_key_exists('parent', $updates)) {
+        // Empty is the top of the menu.
+        $parent = (string) $updates['parent'] === '' ? '' : $this->parent((string) $updates['parent'], $menuLink->getMenuName());
+        if (is_array($parent)) {
+          return $parent;
+        }
+        if ($parent === $menuLink->getPluginId()) {
+          return ['success' => FALSE, 'error' => 'A link cannot be its own parent. Nothing was changed.'];
+        }
+        $menuLink->set('parent', $parent);
       }
       if (isset($updates['uri'])) {
         // SECURITY: Validate URI before updating.
@@ -491,6 +502,37 @@ class MenuManagementService {
     }
 
     return ['valid' => TRUE, 'uri' => $uri, 'reason' => NULL];
+  }
+
+  /**
+   * The plugin id of a parent given by plugin id or id, or why it is none.
+   *
+   * Drupal puts a link whose parent it does not know at the top, and one
+   * whose parent is in another menu into that menu; the answer named the
+   * menu that was asked.
+   *
+   * @return string|array
+   *   The plugin id, or a failed result.
+   */
+  protected function parent(string $given, string $menuName): string|array {
+    $parent = $given;
+    if (ctype_digit($parent) && ($parentLink = $this->entityTypeManager->getStorage('menu_link_content')->load((int) $parent))) {
+      $parent = $parentLink->getPluginId();
+    }
+    if (!$this->menuLinkManager->hasDefinition($parent)) {
+      return [
+        'success' => FALSE,
+        'error' => "There is no menu link '$parent' to be the parent. Give the plugin_id of a link of '$menuName' (mcp_tools_get_menu_tree shows them), or its id.",
+      ];
+    }
+    $parentMenu = $this->menuLinkManager->getDefinition($parent)['menu_name'] ?? NULL;
+    if ($parentMenu !== $menuName) {
+      return [
+        'success' => FALSE,
+        'error' => "The parent '$parent' is in menu '$parentMenu', not '$menuName'.",
+      ];
+    }
+    return $parent;
   }
 
 }

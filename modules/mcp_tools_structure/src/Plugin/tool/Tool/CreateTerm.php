@@ -41,9 +41,9 @@ use Drupal\tool\TypedData\InputDefinition;
       required: FALSE,
     ),
     'parent' => new InputDefinition(
-      data_type: 'integer',
-      label: new TranslatableMarkup('Parent Term ID'),
-      description: new TranslatableMarkup('Parent term tid for hierarchical vocabularies. 0 or omit for top-level.'),
+      data_type: 'string',
+      label: new TranslatableMarkup('Parent term'),
+      description: new TranslatableMarkup('The parent term, by id or by name, as the tools that make several terms take it. 0 or omit for the top level.'),
       required: FALSE,
     ),
     'weight' => new InputDefinition(

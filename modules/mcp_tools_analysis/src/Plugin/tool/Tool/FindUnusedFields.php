@@ -22,6 +22,12 @@ use Drupal\tool\Tool\ToolOperation;
   operation: ToolOperation::Read,
   input_definitions: [],
   output_definitions: [
+    'not_checked' => new OutputDefinition(
+      data_type: 'list',
+      label: new TranslatableMarkup('Not checked'),
+      description: new TranslatableMarkup('Fields that could not be checked, so may be used.'),
+      required: FALSE,
+    ),
     'unused_fields' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Unused Fields'),

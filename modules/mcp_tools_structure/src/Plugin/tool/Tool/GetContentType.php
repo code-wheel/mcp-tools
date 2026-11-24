@@ -30,6 +30,12 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
+    'display_submitted' => new OutputDefinition(
+      data_type: 'boolean',
+      label: new TranslatableMarkup('Shows author and date'),
+      description: new TranslatableMarkup('Whether content of this type shows its author and date.'),
+      required: FALSE,
+    ),
     'id' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Content Type ID'),

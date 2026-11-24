@@ -238,7 +238,7 @@ This page is generated. Do not edit it by hand.
 
 - `mcp_sitemap_entity_settings` `{"entity_type":"node","bundle":"sweep_page"}`
 - `mcp_sitemap_set_entity` `{"entity_type":"node","bundle":"sweep_page","settings":{"index":true,"priority":"0.5"}}`
-- `mcp_sitemap_update_settings` `{"variant":"default","settings":{"max_links":1000}}`
+- `mcp_sitemap_update_settings` `{"variant":"default","settings":{"global":{"max_links":1000}}}`
 - `mcp_sitemap_regenerate` `{"variant":"default"}`
 
 ## Search API

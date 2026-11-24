@@ -68,7 +68,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'content' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Content Items'),
-      description: new TranslatableMarkup('Array of nodes with nid, title, type, status, author, created, and changed timestamps. Use nid to update/delete content.'),
+      description: new TranslatableMarkup('Array of nodes with id (the nid), title, type, status, author, created, changed, and url. Give the id as nid to update or delete content.'),
     ),
   ],
 )]
@@ -98,8 +98,11 @@ class GetRecentContent extends McpToolsToolBase {
     $limit = min($input['limit'] ?? 20, 100);
     $type = ($input['content_type'] ?? NULL) ?: NULL;
     // Read once to avoid returning NULL when the key is absent.
-    $sortInput = $input['sort'] ?? 'changed';
-    $sort = in_array($sortInput, ['created', 'changed']) ? $sortInput : 'changed';
+    // Another sort was taken as "changed" without a word.
+    $sort = (string) (($input['sort'] ?? '') ?: 'changed');
+    if (!in_array($sort, ['created', 'changed'], TRUE)) {
+      return ['success' => FALSE, 'error' => "sort is created or changed, not '$sort'."];
+    }
     // "1" and "true" are what a model sends for published as well.
     $status = strtolower(trim((string) ($input['status'] ?? '')));
     $published = match ($status) {

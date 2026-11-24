@@ -277,7 +277,6 @@ class ContentTranslationService {
         'data' => [
           'nid' => $nid,
           'language' => $langcode,
-          'language_name' => $language->getName(),
           'title' => $nodeTranslation->getTitle(),
           'url' => $nodeTranslation->toUrl()->toString(),
           'fields_translated' => count($required['fields']),

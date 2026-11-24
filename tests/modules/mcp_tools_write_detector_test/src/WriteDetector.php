@@ -30,6 +30,11 @@ final class WriteDetector implements EventSubscriberInterface {
   public const STATE_KEY = 'mcp_tools_write_detector_test';
 
   /**
+   * Where the keys tools returned and did not declare are kept.
+   */
+  public const DROPPED_KEY = 'mcp_tools_write_detector_test.dropped';
+
+  /**
    * The plugin ID of the read tool that is running, if one is.
    *
    * Static on purpose. In a long session a tool can rebuild the container.
@@ -99,6 +104,20 @@ final class WriteDetector implements EventSubscriberInterface {
     $seen = $this->state->get(self::STATE_KEY, []);
     $seen[] = self::$readTool . ': ' . $what;
     $this->state->set(self::STATE_KEY, array_values(array_unique($seen)));
+  }
+
+  /**
+   * A tool returned keys it does not declare, which the client never gets.
+   *
+   * @param string $tool
+   *   The tool's plugin ID.
+   * @param string[] $keys
+   *   The keys.
+   */
+  public function dropped(string $tool, array $keys): void {
+    $seen = $this->state->get(self::DROPPED_KEY, []);
+    $seen[$tool] = array_values(array_unique(array_merge($seen[$tool] ?? [], $keys)));
+    $this->state->set(self::DROPPED_KEY, $seen);
   }
 
 }

@@ -102,8 +102,6 @@ class WebformService {
           'submission_limit' => $webform->getSetting('limit_total'),
           'submission_limit_user' => $webform->getSetting('limit_user'),
         ],
-        'created' => $webform->get('created') ? date('Y-m-d H:i:s', (int) $webform->get('created')) : NULL,
-        'updated' => $webform->get('updated') ? date('Y-m-d H:i:s', (int) $webform->get('updated')) : NULL,
       ],
     ];
   }

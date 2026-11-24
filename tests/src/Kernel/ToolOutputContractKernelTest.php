@@ -164,4 +164,33 @@ final class ToolOutputContractKernelTest extends KernelTestBase {
     $this->assertSame($result->structuredContent['message'], $result->content[0]->text);
   }
 
+  /**
+   * The text gives the message once, then the data, and nothing again.
+   *
+   * The text stays in the conversation and is sent again every turn. It
+   * gave the message and "success" a second time inside its JSON; the
+   * structured content keeps all three.
+   */
+  public function testTextGivesTheMessageOnceThenTheData(): void {
+    $handler = new ToolApiCallToolHandler(
+      $this->container->get('plugin.manager.tool'),
+      new NullLogger(),
+      FALSE,
+      'mcp_tools',
+      new ToolInputValidator(new ToolApiSchemaConverter(), new NullLogger()),
+    );
+    $session = $this->createMock(SessionInterface::class);
+    $session->method('get')->willReturnArgument(1);
+    $session->method('getId')->willReturn(Uuid::v4());
+
+    $result = $handler->handle((new CallToolRequest('mcp_cache_get_status', []))->withId(1), $session)->result;
+
+    $this->assertFalse($result->isError, $result->content[0]->text);
+    [$first, $json] = explode("\n", $result->content[0]->text, 2);
+    $this->assertSame($result->structuredContent['message'], $first);
+    $this->assertSame(json_decode(json_encode($result->structuredContent['data']), TRUE), json_decode($json, TRUE));
+    $this->assertSame(1, substr_count($result->content[0]->text, $result->structuredContent['message']));
+    $this->assertTrue($result->structuredContent['success']);
+  }
+
 }

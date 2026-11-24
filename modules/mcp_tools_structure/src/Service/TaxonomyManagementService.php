@@ -318,7 +318,11 @@ class TaxonomyManagementService {
           'tid' => $term->id(),
           'name' => $name,
           'vocabulary' => $vocabulary,
-          'message' => "Term '$name' created in vocabulary '$vocabulary'.",
+          // Where it went, said: a model that meant a parent and left it out
+          // of the call read "created" and never knew.
+          'message' => "Term '$name' created in vocabulary '$vocabulary', " . (isset($termData['parent'])
+            ? "under '" . $this->entityTypeManager->getStorage('taxonomy_term')->load($termData['parent']['target_id'])?->label() . "' (" . $termData['parent']['target_id'] . ').'
+            : 'at the top level (no parent given).'),
         ],
       ];
     }

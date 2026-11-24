@@ -89,6 +89,33 @@ final class McpToolsToolBaseTest extends UnitTestCase {
   }
 
   /**
+   * A message the service puts in data is the answer's message.
+   *
+   * It was heard as "Success.": "the entity has no metatag field" read as
+   * no tags. A message given at the top still wins.
+   */
+  public function testAMessageInDataIsTheAnswersMessage(): void {
+    $definition = $this->definition('mcp_tools:test_data_message', ToolOperation::Read);
+    foreach ([[['data' => ['message' => 'No metatag field.']], 'No metatag field.'], [['message' => 'Top', 'data' => ['message' => 'Inner']], 'Top'], [['data' => ['message' => ['not', 'text']]], 'Success.']] as [$answer, $said]) {
+      $tool = new class([], 'mcp_tools:test_data_message', $definition, $this->createMock(AccountInterface::class), $this->createMock(EventDispatcherInterface::class), $this->createMock(LoggerChannelInterface::class)) extends McpToolsToolBase {
+        public array $answer = [];
+
+        public function setAccessManager(AccessManager $accessManager): void {
+          $this->accessManager = $accessManager;
+        }
+
+        protected function executeLegacy(array $input): array {
+          return ['success' => TRUE] + $this->answer;
+        }
+      };
+      $tool->answer = $answer;
+      $tool->setAccessManager($this->createMock(AccessManager::class));
+      $tool->execute();
+      $this->assertSame($said, (string) $tool->getResult()->getMessage(), json_encode($answer));
+    }
+  }
+
+  /**
    * Scalar outputs come back in the type their definition declares.
    *
    * Drupal hands out IDs as strings for loaded entities and as integers for

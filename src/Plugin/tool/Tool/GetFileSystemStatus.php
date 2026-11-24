@@ -25,7 +25,7 @@ use Drupal\tool\Tool\ToolOperation;
     'directories' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Directory Status'),
-      description: new TranslatableMarkup('Status of key directories (public, private, temp) with path, exists, writable, and free_space.'),
+      description: new TranslatableMarkup('Status of key directories (public, private, temp) with scheme, path, exists, writable, and size (bytes used, when it exists).'),
     ),
     'stream_wrappers' => new OutputDefinition(
       data_type: 'list',

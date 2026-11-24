@@ -33,6 +33,12 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
+    'bin' => new OutputDefinition(
+      data_type: 'string',
+      label: new TranslatableMarkup('Bin'),
+      description: new TranslatableMarkup('The bin that was cleared.'),
+      required: FALSE,
+    ),
     'success' => new OutputDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Success status'),

@@ -38,7 +38,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'status' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Indexing status'),
-      description: new TranslatableMarkup('Status object with total_items, indexed_items, and remaining_items. Use remaining to determine if reindexing needed.'),
+      description: new TranslatableMarkup('Status object with total, indexed and remaining items. Use remaining to see whether reindexing is needed.'),
     ),
   ],
 )]

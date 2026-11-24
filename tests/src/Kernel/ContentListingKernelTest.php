@@ -36,7 +36,7 @@ final class ContentListingKernelTest extends KernelTestBase {
   /**
    * {@inheritdoc}
    */
-  protected static $modules = ['system', 'user', 'field', 'text', 'filter', 'node', 'dblog', 'update', 'tool', 'mcp_tools'];
+  protected static $modules = ['system', 'user', 'field', 'text', 'filter', 'node', 'taxonomy', 'dblog', 'update', 'tool', 'mcp_tools'];
 
   /**
    * {@inheritdoc}
@@ -122,6 +122,64 @@ final class ContentListingKernelTest extends KernelTestBase {
       $this->assertFalse($response->result->isError, var_export($status, TRUE) . ': ' . $response->result->content[0]->text);
       $this->assertSame($matching, $response->result->structuredContent['data']['matching'], var_export($status, TRUE));
     }
+  }
+
+  /**
+   * A choice that is none of the tool's is refused, not taken as the default.
+   *
+   * The watchdog tool gave its summary for an unknown mode and named the
+   * mode asked for ("error" read as errors); the listing sorted by
+   * "changed" for any sort.
+   */
+  public function testAChoiceThatIsNoneIsRefused(): void {
+    foreach ([['mcp_tools_analyze_watchdog', 'mode', 'error', 'mode is summary, errors or recent'], ['mcp_tools_get_recent_content', 'sort', 'title', 'sort is created or changed']] as [$tool, $input, $given, $said]) {
+      $instance = $this->container->get('plugin.manager.tool')->createInstance($tool);
+      $instance->setInputValue($input, $given);
+      $instance->execute();
+      $this->assertFalse($instance->getResult()->isSuccess(), "$tool took $input '$given' as its default.");
+      $this->assertStringContainsString($said, (string) $instance->getResult()->getMessage());
+    }
+    $this->assertSame('created', $this->callTool('mcp_tools_get_recent_content', ['sort' => 'created'])['sorted_by'] ?? NULL);
+  }
+
+  /**
+   * A total counts all that match, not the ones a limit lets through.
+   *
+   * Search said "total": 5 when 12 matched, and terms the same, so a model
+   * took the first page for all there was.
+   */
+  public function testATotalCountsAllThatMatch(): void {
+    for ($n = 1; $n <= 12; $n++) {
+      Node::create(['type' => 'article', 'title' => "Harvest note $n", 'status' => 1])->save();
+    }
+    $found = $this->callTool('mcp_tools_search_content', ['query' => 'Harvest', 'limit' => 5]);
+    $this->assertSame(12, $found['total']);
+    $this->assertCount(5, $found['results']);
+
+    $this->installEntitySchema('taxonomy_term');
+    \Drupal\taxonomy\Entity\Vocabulary::create(['vid' => 'tags', 'name' => 'Tags'])->save();
+    for ($n = 1; $n <= 7; $n++) {
+      \Drupal\taxonomy\Entity\Term::create(['vid' => 'tags', 'name' => "Tag $n"])->save();
+    }
+    $terms = $this->callTool('mcp_tools_get_terms', ['vocabulary' => 'tags', 'limit' => 3]);
+    $this->assertSame(7, $terms['total']);
+    $this->assertCount(3, $terms['terms']);
+  }
+
+  /**
+   * The watchdog's lists say how many there are, besides the ones shown.
+   *
+   * They gave total_returned only: 100 entries read as all.
+   */
+  public function testTheWatchdogListsHaveATotal(): void {
+    $logger = $this->container->get('logger.factory')->get('mcp_probe');
+    for ($n = 1; $n <= 6; $n++) {
+      $logger->error('Probe failure @n', ['@n' => $n]);
+    }
+    $errors = $this->callTool('mcp_tools_analyze_watchdog', ['mode' => 'errors', 'limit' => 4])['data'];
+    $this->assertSame(4, $errors['total_returned']);
+    $this->assertGreaterThanOrEqual(6, $errors['total'], 'The total counted only the entries shown.');
+    $this->assertStringContainsString('Probe failure 6', $errors['entries'][0]['message'], 'The newest entry is not first.');
   }
 
 }

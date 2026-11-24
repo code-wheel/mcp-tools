@@ -122,7 +122,6 @@ class MetatagService {
             'entity_id' => $entityId,
             'entity_label' => $entity->label(),
             'has_metatag_field' => FALSE,
-            'tags' => [],
             'message' => 'Entity does not have a metatag field configured.',
           ],
         ];
@@ -236,7 +235,6 @@ class MetatagService {
           'entity_id' => $entityId,
           'entity_label' => $entity->label(),
           'tags_updated' => array_keys($tags),
-          'current_tags' => $newValues,
           'message' => 'Metatags updated successfully.',
         ],
       ];
@@ -279,59 +277,77 @@ class MetatagService {
   }
 
   /**
-   * List all available metatag tags with descriptions.
+   * Lists the metatag tags, all or one group's, each described once.
+   *
+   * A tag gives its id, label, a plain description when it has one, group,
+   * type, and secure or multiple only when set. by_group names its tags by
+   * id, in weight order.
+   *
+   * @param string|null $group
+   *   Only this group's tags (a group id, for example "open_graph").
    *
    * @return array
-   *   List of available tags.
+   *   The tags, or an error for an unknown group.
    */
-  public function listAvailableTags(): array {
+  public function listAvailableTags(?string $group = NULL): array {
     $definitions = $this->tagPluginManager->getDefinitions();
     $groupDefinitions = $this->groupPluginManager->getDefinitions();
+    $plain = static fn(mixed $text): string => trim(html_entity_decode(strip_tags((string) $text), ENT_QUOTES | ENT_HTML5));
+
+    $group = $group === NULL || trim($group) === '' ? NULL : trim($group);
+    if ($group !== NULL) {
+      $groupOf = static fn(array $definition): string => (string) ($definition['group'] ?? 'basic');
+      $groups = array_unique(array_map($groupOf, $definitions));
+      sort($groups);
+      if (!in_array($group, $groups, TRUE)) {
+        $error = "No metatag group '$group'. Groups with tags: " . implode(', ', $groups) . '.';
+        return ['success' => FALSE, 'error' => $error];
+      }
+    }
 
     $tags = [];
     $byGroup = [];
-
+    $weights = [];
     foreach ($definitions as $id => $definition) {
-      $groupId = $definition['group'] ?? 'basic';
-      $groupLabel = isset($groupDefinitions[$groupId]) ? (string) $groupDefinitions[$groupId]['label'] : $groupId;
-
-      $tagInfo = [
-        'id' => $id,
-        'label' => (string) $definition['label'],
-        'description' => isset($definition['description']) ? (string) $definition['description'] : NULL,
-        'group' => $groupId,
-        'group_label' => $groupLabel,
-        'weight' => $definition['weight'] ?? 0,
-        'type' => $definition['type'] ?? 'string',
-        'secure' => $definition['secure'] ?? FALSE,
-        'multiple' => $definition['multiple'] ?? FALSE,
-      ];
-
-      $tags[] = $tagInfo;
-
-      if (!isset($byGroup[$groupId])) {
-        $byGroup[$groupId] = [
-          'group_id' => $groupId,
-          'group_label' => $groupLabel,
-          'tags' => [],
-        ];
+      $groupId = (string) ($definition['group'] ?? 'basic');
+      if ($group !== NULL && $groupId !== $group) {
+        continue;
       }
-      $byGroup[$groupId]['tags'][] = $tagInfo;
+      $tagInfo = ['id' => (string) $id, 'label' => (string) $definition['label']];
+      $description = $plain($definition['description'] ?? '');
+      if ($description !== '') {
+        $tagInfo['description'] = $description;
+      }
+      $tagInfo += ['group' => $groupId, 'type' => $definition['type'] ?? 'string'];
+      foreach (['secure', 'multiple'] as $flag) {
+        if (!empty($definition[$flag])) {
+          $tagInfo[$flag] = TRUE;
+        }
+      }
+      $tags[] = $tagInfo;
+      $byGroup[$groupId] ??= [
+        'group_id' => $groupId,
+        'group_label' => isset($groupDefinitions[$groupId]) ? (string) $groupDefinitions[$groupId]['label'] : $groupId,
+        'tags' => [],
+      ];
+      $byGroup[$groupId]['tags'][] = (string) $id;
+      $weights[$id] = $definition['weight'] ?? 0;
     }
 
-    // Sort tags by weight within each group.
-    foreach ($byGroup as &$group) {
-      usort($group['tags'], fn($a, $b) => $a['weight'] <=> $b['weight']);
+    foreach ($byGroup as &$entry) {
+      usort($entry['tags'], static fn(string $a, string $b): int => $weights[$a] <=> $weights[$b]);
     }
+    unset($entry);
 
-    return [
-      'success' => TRUE,
-      'data' => [
-        'total' => count($tags),
-        'by_group' => array_values($byGroup),
-        'all_tags' => $tags,
-      ],
+    $data = [
+      'total' => count($definitions),
+      'by_group' => array_values($byGroup),
+      'all_tags' => $tags,
     ];
+    if ($group !== NULL) {
+      $data['matching'] = count($tags);
+    }
+    return ['success' => TRUE, 'data' => $data];
   }
 
   /**

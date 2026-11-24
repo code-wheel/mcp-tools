@@ -159,4 +159,19 @@ final class UserStatusToolsKernelTest extends KernelTestBase {
     $this->assertTrue($this->isActive($uid), 'The account is active again.');
   }
 
+  /**
+   * A password made up for a new user is not in the answer.
+   *
+   * The service returned it; only the tool's declared outputs kept it from
+   * the client, by chance. A model's answer goes into transcripts and logs.
+   */
+  public function testAMadeUpPasswordIsNotGivenBack(): void {
+    $this->container->get('mcp_tools.access_manager')->setScopes(['read', 'write', 'admin']);
+    $result = $this->container->get('mcp_tools_users.user')->createUser('newperson', 'newperson@example.com');
+    $this->assertTrue($result['success'], json_encode($result));
+    $this->assertArrayNotHasKey('generated_password', $result['data']);
+    $this->assertStringContainsString('is not shown', $result['data']['message']);
+    $this->assertTrue(\Drupal\user\Entity\User::load($result['data']['uid'])->getPassword() !== NULL, 'No password was set.');
+  }
+
 }

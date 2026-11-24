@@ -151,10 +151,6 @@ class ContentAuditor {
           'orphaned_count' => count($results['orphaned_content']),
           'drafts' => $results['drafts'],
           'draft_count' => count($results['drafts']),
-          'audit_options' => [
-            'stale_days' => $staleDays,
-            'content_types' => $contentTypes ?: 'all',
-          ],
           'suggestions' => $suggestions,
         ],
       ];

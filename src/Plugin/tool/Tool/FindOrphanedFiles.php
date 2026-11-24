@@ -34,12 +34,12 @@ use Drupal\tool\TypedData\InputDefinition;
     'total_orphaned' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Orphaned Files'),
-      description: new TranslatableMarkup('Number of files found without entity references.'),
+      description: new TranslatableMarkup('Number of files on the site that no entity uses. files holds up to limit of them.'),
     ),
     'total_size_bytes' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Size (bytes)'),
-      description: new TranslatableMarkup('Combined size of orphaned files in bytes.'),
+      description: new TranslatableMarkup('Combined size in bytes of the orphaned files shown.'),
     ),
     'total_size_human' => new OutputDefinition(
       data_type: 'string',
@@ -49,7 +49,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'files' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Orphaned Files'),
-      description: new TranslatableMarkup('Array of orphaned files with fid, filename, uri, filemime, filesize, and created. These may be safe to delete.'),
+      description: new TranslatableMarkup('Array of orphaned files with fid, filename, uri, size (bytes), and created. These may be safe to delete.'),
     ),
   ],
 )]
@@ -83,10 +83,12 @@ class FindOrphanedFiles extends McpToolsToolBase {
     }
     $limit = min($input['limit'] ?? 100, 500);
 
-    return [
-      'success' => TRUE,
-      'data' => $this->fileSystem->findOrphanedFiles($limit),
-    ];
+    $data = $this->fileSystem->findOrphanedFiles($limit);
+    // "No orphaned files found." was in data.note, which the tool does not
+    // declare: the answer said "Success." and an empty list.
+    $message = $data['note'] ?? 'Success.';
+    unset($data['note']);
+    return ['success' => TRUE, 'message' => $message, 'data' => $data];
   }
 
 }

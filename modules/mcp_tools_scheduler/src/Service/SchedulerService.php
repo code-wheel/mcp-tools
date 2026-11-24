@@ -214,7 +214,6 @@ class SchedulerService {
         'data' => [
           'nid' => $entityId,
           'title' => $node->getTitle(),
-          'type' => $node->bundle(),
           'scheduled_publish' => date('Y-m-d H:i:s', (int) $timestamp),
           'timestamp' => $timestamp,
           'message' => "Content '{$node->getTitle()}' scheduled for publication on "
@@ -290,7 +289,6 @@ class SchedulerService {
         'data' => [
           'nid' => $entityId,
           'title' => $node->getTitle(),
-          'type' => $node->bundle(),
           'scheduled_unpublish' => date('Y-m-d H:i:s', (int) $timestamp),
           'timestamp' => $timestamp,
           'message' => "Content '{$node->getTitle()}' scheduled for unpublication on "
@@ -383,7 +381,6 @@ class SchedulerService {
         'data' => [
           'nid' => $entityId,
           'title' => $node->getTitle(),
-          'type' => $node->bundle(),
           'cancelled' => $cancelled,
           'message' => "Cancelled " . implode(' and ', $cancelled) . " schedule for '{$node->getTitle()}'.",
         ],

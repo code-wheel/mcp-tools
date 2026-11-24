@@ -70,7 +70,7 @@ class BlockService {
     }
 
     // Validate region exists in the theme.
-    $regions = system_region_list($theme, REGIONS_VISIBLE);
+    $regions = $this->visibleRegions($theme);
     if (!isset($regions[$region])) {
       return ['success' => FALSE, 'error' => "Region '$region' not found in theme '$theme'."];
     }
@@ -143,7 +143,6 @@ class BlockService {
           'plugin_id' => $pluginId,
           'region' => $region,
           'theme' => $theme,
-          'weight' => $blockConfig['weight'],
           'message' => "Block '$blockId' placed in region '$region' of theme '$theme'.",
         ],
       ];
@@ -243,7 +242,7 @@ class BlockService {
       // Update region.
       if (isset($config['region'])) {
         $theme = $block->getTheme();
-        $regions = system_region_list($theme, REGIONS_VISIBLE);
+        $regions = $this->visibleRegions($theme);
         if (!isset($regions[$config['region']])) {
           return ['success' => FALSE, 'error' => "Region '{$config['region']}' not found in theme '$theme'."];
         }
@@ -403,7 +402,7 @@ class BlockService {
         return ['success' => FALSE, 'error' => "Theme '$theme' not found."];
       }
 
-      $regions = system_region_list($theme, REGIONS_VISIBLE);
+      $regions = $this->visibleRegions($theme);
       $regionList = [];
 
       foreach ($regions as $regionId => $regionLabel) {
@@ -603,6 +602,25 @@ class BlockService {
     }
 
     return $id;
+  }
+
+  /**
+   * The theme's visible regions: machine name => label.
+   *
+   * The function system_region_list() is deprecated in Drupal 11.4 and
+   * removed in 13. Its replacement is on the theme object from 11.4, which
+   * Drupal 10 does not have.
+   */
+  protected function visibleRegions(string $theme): array {
+    if (!$this->themeHandler->themeExists($theme)) {
+      return [];
+    }
+    $extension = $this->themeHandler->getTheme($theme);
+    if (method_exists($extension, 'listVisibleRegions')) {
+      return $extension->listVisibleRegions();
+    }
+    // @phpstan-ignore-next-line Drupal 10 and 11 before 11.4.
+    return system_region_list($theme, REGIONS_VISIBLE);
   }
 
 }

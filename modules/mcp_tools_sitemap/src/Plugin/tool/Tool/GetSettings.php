@@ -30,6 +30,12 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
+    'is_enabled' => new OutputDefinition(
+      data_type: 'boolean',
+      label: new TranslatableMarkup('Enabled'),
+      description: new TranslatableMarkup('Whether the sitemap variant is enabled.'),
+      required: FALSE,
+    ),
     'variant' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Variant ID'),

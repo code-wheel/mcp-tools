@@ -22,6 +22,18 @@ use Drupal\tool\Tool\ToolOperation;
   operation: ToolOperation::Read,
   input_definitions: [],
   output_definitions: [
+    'site_uuid' => new OutputDefinition(
+      data_type: 'string',
+      label: new TranslatableMarkup('Site UUID'),
+      description: new TranslatableMarkup('The site UUID, which config imports must match.'),
+      required: FALSE,
+    ),
+    'install_profile' => new OutputDefinition(
+      data_type: 'string',
+      label: new TranslatableMarkup('Install profile'),
+      description: new TranslatableMarkup('The install profile the site was made with.'),
+      required: FALSE,
+    ),
     'drupal_version' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Drupal Version'),

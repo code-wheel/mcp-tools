@@ -61,6 +61,19 @@ final class DefaultToolErrorHandlerTest extends TestCase {
     $this->assertCount(2, $result->structuredContent['validation_errors']);
   }
 
+  /**
+   * The text gives the problem once: it was there three times.
+   */
+  public function testValidationTextGivesTheProblemOnce(): void {
+    $errors = [['message' => 'The data (string) must match the type: integer', 'keyword' => 'type', 'path' => 'nid']];
+
+    $result = $this->handler->validationFailed('test_tool', $errors);
+
+    $this->assertSame(1, substr_count($result->content[0]->text, 'nid: The data (string) must match the type: integer'));
+    $this->assertStringContainsString('validation_errors', $result->content[0]->text);
+    $this->assertSame($result->structuredContent['message'], $result->structuredContent['error']);
+  }
+
   public function testValidationFailedWithEmptyErrors(): void {
     $result = $this->handler->validationFailed('test_tool', []);
 

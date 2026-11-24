@@ -119,4 +119,34 @@ final class MenuLinkTargetKernelTest extends KernelTestBase {
     $this->assertSame(['Team 0', 'Team 1'], array_column($about['children'], 'title'));
   }
 
+  /**
+   * The update takes parent and enabled, and refuses a key it does not read.
+   *
+   * It read five keys and ignored the rest: {"parent": ...} and
+   * {"enabled": false} changed nothing, and it said the link was updated.
+   */
+  public function testTheUpdateMovesAndHidesALinkAndRefusesOtherKeys(): void {
+    $links = $this->container->get('mcp_tools_menus.menu');
+    $about = $links->addMenuLink('main', 'About', '/node/1')['data'];
+    $team = $links->addMenuLink('main', 'Team', '/node/1')['data'];
+    $storage = $this->container->get('entity_type.manager')->getStorage('menu_link_content');
+
+    $refused = $links->updateMenuLink((int) $team['id'], ['url' => '/node/1']);
+    $this->assertFalse($refused['success'], 'A key the update does not read was ignored with success.');
+    $this->assertStringContainsString('not url', $refused['error']);
+
+    $moved = $links->updateMenuLink((int) $team['id'], ['parent' => (string) $about['id'], 'enabled' => FALSE]);
+    $this->assertTrue($moved['success'], (string) ($moved['error'] ?? ''));
+    $storage->resetCache();
+    $link = $storage->load($team['id']);
+    $this->assertSame($storage->load($about['id'])->getPluginId(), $link->getParentId());
+    $this->assertFalse($link->isEnabled());
+
+    $this->assertFalse($links->updateMenuLink((int) $team['id'], ['parent' => 'menu_link_content:nope'])['success']);
+    $top = $links->updateMenuLink((int) $team['id'], ['parent' => '']);
+    $this->assertTrue($top['success'], (string) ($top['error'] ?? ''));
+    $storage->resetCache();
+    $this->assertSame('', $storage->load($team['id'])->getParentId());
+  }
+
 }

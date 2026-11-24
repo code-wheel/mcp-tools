@@ -88,9 +88,8 @@ class TaxonomyService {
       ];
     }
 
-    $query = $termStorage->getQuery()
-      ->accessCheck(TRUE)
-      ->condition('vid', $vid)
+    $inVocabulary = fn() => $termStorage->getQuery()->accessCheck(TRUE)->condition('vid', $vid);
+    $query = $inVocabulary()
       ->sort('weight')
       ->sort('name')
       ->range(0, $limit);
@@ -123,7 +122,9 @@ class TaxonomyService {
     return [
       'vocabulary' => $vid,
       'vocabulary_label' => $vocab->label(),
-      'total' => count($result),
+      // All of the vocabulary's, not the ones shown, so a model knows
+      // there are more.
+      'total' => (int) $inVocabulary()->count()->execute(),
       'terms' => $result,
     ];
   }

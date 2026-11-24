@@ -22,6 +22,12 @@ use Drupal\tool\Tool\ToolOperation;
   operation: ToolOperation::Read,
   input_definitions: [],
   output_definitions: [
+    'sync_directory_exists' => new OutputDefinition(
+      data_type: 'boolean',
+      label: new TranslatableMarkup('Sync directory'),
+      description: new TranslatableMarkup('Whether the config sync directory exists; without it nothing can be compared.'),
+      required: FALSE,
+    ),
     'has_changes' => new OutputDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Has Pending Changes'),
@@ -35,7 +41,7 @@ use Drupal\tool\Tool\ToolOperation;
     'changes' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Change Details'),
-      description: new TranslatableMarkup('Array of changes with name and type (create, update, delete, rename).'),
+      description: new TranslatableMarkup('Array of changes with name, operation (create, update, delete, rename), and collection.'),
     ),
   ],
 )]

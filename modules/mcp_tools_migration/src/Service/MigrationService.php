@@ -8,8 +8,8 @@ use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AuditLogger;
+use Drupal\mcp_tools\Service\FieldValue;
 use Drupal\mcp_tools\Service\LinkTarget;
-use Drupal\mcp_tools\Service\TextFormat;
 
 /**
  * Service for content import/export and migration operations.
@@ -501,7 +501,6 @@ class MigrationService {
       'success' => TRUE,
       'data' => [
         'import_id' => $importId,
-        'entity_type' => $entityType,
         'content_type' => $bundle,
         'total_items' => count($items) + count($rowErrors),
         'created_count' => $created,
@@ -965,7 +964,12 @@ class MigrationService {
       $what = $entityType === 'node' ? 'Content type' : 'Vocabulary';
       return ['success' => FALSE, 'error' => "$what '$bundle' not found."];
     }
-    $names = ($options['references'] ?? 'ids') === 'names';
+    // Another value gave ids, which mean nothing on another site.
+    $references = (string) (($options['references'] ?? '') ?: 'ids');
+    if (!in_array($references, ['ids', 'names'], TRUE)) {
+      return ['success' => FALSE, 'error' => "references is ids or names, not '$references'."];
+    }
+    $names = $references === 'names';
     $limit = min($limit, self::MAX_EXPORT_ITEMS);
     [$entities, $total] = $this->exportPage($entityType, $bundle, $limit, $offset);
     $definitions = $this->entityFieldManager->getFieldDefinitions($entityType, $bundle);
@@ -1104,32 +1108,10 @@ class MigrationService {
     if (!isset($fieldDefinitions[$fieldName])) {
       return $value;
     }
-
-    $fieldType = $fieldDefinitions[$fieldName]->getType();
-
-    return match ($fieldType) {
-      'text_long', 'text_with_summary' => TextFormat::fieldValue($this->entityTypeManager, $value),
-      'entity_reference' => is_array($value) ? $value : ['target_id' => (int) $value],
-      'image', 'file' => is_array($value) ? $value : ['target_id' => (int) $value],
-      'link' => is_array($value) ? $value : ['uri' => $this->linkUri((string) $value)],
-      'redirect_source' => is_array($value) ? $value : ['path' => ltrim(trim((string) $value), '/'), 'query' => []],
-      'datetime' => is_array($value) ? $value : ['value' => $value],
-      'boolean' => (bool) $value,
-      'integer' => (int) $value,
-      'decimal', 'float' => (float) $value,
-      default => $value,
-    };
-  }
-
-  /**
-   * A link as Drupal stores it: a path becomes internal:/path.
-   */
-  protected function linkUri(string $value): string {
-    $value = trim($value);
-    if (preg_match('#^[a-z][a-z0-9+.-]*:#i', $value)) {
-      return $value;
+    if ($fieldDefinitions[$fieldName]->getType() === 'redirect_source') {
+      return is_array($value) ? $value : ['path' => ltrim(trim((string) $value), '/'), 'query' => []];
     }
-    return 'internal:/' . ltrim($value, '/');
+    return FieldValue::normalize($this->entityTypeManager, $fieldDefinitions[$fieldName], $value);
   }
 
   /**

@@ -44,6 +44,12 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
+    'hint' => new OutputDefinition(
+      data_type: 'string',
+      label: new TranslatableMarkup('Hint'),
+      description: new TranslatableMarkup('What to try when the list is not what was wanted.'),
+      required: FALSE,
+    ),
     'total_tools' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Tools'),
@@ -57,7 +63,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'tools' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Tools'),
-      description: new TranslatableMarkup('Array of tools with id, label, category, and description. Use id to call the tool.'),
+      description: new TranslatableMarkup('Array of tools with id, category, and description. Use id to call the tool.'),
     ),
   ],
 )]
@@ -123,9 +129,10 @@ class ListAvailableTools extends McpToolsToolBase {
         }
       }
 
+      // No label: it says what the id says, and with every tool listed it
+      // was a good part of the answer. The search still looks at it.
       $toolInfo = [
         'id' => $id,
-        'label' => (string) $definition->getLabel(),
         'category' => $toolCategory,
       ];
 
@@ -157,10 +164,6 @@ class ListAvailableTools extends McpToolsToolBase {
         'total_tools' => count($tools),
         'categories' => $categories,
         'tools' => $tools,
-        'filters_applied' => [
-          'category' => $category,
-          'search' => $search,
-        ],
         'hint' => $this->getUsageHint($category, $search),
       ],
     ];
@@ -190,12 +193,11 @@ class ListAvailableTools extends McpToolsToolBase {
       return 'other';
     }
 
-    $const = $class . '::MCP_CATEGORY';
-    if (class_exists($class) && defined($const)) {
-      $category = constant($const);
-      if (is_string($category) && $category !== '') {
-        return $category;
-      }
+    // The tool says it, through the base class: its constant is protected,
+    // which a sibling class like this one cannot read (all but this one came
+    // back as "other").
+    if (is_subclass_of($class, McpToolsToolBase::class)) {
+      return $class::getMcpCategory();
     }
 
     return 'other';

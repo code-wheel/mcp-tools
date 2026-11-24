@@ -19,7 +19,7 @@ use Drupal\tool\TypedData\InputDefinition;
 #[Tool(
   id: 'mcp_batch_create_content',
   label: new TranslatableMarkup('Batch Create Content'),
-  description: new TranslatableMarkup('Create multiple content items (nodes) at once. Maximum 50 items per operation.'),
+  description: new TranslatableMarkup('Create multiple content items (nodes) at once. Maximum 50 items per operation. For more rows, or a list to import again with changes: mcp_migration_import_json or mcp_migration_import_csv (MCP Tools - Migration), where a second run updates and makes no copies.'),
   operation: ToolOperation::Write,
   input_definitions: [
     'content_type' => new InputDefinition(

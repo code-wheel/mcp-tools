@@ -42,6 +42,36 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
     ),
   ],
   output_definitions: [
+    'label' => new OutputDefinition(
+      data_type: 'string',
+      label: new TranslatableMarkup('Label'),
+      description: new TranslatableMarkup('Its label.'),
+      required: FALSE,
+    ),
+    'status' => new OutputDefinition(
+      data_type: 'boolean',
+      label: new TranslatableMarkup('Status'),
+      description: new TranslatableMarkup('Whether it is published or active.'),
+      required: FALSE,
+    ),
+    'created' => new OutputDefinition(
+      data_type: 'integer',
+      label: new TranslatableMarkup('Created'),
+      description: new TranslatableMarkup('When it was made, as a Unix time.'),
+      required: FALSE,
+    ),
+    'changed' => new OutputDefinition(
+      data_type: 'integer',
+      label: new TranslatableMarkup('Changed'),
+      description: new TranslatableMarkup('When it was last changed, as a Unix time.'),
+      required: FALSE,
+    ),
+    'fields' => new OutputDefinition(
+      data_type: 'map',
+      label: new TranslatableMarkup('Fields'),
+      description: new TranslatableMarkup('Its field values, as stored.'),
+      required: FALSE,
+    ),
     'entity_type' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Entity Type'),

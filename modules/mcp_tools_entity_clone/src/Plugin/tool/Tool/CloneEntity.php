@@ -54,6 +54,12 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
+    'status' => new OutputDefinition(
+      data_type: 'string',
+      label: new TranslatableMarkup('Status'),
+      description: new TranslatableMarkup('published or unpublished: a clone is unpublished unless the source was not.'),
+      required: FALSE,
+    ),
     'entity_type' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Entity Type'),

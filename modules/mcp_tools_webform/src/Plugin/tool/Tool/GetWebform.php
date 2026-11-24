@@ -30,6 +30,12 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
+    'submission_count' => new OutputDefinition(
+      data_type: 'integer',
+      label: new TranslatableMarkup('Submissions'),
+      description: new TranslatableMarkup('Number of submissions the webform has.'),
+      required: FALSE,
+    ),
     'id' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Webform ID'),

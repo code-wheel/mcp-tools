@@ -49,7 +49,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'files' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('File List'),
-      description: new TranslatableMarkup('Array of files with fid, filename, uri, filemime, filesize, status, and created. Use fid for media references.'),
+      description: new TranslatableMarkup('Array of files with fid, filename, uri, mime, size (bytes), status, and created. Use fid for media references.'),
     ),
   ],
 )]

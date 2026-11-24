@@ -238,31 +238,30 @@ class ContentServiceTest extends UnitTestCase {
   }
 
   /**
-   * Tests field value normalization code paths for various field types.
+   * The content tool stores each field's value as the shared FieldValue does.
+   *
+   * It asserted nothing (assertTrue(TRUE)), and so missed that this copy
+   * had drifted from the import's.
    *
    * @dataProvider normalizeFieldValueProvider
    */
   #[\PHPUnit\Framework\Attributes\DataProvider('normalizeFieldValueProvider')]
-  public function testNormalizeFieldValueBehavior(string $fieldType, mixed $input, mixed $expectedPattern): void {
-    $this->accessManager->method('canWrite')->willReturn(TRUE);
-
-    $nodeType = $this->createMock(NodeTypeInterface::class);
-    $this->nodeTypeStorage->method('load')->with('article')->willReturn($nodeType);
-
+  public function testNormalizeFieldValueBehavior(string $fieldType, mixed $input, mixed $expected): void {
     $fieldDef = $this->createMock(FieldDefinitionInterface::class);
     $fieldDef->method('getType')->willReturn($fieldType);
+    $service = $this->createContentService();
 
-    $this->entityFieldManager->method('getFieldDefinitions')
-      ->with('node', 'article')
-      ->willReturn(['field_test' => $fieldDef]);
+    $result = (new \ReflectionMethod($service, 'normalizeFieldValue'))->invoke($service, 'field_test', $input, ['field_test' => $fieldDef]);
 
-    // We can't easily test the actual normalization without creating nodes,
-    // but we verify the service can be constructed for various field types.
-    $this->createContentService();
-
-    // This tests that the code path doesn't throw an exception.
-    // Full integration testing would require Drupal bootstrap.
-    $this->assertTrue(TRUE);
+    if (is_array($expected)) {
+      // The keys given are kept; a text value gets a format besides.
+      foreach ($expected as $key => $value) {
+        $this->assertSame($value, $result[$key] ?? NULL, "$fieldType: $key");
+      }
+    }
+    else {
+      $this->assertSame($expected, $result);
+    }
   }
 
   /**
@@ -275,75 +274,14 @@ class ContentServiceTest extends UnitTestCase {
       'entity_reference int' => ['entity_reference', 5, ['target_id' => 5]],
       'entity_reference array' => ['entity_reference', ['target_id' => 5], ['target_id' => 5]],
       'link string' => ['link', 'https://example.com', ['uri' => 'https://example.com']],
+      'link path' => ['link', '/about', ['uri' => 'internal:/about']],
       'datetime string' => ['datetime', '2024-01-15', ['value' => '2024-01-15']],
       'string direct' => ['string', 'plain value', 'plain value'],
     ];
   }
 
-  /**
-   * ERR values without inline definitions pass through unchanged.
-   *
-   * Items referencing existing entities (['target_id' => ...]) must not be
-   * dropped by the inline-creation support added for Layout Paragraphs.
-   */
-  public function testEntityReferenceRevisionsPassesThroughPlainReferences(): void {
-    $this->entityTypeManager = $this->createMock(EntityTypeManagerInterface::class);
-    $this->entityTypeManager->method('hasDefinition')->with('paragraph')->willReturn(TRUE);
-
-    $fieldDef = $this->createMock(FieldDefinitionInterface::class);
-    $fieldDef->method('getSetting')->with('target_type')->willReturn('paragraph');
-
-    $service = $this->createContentService();
-    $method = new \ReflectionMethod($service, 'createReferencedEntities');
-
-    // A single reference to an existing paragraph.
-    $this->assertSame(
-      [['target_id' => 5]],
-      $method->invoke($service, ['target_id' => 5], $fieldDef),
-    );
-
-    // A list of references, including a revision-qualified one.
-    $value = [['target_id' => 5], ['target_id' => 7, 'target_revision_id' => 9]];
-    $this->assertSame($value, $method->invoke($service, $value, $fieldDef));
-
-    // Non-array values are returned untouched.
-    $this->assertSame(3, $method->invoke($service, 3, $fieldDef));
-  }
-
-  /**
-   * ERR items with a "type" key create entities; plain references survive.
-   */
-  public function testEntityReferenceRevisionsCreatesInlineEntities(): void {
-    $created = $this->createMock(EntityInterface::class);
-
-    $storage = $this->createMock(EntityStorageInterface::class);
-    $storage->expects($this->once())
-      ->method('create')
-      ->with(['type' => 'text_block'])
-      ->willReturn($created);
-
-    $entityType = $this->createMock(EntityTypeInterface::class);
-    $entityType->method('getKey')->with('bundle')->willReturn('type');
-
-    $this->entityTypeManager = $this->createMock(EntityTypeManagerInterface::class);
-    $this->entityTypeManager->method('hasDefinition')->with('paragraph')->willReturn(TRUE);
-    $this->entityTypeManager->method('getDefinition')->with('paragraph')->willReturn($entityType);
-    $this->entityTypeManager->method('getStorage')->with('paragraph')->willReturn($storage);
-
-    $fieldDef = $this->createMock(FieldDefinitionInterface::class);
-    $fieldDef->method('getSetting')->with('target_type')->willReturn('paragraph');
-
-    $service = $this->createContentService();
-    $method = new \ReflectionMethod($service, 'createReferencedEntities');
-
-    $result = $method->invoke($service, [
-      ['type' => 'text_block'],
-      ['target_id' => 5],
-    ], $fieldDef);
-
-    $this->assertCount(2, $result);
-    $this->assertSame($created, $result[0]);
-    $this->assertSame(['target_id' => 5], $result[1]);
-  }
+  // The tests of paragraphs given inline (plain references pass through,
+  // items with a "type" are made) moved with the code to
+  // \Drupal\Tests\mcp_tools\Unit\Service\FieldValueTest.
 
 }

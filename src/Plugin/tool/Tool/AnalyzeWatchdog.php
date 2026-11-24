@@ -53,7 +53,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'data' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Analysis Results'),
-      description: new TranslatableMarkup('For summary: counts by type/severity. For errors/recent: array of log entries with wid, type, severity, message, timestamp, and user.'),
+      description: new TranslatableMarkup('For summary: counts by type/severity. For errors/recent: total (all that match), total_returned, and entries (up to limit, the newest first), each with id, type, severity, message and timestamp.'),
     ),
   ],
 )]
@@ -85,17 +85,22 @@ class AnalyzeWatchdog extends McpToolsToolBase {
     // Max 1 week.
     $hours = min($input['hours'] ?? 24, 168);
 
+    // Another mode gave the summary, and the answer named the mode asked
+    // for: "error" read as errors.
+    if (!in_array($mode, ['summary', 'errors', 'recent'], TRUE)) {
+      return ['success' => FALSE, 'error' => "mode is summary, errors or recent, not '$mode'."];
+    }
     $data = match ($mode) {
       'errors' => $this->watchdogAnalyzer->getRecentErrors($limit),
       'recent' => $this->watchdogAnalyzer->getRecentEntries($limit),
       'summary' => $this->watchdogAnalyzer->getErrorSummary($hours),
-      default => $this->watchdogAnalyzer->getErrorSummary($hours),
     };
 
+    // Both outputs under data: with "data" at the top, the summary's own
+    // keys were read as the tool's too, besides its data output.
     return [
       'success' => TRUE,
-      'mode' => $mode,
-      'data' => $data,
+      'data' => ['mode' => $mode, 'data' => $data],
     ];
   }
 

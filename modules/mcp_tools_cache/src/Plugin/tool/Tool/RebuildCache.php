@@ -33,6 +33,12 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
+    'type' => new OutputDefinition(
+      data_type: 'string',
+      label: new TranslatableMarkup('Rebuilt'),
+      description: new TranslatableMarkup('What was rebuilt.'),
+      required: FALSE,
+    ),
     'success' => new OutputDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Success status'),

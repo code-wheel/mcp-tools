@@ -147,4 +147,15 @@ final class ExportRoundTripKernelTest extends KernelTestBase {
     $this->assertStringContainsString('node, taxonomy_term, redirect', $result['error']);
   }
 
+  /**
+   * A references value that is neither ids nor names is refused.
+   *
+   * "name" gave ids, which mean nothing on another site, and said success.
+   */
+  public function testAnUnknownReferencesValueIsRefused(): void {
+    $result = $this->service()->exportToJson('article', 10, 0, ['references' => 'name']);
+    $this->assertFalse($result['success'], 'references "name" exported ids with success.');
+    $this->assertStringContainsString('references is ids or names', $result['error']);
+  }
+
 }

@@ -177,7 +177,6 @@ class ImageStyleService {
     return [
       'success' => TRUE,
       'message' => "Image style '$label' deleted successfully.",
-      'deleted_id' => $styleId,
     ];
   }
 
@@ -217,6 +216,19 @@ class ImageStyleService {
       ];
     }
 
+    // A setting the effect does not have was stored as it was, and a scale
+    // given "widht" had no width: the effect did nothing, and the tool said
+    // it was added. The effect's own defaults name the settings it has.
+    $known = array_keys($this->imageEffectManager->createInstance($effectId)->defaultConfiguration());
+    $unknown = array_diff(array_keys($configuration), $known);
+    if ($unknown !== []) {
+      return [
+        'success' => FALSE,
+        'error' => "The effect '$effectId' has no setting " . implode(', ', $unknown) . '. Its settings: ' . ($known === [] ? 'none' : implode(', ', $known)) . '.',
+        'code' => 'VALIDATION_ERROR',
+      ];
+    }
+
     // As Drupal's image style form adds one: after the effects there are,
     // with the settings as its data. The effect had no weight, which
     // Drupal's validation refuses.
@@ -237,7 +249,6 @@ class ImageStyleService {
       'success' => TRUE,
       'message' => "Effect '$effectId' added to image style '$styleId'.",
       'effect_uuid' => $uuid,
-      'style_id' => $styleId,
     ];
   }
 
@@ -281,7 +292,6 @@ class ImageStyleService {
     return [
       'success' => TRUE,
       'message' => "Effect '$effectLabel' removed from image style '$styleId'.",
-      'removed_uuid' => $effectUuid,
     ];
   }
 

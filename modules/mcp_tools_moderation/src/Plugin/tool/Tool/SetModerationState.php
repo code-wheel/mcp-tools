@@ -49,6 +49,12 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
+    'is_published' => new OutputDefinition(
+      data_type: 'boolean',
+      label: new TranslatableMarkup('Published'),
+      description: new TranslatableMarkup('Whether the content is published in its new state.'),
+      required: FALSE,
+    ),
     'entity_type' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Entity Type'),

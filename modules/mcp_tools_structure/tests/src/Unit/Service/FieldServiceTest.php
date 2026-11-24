@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\Tests\mcp_tools_structure\Unit\Service;
 
+use Drupal\Core\Entity\EntityDisplayRepositoryInterface;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
@@ -68,7 +69,8 @@ class FieldServiceTest extends UnitTestCase {
       $this->entityFieldManager,
       $this->fieldTypeManager,
       $this->accessManager,
-      $this->auditLogger
+      $this->auditLogger,
+      $this->createMock(EntityDisplayRepositoryInterface::class),
     );
   }
 

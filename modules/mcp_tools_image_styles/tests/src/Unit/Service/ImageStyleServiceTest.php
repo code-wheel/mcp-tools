@@ -102,6 +102,9 @@ final class ImageStyleServiceTest extends UnitTestCase {
     $effects->method('getDefinitions')->willReturn([
       'image_scale' => ['label' => 'Scale', 'description' => 'Scale'],
     ]);
+    // The settings a scale effect has, as Drupal's own declares them.
+    $effect->method('defaultConfiguration')->willReturn(['width' => NULL, 'height' => NULL, 'upscale' => FALSE]);
+    $effects->method('createInstance')->with('image_scale')->willReturn($effect);
 
     $entityTypeManager = $this->createMock(EntityTypeManagerInterface::class);
     $entityTypeManager->method('getStorage')->with('image_style')->willReturn($styleStorage);

@@ -55,6 +55,7 @@ final class McpToolsStdioCommands extends DrushCommands {
   #[CLI\Option(name: 'uid', description: 'Drupal user ID to run tool execution as (defaults to Drush bootstrap user)')]
   #[CLI\Option(name: 'all-tools', description: 'Expose all Tool API tools (not only mcp_tools providers)')]
   #[CLI\Option(name: 'gateway', description: 'Expose gateway tools (discover/info/execute) instead of the full tool list')]
+  #[CLI\Option(name: 'grow', description: 'With --gateway: start with the gateway and a few core tools, and add each tool a session finds to its list')]
   public function serve(
     array $options = [
       'server' => NULL,
@@ -62,6 +63,7 @@ final class McpToolsStdioCommands extends DrushCommands {
       'uid' => NULL,
       'all-tools' => FALSE,
       'gateway' => FALSE,
+      'grow' => FALSE,
     ],
   ): void {
     if (Sdk::serverClass() === NULL) {
@@ -131,6 +133,7 @@ final class McpToolsStdioCommands extends DrushCommands {
     // tell "not given" from "off": ask both.
     $includeAllTools = !empty($options['all-tools']) || !empty($serverConfig['include_all_tools']);
     $gatewayMode = !empty($options['gateway']) || !empty($serverConfig['gateway_mode']);
+    $growTools = !empty($options['grow']) || !empty($serverConfig['grow_tools']);
     $enableResources = (bool) ($serverConfig['enable_resources'] ?? TRUE);
     $enablePrompts = (bool) ($serverConfig['enable_prompts'] ?? TRUE);
 
@@ -170,6 +173,8 @@ final class McpToolsStdioCommands extends DrushCommands {
       $gatewayMode,
       $enableResources,
       $enablePrompts,
+      $growTools,
+      (array) ($serverConfig['core_tools'] ?? []),
     );
 
     try {

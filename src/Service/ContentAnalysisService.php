@@ -165,17 +165,17 @@ class ContentAnalysisService {
     }
 
     $storage = $this->entityTypeManager->getStorage('node');
-    $entityQuery = $storage->getQuery()
-      ->accessCheck(TRUE)
-      ->condition('title', '%' . $query . '%', 'LIKE')
-      ->sort('changed', 'DESC')
-      ->range(0, $limit);
+    $matching = function () use ($storage, $query, $type) {
+      $entityQuery = $storage->getQuery()
+        ->accessCheck(TRUE)
+        ->condition('title', '%' . $query . '%', 'LIKE');
+      if ($type !== NULL) {
+        $entityQuery->condition('type', $type);
+      }
+      return $entityQuery;
+    };
 
-    if ($type !== NULL) {
-      $entityQuery->condition('type', $type);
-    }
-
-    $nids = $entityQuery->execute();
+    $nids = $matching()->sort('changed', 'DESC')->range(0, $limit)->execute();
 
     if (empty($nids)) {
       return [
@@ -214,9 +214,11 @@ class ContentAnalysisService {
       ];
     }
 
+    // All that match, not the ones shown: a model read "total": 20 of 50
+    // as all there were.
     return [
       'query' => $query,
-      'total' => count($results),
+      'total' => (int) $matching()->count()->execute(),
       'results' => $results,
     ];
   }

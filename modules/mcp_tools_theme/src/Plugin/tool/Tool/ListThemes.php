@@ -33,7 +33,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'themes' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Themes'),
-      description: new TranslatableMarkup('Array of theme objects with name, label, version, status, and base_theme. Use name with mcp_theme_enable, mcp_theme_get_settings, etc.'),
+      description: new TranslatableMarkup('Array of theme objects with name, label, version, installed, is_default, is_admin, and base_theme. Use name with mcp_theme_enable, mcp_theme_get_settings, etc.'),
     ),
     'total' => new OutputDefinition(
       data_type: 'integer',

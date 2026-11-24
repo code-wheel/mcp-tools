@@ -66,6 +66,12 @@ class McpToolsServerFactory {
    *   When TRUE, register MCP resources.
    * @param bool $enablePrompts
    *   When TRUE, register MCP prompts.
+   * @param bool $growTools
+   *   In gateway mode: the list starts with the gateway's tools and the core
+   *   ones, and a tool that discover or get info found joins it
+   *   (GrowingToolList).
+   * @param string[] $coreTools
+   *   Plugin ids of the core tools; empty for CORE_TOOLS.
    *
    * @return \Mcp\Server|\Mcp\Server\Server
    *   MCP server instance.
@@ -80,6 +86,8 @@ class McpToolsServerFactory {
     bool $gatewayMode = FALSE,
     bool $enableResources = TRUE,
     bool $enablePrompts = TRUE,
+    bool $growTools = FALSE,
+    array $coreTools = [],
   ): object {
     $builder = Sdk::serverClass()::builder()
       ->setServerInfo($serverName, $serverVersion)
@@ -108,14 +116,22 @@ class McpToolsServerFactory {
       }
     }
 
+    $growTools = $gatewayMode && $growTools && Sdk::registryClass() !== NULL && method_exists($builder, 'setRegistry');
+    $registry = NULL;
+    if ($growTools) {
+      $registryClass = Sdk::registryClass();
+      $registry = new $registryClass($this->eventDispatcher, new MinimumLevelLogger($this->logger));
+      $builder->setRegistry($registry);
+    }
+
     $resourceCount = $enableResources ? $this->addResources($builder) : 0;
     $promptCount = $enablePrompts ? $this->addPrompts($builder) : 0;
-    $this->declareCapabilities($builder, $resourceCount > 0, $promptCount > 0);
+    $this->declareCapabilities($builder, $resourceCount > 0, $promptCount > 0, $growTools);
     [$listed, $hidden] = $this->listedTools($includeAllTools);
     if (method_exists($builder, 'setInstructions')) {
-      $builder->setInstructions(self::instructions($gatewayMode, $hidden));
+      $builder->setInstructions(self::instructions($gatewayMode, $hidden, $growTools));
     }
-    $this->declareCachePolicy($builder);
+    $this->declareCachePolicy($builder, $growTools);
 
     if ($gatewayMode) {
       $gateway = new ToolApiGateway(
@@ -138,6 +154,18 @@ class McpToolsServerFactory {
           annotations: $tool['annotations'],
           inputSchema: $tool['inputSchema'],
         );
+      }
+
+      if ($growTools) {
+        // Every tool is in the registry; each session is shown the gateway's,
+        // the core ones and those it found.
+        $this->addListedTools($builder, $listed);
+        $core = array_values(array_intersect($coreTools ?: self::CORE_TOOLS, array_keys($listed)));
+        $builder->addRequestHandler(new GrowingFindHandler($gateway));
+        $builder->addRequestHandler(new GrowingToolList($registry, array_merge(
+          [ToolApiGateway::DISCOVER_TOOL, ToolApiGateway::GET_INFO_TOOL, ToolApiGateway::EXECUTE_TOOL],
+          array_map([self::class, 'pluginIdToMcpName'], $core),
+        )));
       }
 
       // A model that has found a tool often calls it by its own name.
@@ -175,6 +203,39 @@ class McpToolsServerFactory {
       $this->toolCallContext,
     ));
 
+    // The core tools, loaded up front by a client that defers the rest.
+    $this->addListedTools($builder, $listed, array_values(array_intersect($coreTools ?: self::CORE_TOOLS, array_keys($listed))));
+
+    return $builder->build();
+  }
+
+  /**
+   * The core tools a growing list starts with, besides the gateway's.
+   *
+   * The five most called in our 406 runs, after the gateway's own: search,
+   * the content types, the site status, and making and changing content.
+   */
+  public const CORE_TOOLS = [
+    'mcp_tools_search_content',
+    'mcp_tools_list_content_types',
+    'mcp_tools_get_site_status',
+    'mcp_create_content',
+    'mcp_update_content',
+  ];
+
+  /**
+   * Registers the tools, each with its schemas and hints.
+   *
+   * @param \Mcp\Server\Builder $builder
+   *   The server builder.
+   * @param \Drupal\tool\Tool\ToolDefinition[] $listed
+   *   The tools, by plugin id.
+   * @param string[] $alwaysLoad
+   *   Plugin ids a client that loads tools on demand should load up front
+   *   (_meta "anthropic/alwaysLoad"; Claude Code defers MCP tools by
+   *   default and reads it). Other clients ignore it.
+   */
+  private function addListedTools(Builder $builder, array $listed, array $alwaysLoad = []): void {
     foreach ($listed as $pluginId => $definition) {
       $annotationsData = $this->schemaConverter->toolDefinitionToAnnotations($definition, (string) $pluginId);
       $annotations = ToolAnnotations::fromArray($annotationsData);
@@ -191,6 +252,7 @@ class McpToolsServerFactory {
           annotations: $annotations,
           inputSchema: $this->schemaConverter->toolDefinitionToInputSchema($definition, (string) $pluginId),
           outputSchema: $outputSchema,
+          meta: in_array((string) $pluginId, $alwaysLoad, TRUE) ? ['anthropic/alwaysLoad' => TRUE] : NULL,
         );
       }
       else {
@@ -200,11 +262,10 @@ class McpToolsServerFactory {
           description: (string) $definition->getDescription(),
           annotations: $annotations,
           inputSchema: $this->schemaConverter->toolDefinitionToInputSchema($definition, (string) $pluginId),
+          meta: in_array((string) $pluginId, $alwaysLoad, TRUE) ? ['anthropic/alwaysLoad' => TRUE] : NULL,
         );
       }
     }
-
-    return $builder->build();
   }
 
   /**
@@ -390,13 +451,14 @@ class McpToolsServerFactory {
    * implemented here, and a client that believes the claim waits for
    * messages that never come.
    */
-  private function declareCapabilities(Builder $builder, bool $hasResources, bool $hasPrompts): void {
+  private function declareCapabilities(Builder $builder, bool $hasResources, bool $hasPrompts, bool $toolsGrow = FALSE): void {
     if (!method_exists($builder, 'setCapabilities') || !class_exists(ServerCapabilities::class)) {
       return;
     }
     $builder->setCapabilities(new ServerCapabilities(
       tools: TRUE,
-      toolsListChanged: FALSE,
+      // Only a growing list changes, and then the client is told.
+      toolsListChanged: $toolsGrow,
       resources: $hasResources,
       resourcesSubscribe: FALSE,
       resourcesListChanged: FALSE,
@@ -417,12 +479,17 @@ class McpToolsServerFactory {
    * alone, never for a shared cache. Resource contents are live site data
    * and stay uncached.
    */
-  private function declareCachePolicy(Builder $builder): void {
+  private function declareCachePolicy(Builder $builder, bool $toolsGrow = FALSE): void {
     if (!method_exists($builder, 'setCachePolicy') || !class_exists(CachePolicy::class)) {
       return;
     }
     $policy = CachePolicy::none();
-    foreach (['tools/list', 'prompts/list', 'resources/list', 'resources/templates/list'] as $method) {
+    // A growing tool list is not kept: it changes as the session finds tools.
+    $lists = ['prompts/list', 'resources/list', 'resources/templates/list'];
+    if (!$toolsGrow) {
+      $lists[] = 'tools/list';
+    }
+    foreach ($lists as $method) {
       $policy = $policy->withMethod($method, self::LIST_TTL_MS);
     }
     $builder->setCachePolicy($policy);
@@ -434,14 +501,17 @@ class McpToolsServerFactory {
    * Clients may put this in the system prompt, and some load only this and
    * the tool names at first, so it stays short and says how to find things.
    */
-  public static function instructions(bool $gatewayMode, int $hidden = 0): string {
-    $text = 'Tools for administering this Drupal site: content, content types, fields, taxonomy, roles, menus, views, media, blocks, users, config, cache and site status (Drupal and PHP version, cron). Which tools exist depends on the modules the site enabled. '
+  public static function instructions(bool $gatewayMode, int $hidden = 0, bool $toolsGrow = FALSE): string {
+    $text = 'Tools for administering this Drupal site, among them content, content types, fields, taxonomy, roles, menus, views, media, blocks, users, config, cache and site status (Drupal and PHP version, cron), and more from the modules the site enabled, such as redirects, webforms, imports and site templates. Before you tell the user there is no tool for something, look for one. '
       . 'Tools that only read are safe to call. Tools that write change the live site and need the write scope; if a call is denied, tell the user which scope or permission is missing. A few tools ask for a confirm flag before they delete: pass one only when the tool has such an input, and read a refusal, it says what would be removed. '
       . 'Look up IDs and machine names with a list, get or search tool before you write. When a call fails, the error names the parameter and the problem: fix that and retry.';
     if ($gatewayMode) {
       $text .= ' This server runs in gateway mode: find a tool with ' . ToolApiGateway::DISCOVER_TOOL
         . ' (pass a query), read its inputs with ' . ToolApiGateway::GET_INFO_TOOL
         . ', then run it with ' . ToolApiGateway::EXECUTE_TOOL . '.';
+      if ($toolsGrow) {
+        $text .= ' A tool you read with ' . ToolApiGateway::GET_INFO_TOOL . ' joins your tool list: from then on call it by its name.';
+      }
     }
     if ($hidden > 0) {
       $text .= ' ' . $hidden . ' of this site\'s tools are not listed, because this connection may not call them: they need a scope it does not have or a permission its user lacks, or the site is in read-only mode. If the user asks for something that seems to be missing, say that.';

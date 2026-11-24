@@ -25,7 +25,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
     'types' => new OutputDefinition(
       data_type: 'any',
       label: new TranslatableMarkup('Entity Types'),
-      description: new TranslatableMarkup('List of available entity types with metadata (entity_type, bundle, resource_type, label).'),
+      description: new TranslatableMarkup('List of available entity types, each with entity_type, bundle, resource_type and label; bundle_label when the bundle has one; supports_revisions and supports_translations only when true.'),
     ),
     'total' => new OutputDefinition(
       data_type: 'integer',

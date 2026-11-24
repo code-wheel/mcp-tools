@@ -98,4 +98,29 @@ final class ReferenceFieldsKernelTest extends KernelTestBase {
     $this->assertStringContainsString('not its name', $updated['error'] ?? '', json_encode($updated));
   }
 
+  /**
+   * A field the type does not have refuses its item, on create and update.
+   *
+   * Create passed the name to Drupal, which ignores keys it does not know;
+   * update skipped it. Both said success with nothing set. "tags" still
+   * finds field_tags, and the other items go on.
+   */
+  public function testAFieldTheTypeDoesNotHaveRefusesItsItem(): void {
+    $batch = $this->container->get('mcp_tools_batch.batch');
+    $made = $batch->createMultipleContent('article', [
+      ['title' => 'Right', 'fields' => ['tags' => [1]]],
+      ['title' => 'Typo', 'fields' => ['field_tagz' => [1]]],
+    ]);
+    $this->assertSame(1, $made['data']['created_count'] ?? NULL, json_encode($made));
+    $this->assertStringContainsString('has no field field_tagz. Its fields: field_tags', $made['data']['errors'][0]['error']);
+    $nid = (int) $made['data']['created'][0]['nid'];
+    $this->assertCount(1, Node::load($nid)->get('field_tags')->referencedEntities(), 'tags did not find field_tags.');
+
+    $updated = $batch->updateMultipleContent([
+      ['nid' => $nid, 'fields' => ['field_tagz' => []]],
+    ]);
+    $this->assertFalse($updated['success'], 'An update of a field the type does not have said success.');
+    $this->assertStringContainsString('has no field field_tagz', $updated['error']);
+  }
+
 }

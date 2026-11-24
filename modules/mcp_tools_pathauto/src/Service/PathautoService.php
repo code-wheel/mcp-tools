@@ -480,7 +480,6 @@ class PathautoService {
 
     if ($includeSelectionDetails) {
       $data['selection_criteria'] = $selectionCriteria;
-      $data['type'] = $type;
     }
 
     return $data;

@@ -37,7 +37,9 @@ class DefaultToolErrorHandler implements ToolErrorHandlerInterface {
       'remediation' => 'Review required fields and input types for this tool, then retry.',
     ];
 
-    $text = $message . "\n" . json_encode($structured, JSON_PRETTY_PRINT);
+    // What the message does not say already: it was there three times
+    // (message, error, and the text's first line).
+    $text = $message . "\n" . json_encode(array_diff_key($structured, array_flip(['success', 'message', 'error'])), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 
     return new CallToolResult([new TextContent($text)], TRUE, $structured);
   }

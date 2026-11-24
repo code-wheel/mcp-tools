@@ -19,7 +19,7 @@ use Drupal\tool\TypedData\InputDefinition;
 #[Tool(
   id: 'mcp_create_content',
   label: new TranslatableMarkup('Create Content'),
-  description: new TranslatableMarkup('Create new content (node) of a specified type. It is saved as an unpublished draft unless status is true.'),
+  description: new TranslatableMarkup('Create new content (node) of a specified type. It is saved as an unpublished draft unless status is true. For many rows from a list or a file, or rows to import again later with changes: mcp_migration_import_json or mcp_migration_import_csv (MCP Tools - Migration), where a second run updates and makes no copies.'),
   operation: ToolOperation::Write,
   input_definitions: [
     'type' => new InputDefinition(
@@ -48,6 +48,12 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
+    'url' => new OutputDefinition(
+      data_type: 'string',
+      label: new TranslatableMarkup('URL'),
+      description: new TranslatableMarkup('The address of the new content on the site.'),
+      required: FALSE,
+    ),
     'nid' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Node ID'),

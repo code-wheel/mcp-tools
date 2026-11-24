@@ -42,6 +42,12 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
+    'title' => new OutputDefinition(
+      data_type: 'string',
+      label: new TranslatableMarkup('Title'),
+      description: new TranslatableMarkup('Title of the content.'),
+      required: FALSE,
+    ),
     'nid' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Node ID'),

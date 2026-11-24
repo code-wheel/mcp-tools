@@ -42,6 +42,11 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
+    'admin_path' => new OutputDefinition(
+      data_type: 'string',
+      label: new TranslatableMarkup('Admin path'),
+      description: new TranslatableMarkup('Where a person sees the terms of the vocabulary on the site.'),
+    ),
     'id' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Vocabulary ID'),

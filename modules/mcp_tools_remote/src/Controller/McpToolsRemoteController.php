@@ -325,6 +325,8 @@ final class McpToolsRemoteController implements ContainerInjectionInterface {
       $serverParams['gateway_mode'],
       $serverParams['enable_resources'],
       $serverParams['enable_prompts'],
+      $serverParams['grow_tools'],
+      $serverParams['core_tools'],
     );
 
     $httpFactory = new HttpFactory();
@@ -460,6 +462,9 @@ final class McpToolsRemoteController implements ContainerInjectionInterface {
       'enable_prompts' => $serverConfig
         ? (bool) ($serverConfig['enable_prompts'] ?? TRUE)
         : TRUE,
+      // A server profile sets these; the remote settings form has no field.
+      'grow_tools' => (bool) ($serverConfig['grow_tools'] ?? FALSE),
+      'core_tools' => (array) ($serverConfig['core_tools'] ?? []),
     ];
   }
 

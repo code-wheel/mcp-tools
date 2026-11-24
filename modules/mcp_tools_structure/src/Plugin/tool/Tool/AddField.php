@@ -93,6 +93,12 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
+    'field_type' => new OutputDefinition(
+      data_type: 'string',
+      label: new TranslatableMarkup('Field type'),
+      description: new TranslatableMarkup('The field type that was made: text_long when text_with_summary was asked and the site does not have it.'),
+      required: FALSE,
+    ),
     'field_name' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Field Name'),

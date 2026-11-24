@@ -30,6 +30,12 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
+    'selection_criteria' => new OutputDefinition(
+      data_type: 'map',
+      label: new TranslatableMarkup('Applies to'),
+      description: new TranslatableMarkup('The bundles and conditions the pattern applies to.'),
+      required: FALSE,
+    ),
     'id' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Pattern ID'),

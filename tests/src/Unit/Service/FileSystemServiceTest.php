@@ -200,6 +200,11 @@ final class FileSystemServiceTest extends UnitTestCase {
     $statement = $this->createMock(StatementInterface::class);
     $statement->method('fetchCol')->willReturn([]);
     $select->method('execute')->willReturn($statement);
+    $count = $this->createMock(SelectInterface::class);
+    $counted = $this->createMock(StatementInterface::class);
+    $counted->method('fetchField')->willReturn('0');
+    $count->method('execute')->willReturn($counted);
+    $select->method('countQuery')->willReturn($count);
 
     $this->database->method('select')->willReturn($select);
 
@@ -221,6 +226,12 @@ final class FileSystemServiceTest extends UnitTestCase {
     $statement = $this->createMock(StatementInterface::class);
     $statement->method('fetchCol')->willReturn([1, 2]);
     $select->method('execute')->willReturn($statement);
+    // Five on the site, two shown: the total is all of them.
+    $count = $this->createMock(SelectInterface::class);
+    $counted = $this->createMock(StatementInterface::class);
+    $counted->method('fetchField')->willReturn('5');
+    $count->method('execute')->willReturn($counted);
+    $select->method('countQuery')->willReturn($count);
 
     $this->database->method('select')->willReturn($select);
 
@@ -247,7 +258,7 @@ final class FileSystemServiceTest extends UnitTestCase {
 
     $result = $this->service->findOrphanedFiles();
 
-    $this->assertSame(2, $result['total_orphaned']);
+    $this->assertSame(5, $result['total_orphaned'], 'The total counted only the files shown.');
     $this->assertSame(300, $result['total_size_bytes']);
     $this->assertCount(2, $result['files']);
     $this->assertSame('orphan1.txt', $result['files'][0]['filename']);

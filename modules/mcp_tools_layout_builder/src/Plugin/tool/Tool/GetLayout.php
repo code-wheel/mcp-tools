@@ -60,7 +60,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'sections' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Layout Sections'),
-      description: new TranslatableMarkup('Array of sections with layout_id, settings, and components.'),
+      description: new TranslatableMarkup('Array of sections with delta, layout_id, layout_settings, and components.'),
     ),
     'section_count' => new OutputDefinition(
       data_type: 'integer',

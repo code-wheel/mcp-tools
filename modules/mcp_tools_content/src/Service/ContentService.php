@@ -6,18 +6,16 @@ namespace Drupal\mcp_tools_content\Service;
 
 use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
-use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Session\AccountProxyInterface;
+use Drupal\mcp_tools\Service\FieldValue;
 use Drupal\mcp_tools\Service\LatestRevision;
 use Drupal\mcp_tools\Service\EntityAccess;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AuditLogger;
 use Drupal\mcp_tools\Service\EntityReferences;
-use Drupal\mcp_tools\Service\TextFormat;
 use Drupal\node\NodeInterface;
-use Drupal\paragraphs\ParagraphInterface;
 
 /**
  * Service for content CRUD operations.
@@ -152,7 +150,6 @@ class ContentService {
           'nid' => $node->id(),
           'uuid' => $node->uuid(),
           'title' => $title,
-          'type' => $type,
           'status' => $node->isPublished() ? 'published' : 'draft',
           'url' => $node->toUrl()->toString(),
           'message' => $message,
@@ -328,13 +325,7 @@ class ContentService {
    *   The resolved field name (unchanged when no prefixed variant exists).
    */
   protected function resolveFieldName(string $fieldName, array $fieldDefinitions): string {
-    if (!str_starts_with($fieldName, 'field_') && !in_array($fieldName, ['body'], TRUE)) {
-      $checkName = 'field_' . $fieldName;
-      if (isset($fieldDefinitions[$checkName])) {
-        return $checkName;
-      }
-    }
-    return $fieldName;
+    return FieldValue::fieldName($fieldDefinitions, $fieldName) ?? $fieldName;
   }
 
   /**
@@ -419,7 +410,6 @@ class ContentService {
         'data' => [
           'nid' => $nid,
           'title' => $title,
-          'type' => $type,
           'languages_deleted' => $languages,
           'remaining_languages' => [],
           'message' => sprintf(
@@ -636,132 +626,7 @@ class ContentService {
     if (!isset($fieldDefinitions[$fieldName])) {
       return $value;
     }
-
-    $fieldType = $fieldDefinitions[$fieldName]->getType();
-
-    return match ($fieldType) {
-      'text_long', 'text_with_summary' => TextFormat::fieldValue($this->entityTypeManager, $value),
-      'entity_reference' => is_array($value) ? $value : ['target_id' => $value],
-      'entity_reference_revisions' => $this->createReferencedEntities($value, $fieldDefinitions[$fieldName]),
-      'image', 'file' => is_array($value) ? $value : ['target_id' => $value],
-      'link' => is_array($value) ? $value : ['uri' => $value],
-      'datetime' => is_array($value) ? $value : ['value' => $value],
-      default => $value,
-    };
-  }
-
-  /**
-   * Create referenced entities from inline data for entity_reference_revisions.
-   *
-   * Items containing a "type" key are created inline; anything else (e.g.
-   * ['target_id' => ...] references to existing entities) passes through
-   * unchanged so the field item list can resolve it as before.
-   *
-   * Supports Layout Paragraphs: items may include a "_ref" key (local alias)
-   * and reference it via "parent_ref" in behavior_settings.layout_paragraphs.
-   * The alias is resolved to the real entity UUID after all entities are
-   * created.
-   *
-   * @return mixed
-   *   The field value with inline definitions replaced by unsaved entity
-   *   objects. They will be cascade-saved when the parent entity is saved.
-   */
-  protected function createReferencedEntities(mixed $value, mixed $fieldDefinition): mixed {
-    if (!is_array($value)) {
-      return $value;
-    }
-
-    $targetType = $fieldDefinition->getSetting('target_type') ?? 'paragraph';
-    if (!$this->entityTypeManager->hasDefinition($targetType)) {
-      return $value;
-    }
-
-    $items = array_is_list($value) ? $value : [$value];
-
-    $refMap = [];
-    $created = [];
-    $result = [];
-    foreach ($items as $item) {
-      if (!is_array($item) || empty($item['type'])) {
-        $result[] = $item;
-        continue;
-      }
-
-      $ref = $item['_ref'] ?? NULL;
-      unset($item['_ref']);
-
-      $entity = $this->createReferencedEntity($targetType, $item);
-      if ($entity) {
-        $result[] = $entity;
-        $created[] = $entity;
-        if ($ref !== NULL) {
-          $refMap[$ref] = $entity->uuid();
-        }
-      }
-    }
-
-    $this->resolveParentRefs($created, $refMap);
-
-    return $result;
-  }
-
-  /**
-   * Resolve "parent_ref" aliases to real UUIDs in behavior_settings.
-   *
-   * @param \Drupal\Core\Entity\EntityInterface[] $entities
-   *   The created paragraph entities.
-   * @param array<string, string> $refMap
-   *   Map of local ref aliases to entity UUIDs.
-   */
-  protected function resolveParentRefs(array $entities, array $refMap): void {
-    if (empty($refMap)) {
-      return;
-    }
-
-    foreach ($entities as $entity) {
-      if (!$entity instanceof ParagraphInterface) {
-        continue;
-      }
-      $settings = $entity->getAllBehaviorSettings();
-      $parentRef = $settings['layout_paragraphs']['parent_ref'] ?? NULL;
-      if ($parentRef !== NULL && isset($refMap[$parentRef])) {
-        $settings['layout_paragraphs']['parent_uuid'] = $refMap[$parentRef];
-        unset($settings['layout_paragraphs']['parent_ref']);
-        $entity->setAllBehaviorSettings($settings);
-      }
-    }
-  }
-
-  /**
-   * Create a single referenced entity from inline data.
-   */
-  protected function createReferencedEntity(string $entityTypeId, array $data): ?EntityInterface {
-    $bundle = $data['type'];
-    unset($data['type']);
-
-    $behaviorSettings = $data['behavior_settings'] ?? NULL;
-    unset($data['behavior_settings']);
-
-    $storage = $this->entityTypeManager->getStorage($entityTypeId);
-
-    $bundleKey = $this->entityTypeManager->getDefinition($entityTypeId)->getKey('bundle');
-    $entityData = [$bundleKey => $bundle];
-
-    $fieldDefinitions = $this->entityFieldManager->getFieldDefinitions($entityTypeId, $bundle);
-
-    foreach ($data as $fieldName => $fieldValue) {
-      if (isset($fieldDefinitions[$fieldName])) {
-        $entityData[$fieldName] = $this->normalizeFieldValue($fieldName, $fieldValue, $fieldDefinitions);
-      }
-    }
-
-    $entity = $storage->create($entityData);
-
-    if (is_array($behaviorSettings) && $entity instanceof ParagraphInterface) {
-      $entity->setAllBehaviorSettings($behaviorSettings);
-    }
-
-    return $entity;
+    return FieldValue::normalize($this->entityTypeManager, $fieldDefinitions[$fieldName], $value, $this->entityFieldManager);
   }
 
 }

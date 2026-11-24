@@ -36,6 +36,15 @@ abstract class McpToolsToolBase extends ToolBase {
   protected ?McpToolCallContext $toolCallContext = NULL;
 
   /**
+   * Told of the keys a tool returned and did not declare, when it exists.
+   *
+   * Only declared outputs reach the client, so such a key was lost: the id
+   * a create tool returned, for one. A test module defines the service, so
+   * the tool sweep sees every one; a site has none.
+   */
+  protected ?object $droppedOutputs = NULL;
+
+  /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
@@ -43,6 +52,7 @@ abstract class McpToolsToolBase extends ToolBase {
     $instance = parent::create($container, $configuration, $plugin_id, $plugin_definition);
     $instance->accessManager = $container->get('mcp_tools.access_manager');
     $instance->toolCallContext = $container->get('mcp_tools.tool_call_context');
+    $instance->droppedOutputs = $container->has('mcp_tools.dropped_outputs') ? $container->get('mcp_tools.dropped_outputs') : NULL;
     return $instance;
   }
 
@@ -77,7 +87,10 @@ abstract class McpToolsToolBase extends ToolBase {
 
       $success = (bool) ($legacy['success'] ?? FALSE);
       if ($success) {
-        $message = $legacy['message'] ?? 'Success.';
+        // A service that says what it found in data.message, not message,
+        // was heard as "Success.": "the entity has no metatag field" read as
+        // no tags. Its words are the answer's.
+        $message = $legacy['message'] ?? (is_array($legacy['data'] ?? NULL) ? ($legacy['data']['message'] ?? NULL) : NULL) ?? 'Success.';
         if (!is_string($message) || $message === '') {
           $message = 'Success.';
         }
@@ -89,6 +102,16 @@ abstract class McpToolsToolBase extends ToolBase {
         else {
           $context = $legacy;
           unset($context['success'], $context['message']);
+        }
+
+        $declared = array_keys($this->getOutputDefinitions());
+        // A message given in data is the answer's message now, so it is not
+        // lost when the tool does not declare it.
+        if (!in_array('message', $declared, TRUE) && ($context['message'] ?? NULL) === $message) {
+          unset($context['message']);
+        }
+        if ($this->droppedOutputs !== NULL && $declared !== [] && ($dropped = array_values(array_diff(array_keys($context), $declared))) !== []) {
+          $this->droppedOutputs->dropped($this->getPluginId(), $dropped);
         }
 
         // Backfill declared outputs the result did not populate (tools with

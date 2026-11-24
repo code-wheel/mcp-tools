@@ -49,6 +49,16 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
+    'admin_path' => new OutputDefinition(
+      data_type: 'string',
+      label: new TranslatableMarkup('Admin path'),
+      description: new TranslatableMarkup('Where a person edits the content type on the site.'),
+    ),
+    'add_content_path' => new OutputDefinition(
+      data_type: 'string',
+      label: new TranslatableMarkup('Add content path'),
+      description: new TranslatableMarkup('Where a person adds content of this type.'),
+    ),
     'id' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Content Type ID'),

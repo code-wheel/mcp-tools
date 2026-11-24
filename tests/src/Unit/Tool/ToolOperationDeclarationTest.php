@@ -272,6 +272,22 @@ final class ToolOperationDeclarationTest extends UnitTestCase {
   }
 
   /**
+   * The areas named are examples, and a model looks before it gives up.
+   *
+   * The text listed thirteen areas. A local model took the list for all
+   * there is and answered "there's no available tool to manage redirects"
+   * with no call at all (4 task passes of 592, framework 2026-11-23).
+   */
+  public function testTheInstructionsSayTheAreasAreNotAll(): void {
+    foreach ([TRUE, FALSE] as $gatewayMode) {
+      $text = McpToolsServerFactory::instructions($gatewayMode);
+      $this->assertStringContainsString('among them content', $text);
+      $this->assertStringContainsString('such as redirects, webforms, imports and site templates', $text);
+      $this->assertStringContainsString('Before you tell the user there is no tool for something, look for one.', $text);
+    }
+  }
+
+  /**
    * @return string[]
    *   Absolute paths to Tool API plugin PHP files.
    */

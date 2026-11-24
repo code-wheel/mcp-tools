@@ -149,7 +149,6 @@ class OperationPreviewService {
    */
   public function previewCreateRole(array $params): array {
     $roleId = $params['id'] ?? $params['role_id'] ?? '';
-    $label = $params['label'] ?? '';
 
     if ($roleId === '') {
       return [
@@ -166,7 +165,6 @@ class OperationPreviewService {
       'data' => [
         'action' => 'Create role',
         'role_id' => $roleId,
-        'label' => $label ?: $roleId,
         'already_exists' => $exists,
         'configs_created' => [$configName],
         'description' => $exists
@@ -517,7 +515,6 @@ class OperationPreviewService {
    */
   public function previewCreateView(array $params): array {
     $viewId = $params['id'] ?? $params['view_id'] ?? '';
-    $label = $params['label'] ?? '';
 
     if (empty($viewId)) {
       return [
@@ -534,7 +531,6 @@ class OperationPreviewService {
       'data' => [
         'action' => 'Create view',
         'view_id' => $viewId,
-        'label' => $label ?: $viewId,
         'already_exists' => $exists,
         'configs_created' => [$configName],
         'description' => $exists

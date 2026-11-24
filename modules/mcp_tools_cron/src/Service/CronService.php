@@ -65,7 +65,6 @@ class CronService {
       'data' => [
         'last_run' => $lastRun ? date('Y-m-d H:i:s', (int) $lastRun) : 'Never',
         'last_run_timestamp' => $lastRun,
-        'seconds_since_last_run' => $lastRun ? time() - $lastRun : NULL,
         'autorun_threshold' => $threshold,
         'threshold_human' => $this->formatDuration($threshold),
         'is_overdue' => $lastRun && (time() - $lastRun) > $threshold,

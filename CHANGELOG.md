@@ -4,6 +4,174 @@ All notable changes to the MCP Tools module will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.0.0-beta29] - 2026-11-24
+
+### Added
+
+- **A tool list that grows with the session** (gateway mode, off by
+  default): `drush mcp-tools:serve --gateway --grow`, or `grow_tools` in a
+  server profile. A session starts with the three gateway tools and five
+  core ones; a tool joins its list when the model reads it with get info,
+  always at the end of the list, and the client is told
+  (`tools/list_changed`). A client that does not listen
+  works as in gateway mode.
+- **The five core tools are marked to load up front** (`_meta`
+  `anthropic/alwaysLoad`) in the full list, for clients that load the rest
+  on demand, as Claude Code does.
+
+### Changed
+
+- **Fewer tokens in what a model reads.** Sizes on a site with 87 modules:
+  - `mcp_tools_get_permissions`: titles without markup, a title only when
+    it says more than the name, a description only when there is one,
+    `restrict_access` only when set: 43,302 to 31,713 characters. New
+    inputs `search` and `provider` give a slice (`article`: 1,181). An
+    unknown module is refused with the ones there are.
+  - `mcp_metatag_list_tags`: each tag once (it was in `by_group` and in
+    `all_tags`); `by_group` names its tags by id: 19,166 to 7,417. New
+    input `group`; an unknown group is refused.
+  - `mcp_config_mcp_changes`: each change once, with an ISO time; 9,242 to
+    6,638. `by_operation` names the config of each operation.
+  - `mcp_jsonapi_discover_types`: no `null` bundle labels or `false`
+    flags: 8,598 to 5,826.
+  - `mcp_tools_list_available`: no label beside each id: 42,000 to 36,943.
+  - Gateway search (`mcp_tools_discover_tools`): its text is one line a
+    tool, in words, 37 to 55% shorter on five queries. Get info's text is
+    the name, what it does and the input schema. The structured content of
+    both is as before.
+  - Every answer's text gives the message once, then the data as compact
+    JSON. An input error gives its problem once.
+  - On our 12 test tasks in gateway mode (`gpt-oss:20b`, 4 seeds,
+    2026-11-24): 1,827 tokens a call against 2,326.
+- **The gateway search says the list is not all there is:** its
+  description gives the site's count of tools, and says to look before
+  saying a tool is missing. In grow mode a model that saw eight tools told
+  a user there was none to make a content type.
+
+- **Blocks use the region list of Drupal 11.4,** where it exists.
+  `system_region_list()` is deprecated in 11.4 and removed in 13; on
+  Drupal 10 and 11 before 11.4 the tools use it as before.
+
+### Fixed
+
+- `mcp_tools_list_available` put 229 of 230 tools in "other" (each
+  tool's category is a protected constant its sibling class could not
+  read), so a category found nothing.
+- `mcp_tools_get_permissions` said each permission has an `id`; the key
+  is `name`.
+- **The batch tools refuse a field the type does not have.**
+  `mcp_batch_create_content` passed it to Drupal, which ignores names it
+  does not know, and `mcp_batch_update_content` skipped it: both said
+  success with nothing set. The item is now refused with the type's
+  fields, as `mcp_create_content` does, and the other items go on.
+  `tags` still finds `field_tags`.
+- **`mcp_menus_update_menu_link` moves and hides a link, and refuses a
+  key it does not read.** It read five keys and ignored the rest, so
+  `{"parent": ...}` or `{"enabled": false}` changed nothing and it said
+  the link was updated. It now takes `parent` (a plugin id or id, or
+  empty for the top) and `enabled`, and refuses any other key.
+- **The sitemap tools refuse a key they do not read.**
+  `mcp_sitemap_set_entity` dropped a misspelled key and set the rest, and
+  `mcp_sitemap_update_settings` ignored any key but `global`, `enabled`
+  and `label`, and unknown keys under `global`. Each said success.
+- **`mcp_image_styles_add_effect` refuses a setting the effect does not
+  have.** It stored what it was given: a scale with `widht` had no width,
+  did nothing, and the tool said it was added. The error names the
+  effect's settings.
+- **An unknown choice is refused, not taken as the default.**
+  `mcp_tools_analyze_watchdog` gave its summary for a mode it does not
+  have and named the mode asked for, so `"error"` read as the errors.
+  `mcp_tools_get_recent_content` sorted by `changed` for any `sort`.
+  The exports took any `references` but `names` as `ids`, which mean
+  nothing on another site.
+- **A total counts all that match, not the ones shown.**
+  `mcp_tools_search_content`, `mcp_tools_get_terms` and
+  `mcp_tools_find_orphaned_files` gave as their total the items a limit
+  let through: 5 of 12 matches read as "total": 5, so a model took the
+  first page for all there was.
+  The watchdog's error and recent lists now give `total` beside
+  `total_returned`.
+- **Output texts name the keys the answer has.** Six named keys that
+  were not there: `filemime` and `filesize` for `mime` and `size` (files,
+  orphaned files), `total_items` and the like for `total`, `indexed` and
+  `remaining` (Search API status), `installed_version` for
+  `current_version` (security updates), `item_count` for `items` (queues),
+  `free_space` for `size` (file system status). Eighteen more, found by a
+  new check in our test sweep: among them `nid` for `id` (search, recent
+  content), `mail` for `email` (users), `vid` for `id` (vocabularies),
+  `parent` for `parent_ids` (terms), and the revision, cron log, theme
+  and metatag lists. The keys are as they were.
+- **`mcp_image_styles_create` gives back the new style's `id` and
+  `label`.** It declared `success` and `message` only, so the id never
+  reached the model, which then had to guess it for
+  `mcp_image_styles_add_effect`.
+- **The cache and cron status tools say what they found.**
+  `mcp_cache_get_status` and `mcp_cron_get_status` wrapped their answer
+  twice, so every output (bins, last run, overdue) was empty and they said
+  success.
+- **A password made up for a new user is not given back.**
+  `mcp_create_user` returned it, and only chance kept it from the client.
+  A model's answer goes into transcripts and logs; the answer now says a
+  password was set and how the person sets their own.
+- **A tool that says what it found in its data is heard.** A service
+  that put its message in `data.message` was answered with "Success.":
+  "the entity has no metatag field" read as no tags. It is now the
+  answer's message (metatag, config changes, config diff, import status,
+  orphaned files).
+- **Four outputs a model uses next reach it:** the scheduler's
+  `pagination` (with `has_more`), the new content's `url`, a webform's
+  `submission_count`, and the moderation `workflow_id`. The services
+  returned them; the tools did not declare them, so they were dropped.
+- **What a tool returns, it declares.** Keys tools returned and did not
+  declare never reached the client. Facts a model uses are declared now,
+  among them the count of content deleted with a type, whether the content
+  is published after a moderation change, the field type a field was made
+  with, the cron interval and run times, whether an index is done, a view's
+  page path, and the paging of searches. Echoes of what was sent (`type`,
+  `bundle`, `index_id`) and "done at" times are out of the answers.
+- **The structure create tools give the admin link,** as the get tools
+  do: `admin_path` for a new content type, role or vocabulary, and
+  `add_content_path` for a content type.
+- **`mcp_structure_create_term` takes a parent by name,** as the tools
+  that make several terms do. Its input was an integer, so
+  `"parent": "Food"` was refused by the input check. An id given as a
+  number still works.
+
+- **The server's opening text named thirteen areas,** and a model took
+  them for all there are: asked about redirects, it answered that there
+  is no tool for them, with no call. The areas are now examples, the text
+  names some that modules add, and it says to look before saying there is
+  no tool.
+- **Paths came with a backslash** in the JSON a model reads (`\/about`),
+  and a model copied it into its calls. Tool results, errors and the
+  gateway's lists now write slashes and accented letters as they are.
+- **`mcp_create_content` and `mcp_batch_create_content` name the
+  import,** for many rows or a list to import again.
+- **`mcp_structure_create_term` says where the term went:** under its
+  parent, or at the top level when no parent was given.
+- **A site template applied in part says why.** `mcp_templates_apply`
+  answered "Tool execution failed." and nothing else when one component
+  could not be made: the reasons were in its data, which a failed tool
+  does not pass on. The error now names what was made and each one that
+  was not, with why.
+- **One way from a model's field value to a stored one.** The content,
+  batch and import tools each had their own copy, and they drifted. The
+  import turned a CSV `"false"` or `"no"` into TRUE and `"abc"` into 0,
+  and saved them. Only the import took a link given as `/about`. Now all
+  three share one: a link may be a path, `"false"` and `"no"` are FALSE,
+  numbers given as text are numbers, and a value with no plain meaning
+  is left as given, so Drupal's validation refuses it and says why.
+- **The batch tool fills a paragraphs field,** with each paragraph given
+  inline, as the content tool does. It made the node and left the
+  paragraphs out.
+- **A field a paragraph does not have is refused.** In a paragraph given
+  inline, a field its type does not have was dropped, and the call said
+  success. It is now refused with the fields that type has; `body` finds
+  `field_body`, as it does on the node.
+- **An empty object is an object.** `"updates": {}` was refused with "The
+  data (array) must match the type: object", and a model then sent
+  `[{}]`. The tool now gets it and says that nothing was given to change.
+
 ## [1.0.0-beta27] - 2026-11-23
 
 ### Security

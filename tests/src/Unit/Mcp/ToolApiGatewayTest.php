@@ -205,6 +205,45 @@ final class ToolApiGatewayTest extends UnitTestCase {
     $this->assertSame('Test Tool', $queried->structuredContent['tools'][0]['label']);
   }
 
+  /**
+   * A query's text gives a tool a line: name, read or write, inputs, use.
+   *
+   * Discover is a third of a gateway session's calls, and its answer stays
+   * in the conversation. As JSON a match also carried its label and
+   * provider, which say what its name says; the structured content keeps
+   * them for a client that reads it.
+   */
+  public function testDiscoverTextGivesEachToolOneLine(): void {
+    $this->toolManager->method('getDefinitions')->willReturn([
+      'mcp_tools:test_tool' => $this->createToolDefinition('mcp_tools:test_tool', 'mcp_tools', 'Test Tool', 'Does a test.'),
+    ]);
+    $gateway = $this->createGateway();
+
+    $text = $gateway->discoverTools('test')->content[0]->text;
+
+    $this->assertStringContainsString('mcp_tools___test_tool', $text);
+    $this->assertStringContainsString('Does a test.', $text);
+    $this->assertStringNotContainsString('"label"', $text);
+    $this->assertStringNotContainsString('"provider"', $text);
+    $this->assertStringNotContainsString('Test Tool', $text);
+  }
+
+  /**
+   * The text the model reads has a path as it is, with no backslash.
+   *
+   * Plain json_encode() gave "\/about", and a model copied the backslash
+   * into its call (framework, 2026-11-23).
+   */
+  public function testTheTextHasPathsAsTheyAre(): void {
+    $definition = $this->createToolDefinition('mcp_tools:test_tool', 'mcp_tools', 'Test Tool', 'Shows a block on /about and /contact, for café pages.');
+    $this->toolManager->method('getDefinitions')->willReturn(['mcp_tools:test_tool' => $definition]);
+
+    $text = $this->createGateway()->discoverTools('test')->content[0]->text;
+    $this->assertStringContainsString('/about and /contact', $text);
+    $this->assertStringNotContainsString('\\/', $text);
+    $this->assertStringContainsString('café', $text);
+  }
+
   public function testDiscoverToolsFiltersNonMatchingProviders(): void {
     $allowedDef = $this->createToolDefinition(
       'mcp_tools:allowed',
@@ -597,6 +636,46 @@ final class ToolApiGatewayTest extends UnitTestCase {
     $this->assertSame('mcp_tools', $result->structuredContent['provider']);
     $this->assertArrayHasKey('input_schema', $result->structuredContent);
     $this->assertArrayHasKey('annotations', $result->structuredContent);
+  }
+
+  /**
+   * Get info's text is what a call needs: name, use, and input schema.
+   *
+   * Its JSON also gave label, provider, every annotation, metadata and the
+   * plugin id, 15 to 35 in 100 of an answer; the structured content keeps
+   * them.
+   */
+  public function testGetToolInfoTextIsWhatACallNeeds(): void {
+    $this->toolManager->method('getDefinitions')->willReturn([
+      'mcp_tools:test_tool' => $this->createToolDefinition('mcp_tools:test_tool', 'mcp_tools', 'Test Tool', 'Does a test.'),
+    ]);
+
+    $result = $this->createGateway()->getToolInfo('mcp_tools___test_tool');
+    $text = $result->content[0]->text;
+
+    $this->assertStringStartsWith('mcp_tools___test_tool (reads): Does a test.', $text);
+    $this->assertStringContainsString(json_encode($result->structuredContent['input_schema'], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE), $text);
+    foreach (['"label"', '"provider"', '"annotations"', '"plugin_id"', 'Test Tool'] as $gone) {
+      $this->assertStringNotContainsString($gone, $text);
+    }
+  }
+
+  /**
+   * Discover says the list a model sees is not all there is.
+   *
+   * In grow mode a model saw eight tools, none that makes a content type,
+   * and told the user there was none without a search (next, grow, seed 1:
+   * that miss took five tasks after it down).
+   */
+  public function testDiscoverSaysMostToolsAreNotListed(): void {
+    $this->toolManager->method('getDefinitions')->willReturn([
+      'mcp_tools:make_widget' => $this->createToolDefinition('mcp_tools:make_widget', 'mcp_tools', 'Make Widget', 'Makes a widget.'),
+      'mcp_tools:list_gadgets' => $this->createToolDefinition('mcp_tools:list_gadgets', 'mcp_tools', 'List Gadgets', 'Lists gadgets.'),
+    ]);
+    $discover = array_values(array_filter($this->createGateway()->getGatewayTools(), static fn(array $tool): bool => $tool['name'] === ToolApiGateway::DISCOVER_TOOL))[0];
+
+    $this->assertStringContainsString("This site's 2 tools are not all in your list", $discover['description']);
+    $this->assertStringContainsString('before you say', $discover['description']);
   }
 
   public function testGetToolInfoResolvesPluginIdFormat(): void {

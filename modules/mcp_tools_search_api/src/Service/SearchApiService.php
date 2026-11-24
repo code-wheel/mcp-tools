@@ -140,7 +140,6 @@ class SearchApiService {
     return [
       'success' => TRUE,
       'index_id' => $id,
-      'label' => $index->label(),
       'status' => [
         'total' => $totalCount,
         'indexed' => $indexedCount,
@@ -193,7 +192,6 @@ class SearchApiService {
       return [
         'success' => TRUE,
         'message' => "All items marked for reindexing on index '$id'.",
-        'index_id' => $id,
         'total_items' => $tracker->getTotalItemsCount(),
       ];
     }
@@ -273,7 +271,6 @@ class SearchApiService {
       return [
         'success' => TRUE,
         'message' => "Indexed $indexed items on index '$id'." . ($remaining > 0 ? " $remaining are left: call again." : ' The index is complete.'),
-        'index_id' => $id,
         'items_indexed' => $indexed,
         'remaining' => $remaining,
         'is_complete' => $remaining === 0,
@@ -330,7 +327,6 @@ class SearchApiService {
       return [
         'success' => TRUE,
         'message' => "Index '$id' has been cleared.",
-        'index_id' => $id,
         'items_to_reindex' => $tracker->getTotalItemsCount(),
       ];
     }
@@ -554,7 +550,6 @@ class SearchApiService {
         'data' => [
           'items' => $items,
           'total' => $results->getResultCount(),
-          'returned' => count($items),
           'not_shown' => $notShown,
           'limit' => $limit,
           'offset' => $offset,

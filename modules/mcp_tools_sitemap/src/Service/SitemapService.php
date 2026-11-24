@@ -147,7 +147,6 @@ class SitemapService {
       $settings = [
         'variant' => $variant,
         'label' => $sitemap->label(),
-        'type' => $sitemap->getType()->id(),
         'is_enabled' => $sitemap->status(),
         'global_settings' => [
           'max_links' => $config->get('max_links'),
@@ -217,25 +216,33 @@ class SitemapService {
       }
 
       $updatedSettings = [];
+      $allowedGlobal = [
+        'max_links',
+        'cron_generate',
+        'cron_generate_interval',
+        'remove_duplicates',
+        'skip_untranslated',
+        'base_url',
+        'xsl',
+      ];
+      // A key the tool does not read was dropped: {"max_links": 100} at the
+      // top, not under global, changed nothing and said success.
+      $unknown = array_diff(array_keys($settings), ['global', 'enabled', 'label']);
+      $unknownGlobal = array_diff(array_keys((array) ($settings['global'] ?? [])), $allowedGlobal);
+      if ($unknown !== [] || $unknownGlobal !== []) {
+        return [
+          'success' => FALSE,
+          'error' => 'settings takes global, enabled and label, and global takes ' . implode(', ', $allowedGlobal)
+            . '. Not: ' . implode(', ', array_merge($unknown, array_map(fn($k) => "global.$k", $unknownGlobal))) . '. Nothing was changed.',
+        ];
+      }
 
       // Update global settings if provided.
       if (!empty($settings['global'])) {
         $config = $this->configFactory->getEditable('simple_sitemap.settings');
-        $allowedGlobal = [
-          'max_links',
-          'cron_generate',
-          'cron_generate_interval',
-          'remove_duplicates',
-          'skip_untranslated',
-          'base_url',
-          'xsl',
-        ];
-
         foreach ($settings['global'] as $key => $value) {
-          if (in_array($key, $allowedGlobal, TRUE)) {
-            $config->set($key, $value);
-            $updatedSettings['global'][$key] = $value;
-          }
+          $config->set($key, $value);
+          $updatedSettings['global'][$key] = $value;
         }
         $config->save();
       }
@@ -465,7 +472,15 @@ class SitemapService {
 
       // Only what was given: the rest stays as it is. Defaults filled in for
       // what was not given turned indexing on and reset the priority.
-      $bundleSettings = array_intersect_key($settings, array_flip(['index', 'priority', 'changefreq', 'include_images']));
+      $keys = ['index', 'priority', 'changefreq', 'include_images'];
+      // A key the tool does not read was dropped, and the rest said success.
+      if (($unknown = array_diff(array_keys($settings), $keys)) !== []) {
+        return [
+          'success' => FALSE,
+          'error' => 'settings takes ' . implode(', ', $keys) . ', not ' . implode(', ', $unknown) . '. Nothing was changed.',
+        ];
+      }
+      $bundleSettings = array_intersect_key($settings, array_flip($keys));
       if ($bundleSettings === []) {
         return ['success' => FALSE, 'error' => 'Give at least one of index, priority, changefreq, include_images.'];
       }
@@ -522,7 +537,6 @@ class SitemapService {
           'entity_type' => $entityType,
           'bundle' => $bundle,
           'settings' => $bundleSettings,
-          'variants' => $applied,
           'message' => sprintf('Sitemap settings for %s:%s updated in %d variant(s): %s.', $entityType, $bundle, count($applied), implode(', ', array_keys($applied))),
         ],
       ];

@@ -11,6 +11,7 @@ use Drupal\node\Entity\Node;
 use Drupal\node\Entity\NodeType;
 use Drupal\paragraphs\Entity\Paragraph;
 use Drupal\paragraphs\Entity\ParagraphsType;
+use Drupal\Tests\user\Traits\UserCreationTrait;
 
 /**
  * A field that holds paragraphs, added by the field tools, works.
@@ -23,13 +24,15 @@ use Drupal\paragraphs\Entity\ParagraphsType;
 #[\PHPUnit\Framework\Attributes\Group('mcp_tools_paragraphs')]
 final class ParagraphsFieldKernelTest extends KernelTestBase {
 
+  use UserCreationTrait;
+
   /**
    * {@inheritdoc}
    */
   protected static $modules = [
     'system', 'user', 'field', 'text', 'filter', 'file', 'node', 'dblog', 'update',
     'entity_reference_revisions', 'paragraphs',
-    'tool', 'mcp_tools', 'mcp_tools_structure', 'mcp_tools_paragraphs',
+    'tool', 'mcp_tools', 'mcp_tools_structure', 'mcp_tools_paragraphs', 'mcp_tools_content', 'mcp_tools_batch',
   ];
 
   /**
@@ -46,6 +49,8 @@ final class ParagraphsFieldKernelTest extends KernelTestBase {
     NodeType::create(['type' => 'page', 'name' => 'Page'])->save();
     ParagraphsType::create(['id' => 'text', 'label' => 'Text'])->save();
     ParagraphsType::create(['id' => 'accordion', 'label' => 'Accordion'])->save();
+    // An administrator: the content tools follow Drupal's access.
+    $this->setUpCurrentUser([], [], TRUE);
     $this->container->get('mcp_tools.access_manager')->setScopes(['read', 'write']);
   }
 
@@ -105,6 +110,35 @@ final class ParagraphsFieldKernelTest extends KernelTestBase {
     $this->assertStringContainsString('accordion', $result['error']);
     $this->assertStringContainsString('text', $result['error']);
     $this->assertNull(FieldStorageConfig::load('node.field_sections'));
+  }
+
+  /**
+   * The batch tool fills a paragraphs field as the content tool does.
+   *
+   * Only the content tool had the code: given paragraphs inline, the batch
+   * tool passed the items on as they were.
+   */
+  public function testTheBatchToolFillsAParagraphsField(): void {
+    $fields = $this->container->get('mcp_tools_structure.field');
+    $this->assertTrue($fields->addField('node', 'page', 'sections', 'paragraphs', 'Sections')['success']);
+
+    $result = $this->container->get('mcp_tools_batch.batch')->createMultipleContent('page', [
+      ['title' => 'Batch', 'fields' => ['field_sections' => [['type' => 'text'], ['type' => 'accordion']]]],
+    ]);
+    $this->assertTrue($result['success'], json_encode($result));
+    $node = Node::load($result['data']['created'][0]['nid']);
+    $this->assertSame(['text', 'accordion'], array_map(fn($p) => $p->bundle(), $node->get('field_sections')->referencedEntities()));
+  }
+
+  /**
+   * A field a paragraph's type does not have is refused, and nothing made.
+   */
+  public function testAnUnknownFieldInAParagraphIsRefused(): void {
+    $this->container->get('mcp_tools_structure.field')->addField('node', 'page', 'sections', 'paragraphs', 'Sections');
+    $result = $this->container->get('mcp_tools_content.content')->createContent('page', 'Typo', ['field_sections' => [['type' => 'text', 'field_titel' => 'x']]]);
+    $this->assertFalse($result['success'], 'A field the paragraph does not have was dropped and the call said success.');
+    $this->assertStringContainsString("has no field field_titel", $result['error']);
+    $this->assertSame([], Node::loadMultiple());
   }
 
 }

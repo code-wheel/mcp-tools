@@ -31,7 +31,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'updates' => new InputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('Updates'),
-      description: new TranslatableMarkup('Fields to update: title, uri, weight, expanded, description'),
+      description: new TranslatableMarkup('Fields to update: title, uri, weight, expanded, enabled, parent (a plugin_id or id from mcp_tools_get_menu_tree, or empty for the top of the menu), description. Another key is refused.'),
       required: TRUE,
     ),
   ],
@@ -92,7 +92,10 @@ class UpdateMenuLink extends McpToolsToolBase {
     $updates = $input['updates'] ?? [];
 
     if (empty($updates)) {
-      return ['success' => FALSE, 'error' => 'At least one field to update is required.'];
+      return [
+        'success' => FALSE,
+        'error' => 'updates is empty, so nothing was changed. Give the fields to change, like {"title": "New title"}: title, uri, weight, expanded, enabled, parent, description.',
+      ];
     }
 
     return $this->menuService->updateMenuLink((int) $linkId, $updates);

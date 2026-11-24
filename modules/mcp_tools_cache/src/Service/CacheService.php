@@ -90,7 +90,6 @@ class CacheService {
     return [
       'success' => TRUE,
       'message' => 'All caches have been cleared.',
-      'cleared_at' => date('Y-m-d H:i:s'),
     ];
   }
 
@@ -123,7 +122,6 @@ class CacheService {
         'success' => TRUE,
         'message' => "Cache bin '$bin' has been cleared.",
         'bin' => $bin,
-        'cleared_at' => date('Y-m-d H:i:s'),
       ];
     }
     catch (\Exception $e) {
@@ -159,7 +157,6 @@ class CacheService {
       'success' => TRUE,
       'message' => 'Cache tags invalidated successfully.',
       'tags' => $tags,
-      'invalidated_at' => date('Y-m-d H:i:s'),
     ];
   }
 
@@ -250,7 +247,6 @@ class CacheService {
         'success' => TRUE,
         'message' => "Successfully rebuilt $type cache.",
         'type' => $type,
-        'rebuilt_at' => date('Y-m-d H:i:s'),
       ];
     }
     catch (\Exception $e) {

@@ -36,4 +36,16 @@ final class Sdk {
     return NULL;
   }
 
+  /**
+   * The registry class: Mcp\Capability\Registry before 0.10, then in Server.
+   */
+  public static function registryClass(): ?string {
+    foreach (['Mcp\Server\Capability\Registry', 'Mcp\Capability\Registry'] as $class) {
+      if (class_exists($class)) {
+        return $class;
+      }
+    }
+    return NULL;
+  }
+
 }

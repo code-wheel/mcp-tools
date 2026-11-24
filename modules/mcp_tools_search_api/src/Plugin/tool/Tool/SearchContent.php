@@ -54,10 +54,34 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
     ),
   ],
   output_definitions: [
+    'index' => new OutputDefinition(
+      data_type: 'string',
+      label: new TranslatableMarkup('Index'),
+      description: new TranslatableMarkup('The index searched.'),
+      required: FALSE,
+    ),
+    'keywords' => new OutputDefinition(
+      data_type: 'string',
+      label: new TranslatableMarkup('Keywords'),
+      description: new TranslatableMarkup('What was searched for.'),
+      required: FALSE,
+    ),
+    'limit' => new OutputDefinition(
+      data_type: 'integer',
+      label: new TranslatableMarkup('Limit'),
+      description: new TranslatableMarkup('Most items shown.'),
+      required: FALSE,
+    ),
+    'offset' => new OutputDefinition(
+      data_type: 'integer',
+      label: new TranslatableMarkup('Offset'),
+      description: new TranslatableMarkup('Items skipped, for the next page.'),
+      required: FALSE,
+    ),
     'items' => new OutputDefinition(
       data_type: 'any',
       label: new TranslatableMarkup('Search Results'),
-      description: new TranslatableMarkup('Array of matching items with entity info, relevance score, and excerpt.'),
+      description: new TranslatableMarkup('Array of matching items with id, score, entity_type, bundle, entity_id, label, uuid, and url.'),
     ),
     'total' => new OutputDefinition(
       data_type: 'integer',

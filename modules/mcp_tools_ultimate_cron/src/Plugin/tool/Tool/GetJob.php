@@ -30,6 +30,18 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
+    'callback' => new OutputDefinition(
+      data_type: 'string',
+      label: new TranslatableMarkup('Callback'),
+      description: new TranslatableMarkup('What the job runs.'),
+      required: FALSE,
+    ),
+    'launcher' => new OutputDefinition(
+      data_type: 'map',
+      label: new TranslatableMarkup('Launcher'),
+      description: new TranslatableMarkup('How the job is launched.'),
+      required: FALSE,
+    ),
     'id' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Job ID'),

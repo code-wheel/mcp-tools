@@ -22,6 +22,12 @@ use Drupal\tool\Tool\ToolOperation;
   operation: ToolOperation::Read,
   input_definitions: [],
   output_definitions: [
+    'cache_tags_table_size' => new OutputDefinition(
+      data_type: 'integer',
+      label: new TranslatableMarkup('Cache tag rows'),
+      description: new TranslatableMarkup('Rows in the cache tag table.'),
+      required: FALSE,
+    ),
     'total_bins' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total cache bins'),
@@ -30,7 +36,7 @@ use Drupal\tool\Tool\ToolOperation;
     'bins' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Cache bin details'),
-      description: new TranslatableMarkup('Array of cache bins with name, backend class, and status. Use name with mcp_cache_clear_bin.'),
+      description: new TranslatableMarkup('Array of cache bins with bin, backend, and estimated_items. Give the bin to mcp_cache_clear_bin.'),
     ),
   ],
 )]
@@ -59,10 +65,9 @@ class GetCacheStatus extends McpToolsToolBase {
    * {@inheritdoc}
    */
   protected function executeLegacy(array $input): array {
-    return [
-      'success' => TRUE,
-      'data' => $this->cacheService->getCacheStatus(),
-    ];
+    // The service's answer as it is: wrapped in another "data", every
+    // declared output was empty and the tool said success.
+    return $this->cacheService->getCacheStatus();
   }
 
 }

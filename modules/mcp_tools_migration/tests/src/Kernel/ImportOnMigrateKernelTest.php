@@ -135,6 +135,23 @@ final class ImportOnMigrateKernelTest extends KernelTestBase {
   }
 
   /**
+   * A yes or no in a CSV is what it says.
+   *
+   * The import cast "false" and "no" to TRUE: a CSV that said not to
+   * promote a page promoted it.
+   */
+  public function testANoInACsvIsNo(): void {
+    $csv = "id,title,promote\n1,One,false\n2,Two,no\n3,Three,true\n";
+    $result = $this->import()->importFromCsv('article', $csv, [], 'id');
+    $this->assertTrue($result['success'], json_encode($result));
+    $promoted = [];
+    foreach (Node::loadMultiple() as $node) {
+      $promoted[$node->label()] = (bool) $node->get('promote')->value;
+    }
+    $this->assertSame(['One' => FALSE, 'Two' => FALSE, 'Three' => TRUE], $promoted);
+  }
+
+  /**
    * A row with the wrong number of columns is an error in the answer.
    */
   public function testAShortRowIsReported(): void {

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\Tests\mcp_tools_paragraphs\Unit\Service;
 
+use Drupal\Core\Entity\EntityDisplayRepositoryInterface;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
@@ -91,6 +92,7 @@ final class ParagraphsServiceTest extends UnitTestCase {
       $this->accessManager,
       $this->auditLogger,
       $this->fieldTypeManager,
+      $this->createMock(EntityDisplayRepositoryInterface::class),
     );
   }
 
@@ -495,6 +497,7 @@ final class ParagraphsServiceTest extends UnitTestCase {
       $this->accessManager,
       $this->auditLogger,
       $this->fieldTypeManager,
+      $this->createMock(EntityDisplayRepositoryInterface::class),
     );
 
     $method = new \ReflectionMethod($service, 'getFieldsForBundle');

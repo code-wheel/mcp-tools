@@ -37,6 +37,45 @@ final class UserAnalysisServiceTest extends UnitTestCase {
     $this->assertTrue($result['by_provider']['bar'][0]['restrict_access']);
   }
 
+  /**
+   * A permission says what it is once, in plain text, and can be asked for.
+   *
+   * On a site with 61 modules the list was 43,302 characters, a third of a
+   * small model's context, from one call. Markup, empty descriptions and a
+   * false restrict_access on nearly every one were most of what it
+   * repeated. A search or a module gives the slice a task needs; with
+   * neither, the whole list, as before.
+   */
+  public function testPermissionsArePlainAndCanBeAskedForBySlice(): void {
+    $permissionHandler = $this->createMock(PermissionHandlerInterface::class);
+    $permissionHandler->method('getPermissions')->willReturn([
+      'create article content' => ['provider' => 'node', 'title' => '<em class="placeholder">Article</em>: Create new content'],
+      'administer nodes' => ['provider' => 'node', 'title' => 'Administer content', 'description' => 'Promote, change ownership, edit revisions, and perform other tasks across all content types.', 'restrict access' => TRUE],
+      'administer blocks' => ['provider' => 'block', 'title' => 'Administer blocks'],
+    ]);
+    $service = new UserAnalysisService($this->createMock(EntityTypeManagerInterface::class), $permissionHandler);
+
+    $all = $service->getPermissions();
+    $this->assertSame(['name' => 'create article content', 'title' => 'Article: Create new content'], $all['by_provider']['node'][0]);
+    // A title that only says the name again is left out (75 of 257).
+    $this->assertSame(['name' => 'administer blocks'], $all['by_provider']['block'][0]);
+    $this->assertTrue($all['by_provider']['node'][1]['restrict_access']);
+    $this->assertSame(3, $all['total_permissions']);
+
+    $article = $service->getPermissions('ARTICLE');
+    $this->assertSame(['node'], array_keys($article['by_provider']));
+    $this->assertSame(['create article content'], array_column($article['by_provider']['node'], 'name'));
+    $this->assertSame(1, $article['matching']);
+    $this->assertSame(3, $article['total_permissions']);
+
+    $block = $service->getPermissions(NULL, 'block');
+    $this->assertSame(['block'], array_keys($block['by_provider']));
+
+    $unknown = $service->getPermissions(NULL, 'no_such_module');
+    $this->assertStringContainsString('no_such_module', $unknown['error']);
+    $this->assertStringContainsString('block, node', $unknown['error']);
+  }
+
   public function testAnalyzePermissionIncludesAdminRoles(): void {
     $admin = $this->createMock(RoleInterface::class);
     $admin->method('id')->willReturn('administrator');

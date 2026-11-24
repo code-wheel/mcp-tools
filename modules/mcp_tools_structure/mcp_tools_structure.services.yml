@@ -16,6 +16,7 @@ services:
       - '@plugin.manager.field.field_type'
       - '@mcp_tools.access_manager'
       - '@mcp_tools.audit_logger'
+      - '@entity_display.repository'
 
   mcp_tools_structure.taxonomy:
     class: Drupal\mcp_tools_structure\Service\TaxonomyManagementService

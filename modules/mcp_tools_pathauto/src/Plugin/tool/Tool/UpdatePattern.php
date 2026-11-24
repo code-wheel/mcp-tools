@@ -60,6 +60,30 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
+    'entity_type' => new OutputDefinition(
+      data_type: 'string',
+      label: new TranslatableMarkup('Entity type'),
+      description: new TranslatableMarkup('The entity type the pattern is for.'),
+      required: FALSE,
+    ),
+    'bundles' => new OutputDefinition(
+      data_type: 'list',
+      label: new TranslatableMarkup('Bundles'),
+      description: new TranslatableMarkup('The bundles it applies to; empty for all.'),
+      required: FALSE,
+    ),
+    'weight' => new OutputDefinition(
+      data_type: 'integer',
+      label: new TranslatableMarkup('Weight'),
+      description: new TranslatableMarkup('Its weight: lower ones are tried first.'),
+      required: FALSE,
+    ),
+    'status' => new OutputDefinition(
+      data_type: 'boolean',
+      label: new TranslatableMarkup('Enabled'),
+      description: new TranslatableMarkup('Whether the pattern is enabled.'),
+      required: FALSE,
+    ),
     'id' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Pattern ID'),

@@ -7,8 +7,10 @@ namespace Drupal\Tests\mcp_tools_jsonapi\Unit\Service;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Config\ImmutableConfig;
 use Drupal\Core\Entity\EntityRepositoryInterface;
+use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Session\AccountProxyInterface;
+use Drupal\jsonapi\ResourceType\ResourceType;
 use Drupal\jsonapi\ResourceType\ResourceTypeRepositoryInterface;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AuditLogger;
@@ -161,6 +163,46 @@ final class JsonApiServiceTest extends UnitTestCase {
     $this->assertArrayHasKey('data', $result);
     $this->assertArrayHasKey('types', $result['data']);
     $this->assertIsArray($result['data']['types']);
+  }
+
+  /**
+   * A type gives a bundle label and the supports flags only when it has them.
+   *
+   * Most types have no bundle of their own and support neither revisions
+   * nor translations: on the full site those were a good part of 8,598
+   * characters, saying null and false.
+   */
+  public function testDiscoverTypesGivesOnlyWhatATypeHas(): void {
+    $action = $this->createMock(ResourceType::class);
+    $action->method('getEntityTypeId')->willReturn('action');
+    $action->method('getBundle')->willReturn('action');
+    $action->method('getTypeName')->willReturn('action--action');
+    $action->method('isInternal')->willReturn(FALSE);
+    $node = $this->createMock(ResourceType::class);
+    $node->method('getEntityTypeId')->willReturn('node');
+    $node->method('getBundle')->willReturn('node');
+    $node->method('getTypeName')->willReturn('node--node');
+    $node->method('isInternal')->willReturn(FALSE);
+    $this->resourceTypeRepository->method('all')->willReturn([$action, $node]);
+
+    $definitions = ['action' => $this->entityType('Action', FALSE, FALSE), 'node' => $this->entityType('Content', TRUE, FALSE)];
+    $this->entityTypeManager->method('getDefinition')->willReturnCallback(fn(string $id) => $definitions[$id]);
+
+    $types = $this->service->discoverTypes()['data']['types'];
+
+    $this->assertSame(['entity_type' => 'action', 'bundle' => 'action', 'resource_type' => 'action--action', 'label' => 'Action'], $types[0]);
+    $this->assertSame(['entity_type' => 'node', 'bundle' => 'node', 'resource_type' => 'node--node', 'label' => 'Content', 'supports_revisions' => TRUE], $types[1]);
+  }
+
+  /**
+   * An entity type with a label and what it supports.
+   */
+  private function entityType(string $label, bool $revisions, bool $translations): EntityTypeInterface {
+    $type = $this->createMock(EntityTypeInterface::class);
+    $type->method('getLabel')->willReturn($label);
+    $type->method('isRevisionable')->willReturn($revisions);
+    $type->method('isTranslatable')->willReturn($translations);
+    return $type;
   }
 
 }

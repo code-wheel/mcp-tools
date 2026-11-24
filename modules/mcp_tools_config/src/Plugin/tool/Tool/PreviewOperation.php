@@ -36,6 +36,24 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
+    'role_id' => new OutputDefinition(
+      data_type: 'string',
+      label: new TranslatableMarkup('Role'),
+      description: new TranslatableMarkup('The role the operation is about, for role operations.'),
+      required: FALSE,
+    ),
+    'already_exists' => new OutputDefinition(
+      data_type: 'boolean',
+      label: new TranslatableMarkup('Already exists'),
+      description: new TranslatableMarkup('TRUE when what would be made is there already.'),
+      required: FALSE,
+    ),
+    'configs_created' => new OutputDefinition(
+      data_type: 'list',
+      label: new TranslatableMarkup('Configs it would make'),
+      description: new TranslatableMarkup('The config names the operation would make.'),
+      required: FALSE,
+    ),
     'dry_run' => new OutputDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Dry Run'),

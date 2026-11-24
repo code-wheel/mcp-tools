@@ -22,6 +22,30 @@ use Drupal\tool\Tool\ToolOperation;
   operation: ToolOperation::Read,
   input_definitions: [],
   output_definitions: [
+    'last_run_timestamp' => new OutputDefinition(
+      data_type: 'integer',
+      label: new TranslatableMarkup('Last run (Unix time)'),
+      description: new TranslatableMarkup('When cron last ran, as a Unix time.'),
+      required: FALSE,
+    ),
+    'autorun_threshold' => new OutputDefinition(
+      data_type: 'integer',
+      label: new TranslatableMarkup('Runs every'),
+      description: new TranslatableMarkup('How often cron runs by itself, in seconds; 0 when it does not.'),
+      required: FALSE,
+    ),
+    'threshold_human' => new OutputDefinition(
+      data_type: 'string',
+      label: new TranslatableMarkup('Runs every (in words)'),
+      description: new TranslatableMarkup('The same in words.'),
+      required: FALSE,
+    ),
+    'jobs_count' => new OutputDefinition(
+      data_type: 'integer',
+      label: new TranslatableMarkup('Jobs'),
+      description: new TranslatableMarkup('Number of cron jobs.'),
+      required: FALSE,
+    ),
     'last_run' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Last cron run time'),
@@ -64,10 +88,9 @@ class GetCronStatus extends McpToolsToolBase {
    * {@inheritdoc}
    */
   protected function executeLegacy(array $input): array {
-    return [
-      'success' => TRUE,
-      'data' => $this->cronService->getCronStatus(),
-    ];
+    // The service's answer as it is: wrapped in another "data", every
+    // declared output was empty and the tool said success.
+    return $this->cronService->getCronStatus();
   }
 
 }

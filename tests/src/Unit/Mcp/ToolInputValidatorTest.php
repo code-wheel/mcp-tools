@@ -355,6 +355,33 @@ final class ToolInputValidatorTest extends UnitTestCase {
     $this->assertFalse($invalidResult['valid']);
   }
 
+  /**
+   * An empty object where an object is wanted is an object, not a list.
+   *
+   * "updates": {} was refused with "The data (array) must match the type:
+   * object", and a model then sent [{}] (framework, 2026-11-23). A list
+   * where an object is wanted is still refused.
+   */
+  public function testAnEmptyObjectIsAnObject(): void {
+    $definition = $this->createMockDefinition();
+    $this->schemaConverter->method('toolDefinitionToInputSchema')
+      ->willReturn([
+        'type' => 'object',
+        'properties' => [
+          'link_id' => ['type' => 'integer'],
+          'updates' => ['type' => 'object'],
+          'tags' => ['type' => 'array'],
+        ],
+        'required' => ['link_id', 'updates'],
+      ]);
+    $validator = $this->createValidator();
+
+    $this->assertTrue($validator->validate($definition, ['link_id' => 1, 'updates' => []])['valid']);
+    // An empty list where a list is wanted stays a list.
+    $this->assertTrue($validator->validate($definition, ['link_id' => 1, 'updates' => [], 'tags' => []])['valid']);
+    $this->assertFalse($validator->validate($definition, ['link_id' => 1, 'updates' => [['title' => 'x']]])['valid']);
+  }
+
   public function testValidateReturnsValidWhenSchemaCannotBeNormalized(): void {
     $definition = $this->createMockDefinition();
 

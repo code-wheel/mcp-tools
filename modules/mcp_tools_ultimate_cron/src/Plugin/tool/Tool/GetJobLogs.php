@@ -50,7 +50,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'logs' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Log entries'),
-      description: new TranslatableMarkup('Array of log entries with timestamp, duration, status, and message. Most recent first.'),
+      description: new TranslatableMarkup('Array of log entries with lid, start_time, end_time, duration, message, and severity. Most recent first.'),
     ),
     'count' => new OutputDefinition(
       data_type: 'integer',

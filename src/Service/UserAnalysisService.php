@@ -50,35 +50,66 @@ class UserAnalysisService {
   }
 
   /**
-   * Get all available permissions.
+   * Gets the site's permissions by module, all or a slice.
+   *
+   * Each says what it is once, in plain text: a title without its markup
+   * and only when it is more than the name, a description only when there
+   * is one, restrict_access only when set.
+   *
+   * @param string|null $search
+   *   Only permissions with this in their name or title (any case).
+   * @param string|null $provider
+   *   Only the permissions of this module.
    *
    * @return array
-   *   All permissions grouped by provider.
+   *   Permissions grouped by provider, or an error for an unknown module.
    */
-  public function getPermissions(): array {
+  public function getPermissions(?string $search = NULL, ?string $provider = NULL): array {
     $permissions = $this->permissionHandler->getPermissions();
+    $plain = static fn(mixed $text): string => trim(html_entity_decode(strip_tags((string) $text), ENT_QUOTES | ENT_HTML5));
+
+    $providers = array_unique(array_map(static fn(array $permission): string => (string) ($permission['provider'] ?? 'unknown'), $permissions));
+    sort($providers);
+    $provider = $provider === NULL || trim($provider) === '' ? NULL : trim($provider);
+    if ($provider !== NULL && !in_array($provider, $providers, TRUE)) {
+      return ['error' => "No module named '$provider' gives permissions. Modules that do: " . implode(', ', $providers) . '.'];
+    }
+    $search = $search === NULL || trim($search) === '' ? NULL : mb_strtolower(trim($search));
 
     $grouped = [];
+    $matching = 0;
     foreach ($permissions as $name => $permission) {
-      $provider = $permission['provider'] ?? 'unknown';
-      if (!isset($grouped[$provider])) {
-        $grouped[$provider] = [];
+      $from = (string) ($permission['provider'] ?? 'unknown');
+      $title = $plain($permission['title'] ?? $name);
+      if (($provider !== NULL && $from !== $provider)
+        || ($search !== NULL && !str_contains(mb_strtolower($name . ' ' . $title), $search))) {
+        continue;
       }
-      $grouped[$provider][] = [
-        'name' => $name,
-        'title' => (string) ($permission['title'] ?? $name),
-        'description' => isset($permission['description']) ? (string) $permission['description'] : NULL,
-        'restrict_access' => $permission['restrict access'] ?? FALSE,
-      ];
+      $item = ['name' => (string) $name];
+      if (mb_strtolower($title) !== mb_strtolower((string) $name)) {
+        $item['title'] = $title;
+      }
+      $description = $plain($permission['description'] ?? '');
+      if ($description !== '') {
+        $item['description'] = $description;
+      }
+      if (!empty($permission['restrict access'])) {
+        $item['restrict_access'] = TRUE;
+      }
+      $grouped[$from][] = $item;
+      $matching++;
     }
-
     ksort($grouped);
 
-    return [
+    $result = [
       'total_permissions' => count($permissions),
       'providers' => count($grouped),
       'by_provider' => $grouped,
     ];
+    if ($search !== NULL || $provider !== NULL) {
+      $result['matching'] = $matching;
+    }
+    return $result;
   }
 
   /**

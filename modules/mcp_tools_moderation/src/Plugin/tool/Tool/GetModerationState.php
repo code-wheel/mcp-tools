@@ -37,6 +37,12 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
+    'workflow_id' => new OutputDefinition(
+      data_type: 'string',
+      label: new TranslatableMarkup('Workflow'),
+      description: new TranslatableMarkup('Machine name of the workflow the content is in.'),
+      required: FALSE,
+    ),
     'entity_type' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Entity Type'),

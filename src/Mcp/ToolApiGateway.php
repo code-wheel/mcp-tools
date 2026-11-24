@@ -140,7 +140,8 @@ class ToolApiGateway {
           return FiberIsolation::run(fn(): CallToolResult => $this->discoverTools($query, $limit));
         },
         'name' => self::DISCOVER_TOOL,
-        'description' => 'Find tools by keyword. Each match comes with its description and the names of its inputs.',
+        // A model that sees a few tools takes them for all there are.
+        'description' => "This site's " . count($this->toolProvider->getTools()) . ' tools are not all in your list: find any of them by keyword here, before you say there is no tool for something. Each match comes with its description and the names of its inputs.',
         'annotations' => ToolAnnotations::fromArray([
           'title' => 'Discover Tools',
           'readOnlyHint' => TRUE,
@@ -252,7 +253,7 @@ class ToolApiGateway {
           break;
         }
       }
-      return new CallToolResult([new TextContent(json_encode($structured))], FALSE, $structured);
+      return new CallToolResult([new TextContent(self::json($structured))], FALSE, $structured);
     }
 
     // The query as one phrase first. A model that asks in its own words
@@ -321,7 +322,31 @@ class ToolApiGateway {
       $structured['hint'] = 'Result truncated to ' . count($tools) . ' of ' . count($found) . ' matches. Narrow the query or raise limit.';
     }
 
-    return new CallToolResult([new TextContent(json_encode($structured))], FALSE, $structured);
+    return new CallToolResult([new TextContent(self::discoverText($structured))], FALSE, $structured);
+  }
+
+  /**
+   * The text a model reads of a query's matches: one line a tool.
+   *
+   * Discover is a third of a gateway session's calls, and its answer stays
+   * in the conversation. As JSON a match also gave its label and provider,
+   * which say what its name says; the structured content keeps them.
+   */
+  private static function discoverText(array $structured): string {
+    $match = isset($structured['match']) ? ' (' . $structured['match'] . ')' : '';
+    $lines = [$structured['count'] . ' of ' . $structured['total_matches'] . ' matching tools' . $match . ':'];
+    foreach ($structured['tools'] as $tool) {
+      // Words, not a call's look: name(a, b?) had a model write its next
+      // call in that form, which its runtime could not read.
+      $kind = !empty($tool['hints']['read_only']) ? 'reads' : 'writes';
+      $inputs = $tool['inputs']['required'] === [] ? '' : ' Needs: ' . implode(', ', $tool['inputs']['required']) . '.';
+      $inputs .= $tool['inputs']['optional'] === [] ? '' : ' Optional: ' . implode(', ', $tool['inputs']['optional']) . '.';
+      $lines[] = '- ' . $tool['name'] . ' (' . $kind . '): ' . $tool['description'] . $inputs;
+    }
+    if (isset($structured['hint'])) {
+      $lines[] = $structured['hint'];
+    }
+    return implode("\n", $lines);
   }
 
   /**
@@ -432,9 +457,14 @@ class ToolApiGateway {
       'plugin_id' => $toolInfo->metadata['plugin_id'] ?? '',
     ];
 
-    $content = [new TextContent(json_encode($structured))];
+    // The text is what a call needs; the structured content keeps label,
+    // provider, every annotation, metadata and the plugin id (15 to 35 in
+    // 100 of an answer).
+    $kind = !empty($structured['annotations']['readOnlyHint']) ? 'reads' : 'writes';
+    $text = $structured['name'] . ' (' . $kind . '): ' . $structured['description']
+      . "\nInput schema: " . self::json((array) $structured['input_schema']);
 
-    return new CallToolResult($content, FALSE, $structured);
+    return new CallToolResult([new TextContent($text)], FALSE, $structured);
   }
 
   /**
@@ -513,6 +543,16 @@ class ToolApiGateway {
     }
 
     return $schema;
+  }
+
+  /**
+   * JSON for the model to read: "/about" as it is, not "\/about".
+   *
+   * Plain json_encode() escaped every slash, and a model copied the
+   * backslash into its call ("pages": "\/some/page").
+   */
+  private static function json(array $structured): string {
+    return (string) json_encode($structured, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
   }
 
 }

@@ -58,9 +58,7 @@ class WatchdogAnalyzer {
     }
 
     $query = $this->database->select('watchdog', 'w')
-      ->fields('w', ['wid', 'type', 'severity', 'message', 'variables', 'timestamp'])
-      ->orderBy('wid', 'DESC')
-      ->range(0, $limit);
+      ->fields('w', ['wid', 'type', 'severity', 'message', 'variables', 'timestamp']);
 
     if (!empty($severities)) {
       $query->condition('severity', $severities, 'IN');
@@ -70,7 +68,9 @@ class WatchdogAnalyzer {
       $query->condition('type', $type);
     }
 
-    $results = $query->execute()->fetchAll();
+    // All that match, besides the ones shown: 100 entries read as all.
+    $total = (int) (clone $query)->countQuery()->execute()->fetchField();
+    $results = $query->orderBy('wid', 'DESC')->range(0, $limit)->execute()->fetchAll();
     $entries = [];
 
     foreach ($results as $row) {
@@ -85,6 +85,7 @@ class WatchdogAnalyzer {
     }
 
     return [
+      'total' => $total,
       'total_returned' => count($entries),
       'entries' => $entries,
     ];

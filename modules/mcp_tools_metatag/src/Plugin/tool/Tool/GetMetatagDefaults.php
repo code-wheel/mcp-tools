@@ -38,7 +38,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'defaults' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Metatag Defaults'),
-      description: new TranslatableMarkup('Array of default configurations with id, label, entity_type, and tags. Tags can use tokens like [node:title].'),
+      description: new TranslatableMarkup('Array of default configurations with id, label, and tags. Tags can use tokens like [node:title].'),
     ),
   ],
 )]

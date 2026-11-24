@@ -30,12 +30,12 @@ use Drupal\tool\Tool\ToolOperation;
     'by_operation' => new OutputDefinition(
       data_type: 'map',
       label: new TranslatableMarkup('By Operation'),
-      description: new TranslatableMarkup('Changes grouped by operation type.'),
+      description: new TranslatableMarkup('For each operation (create, update, delete), the names of the configuration it changed, newest first.'),
     ),
     'changes' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Changes'),
-      description: new TranslatableMarkup('List of all tracked configuration changes.'),
+      description: new TranslatableMarkup('Each tracked change, newest first: config_name, operation, and time (ISO 8601, UTC).'),
     ),
     'message' => new OutputDefinition(
       data_type: 'string',

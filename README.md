@@ -113,6 +113,14 @@ The client then sees three tools and not the whole list:
 too, through the same checks. For HTTP, turn gateway mode on in the
 remote settings.
 
+Add `--grow` (or `grow_tools` in a server profile) and the list grows as
+the model works. It starts with the three tools and five common ones. A
+tool the model reads with `mcp_tools_get_tool_info` is added to its list,
+and the client is told, so the model can call it by name from then on. A
+client that does not listen for list changes works as in plain gateway
+mode. On our twelve test tasks with `gpt-oss:20b` (2026-11-24), it took
+about 17% fewer calls than plain gateway mode.
+
 A model often gets a tool's name a little wrong. When only one tool can
 be meant, it runs, through the same checks as the full name: `tools_`
 left out or put in after `mcp_`, or the wrong module in the name, such

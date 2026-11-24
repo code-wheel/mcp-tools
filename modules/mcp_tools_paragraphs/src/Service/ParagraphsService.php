@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools_paragraphs\Service;
 
+use Drupal\Core\Entity\EntityDisplayRepositoryInterface;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Field\FieldTypePluginManagerInterface;
@@ -25,6 +26,7 @@ class ParagraphsService {
     protected AccessManager $accessManager,
     protected AuditLogger $auditLogger,
     protected FieldTypePluginManagerInterface $fieldTypeManager,
+    protected EntityDisplayRepositoryInterface $displays,
   ) {}
 
   /**
@@ -95,7 +97,6 @@ class ParagraphsService {
         'id' => $paragraphType->id(),
         'label' => $paragraphType->label(),
         'description' => $paragraphType->getDescription() ?? '',
-        'icon_uuid' => ($paragraphType->getIconFile() ?: NULL)?->uuid(),
         'fields' => $fields,
         'admin_path' => "/admin/structure/paragraphs_type/$id",
       ],
@@ -410,11 +411,17 @@ class ParagraphsService {
       ]);
       $field->save();
 
-      // Configure form display.
-      $this->configureFormDisplay($bundle, $fieldName, $typeConfig['widget'], $settings['widget_settings'] ?? []);
-
-      // Configure view display.
-      $this->configureViewDisplay($bundle, $fieldName, $typeConfig['formatter'], $settings['formatter_settings'] ?? []);
+      // The default displays, made when there are none.
+      $this->displays->getFormDisplay('paragraph', $bundle)
+        ->setComponent($fieldName, ['type' => $typeConfig['widget'], 'settings' => $settings['widget_settings'] ?? []])
+        ->save();
+      $this->displays->getViewDisplay('paragraph', $bundle)
+        ->setComponent($fieldName, [
+          'type' => $typeConfig['formatter'],
+          'settings' => $settings['formatter_settings'] ?? [],
+          'label' => 'above',
+        ])
+        ->save();
 
       $this->auditLogger->logSuccess('add_paragraph_field', 'field_config', "paragraph.$bundle.$fieldName", [
         'field_type' => $fieldType,
@@ -536,67 +543,6 @@ class ParagraphsService {
     }
 
     return $fields;
-  }
-
-  /**
-   * Configure form display for a field.
-   */
-  protected function configureFormDisplay(
-    string $bundle,
-    string $fieldName,
-    string $widget,
-    array $settings = [],
-  ): void {
-    $formDisplay = $this->entityTypeManager
-      ->getStorage('entity_form_display')
-      ->load("paragraph.$bundle.default");
-
-    if (!$formDisplay) {
-      $formDisplay = $this->entityTypeManager
-        ->getStorage('entity_form_display')
-        ->create([
-          'targetEntityType' => 'paragraph',
-          'bundle' => $bundle,
-          'mode' => 'default',
-          'status' => TRUE,
-        ]);
-    }
-
-    $formDisplay->setComponent($fieldName, [
-      'type' => $widget,
-      'settings' => $settings,
-    ])->save();
-  }
-
-  /**
-   * Configure view display for a field.
-   */
-  protected function configureViewDisplay(
-    string $bundle,
-    string $fieldName,
-    string $formatter,
-    array $settings = [],
-  ): void {
-    $viewDisplay = $this->entityTypeManager
-      ->getStorage('entity_view_display')
-      ->load("paragraph.$bundle.default");
-
-    if (!$viewDisplay) {
-      $viewDisplay = $this->entityTypeManager
-        ->getStorage('entity_view_display')
-        ->create([
-          'targetEntityType' => 'paragraph',
-          'bundle' => $bundle,
-          'mode' => 'default',
-          'status' => TRUE,
-        ]);
-    }
-
-    $viewDisplay->setComponent($fieldName, [
-      'type' => $formatter,
-      'settings' => $settings,
-      'label' => 'above',
-    ])->save();
   }
 
   /**

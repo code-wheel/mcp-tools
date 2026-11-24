@@ -91,19 +91,17 @@ class McpChangeTracker {
     // Sort by timestamp, newest first.
     usort($changes, fn($a, $b) => ($b['timestamp'] ?? 0) <=> ($a['timestamp'] ?? 0));
 
-    // Group by operation.
+    // Each change once, with a time a reader can read; by_operation names
+    // the config of each operation (it gave every change a second time).
     $grouped = [];
+    $list = [];
     foreach ($changes as $change) {
       $op = $change['operation'] ?? 'unknown';
-      if (!isset($grouped[$op])) {
-        $grouped[$op] = [];
-      }
-      $grouped[$op][] = [
+      $grouped[$op][] = $change['config_name'];
+      $list[] = [
         'config_name' => $change['config_name'],
-        'timestamp' => $change['timestamp'] ?? NULL,
-        'human_time' => isset($change['timestamp'])
-          ? date('Y-m-d H:i:s', (int) $change['timestamp'])
-          : 'unknown',
+        'operation' => $op,
+        'time' => isset($change['timestamp']) ? gmdate('c', (int) $change['timestamp']) : 'unknown',
       ];
     }
 
@@ -112,7 +110,7 @@ class McpChangeTracker {
       'data' => [
         'total' => count($changes),
         'by_operation' => $grouped,
-        'changes' => $changes,
+        'changes' => $list,
         'message' => sprintf(
           '%d configuration changes tracked via MCP. Consider exporting to sync these changes.',
           count($changes)

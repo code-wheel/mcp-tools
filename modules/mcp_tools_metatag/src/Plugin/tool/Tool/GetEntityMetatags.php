@@ -36,6 +36,18 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
+    'metatag_field' => new OutputDefinition(
+      data_type: 'string',
+      label: new TranslatableMarkup('Metatag field'),
+      description: new TranslatableMarkup('The field that holds the tags.'),
+      required: FALSE,
+    ),
+    'has_metatag_field' => new OutputDefinition(
+      data_type: 'boolean',
+      label: new TranslatableMarkup('Has a metatag field'),
+      description: new TranslatableMarkup('FALSE when the entity has no metatag field: then it has no tags of its own.'),
+      required: FALSE,
+    ),
     'entity_type' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Entity Type'),

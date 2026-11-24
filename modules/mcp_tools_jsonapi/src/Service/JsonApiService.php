@@ -71,15 +71,25 @@ class JsonApiService {
 
       $entityType = $this->entityTypeManager->getDefinition($entityTypeId);
 
-      $types[] = [
+      // What a type has, and nothing it has not: most have no bundle of
+      // their own and support neither revisions nor translations.
+      $type = [
         'entity_type' => $entityTypeId,
         'bundle' => $bundle,
         'resource_type' => $resourceType->getTypeName(),
-        'label' => $entityType->getLabel(),
-        'bundle_label' => $bundle !== $entityTypeId ? $this->getBundleLabel($entityTypeId, $bundle) : NULL,
-        'supports_revisions' => $entityType->isRevisionable(),
-        'supports_translations' => $entityType->isTranslatable(),
+        'label' => (string) $entityType->getLabel(),
       ];
+      $bundleLabel = $bundle !== $entityTypeId ? $this->getBundleLabel($entityTypeId, $bundle) : NULL;
+      if ($bundleLabel !== NULL) {
+        $type['bundle_label'] = $bundleLabel;
+      }
+      if ($entityType->isRevisionable()) {
+        $type['supports_revisions'] = TRUE;
+      }
+      if ($entityType->isTranslatable()) {
+        $type['supports_translations'] = TRUE;
+      }
+      $types[] = $type;
     }
 
     // Sort by entity type and bundle.
@@ -92,7 +102,6 @@ class JsonApiService {
       'data' => [
         'types' => $types,
         'total' => count($types),
-        'note' => 'Use mcp_jsonapi_list_entities or mcp_jsonapi_get_entity for specific entity operations.',
       ],
     ];
   }

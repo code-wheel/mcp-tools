@@ -5,9 +5,16 @@ declare(strict_types=1);
 namespace Drupal\Tests\mcp_tools_structure\Kernel;
 
 use Drupal\KernelTests\KernelTestBase;
+use Drupal\mcp_tools\Mcp\ToolApiCallToolHandler;
+use Drupal\mcp_tools\Mcp\ToolApiSchemaConverter;
+use Drupal\mcp_tools\Mcp\ToolInputValidator;
 use Drupal\taxonomy\Entity\Term;
 use Drupal\taxonomy\Entity\Vocabulary;
 use Drupal\Tests\user\Traits\UserCreationTrait;
+use Mcp\Schema\JsonRpc\Response;
+use Mcp\Schema\Request\CallToolRequest;
+use Mcp\Server\Session\SessionInterface;
+use Psr\Log\NullLogger;
 
 /**
  * The tools that make several terms take a parent by name.
@@ -92,6 +99,21 @@ final class TermParentsKernelTest extends KernelTestBase {
   }
 
   /**
+   * The answer says where the term went: under its parent, or at the top.
+   *
+   * It said "created" only. A model that named the parent in its thinking
+   * and left it out of the call never saw that the term was at the top
+   * (7 of 24 task passes of one kind of request, framework 2026-11-23).
+   */
+  public function testTheAnswerSaysWhereTheTermWent(): void {
+    $taxonomy = $this->container->get('mcp_tools_structure.taxonomy');
+    $top = $taxonomy->createTerm('tags', 'Food');
+    $this->assertStringContainsString('at the top level (no parent given)', $top['data']['message']);
+    $under = $taxonomy->createTerm('tags', 'Fruit', ['parent' => 'Food']);
+    $this->assertStringContainsString("under 'Food' (" . $top['data']['tid'] . ')', $under['data']['message']);
+  }
+
+  /**
    * A parent that is no term is refused, and the answer says why.
    */
   public function testAParentThatIsNoTermIsSaid(): void {
@@ -109,6 +131,31 @@ final class TermParentsKernelTest extends KernelTestBase {
     $this->assertFalse($result['success']);
     $this->assertStringContainsString("There is no term 'Nowhere'", $result['error']);
     $this->assertSame(['Kept' => ''], $this->tree());
+  }
+
+  /**
+   * The tool that makes one term takes a parent by name, or by id as a number.
+   *
+   * Its input was an integer, so "parent": "Food" was refused by the input
+   * check, though the tools that make several terms take names.
+   */
+  public function testTheOneTermToolTakesAParentByName(): void {
+    $food = Term::create(['vid' => 'tags', 'name' => 'Food']);
+    $food->save();
+    $handler = new ToolApiCallToolHandler(
+      $this->container->get('plugin.manager.tool'),
+      new NullLogger(),
+      FALSE,
+      'mcp_tools',
+      new ToolInputValidator(new ToolApiSchemaConverter(), new NullLogger()),
+    );
+    $session = $this->createMock(SessionInterface::class);
+    foreach (['Fruit' => 'Food', 'Bread' => (int) $food->id()] as $n => $parent) {
+      $response = $handler->handle((new CallToolRequest('mcp_structure_create_term', ['vocabulary' => 'tags', 'name' => $n, 'parent' => $parent]))->withId($n), $session);
+      $this->assertInstanceOf(Response::class, $response);
+      $this->assertFalse($response->result->isError, var_export($parent, TRUE) . ': ' . $response->result->content[0]->text);
+    }
+    $this->assertSame(['Bread' => 'Food', 'Food' => '', 'Fruit' => 'Food'], $this->tree());
   }
 
 }

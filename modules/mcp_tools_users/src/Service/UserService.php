@@ -113,10 +113,11 @@ class UserService {
         ],
       ];
 
-      // Include generated password in response if auto-generated.
+      // A password made up here is not given back: a model's answer goes
+      // into transcripts and logs. (It was returned, and only the tool's
+      // outputs kept it from the client, by chance.)
       if ($passwordGenerated) {
-        $result['data']['generated_password'] = $password;
-        $result['data']['password_note'] = 'This password was auto-generated. Store it securely or send a password reset email.';
+        $result['data']['message'] .= ' A random password was set and is not shown. The person sets their own with "Forgot your password?" on the login page, or an administrator sets one.';
       }
 
       return $result;

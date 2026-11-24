@@ -4,3 +4,6 @@ services:
     arguments: ['@plugin.manager.tool', '@state']
     tags:
       - { name: event_subscriber }
+  # The tool base tells it of keys a tool returned and did not declare.
+  mcp_tools.dropped_outputs:
+    alias: mcp_tools_write_detector_test.detector

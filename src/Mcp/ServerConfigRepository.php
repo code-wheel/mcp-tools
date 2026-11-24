@@ -33,6 +33,10 @@ class ServerConfigRepository {
     'pagination_limit' => 50,
     'include_all_tools' => FALSE,
     'gateway_mode' => FALSE,
+    // With gateway_mode: the list grows with what a session finds.
+    'grow_tools' => FALSE,
+    // Plugin ids a growing list starts with; empty for the factory's own.
+    'core_tools' => [],
     'enable_resources' => TRUE,
     'enable_prompts' => TRUE,
     'transports' => [],
@@ -189,6 +193,8 @@ class ServerConfigRepository {
     $merged['pagination_limit'] = max(1, (int) $merged['pagination_limit']);
     $merged['include_all_tools'] = (bool) $merged['include_all_tools'];
     $merged['gateway_mode'] = (bool) $merged['gateway_mode'];
+    $merged['grow_tools'] = (bool) $merged['grow_tools'];
+    $merged['core_tools'] = array_values(array_filter((array) $merged['core_tools'], 'is_string'));
     $merged['enable_resources'] = (bool) $merged['enable_resources'];
     $merged['enable_prompts'] = (bool) $merged['enable_prompts'];
     $merged['enabled'] = (bool) $merged['enabled'];

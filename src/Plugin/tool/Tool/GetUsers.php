@@ -37,6 +37,12 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
+    'returned' => new OutputDefinition(
+      data_type: 'integer',
+      label: new TranslatableMarkup('Shown'),
+      description: new TranslatableMarkup('Number of users in users.'),
+      required: FALSE,
+    ),
     'total_users' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Users'),
@@ -55,7 +61,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'users' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('User List'),
-      description: new TranslatableMarkup('Array of users with uid, name, mail, status (1=active, 0=blocked), roles, created, and last_access. Use uid to update/block users.'),
+      description: new TranslatableMarkup('Array of users with uid, name, email, status (active or blocked), roles, created, and last_access. Use uid to update/block users.'),
     ),
   ],
 )]

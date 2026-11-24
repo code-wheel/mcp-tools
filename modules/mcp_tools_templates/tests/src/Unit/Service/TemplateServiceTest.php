@@ -149,6 +149,27 @@ final class TemplateServiceTest extends UnitTestCase {
   }
 
   /**
+   * A template applied in part says, in its error, what was made and what not.
+   *
+   * The reasons were in data only, which a failed tool does not pass on,
+   * so the model got "Tool execution failed." and nothing else.
+   */
+  public function testAPartlyAppliedTemplateSaysWhy(): void {
+    $accessManager = $this->createMock(AccessManager::class);
+    $accessManager->method('canAdmin')->willReturn(TRUE);
+    $componentFactory = $this->createMock(ComponentFactory::class);
+    $componentFactory->method('createVocabularies')->willReturn(['created' => [['type' => 'vocabulary', 'id' => 'tags']], 'skipped' => [], 'errors' => []]);
+    $componentFactory->method('createRoles')->willReturn(['created' => [], 'skipped' => [], 'errors' => [['type' => 'role', 'id' => 'editor', 'error' => 'The role could not be saved.']]]);
+
+    $result = $this->createService(accessManager: $accessManager, componentFactory: $componentFactory)
+      ->applyTemplate('blog', ['components' => ['vocabularies', 'roles']]);
+
+    $this->assertFalse($result['success']);
+    $this->assertStringContainsString('1 components made, 1 not', $result['error'] ?? '', 'The failure says nothing a model can read.');
+    $this->assertStringContainsString("role 'editor': The role could not be saved.", $result['error']);
+  }
+
+  /**
    * A kind of component the template does not have is refused.
    *
    * "content_type" for "content_types" applied nothing and said success.

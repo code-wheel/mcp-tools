@@ -64,7 +64,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'created' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Created Terms'),
-      description: new TranslatableMarkup('Array of created terms with tid, name, and path.'),
+      description: new TranslatableMarkup('Array of created terms with index, tid, and name.'),
     ),
     'skipped' => new OutputDefinition(
       data_type: 'list',

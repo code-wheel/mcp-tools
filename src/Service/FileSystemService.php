@@ -150,6 +150,7 @@ class FileSystemService {
     $query->isNull('fu.fid');
     // Only permanent files.
     $query->condition('fm.status', 1);
+    $all = (int) (clone $query)->countQuery()->execute()->fetchField();
     $query->range(0, $limit);
 
     $orphanedFids = $query->execute()->fetchCol();
@@ -158,7 +159,7 @@ class FileSystemService {
       return [
         'total_orphaned' => 0,
         'files' => [],
-        'note' => 'No orphaned files found (checked up to ' . $limit . ' files).',
+        'note' => 'No orphaned files found.',
       ];
     }
 
@@ -180,7 +181,8 @@ class FileSystemService {
     }
 
     return [
-      'total_orphaned' => count($orphaned),
+      // All there are, not the ones shown.
+      'total_orphaned' => $all,
       'total_size_bytes' => $totalSize,
       'total_size_human' => $this->formatBytes($totalSize),
       'files' => $orphaned,

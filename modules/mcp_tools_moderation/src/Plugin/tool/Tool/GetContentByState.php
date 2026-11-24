@@ -71,7 +71,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'content' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Content'),
-      description: new TranslatableMarkup('Array of entities with id, type, bundle, label, and changed date.'),
+      description: new TranslatableMarkup('Array of entities with entity_type, entity_id, bundle, label, url, and changed.'),
     ),
   ],
 )]

@@ -38,6 +38,12 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
+    'pagination' => new OutputDefinition(
+      data_type: 'map',
+      label: new TranslatableMarkup('Paging'),
+      description: new TranslatableMarkup('limit, offset, and has_more: TRUE when there are more items after these; ask again with a higher offset.'),
+      required: FALSE,
+    ),
     'items' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Scheduled Items'),

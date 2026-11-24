@@ -43,6 +43,16 @@ use Drupal\tool\TypedData\InputDefinition;
       label: new TranslatableMarkup('Success status'),
       description: new TranslatableMarkup('True if style was created. Add effects with mcp_image_styles_add_effect.'),
     ),
+    'id' => new OutputDefinition(
+      data_type: 'string',
+      label: new TranslatableMarkup('Style ID'),
+      description: new TranslatableMarkup('Machine name of the new style: give it as style_id to mcp_image_styles_add_effect.'),
+    ),
+    'label' => new OutputDefinition(
+      data_type: 'string',
+      label: new TranslatableMarkup('Label'),
+      description: new TranslatableMarkup('Label of the new style.'),
+    ),
     'message' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result message'),

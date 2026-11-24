@@ -72,6 +72,12 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
+    'changed' => new OutputDefinition(
+      data_type: 'boolean',
+      label: new TranslatableMarkup('Changed'),
+      description: new TranslatableMarkup('FALSE when the block already had what was given: nothing was saved.'),
+      required: FALSE,
+    ),
     'block_id' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Block ID'),

@@ -38,6 +38,12 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
+    'is_complete' => new OutputDefinition(
+      data_type: 'boolean',
+      label: new TranslatableMarkup('Complete'),
+      description: new TranslatableMarkup('TRUE when nothing is left to index; else call again.'),
+      required: FALSE,
+    ),
     'success' => new OutputDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Success status'),

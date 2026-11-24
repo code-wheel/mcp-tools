@@ -57,12 +57,12 @@ use Drupal\tool\TypedData\InputDefinition;
     'total' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Terms'),
-      description: new TranslatableMarkup('Number of terms returned.'),
+      description: new TranslatableMarkup('Number of terms in the vocabulary. terms holds up to limit of them.'),
     ),
     'terms' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Terms'),
-      description: new TranslatableMarkup('Array of terms with tid, name, description, weight, and parent. Use tid for entity reference fields.'),
+      description: new TranslatableMarkup('Array of terms with tid, name, description, weight, parent_ids, and depth (and children when hierarchical). Use tid for entity reference fields.'),
     ),
   ],
 )]

@@ -43,6 +43,11 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
+    'admin_path' => new OutputDefinition(
+      data_type: 'string',
+      label: new TranslatableMarkup('Admin path'),
+      description: new TranslatableMarkup('Where a person edits the role on the site.'),
+    ),
     'id' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Role ID'),
