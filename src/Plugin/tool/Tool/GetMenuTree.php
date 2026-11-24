@@ -50,7 +50,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'tree' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Menu Tree'),
-      description: new TranslatableMarkup('Hierarchical array of menu links. Each has id, title, url, weight, enabled, and children (nested links).'),
+      description: new TranslatableMarkup('Hierarchical array of menu links. Each has plugin_id, id (for a link made in the UI or by mcp_menus_add_menu_link, else null), title, url, weight, enabled, expanded, and children (nested links). Give the plugin_id or the id as a parent.'),
     ),
   ],
 )]

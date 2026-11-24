@@ -8,6 +8,7 @@ use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AuditLogger;
+use Drupal\mcp_tools\Service\TermParent;
 use Drupal\mcp_tools\Service\TextFormat;
 
 /**
@@ -289,15 +290,14 @@ class TaxonomyManagementService {
       // Handle parent term. A parent that is not there, or is in another
       // vocabulary, was stored: the term then dropped out of the tree and the
       // vocabulary's overview.
-      if (isset($options['parent']) && (string) $options['parent'] !== '0') {
-        $parent = $this->entityTypeManager->getStorage('taxonomy_term')->load($options['parent']);
-        if ($parent === NULL || $parent->bundle() !== $vocabulary) {
-          return [
-            'success' => FALSE,
-            'error' => "There is no term {$options['parent']} in vocabulary '$vocabulary' to be the parent. mcp_structure_get_vocabulary lists its terms.",
-          ];
+      if (isset($options['parent'])) {
+        $parent = TermParent::resolve($this->entityTypeManager, $vocabulary, $options['parent'], $options['made_now'] ?? []);
+        if (is_string($parent)) {
+          return ['success' => FALSE, 'error' => $parent];
         }
-        $termData['parent'] = ['target_id' => $parent->id()];
+        if ($parent > 0) {
+          $termData['parent'] = ['target_id' => $parent];
+        }
       }
 
       // Use getCurrentTime() to avoid frozen REQUEST_TIME in server mode.
@@ -361,17 +361,24 @@ class TaxonomyManagementService {
 
     $created = [];
     $errors = [];
+    // A parent may be a term made earlier in this call, by its name.
+    $madeNow = [];
 
     foreach ($terms as $termData) {
       // Normalize to array format.
       if (is_string($termData)) {
         $termData = ['name' => $termData];
       }
+      if (!is_array($termData) || !is_string($termData['name'] ?? NULL) || trim($termData['name']) === '') {
+        $errors[] = ['name' => '', 'error' => 'A term needs a name.'];
+        continue;
+      }
 
-      $result = $this->createTerm($vocabulary, $termData['name'], $termData);
+      $result = $this->createTerm($vocabulary, $termData['name'], ['made_now' => $madeNow] + $termData);
 
       if ($result['success']) {
         $created[] = $result['data'];
+        $madeNow[$termData['name']] = (int) $result['data']['tid'];
       }
       else {
         $errors[] = [
@@ -381,15 +388,23 @@ class TaxonomyManagementService {
       }
     }
 
+    $data = [
+      'vocabulary' => $vocabulary,
+      'created_count' => count($created),
+      'error_count' => count($errors),
+      'created' => $created,
+      'errors' => $errors,
+    ];
+    if ($errors === []) {
+      return ['success' => TRUE, 'data' => $data];
+    }
+    // Said in the error: a failed tool's data does not reach the model,
+    // which got "Tool execution failed." and nothing else.
     return [
-      'success' => empty($errors),
-      'data' => [
-        'vocabulary' => $vocabulary,
-        'created_count' => count($created),
-        'error_count' => count($errors),
-        'created' => $created,
-        'errors' => $errors,
-      ],
+      'success' => FALSE,
+      'error' => sprintf('%d of %d terms were not made%s: ', count($errors), count($terms), $created ? ' (the others were)' : '')
+        . implode(' ', array_map(fn($e) => ($e['name'] !== '' ? "'{$e['name']}': " : '') . $e['error'], $errors)),
+      'data' => $data,
     ];
   }
 

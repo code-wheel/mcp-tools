@@ -1,4 +1,4 @@
-name: 'MCP Tools: JSON:API'
+name: 'MCP Tools - JSON:API'
 type: module
 description: 'Generic entity access via JSON:API for AI agents. Provides fallback CRUD tools for any entity type.'
 package: MCP Tools

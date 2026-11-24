@@ -13,9 +13,12 @@ use Drupal\Core\Field\FieldStorageDefinitionInterface;
 use Drupal\Core\Field\FieldTypePluginManagerInterface;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AuditLogger;
+use Drupal\mcp_tools\Service\FieldInput;
+use Drupal\mcp_tools_paragraphs\Plugin\tool\Tool\AddParagraphField;
 use Drupal\mcp_tools_paragraphs\Service\ParagraphsService;
 use Drupal\paragraphs\ParagraphsTypeInterface;
 use Drupal\Tests\UnitTestCase;
+use Drupal\tool\Attribute\Tool;
 
 #[\PHPUnit\Framework\Attributes\CoversClass(ParagraphsService::class)]
 #[\PHPUnit\Framework\Attributes\Group('mcp_tools_paragraphs')]
@@ -38,6 +41,13 @@ final class ParagraphsServiceTest extends UnitTestCase {
    */
   protected array $fieldDefinitions = [];
 
+  /**
+   * Field types whose module is off.
+   *
+   * @var string[]
+   */
+  protected array $missingFieldTypes = [];
+
   protected function setUp(): void {
     parent::setUp();
 
@@ -49,6 +59,9 @@ final class ParagraphsServiceTest extends UnitTestCase {
     $this->entityTypeManager = $this->createMock(EntityTypeManagerInterface::class);
     $this->entityFieldManager = $this->createMock(EntityFieldManagerInterface::class);
     $this->fieldTypeManager = $this->createMock(FieldTypePluginManagerInterface::class);
+    // Every field type is there, but the ones a test says are off.
+    $this->fieldTypeManager->method('hasDefinition')
+      ->willReturnCallback(fn (string $type): bool => !in_array($type, $this->missingFieldTypes, TRUE));
     $this->accessManager = $this->createMock(AccessManager::class);
     $this->auditLogger = $this->createMock(AuditLogger::class);
     $this->paragraphsTypeStorage = $this->createMock(EntityStorageInterface::class);
@@ -75,9 +88,9 @@ final class ParagraphsServiceTest extends UnitTestCase {
     return new ParagraphsService(
       $this->entityTypeManager,
       $this->entityFieldManager,
-      $this->fieldTypeManager,
       $this->accessManager,
       $this->auditLogger,
+      $this->fieldTypeManager,
     );
   }
 
@@ -318,6 +331,38 @@ final class ParagraphsServiceTest extends UnitTestCase {
     $this->assertArrayHasKey('available_types', $result);
   }
 
+  /**
+   * A type whose module is off is refused before anything is made.
+   *
+   * The paragraphs copy of the type table took it, and Drupal failed on
+   * the field storage. The answer names the types the site has.
+   */
+  public function testAddFieldRefusesATypeWhoseModuleIsOff(): void {
+    $this->accessManager->method('canWrite')->willReturn(TRUE);
+    $this->missingFieldTypes = ['list_string'];
+    $this->paragraphsTypeStorage->expects($this->never())->method('load');
+
+    $result = $this->createService()->addField('text', 'style', 'list_string');
+
+    $this->assertFalse($result['success']);
+    $this->assertStringContainsString('not available on this site', $result['error']);
+    $this->assertNotContains('list_string', $result['available_types']);
+    $this->assertContains('timestamp', $result['available_types'], 'The paragraphs tools do not take timestamp, which the structure tools do.');
+  }
+
+  /**
+   * The tool's text names every field type the service takes.
+   *
+   * It named 6 of them and "etc.", as the structure tool's text did before
+   * a model picked text_long where plain long text was asked for.
+   */
+  public function testTheToolNamesEveryFieldType(): void {
+    $attribute = (new \ReflectionClass(AddParagraphField::class))->getAttributes(Tool::class)[0]->getArguments();
+    $text = $attribute['input_definitions']['field_type']->getDescription()->getUntranslatedString();
+    $missing = array_values(array_filter(array_keys(FieldInput::TYPES), static fn(string $type): bool => !preg_match('/(?<![a-z_])' . $type . '(?![a-z_])/', $text)));
+    $this->assertSame([], $missing, 'mcp_paragraphs_add_field does not name: ' . implode(', ', $missing));
+  }
+
   public function testAddFieldChecksParagraphTypeExists(): void {
     $this->accessManager->method('canWrite')->willReturn(TRUE);
     $this->paragraphsTypeStorage->method('load')
@@ -447,9 +492,9 @@ final class ParagraphsServiceTest extends UnitTestCase {
     $service = new ParagraphsService(
       $this->entityTypeManager,
       $entityFieldManager,
-      $this->fieldTypeManager,
       $this->accessManager,
       $this->auditLogger,
+      $this->fieldTypeManager,
     );
 
     $method = new \ReflectionMethod($service, 'getFieldsForBundle');

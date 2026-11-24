@@ -7,7 +7,6 @@ namespace Drupal\mcp_tools_pathauto\Service;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AuditLogger;
-use Drupal\pathauto\AliasCleanerInterface;
 use Drupal\pathauto\PathautoGeneratorInterface;
 
 /**
@@ -23,7 +22,6 @@ class PathautoService {
   public function __construct(
     protected EntityTypeManagerInterface $entityTypeManager,
     protected PathautoGeneratorInterface $pathautoGenerator,
-    protected AliasCleanerInterface $aliasCleaner,
     protected AccessManager $accessManager,
     protected AuditLogger $auditLogger,
   ) {}

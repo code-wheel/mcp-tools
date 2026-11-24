@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools\Service;
 
-use Drupal\Core\Database\Connection;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 
@@ -16,7 +15,6 @@ class ContentAnalysisService {
   public function __construct(
     protected EntityTypeManagerInterface $entityTypeManager,
     protected EntityFieldManagerInterface $entityFieldManager,
-    protected Connection $database,
   ) {}
 
   /**
@@ -63,6 +61,12 @@ class ContentAnalysisService {
         'label' => $type->label(),
         'description' => $type->getDescription(),
         'field_count' => count($customFields),
+        // The content the user may see: with access checked, as search is.
+        'content_count' => (int) $this->entityTypeManager->getStorage('node')->getQuery()
+          ->accessCheck(TRUE)
+          ->condition('type', $type->id())
+          ->count()
+          ->execute(),
         'fields' => $customFields,
       ];
     }

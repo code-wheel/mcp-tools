@@ -25,7 +25,6 @@ use Drupal\Core\Cache\CacheTagsInvalidatorInterface;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Database\Schema;
 use Drupal\Core\DrupalKernelInterface;
-use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Menu\MenuLinkManagerInterface;
 use Drupal\Core\Routing\RouteBuilderInterface;
 use Drupal\Core\Theme\Registry;
@@ -98,7 +97,6 @@ final class CacheServiceTest extends UnitTestCase {
   private function createService(Connection $database): CacheService {
     return new CacheService(
       $this->createMock(CacheTagsInvalidatorInterface::class),
-      $this->createMock(ModuleHandlerInterface::class),
       $database,
       $this->cacheFactory,
       $this->routerBuilder,
@@ -254,7 +252,6 @@ final class CacheServiceTest extends UnitTestCase {
 
     $service = new CacheService(
       $cacheTagsInvalidator,
-      $this->createMock(ModuleHandlerInterface::class),
       $this->createMock(Connection::class),
       $this->cacheFactory,
       $this->routerBuilder,

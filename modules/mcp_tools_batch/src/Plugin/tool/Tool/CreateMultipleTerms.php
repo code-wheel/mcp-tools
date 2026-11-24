@@ -31,7 +31,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'terms' => new InputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Terms'),
-      description: new TranslatableMarkup('Array of terms to create. Each can be a string (term name) or object with "name", "description", "parent" (term ID), "weight".'),
+      description: new TranslatableMarkup('Array of terms to create. Each can be a string (term name) or object with "name", "description", "parent" (a term id or a term name, also of a term made earlier in this list), "weight".'),
       required: TRUE,
     ),
   ],

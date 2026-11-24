@@ -220,6 +220,34 @@ final class ToolApiCallToolHandlerKernelTest extends KernelTestBase {
   }
 
   /**
+   * A yes/no or a whole number is cast only when its meaning is plain.
+   *
+   * "garbage", 2 and "1.0" became FALSE, and "1.9" became 1, before the
+   * schema check could see them (issue: boolean and integer upcasting
+   * before validation). A value that is not plain is refused as sent.
+   */
+  public function testOnlyPlainValuesAreCast(): void {
+    $handler = $this->buildHandler();
+    $session = $this->createMock(SessionInterface::class);
+    $values = function (array $arguments) use ($handler, $session): ?array {
+      $result = $handler->handle((new CallToolRequest('foreign_test_echo', $arguments))->withId(9), $session)->result;
+      return $result->isError ? NULL : ($result->structuredContent['data']['values'] ?? []);
+    };
+    foreach ([[TRUE, TRUE], ['true', TRUE], ['1', TRUE], [1, TRUE], ['false', FALSE], [0, FALSE], ['no', FALSE]] as [$sent, $meant]) {
+      $this->assertSame($meant, $values(['count' => 1, 'dry_run' => $sent])['dry_run'] ?? 'refused', 'dry_run ' . json_encode($sent));
+    }
+    foreach (['garbage', 2, '1.0', 'yes please'] as $sent) {
+      $this->assertNull($values(['count' => 1, 'dry_run' => $sent]), 'dry_run ' . json_encode($sent) . ' was taken as a yes or a no.');
+    }
+    foreach ([[5, 5], ['5', 5], [' 7 ', 7], ['-3', -3], [5.0, 5]] as [$sent, $meant]) {
+      $this->assertSame($meant, $values(['count' => $sent])['count'] ?? 'refused', 'count ' . json_encode($sent));
+    }
+    foreach (['1.9', '7.5', '1e3', 1.9] as $sent) {
+      $this->assertNull($values(['count' => $sent]), 'count ' . json_encode($sent) . ' was cut to a whole number.');
+    }
+  }
+
+  /**
    * Undeclared arguments fail validation instead of being silently dropped.
    *
    * End-to-end regression for the incident where an undeclared "language"

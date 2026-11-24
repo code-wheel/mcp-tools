@@ -55,6 +55,7 @@ final class ToolOperationDeclarationTest extends UnitTestCase {
     'Schedule',
     'Set',
     'Translate',
+    'Undo',
     'Update',
     'Upload',
   ];

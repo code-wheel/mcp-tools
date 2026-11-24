@@ -6,7 +6,6 @@ namespace Drupal\mcp_tools\Service;
 
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
-use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\StreamWrapper\StreamWrapperManagerInterface;
 
 /**
@@ -15,7 +14,6 @@ use Drupal\Core\StreamWrapper\StreamWrapperManagerInterface;
 class FileSystemService {
 
   public function __construct(
-    protected FileSystemInterface $fileSystem,
     protected StreamWrapperManagerInterface $streamWrapperManager,
     protected EntityTypeManagerInterface $entityTypeManager,
     protected Connection $database,

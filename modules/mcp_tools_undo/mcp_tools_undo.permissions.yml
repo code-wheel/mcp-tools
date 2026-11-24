@@ -1,0 +1,13 @@
+mcp_tools use undo:
+  title: 'Use MCP undo tools'
+  description: 'List the recent tool calls that changed something, and undo one, via MCP (MCP Tools - Undo).'
+  restrict access: true
+
+view mcp tool calls:
+  title: 'See what MCP tool calls changed'
+  description: 'The list under Reports, with the content and config each call made, changed or deleted.'
+  restrict access: true
+undo mcp tool calls:
+  title: 'Undo MCP tool calls'
+  description: 'Put back what a tool call changed, from the list under Reports.'
+  restrict access: true

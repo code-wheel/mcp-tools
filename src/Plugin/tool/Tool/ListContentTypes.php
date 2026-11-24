@@ -38,7 +38,7 @@ use Drupal\tool\Tool\ToolOperation;
     'types' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Content Types'),
-      description: new TranslatableMarkup('Array of content types with id (machine name), label, description, and fields. Use the id when creating content.'),
+      description: new TranslatableMarkup('Array of content types with id (machine name), label, description, field_count, content_count (the content the user may see) and fields. Use the id when creating content.'),
     ),
   ],
 )]

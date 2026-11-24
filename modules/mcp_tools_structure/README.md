@@ -11,7 +11,7 @@ Site structure management: content types, fields, taxonomy, and roles.
 | `mcp_structure_create_content_type` | Create new content types with body field |
 | `mcp_structure_delete_content_type` | Remove custom content types |
 | `mcp_structure_get_content_type` | Get details of a content type |
-| `mcp_structure_list_content_types` | List all content types |
+| `mcp_structure_list_content_types` | Deprecated: use `mcp_tools_list_content_types` (base module) |
 
 ### Fields
 
@@ -58,6 +58,7 @@ Site structure management: content types, fields, taxonomy, and roles.
 - `email` / `link` - An address, a URL
 - `datetime` / `date` / `timestamp` - Date and time, date only, a timestamp
 - `entity_reference` - References to other entities
+- `paragraphs` - A field that holds paragraphs (needs Paragraphs; `target_bundles` names the paragraph types)
 - `image` / `file` - Media
 - `list_string` / `list_integer` - A fixed set of options
 

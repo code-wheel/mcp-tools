@@ -88,16 +88,63 @@ class MigrateImport {
     if (!$this->exists($id)) {
       return [];
     }
-    $map = $this->migrationManager->createInstance($id)->getIdMap();
     $made = [];
-    foreach ($keys as $key) {
-      foreach ($map->lookupDestinationIds([(string) $key]) as $destination) {
-        if (array_filter($destination, fn($v) => $v !== NULL && $v !== '')) {
-          $made[(string) $key] = TRUE;
-        }
+    foreach ($this->destinations($id, $keys) as $key => [$destination, $there]) {
+      if ($there) {
+        $made[$key] = TRUE;
       }
     }
     return $made;
+  }
+
+  /**
+   * Marks to run again the rows whose entity is gone.
+   *
+   * Migrate's record says such a row was imported, so with its data
+   * unchanged a run skipped it: a node deleted by hand was not made again,
+   * and the import said success.
+   *
+   * @param string $id
+   *   The import's migration id.
+   * @param string[] $keys
+   *   Source keys of this run.
+   */
+  public function rerunGone(string $id, array $keys): void {
+    if (!$this->exists($id)) {
+      return;
+    }
+    $migration = $this->migrationManager->createInstance($id);
+    $map = $migration->getIdMap();
+    // The record wants the key by its column's name.
+    $column = (string) array_key_first((array) ($migration->getSourceConfiguration()['ids'] ?? []));
+    foreach ($this->destinations($id, $keys) as $key => [$destination, $there]) {
+      if (!$there) {
+        $map->setUpdate([$column => (string) $key]);
+      }
+    }
+  }
+
+  /**
+   * For each key the record knows: its entity id and whether it is there.
+   *
+   * @return array<string, array{0: int|string, 1: bool}>
+   *   By key.
+   */
+  protected function destinations(string $id, array $keys): array {
+    $migration = $this->migrationManager->createInstance($id);
+    $map = $migration->getIdMap();
+    $entityType = substr((string) ($migration->getDestinationConfiguration()['plugin'] ?? ''), strlen('entity:'));
+    $storage = $this->entityTypeManager->getStorage($entityType);
+    $found = [];
+    foreach ($keys as $key) {
+      foreach ($map->lookupDestinationIds([(string) $key]) as $destination) {
+        $value = reset($destination);
+        if ($value !== NULL && $value !== '' && $value !== FALSE) {
+          $found[(string) $key] = [$value, $storage->load($value) !== NULL];
+        }
+      }
+    }
+    return $found;
   }
 
   /**

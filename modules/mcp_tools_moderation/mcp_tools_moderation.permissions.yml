@@ -1,4 +1,4 @@
 mcp_tools use moderation:
-  title: 'Use MCP moderation tools'
-  description: 'View and update content moderation state and workflows via MCP.'
+  title: 'Use MCP moderation tools (category: moderation)'
+  description: 'Access Content Moderation workflow and state operations via MCP.'
   restrict access: true

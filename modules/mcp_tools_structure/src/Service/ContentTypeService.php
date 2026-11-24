@@ -5,9 +5,7 @@ declare(strict_types=1);
 namespace Drupal\mcp_tools_structure\Service;
 
 use Drupal\field\FieldConfigInterface;
-use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Entity\EntityFieldManagerInterface;
-use Drupal\Core\Entity\EntityTypeBundleInfoInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Field\FieldTypePluginManagerInterface;
 use Drupal\mcp_tools\Service\AccessManager;
@@ -20,8 +18,6 @@ class ContentTypeService {
 
   public function __construct(
     protected EntityTypeManagerInterface $entityTypeManager,
-    protected EntityTypeBundleInfoInterface $bundleInfo,
-    protected ConfigFactoryInterface $configFactory,
     protected AccessManager $accessManager,
     protected AuditLogger $auditLogger,
     protected EntityFieldManagerInterface $entityFieldManager,

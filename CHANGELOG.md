@@ -4,6 +4,136 @@ All notable changes to the MCP Tools module will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.0.0-beta27] - 2026-11-23
+
+### Security
+
+- **The tools follow Drupal's field access, not only its entity access.**
+  Where tools follow entity access (new sites), a content or batch tool
+  that creates, updates or publishes a node checks each field it sets.
+  On a node, the owner, the published status, the dates, promote and
+  sticky are for "administer nodes", as on Drupal's node form. Before, a
+  writer could create content owned by user 1, give their node to
+  someone else, or publish without that permission. Sites that updated
+  from before 1.0.0-beta23 keep the old behavior until they turn
+  `access.entity_access` on.
+
+### Changed
+
+- **One field type table for both field tools.** `mcp_paragraphs_add_field`
+  had its own copy: it did not take `timestamp`, took a type whose module
+  is off (Drupal then failed), and its text named 6 types and "etc.".
+  It now takes the same types as `mcp_structure_add_field`, refuses one
+  whose module is off with the ones the site has, and names them all.
+
+- **Each submodule owns its permission.** The base module defined the
+  permission of every category, so the permissions page listed all 36,
+  also for submodules that are off, and uninstalling a submodule left its
+  permission on the roles. Now each submodule defines its own
+  (`mcp_tools use metatag` in MCP Tools - Metatag, and so on), and the
+  base module the six its own tools use. `drush updb` takes from roles the
+  permissions of submodules that are off and saves each role, so an
+  uninstall revokes the submodule's permission from then on.
+
+- **One group on the Extend page.** The base module and its submodules
+  were under "AI", "MCP" and "MCP Tools"; all are under "MCP Tools" now,
+  each named "MCP Tools - X". Machine names are as they were.
+
+- **The export is the mirror of the import.** `mcp_migration_export_json`
+  and `mcp_migration_export_csv` take `entity_type` (node, taxonomy_term,
+  redirect) and give the rows the import of that type reads back. With
+  `references: "names"`, tags and a term's parent go by name, so an export
+  from one site imports into another, a term tree included.
+
+### Removed
+
+- Six category permissions that let nothing through: `mcp_tools use
+  site_tools`, `content_tools`, `config_tools`, `user_tools`,
+  `structure_tools` (older names of five categories, which no code
+  checked) and `workflows` (no tool used it). `drush updb` takes them from
+  the roles. The remote setup no longer grants them.
+
+### Deprecated
+
+- **`mcp_structure_list_content_types`**, to be removed in a later
+  release. `mcp_tools_list_content_types` gives the same, with each type's
+  fields, and now its `content_count` too, counted with access checked
+  (the structure tool counted all content, also what the user may not
+  see). One tool for one question.
+
+- **`mcp_migration_validate`**, to be removed in a later release. Use
+  `mcp_migration_import_json` (or `_csv`) with `dry_run`: it runs the
+  checks the import itself runs (the key, references by id or name, a
+  term's parent), so it cannot drift from the import, and writes nothing.
+  The tool says so in its description and in its answer.
+
+### Added
+
+- **A field that holds paragraphs.** The `paragraphs` field type in
+  `mcp_structure_add_field`, `mcp_structure_scaffold_content_type` and
+  `mcp_paragraphs_add_field`: paragraphs on a content type, or inside a
+  paragraph type. No tool could add one before, so a model could make
+  paragraph types but not use them. It is an entity reference revisions
+  field with the Paragraphs widget, holds many by default, and
+  `target_bundles` names the paragraph types. Offered when Paragraphs is
+  on.
+
+- **MCP Tools - Undo** (`mcp_tools_undo`, new): undo what one tool call
+  changed. While it is on, each call's changes are kept:
+  content made, changed or deleted, and config. `mcp_undo_call` puts them
+  back, newest first: what the call made is deleted, what it changed gets
+  the revision before as a new revision (or its values), what it deleted
+  is made again, and config gets its data back. When anything was changed
+  again since, the undo is refused and nothing is undone. It asks first.
+  `mcp_undo_recent` lists the recent calls.
+  - Each call is an **MCP tool call** record (an entity), kept 30 days by
+    default (`keep_days`) and removed on cron.
+  - **Reports > MCP tool calls** shows people what the AI changed, with
+    an Undo button on each call. Permissions: "See what MCP tool calls
+    changed" and "Undo MCP tool calls". The records have Views data.
+
+### Fixed
+
+- **A redirect's new destination broke it.** `mcp_redirect_update` stored
+  `internal:/internal:/node/2` and answered success: the redirect led
+  nowhere after the first change of its destination. It now stores it as
+  the create and import tools do.
+- **A menu link's parent could only be guessed.** A wrong parent is
+  refused with "give the plugin_id or the id", and
+  `mcp_tools_get_menu_tree` showed neither. Each link in the tree now has
+  `plugin_id` and `id`.
+- **An edit of a waiting draft says it is the draft.** The answer of
+  `mcp_update_content` gave the draft's title only, so a model that had
+  found the live title "corrected" it back. It now says `draft`, gives
+  `live_title`, and says the draft's changes are its own.
+- **The import's key follows the column mapping.** With a `field_mapping`
+  that renames the key column, the key given as the CSV has it failed
+  every row, and the call answered success with nothing made. Both names
+  work now, and a key no row has is refused with the columns there are.
+- **The term tools take a parent by name.** `mcp_structure_create_terms`
+  and `mcp_batch_create_terms` took an id only: given a name, the first
+  answered "Tool execution failed." and nothing else, the second stored a
+  parent that was no term. A parent may now be a term's id or name, also
+  of a term made earlier in the same call, and a term that is not made
+  is named in the error with why.
+
+- **An import run again makes again what was deleted by hand.** Migrate's
+  record still said the row was imported, so a rerun skipped it and
+  answered success with nothing made.
+- **New content on a moderated type says why a status is refused.**
+  `mcp_create_content` with `status` on a type under a moderation workflow
+  answers `MODERATED` and points to `mcp_moderation_set_state`, as an
+  update does. The workflow's state decides the status.
+- **The CSV export keeps every value of a reference field,** joined by
+  `|`. It kept the first one only.
+- **A yes/no or a whole number is taken only when its meaning is plain.**
+  Before the input check, a boolean input turned anything it did not
+  know ("garbage", `2`, `"1.0"`) into FALSE, and an integer input cut
+  `"1.9"` to 1 and read `"1e3"` as 1000. The call then went on with a
+  value nobody sent. Now only plain values are cast (`true`, `"1"`,
+  `"no"`, `"5"`, `5.0`), and anything else is refused by the input
+  check as it was sent.
+
 ## [1.0.0-beta25] - 2026-11-23
 
 ### Changed

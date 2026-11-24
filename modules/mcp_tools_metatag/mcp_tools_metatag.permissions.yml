@@ -1,4 +1,4 @@
 mcp_tools use metatag:
-  title: 'Use MCP metatag tools'
-  description: 'View and update Metatag defaults and entity metatags via MCP.'
+  title: 'Use MCP metatag tools (category: metatag)'
+  description: 'Access Metatag configuration tools via MCP.'
   restrict access: true

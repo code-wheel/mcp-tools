@@ -3,8 +3,6 @@ services:
     class: Drupal\mcp_tools_structure\Service\ContentTypeService
     arguments:
       - '@entity_type.manager'
-      - '@entity_type.bundle.info'
-      - '@config.factory'
       - '@mcp_tools.access_manager'
       - '@mcp_tools.audit_logger'
       - '@entity_field.manager'

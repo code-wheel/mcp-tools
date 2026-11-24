@@ -19,126 +19,12 @@ use Drupal\paragraphs\Entity\ParagraphsType;
  */
 class ParagraphsService {
 
-  /**
-   * Common field type mappings with default settings.
-   */
-  protected const FIELD_TYPE_DEFAULTS = [
-    'string' => [
-      'type' => 'string',
-      'widget' => 'string_textfield',
-      'formatter' => 'string',
-      'storage_settings' => ['max_length' => 255],
-    ],
-    'string_long' => [
-      'type' => 'string_long',
-      'widget' => 'string_textarea',
-      'formatter' => 'basic_string',
-      'storage_settings' => [],
-    ],
-    'text' => [
-      'type' => 'text',
-      'widget' => 'text_textfield',
-      'formatter' => 'text_default',
-      'storage_settings' => ['max_length' => 255],
-    ],
-    'text_long' => [
-      'type' => 'text_long',
-      'widget' => 'text_textarea',
-      'formatter' => 'text_default',
-      'storage_settings' => [],
-    ],
-    'text_with_summary' => [
-      'type' => 'text_with_summary',
-      'widget' => 'text_textarea_with_summary',
-      'formatter' => 'text_default',
-      'storage_settings' => [],
-    ],
-    'integer' => [
-      'type' => 'integer',
-      'widget' => 'number',
-      'formatter' => 'number_integer',
-      'storage_settings' => [],
-    ],
-    'decimal' => [
-      'type' => 'decimal',
-      'widget' => 'number',
-      'formatter' => 'number_decimal',
-      'storage_settings' => ['precision' => 10, 'scale' => 2],
-    ],
-    'float' => [
-      'type' => 'float',
-      'widget' => 'number',
-      'formatter' => 'number_decimal',
-      'storage_settings' => [],
-    ],
-    'boolean' => [
-      'type' => 'boolean',
-      'widget' => 'boolean_checkbox',
-      'formatter' => 'boolean',
-      'storage_settings' => [],
-    ],
-    'email' => [
-      'type' => 'email',
-      'widget' => 'email_default',
-      'formatter' => 'basic_string',
-      'storage_settings' => [],
-    ],
-    'link' => [
-      'type' => 'link',
-      'widget' => 'link_default',
-      'formatter' => 'link',
-      'storage_settings' => [],
-    ],
-    'datetime' => [
-      'type' => 'datetime',
-      'widget' => 'datetime_default',
-      'formatter' => 'datetime_default',
-      'storage_settings' => ['datetime_type' => 'datetime'],
-    ],
-    'date' => [
-      'type' => 'datetime',
-      'widget' => 'datetime_default',
-      'formatter' => 'datetime_default',
-      'storage_settings' => ['datetime_type' => 'date'],
-    ],
-    'image' => [
-      'type' => 'image',
-      'widget' => 'image_image',
-      'formatter' => 'image',
-      'storage_settings' => ['target_type' => 'file'],
-    ],
-    'file' => [
-      'type' => 'file',
-      'widget' => 'file_generic',
-      'formatter' => 'file_default',
-      'storage_settings' => ['target_type' => 'file'],
-    ],
-    'entity_reference' => [
-      'type' => 'entity_reference',
-      'widget' => 'entity_reference_autocomplete',
-      'formatter' => 'entity_reference_label',
-      'storage_settings' => [],
-    ],
-    'list_string' => [
-      'type' => 'list_string',
-      'widget' => 'options_select',
-      'formatter' => 'list_default',
-      'storage_settings' => ['allowed_values' => []],
-    ],
-    'list_integer' => [
-      'type' => 'list_integer',
-      'widget' => 'options_select',
-      'formatter' => 'list_default',
-      'storage_settings' => ['allowed_values' => []],
-    ],
-  ];
-
   public function __construct(
     protected EntityTypeManagerInterface $entityTypeManager,
     protected EntityFieldManagerInterface $entityFieldManager,
-    protected FieldTypePluginManagerInterface $fieldTypeManager,
     protected AccessManager $accessManager,
     protected AuditLogger $auditLogger,
+    protected FieldTypePluginManagerInterface $fieldTypeManager,
   ) {}
 
   /**
@@ -417,11 +303,14 @@ class ParagraphsService {
     }
 
     // Check field type.
-    if (!isset(self::FIELD_TYPE_DEFAULTS[$fieldType])) {
+    $available = FieldInput::availableTypes($this->fieldTypeManager, $this->entityTypeManager);
+    if (!in_array($fieldType, $available, TRUE)) {
       return [
         'success' => FALSE,
-        'error' => "Unknown field type '$fieldType'.",
-        'available_types' => array_keys(self::FIELD_TYPE_DEFAULTS),
+        'error' => isset(FieldInput::TYPES[$fieldType])
+          ? "Field type '$fieldType' is not available on this site: the module that provides it is not enabled."
+          : "Unknown field type '$fieldType'.",
+        'available_types' => $available,
       ];
     }
 
@@ -446,18 +335,19 @@ class ParagraphsService {
       ];
     }
 
-    $typeConfig = self::FIELD_TYPE_DEFAULTS[$fieldType];
+    $typeConfig = FieldInput::TYPES[$fieldType];
     $label = $settings['label'] ?? ucfirst(str_replace(['field_', '_'], ['', ' '], $fieldName));
 
     // The list inputs, read before anything is made.
     $allowedValues = NULL;
     $targetBundles = [];
+    $targetType = FieldInput::referenceTarget($typeConfig, $settings['target_type'] ?? NULL);
     try {
       if (in_array($typeConfig['type'], ['list_string', 'list_integer'], TRUE) && isset($settings['allowed_values'])) {
         $allowedValues = $this->formatAllowedValues($settings['allowed_values']);
       }
-      if ($typeConfig['type'] === 'entity_reference') {
-        $targetBundles = FieldInput::targetBundles($settings['target_bundles'] ?? NULL, (string) ($settings['target_type'] ?? 'node'), $this->entityTypeManager);
+      if ($targetType !== NULL) {
+        $targetBundles = FieldInput::targetBundles($settings['target_bundles'] ?? NULL, $targetType, $this->entityTypeManager);
       }
     }
     catch (\InvalidArgumentException $e) {
@@ -479,8 +369,7 @@ class ParagraphsService {
         );
 
         // Handle entity reference target type.
-        if ($typeConfig['type'] === 'entity_reference') {
-          $targetType = $settings['target_type'] ?? 'node';
+        if ($targetType !== NULL) {
           $storageSettings['target_type'] = $targetType;
         }
 
@@ -493,7 +382,7 @@ class ParagraphsService {
           'field_name' => $fieldName,
           'entity_type' => 'paragraph',
           'type' => $typeConfig['type'],
-          'cardinality' => $settings['cardinality'] ?? 1,
+          'cardinality' => $settings['cardinality'] ?? $typeConfig['cardinality'] ?? 1,
           'settings' => $storageSettings,
         ]);
         $fieldStorage->save();
@@ -503,8 +392,7 @@ class ParagraphsService {
       $fieldSettings = $settings['field_settings'] ?? [];
 
       // Handle entity reference handler settings.
-      if ($typeConfig['type'] === 'entity_reference') {
-        $targetType = $settings['target_type'] ?? 'node';
+      if ($targetType !== NULL) {
         $fieldSettings['handler'] = 'default:' . $targetType;
         if ($targetBundles !== []) {
           $fieldSettings['handler_settings']['target_bundles'] = $targetBundles;

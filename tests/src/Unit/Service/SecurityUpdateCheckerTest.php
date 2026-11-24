@@ -36,11 +36,8 @@ function update_calculate_project_data(array $available): array {
 
 namespace Drupal\Tests\mcp_tools\Unit\Service;
 
-use Drupal\Core\Extension\ModuleExtensionList;
 use Drupal\mcp_tools\Service\SecurityUpdateChecker;
 use Drupal\Tests\UnitTestCase;
-use Drupal\update\UpdateManagerInterface;
-use Drupal\update\UpdateProcessorInterface;
 
 #[\PHPUnit\Framework\Attributes\CoversClass(\Drupal\mcp_tools\Service\SecurityUpdateChecker::class)]
 #[\PHPUnit\Framework\Attributes\Group('mcp_tools')]
@@ -52,11 +49,7 @@ final class SecurityUpdateCheckerTest extends UnitTestCase {
   }
 
   private function createChecker(): SecurityUpdateChecker {
-    return new SecurityUpdateChecker(
-      $this->createMock(UpdateManagerInterface::class),
-      $this->createMock(UpdateProcessorInterface::class),
-      $this->createMock(ModuleExtensionList::class),
-    );
+    return new SecurityUpdateChecker();
   }
 
   public function testGetAvailableUpdatesReturnsErrorWhenUpdateDataUnavailable(): void {

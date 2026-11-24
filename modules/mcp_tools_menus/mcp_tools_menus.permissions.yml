@@ -1,4 +1,4 @@
 mcp_tools use menus:
-  title: 'Use MCP menu tools'
-  description: 'Create, delete menus and manage menu links via MCP.'
+  title: 'Use MCP menu tools (category: menus)'
+  description: 'Access menu creation and menu link management tools via MCP.'
   restrict access: true

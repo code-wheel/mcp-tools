@@ -75,8 +75,11 @@ final class MenuServiceTest extends UnitTestCase {
     $entityTypeManager = $this->createMock(EntityTypeManagerInterface::class);
     $entityTypeManager->method('getStorage')->with('menu')->willReturn($menuStorage);
 
+    // A link a module defines: it has a plugin id and no entity.
     $childLink = new class('Child', '/child') {
       public function __construct(private readonly string $title, private readonly string $url) {}
+      public function getPluginId(): string { return 'example.child'; }
+      public function getMetaData(): array { return []; }
       public function getTitle(): string { return $this->title; }
       public function getUrlObject(): object {
         return new class($this->url) {
@@ -89,8 +92,11 @@ final class MenuServiceTest extends UnitTestCase {
       public function getWeight(): int { return 0; }
     };
 
+    // A link made in the UI: its plugin id names its entity.
     $parentLink = new class('Parent', '/parent') {
       public function __construct(private readonly string $title, private readonly string $url) {}
+      public function getPluginId(): string { return 'menu_link_content:abc'; }
+      public function getMetaData(): array { return ['entity_id' => '5']; }
       public function getTitle(): string { return $this->title; }
       public function getUrlObject(): object {
         return new class($this->url) {
@@ -117,6 +123,11 @@ final class MenuServiceTest extends UnitTestCase {
     $this->assertSame('Main navigation', $result['label']);
     $this->assertSame('Parent', $result['tree'][0]['title']);
     $this->assertSame('Child', $result['tree'][0]['children'][0]['title']);
+    // What a parent is given as.
+    $this->assertSame('menu_link_content:abc', $result['tree'][0]['plugin_id']);
+    $this->assertSame(5, $result['tree'][0]['id']);
+    $this->assertSame('example.child', $result['tree'][0]['children'][0]['plugin_id']);
+    $this->assertNull($result['tree'][0]['children'][0]['id']);
   }
 
 }

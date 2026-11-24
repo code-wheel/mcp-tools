@@ -37,9 +37,9 @@ It needs migrate and migrate_plus. migrate_tools is optional, for Drush.
 | `mcp_migration_import_csv` | Import rows from CSV, the first line the column names |
 | `mcp_migration_import_status` | What an import made and what failed; without `import_id`, every import |
 | `mcp_migration_rollback` | Undo one import (asks first) |
-| `mcp_migration_validate` | Check rows against a content type |
+| `mcp_migration_validate` | Deprecated: use an import with `dry_run`, which runs the import's own checks |
 | `mcp_migration_field_mapping` | The required and optional fields of a content type |
-| `mcp_migration_export_json` | Export content in id order, with `offset` |
+| `mcp_migration_export_json` | Export content, terms or redirects in id order, with `offset`, as rows the import reads back |
 | `mcp_migration_export_csv` | The same as CSV |
 
 ## The key
@@ -108,6 +108,25 @@ order, so a whole tree goes in one call:
 ```
 
 A destination that leads nowhere is made and said, under `warnings`.
+
+## Export
+
+The exports give the rows the import of the same type reads back:
+`entity_type` (node, taxonomy_term, redirect) as for the import, and
+`references: "names"` for tags and a term's parent by name, several joined
+by `|`. Ids mean nothing on another site; names do. So an export from one
+site imports into another:
+
+```json
+{"tool": "mcp_migration_export_json", "input": {"entity_type": "taxonomy_term", "content_type": "tags", "references": "names"}}
+```
+
+Then give its `items` to `mcp_migration_import_json` with the same
+`entity_type`. Content keeps its `uuid`, so with `key: "uuid"` a second
+import updates instead of making copies.
+
+For one item or a filtered list, the JSON:API tools (`mcp_jsonapi_list_entities`,
+`mcp_jsonapi_get_entity`) are the quicker way.
 
 ## CSV
 

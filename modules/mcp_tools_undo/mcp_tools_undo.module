@@ -1,0 +1,48 @@
+<?php
+
+/**
+ * @file
+ * Writes down what a tool call changes, so that it can be undone.
+ */
+
+declare(strict_types=1);
+
+use Drupal\Core\Entity\ContentEntityInterface;
+use Drupal\Core\Entity\EntityInterface;
+
+/**
+ * Implements hook_entity_insert().
+ */
+function mcp_tools_undo_entity_insert(EntityInterface $entity): void {
+  // No tool call can run before its context exists: other saves stop here.
+  if ($entity instanceof ContentEntityInterface && $entity->getEntityTypeId() !== 'mcp_tool_call' && \Drupal::getContainer()->initialized('mcp_tools.tool_call_context')) {
+    \Drupal::service('mcp_tools_undo.journal')->entityMade($entity);
+  }
+}
+
+/**
+ * Implements hook_entity_update().
+ */
+function mcp_tools_undo_entity_update(EntityInterface $entity): void {
+  // No tool call can run before its context exists: other saves stop here.
+  if ($entity instanceof ContentEntityInterface && $entity->getEntityTypeId() !== 'mcp_tool_call' && \Drupal::getContainer()->initialized('mcp_tools.tool_call_context')) {
+    \Drupal::service('mcp_tools_undo.journal')->entityChanged($entity);
+  }
+}
+
+/**
+ * Implements hook_entity_delete().
+ */
+function mcp_tools_undo_entity_delete(EntityInterface $entity): void {
+  // No tool call can run before its context exists: other saves stop here.
+  if ($entity instanceof ContentEntityInterface && $entity->getEntityTypeId() !== 'mcp_tool_call' && \Drupal::getContainer()->initialized('mcp_tools.tool_call_context')) {
+    \Drupal::service('mcp_tools_undo.journal')->entityDeleted($entity);
+  }
+}
+
+/**
+ * Implements hook_cron().
+ */
+function mcp_tools_undo_cron(): void {
+  \Drupal::service('mcp_tools_undo.journal')->removeOld();
+}

@@ -7,7 +7,6 @@ namespace Drupal\Tests\mcp_tools_scheduler\Unit\Service;
 use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
-use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AuditLogger;
 use Drupal\mcp_tools_scheduler\Service\SchedulerService;
@@ -20,7 +19,6 @@ final class SchedulerServiceTest extends UnitTestCase {
   private function createService(array $overrides = []): SchedulerService {
     return new SchedulerService(
       $overrides['entity_type_manager'] ?? $this->createMock(EntityTypeManagerInterface::class),
-      $overrides['current_user'] ?? $this->createMock(AccountProxyInterface::class),
       $overrides['access_manager'] ?? $this->createMock(AccessManager::class),
       $overrides['audit_logger'] ?? $this->createMock(AuditLogger::class),
       $overrides['time'] ?? $this->createMock(TimeInterface::class),

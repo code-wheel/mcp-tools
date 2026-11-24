@@ -7,7 +7,6 @@ namespace Drupal\mcp_tools\Service;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Extension\ModuleExtensionList;
-use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\State\StateInterface;
 
 /**
@@ -20,7 +19,6 @@ class SiteHealthService {
     protected StateInterface $state,
     protected Connection $database,
     protected ConfigFactoryInterface $configFactory,
-    protected ModuleHandlerInterface $moduleHandler,
   ) {}
 
   /**

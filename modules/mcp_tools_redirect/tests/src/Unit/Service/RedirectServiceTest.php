@@ -53,6 +53,31 @@ class RedirectServiceTest extends UnitTestCase {
     );
   }
 
+  /**
+   * A destination becomes the URI Drupal stores.
+   *
+   * Moved here from the batch module's test, whose copy of this method had
+   * no caller left once its redirect import was removed.
+   */
+  public function testNormalizeDestinationProducesInternalUris(): void {
+    $service = new class(
+      $this->createMock(EntityTypeManagerInterface::class),
+      $this->createMock(AccessManager::class),
+      $this->createMock(AuditLogger::class),
+    ) extends RedirectService {
+
+      public function normalize(string $destination): string {
+        return $this->normalizeDestination($destination);
+      }
+
+    };
+    $this->assertSame('https://example.com', $service->normalize('https://example.com'));
+    $this->assertSame('internal:/foo', $service->normalize('/foo'));
+    $this->assertSame('internal:/foo/bar', $service->normalize('foo/bar'));
+    $this->assertSame('entity:node/1', $service->normalize('entity:node/1'));
+    $this->assertSame('route:<front>', $service->normalize('route:<front>'));
+  }
+
   public function testListRedirectsEmpty(): void {
     $countQuery = $this->createMock(QueryInterface::class);
     $countQuery->method('accessCheck')->willReturnSelf();

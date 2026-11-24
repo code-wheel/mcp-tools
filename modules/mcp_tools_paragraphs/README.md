@@ -240,20 +240,28 @@ Create a complete "Hero Banner" paragraph type:
    {"id": "hero_banner"}
 ```
 
-## Nested Paragraphs
+## Paragraphs fields
 
-To create nested paragraph structures (paragraphs containing other paragraphs), use an entity_reference field targeting paragraphs:
+A field that holds paragraphs is the `paragraphs` field type, in
+`mcp_paragraphs_add_field` (paragraphs inside a paragraph type) and in
+`mcp_structure_add_field` (paragraphs on a content type). It is an "Entity
+reference revisions" field with the Paragraphs widget, and holds many
+paragraphs unless `cardinality` says otherwise. `target_bundles` names
+the paragraph types it takes; without it, it takes all of them.
 
 ```json
 {
   "bundle": "accordion",
   "field_name": "items",
-  "field_type": "entity_reference",
+  "field_type": "paragraphs",
   "label": "Accordion Items",
-  "target_type": "paragraph",
-  "target_bundles": ["accordion_item"],
-  "cardinality": -1
+  "target_bundles": ["accordion_item"]
 }
 ```
 
-Note: You'll need to use the entity_reference_revisions field type in production for proper paragraph behavior. This basic entity_reference works for simple cases.
+`mcp_create_content` and `mcp_update_content` fill it: give each
+paragraph with its type and fields, like
+`"field_sections": [{"type": "text", "field_body": "Hello"}]`.
+
+A plain `entity_reference` field that points at paragraphs is not one
+Paragraphs supports.

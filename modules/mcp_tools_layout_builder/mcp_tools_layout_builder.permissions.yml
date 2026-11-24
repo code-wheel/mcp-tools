@@ -1,4 +1,4 @@
 mcp_tools use layout_builder:
-  title: 'Use MCP Layout Builder tools'
-  description: 'Enable, disable, and configure Layout Builder for content types via MCP.'
+  title: 'Use MCP Layout Builder tools (category: layout_builder)'
+  description: 'Access Layout Builder section and block placement operations via MCP.'
   restrict access: true

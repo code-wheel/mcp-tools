@@ -1,0 +1,5 @@
+entity.mcp_tool_call.collection:
+  title: 'MCP tool calls'
+  description: 'What MCP tool calls changed, with an undo for each.'
+  parent: system.admin_reports
+  route_name: entity.mcp_tool_call.collection

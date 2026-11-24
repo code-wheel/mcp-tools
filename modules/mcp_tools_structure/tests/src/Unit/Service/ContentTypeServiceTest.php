@@ -66,8 +66,6 @@ class ContentTypeServiceTest extends UnitTestCase {
   protected function createService(): ContentTypeService {
     return new ContentTypeService(
       $this->entityTypeManager,
-      $this->bundleInfo,
-      $this->configFactory,
       $this->accessManager,
       $this->auditLogger,
       $this->entityFieldManager,

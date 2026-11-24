@@ -94,4 +94,29 @@ final class MenuLinkTargetKernelTest extends KernelTestBase {
     $this->assertSame($top['data']['plugin_id'], \Drupal\menu_link_content\Entity\MenuLinkContent::load($child['data']['id'])->getParentId());
   }
 
+  /**
+   * The tree gives what a parent is given as, so a model can use it.
+   *
+   * A wrong parent is refused with "Give the plugin_id ... or its id", and
+   * the tree showed neither: a model could only guess.
+   */
+  public function testTheTreeGivesTheIdOfAParent(): void {
+    $links = $this->container->get('mcp_tools_menus.menu');
+    $this->assertTrue($links->addMenuLink('main', 'About', '/node/1')['success']);
+
+    $tree = $this->container->get('mcp_tools.menu')->getMenuTree('main');
+    $about = current(array_filter($tree['tree'], fn($item) => $item['title'] === 'About'));
+    $this->assertIsArray($about, json_encode($tree));
+    $this->assertStringStartsWith('menu_link_content:', $about['plugin_id']);
+    $this->assertIsInt($about['id']);
+
+    foreach (['plugin_id', 'id'] as $n => $key) {
+      $child = $links->addMenuLink('main', 'Team ' . $n, '/node/1', ['parent' => (string) $about[$key]]);
+      $this->assertTrue($child['success'], $key . ': ' . (string) ($child['error'] ?? ''));
+    }
+    $tree = $this->container->get('mcp_tools.menu')->getMenuTree('main');
+    $about = current(array_filter($tree['tree'], fn($item) => $item['title'] === 'About'));
+    $this->assertSame(['Team 0', 'Team 1'], array_column($about['children'], 'title'));
+  }
+
 }

@@ -1,4 +1,4 @@
 mcp_tools use cache:
-  title: 'Use MCP cache tools'
-  description: 'Clear and rebuild caches via MCP.'
+  title: 'Use MCP cache tools (category: cache)'
+  description: 'Access cache inspection and cache clearing operations via MCP.'
   restrict access: true

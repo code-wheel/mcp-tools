@@ -67,7 +67,8 @@ class ContentServiceLanguageTest extends KernelTestBase {
 
     // An editor who may edit and delete any content (tools follow entity
     // access on a new site).
-    $this->setUpCurrentUser([], ['bypass node access']);
+    // Publishing is for 'administer nodes', as on the node form.
+    $this->setUpCurrentUser([], ['bypass node access', 'administer nodes']);
     $this->config('mcp_tools.settings')
       ->set('access.allowed_scopes', ['read', 'write'])
       ->set('access.read_only_mode', FALSE)

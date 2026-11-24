@@ -1,7 +1,7 @@
 name: MCP Tools
 type: module
 description: 'Batteries-included MCP tools for AI assistants working with Drupal sites.'
-package: AI
+package: MCP Tools
 core_version_requirement: ^10.5 || ^11
 php: 8.3
 lifecycle: experimental

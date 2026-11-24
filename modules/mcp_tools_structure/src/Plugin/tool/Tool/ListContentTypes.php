@@ -18,10 +18,15 @@ use Drupal\tool\Tool\ToolOperation;
 #[Tool(
   id: 'mcp_structure_list_content_types',
   label: new TranslatableMarkup('List Content Types'),
-  description: new TranslatableMarkup('List all content types with field counts and content counts. Use this to discover what content structures exist before creating or querying content.'),
+  description: new TranslatableMarkup('Deprecated, and removed in a later release: use mcp_tools_list_content_types, which gives the same with the fields of each type, and counts only the content the user may see.'),
   operation: ToolOperation::Read,
   input_definitions: [],
   output_definitions: [
+    'deprecated' => new OutputDefinition(
+      data_type: 'string',
+      label: new TranslatableMarkup('Deprecated'),
+      description: new TranslatableMarkup('What to use instead.'),
+    ),
     'types' => new OutputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Content Types'),
@@ -58,7 +63,12 @@ class ListContentTypes extends McpToolsToolBase {
    * {@inheritdoc}
    */
   protected function executeLegacy(array $input): array {
-    return $this->contentTypeService->listContentTypes();
+    $result = $this->contentTypeService->listContentTypes();
+    // Said in the answer too: a model that called it reads this.
+    if (!empty($result['success'])) {
+      $result['data']['deprecated'] = 'mcp_structure_list_content_types is deprecated: use mcp_tools_list_content_types, which gives the field and content counts and the fields of each type.';
+    }
+    return $result;
   }
 
 }

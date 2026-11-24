@@ -62,6 +62,7 @@ final class McpToolsRemoteController implements ContainerInjectionInterface {
     private readonly ?McpClientBridge $clientBridge = NULL,
     private readonly ?CacheBackendInterface $schemaCache = NULL,
     private readonly ?McpToolCallContext $toolCallContext = NULL,
+    private readonly string $appRoot = '',
   ) {}
 
   /**
@@ -84,6 +85,7 @@ final class McpToolsRemoteController implements ContainerInjectionInterface {
       $container->get('mcp_tools.client_bridge'),
       $container->get('cache.default'),
       $container->get('mcp_tools.tool_call_context'),
+      (string) $container->getParameter('app.root'),
     );
   }
 
@@ -316,8 +318,7 @@ final class McpToolsRemoteController implements ContainerInjectionInterface {
       $serverParams['pagination_limit'],
       $serverParams['include_all_tools'],
       new FileSessionStore(
-        // phpcs:ignore DrupalPractice.Objects.GlobalDrupal.GlobalDrupal
-        rtrim(sys_get_temp_dir(), \DIRECTORY_SEPARATOR) . \DIRECTORY_SEPARATOR . 'mcp_tools_remote_sessions_' . substr(hash('sha256', \Drupal::root()), 0, 12),
+        rtrim(sys_get_temp_dir(), \DIRECTORY_SEPARATOR) . \DIRECTORY_SEPARATOR . 'mcp_tools_remote_sessions_' . substr(hash('sha256', $this->appRoot), 0, 12),
         3600,
       ),
       3600,

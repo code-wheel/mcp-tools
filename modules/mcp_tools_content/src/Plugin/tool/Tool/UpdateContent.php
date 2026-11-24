@@ -80,6 +80,18 @@ use Drupal\tool\TypedData\InputDefinition;
       label: new TranslatableMarkup('New Revision ID'),
       description: new TranslatableMarkup('ID of the new revision created by this update.'),
     ),
+    'draft' => new OutputDefinition(
+      data_type: 'boolean',
+      label: new TranslatableMarkup('Draft'),
+      description: new TranslatableMarkup('TRUE when the edit went to a draft that waits for publishing, not to what is live. Then title is the title of the draft, and live_title what is live.'),
+      required: FALSE,
+    ),
+    'live_title' => new OutputDefinition(
+      data_type: 'string',
+      label: new TranslatableMarkup('Live title'),
+      description: new TranslatableMarkup('With draft: the title of what is live, until the draft is published.'),
+      required: FALSE,
+    ),
     'message' => new OutputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Result Message'),

@@ -16,7 +16,7 @@ You: "Create a blog with articles, categories, tags, and an editor role"
 AI:  Creates the content type, fields, vocabularies, role, and permissions
 ```
 
-- **228 tools:** 25 read-only tools in the base module and 203 more in 32
+- **230 tools:** 25 read-only tools in the base module and 205 more in 33
   optional submodules. They are [Tool API](https://www.drupal.org/project/tool)
   plugins.
 - **Its own MCP server:** STDIO through Drush for local work, HTTP with
@@ -177,7 +177,7 @@ model.
 The base module also offers read-only MCP resources (for example
 `drupal://site/status`) and prompts (for example `mcp_tools/site-brief`).
 
-### Submodules: 202 tools in 32 submodules
+### Submodules: 205 tools in 33 submodules
 
 Enable what you need. Each submodule lists its tools in its own
 `README.md`, and [docs/TOOL_EXAMPLES.md](docs/TOOL_EXAMPLES.md) has a
@@ -188,6 +188,7 @@ real call for every tool.
 | `mcp_tools_content` | 4 | Create, update, delete and publish content |
 | `mcp_tools_translate` | 3 | Read translatable fields, create and update linked translations, also in paragraphs |
 | `mcp_tools_structure` | 20 | Content types, fields, vocabularies, roles, permissions |
+| `mcp_tools_undo` | 2 | Undo what one tool call changed, and list the calls of the last week |
 | `mcp_tools_users` | 5 | User accounts, roles, blocking |
 | `mcp_tools_menus` | 5 | Menus and menu links |
 | `mcp_tools_views` | 6 | Views |

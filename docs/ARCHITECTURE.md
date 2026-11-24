@@ -21,7 +21,7 @@ MCP Tools provides a comprehensive set of tools for AI assistants to interact wi
 │                         mcp_tools module                         │
 │  ┌──────────────────┐  ┌──────────────────┐  ┌───────────────┐  │
 │  │   Tool Plugins   │  │    Services      │  │ Access Control│  │
-│  │  (228 tools)     │  │ (Business Logic) │  │ (3 layers)    │  │
+│  │  (230 tools)     │  │ (Business Logic) │  │ (3 layers)    │  │
 │  └────────┬─────────┘  └────────┬─────────┘  └───────┬───────┘  │
 │           │                     │                    │          │
 │           └─────────────────────┼────────────────────┘          │
@@ -205,7 +205,13 @@ Three preset modes simplify configuration:
 
 ## Tool Categories
 
-Tools are organized by category for permission control:
+Tools are organized by category for permission control. Each category's
+permission belongs to the module whose tools use it: the base module
+defines the six its own tools use (`site_health`, `discovery`, `content`,
+`config`, `structure`, `users`), and each submodule defines its own, such
+as `mcp_tools use metatag` in MCP Tools - Metatag. So the permissions page
+lists only the categories of the modules that are on, and uninstalling a
+submodule takes its permission from the roles.
 
 | Category | Permission | Tools |
 |----------|------------|-------|

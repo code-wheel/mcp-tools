@@ -1,0 +1,14 @@
+entity.mcp_tool_call.collection:
+  path: '/admin/reports/mcp-tool-calls'
+  defaults:
+    _entity_list: 'mcp_tool_call'
+    _title: 'MCP tool calls'
+  requirements:
+    _permission: 'view mcp tool calls+undo mcp tool calls'
+entity.mcp_tool_call.undo_form:
+  path: '/admin/reports/mcp-tool-calls/{mcp_tool_call}/undo'
+  defaults:
+    _entity_form: 'mcp_tool_call.undo'
+    _title: 'Undo a tool call'
+  requirements:
+    _entity_access: 'mcp_tool_call.undo'

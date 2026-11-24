@@ -98,4 +98,44 @@ final class DraftsKernelTest extends KernelTestBase {
     $this->assertSame('MODERATED', $publish['code']);
   }
 
+  /**
+   * The answer to an edit of a draft says it is the draft, with the live title.
+   *
+   * It gave the draft's title only. A model that had found the content by
+   * its live title then "corrected" the title back, undoing the draft.
+   */
+  public function testAnEditOfADraftSaysSo(): void {
+    $node = $this->pending();
+    $result = $this->container->get('mcp_tools_content.content')->updateContent((int) $node->id(), ['title' => 'Draft text, more']);
+    $this->assertTrue($result['success'], (string) ($result['error'] ?? ''));
+    $this->assertTrue($result['data']['draft'] ?? FALSE);
+    $this->assertSame('Draft text, more', $result['data']['title']);
+    $this->assertSame('Published text', $result['data']['live_title']);
+    $this->assertStringContainsString("the live one stays 'Published text'", $result['data']['message']);
+
+    // Content with no draft waiting says nothing of drafts.
+    $plain = Node::create(['type' => 'article', 'title' => 'Only', 'moderation_state' => 'published']);
+    $plain->save();
+    $result = $this->container->get('mcp_tools_content.content')->updateContent((int) $plain->id(), ['title' => 'Only, edited']);
+    $this->assertTrue($result['success'], (string) ($result['error'] ?? ''));
+    $this->assertArrayNotHasKey('draft', $result['data']);
+  }
+
+  /**
+   * Content made on a moderated type takes no status: its state decides.
+   *
+   * Content Moderation keeps the status field for the workflow. A status
+   * given was refused as a field the user may not set, which said nothing
+   * of the workflow.
+   */
+  public function testNewModeratedContentTakesNoStatus(): void {
+    $content = $this->container->get('mcp_tools_content.content');
+    $refused = $content->createContent('article', 'With a status', [], ['status' => FALSE]);
+    $this->assertFalse($refused['success']);
+    $this->assertSame('MODERATED', $refused['code'] ?? NULL, json_encode($refused));
+    $this->assertStringContainsString('mcp_moderation_set_state', $refused['error']);
+    $made = $content->createContent('article', 'Without one');
+    $this->assertTrue($made['success'], json_encode($made));
+  }
+
 }

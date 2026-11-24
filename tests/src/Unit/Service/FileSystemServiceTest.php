@@ -35,7 +35,6 @@ final class FileSystemServiceTest extends UnitTestCase {
     $this->database = $this->createMock(Connection::class);
 
     $this->service = new FileSystemService(
-      $this->fileSystem,
       $this->streamWrapperManager,
       $this->entityTypeManager,
       $this->database,
@@ -44,7 +43,6 @@ final class FileSystemServiceTest extends UnitTestCase {
 
   public function testDirectorySizeAndByteFormatting(): void {
     $service = new class(
-      $this->createMock(FileSystemInterface::class),
       $this->createMock(StreamWrapperManagerInterface::class),
       $this->createMock(EntityTypeManagerInterface::class),
       $this->createMock(Connection::class),

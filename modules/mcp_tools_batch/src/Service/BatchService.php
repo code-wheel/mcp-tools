@@ -15,6 +15,7 @@ use Drupal\mcp_tools\Service\AuditLogger;
 use Drupal\mcp_tools\Service\EntityReferences;
 use Drupal\mcp_tools\Service\McpClientBridge;
 use Drupal\mcp_tools\Service\OwnRoles;
+use Drupal\mcp_tools\Service\TermParent;
 use Drupal\mcp_tools\Service\TextFormat;
 
 /**
@@ -123,6 +124,17 @@ class BatchService {
         $now = $this->time->getCurrentTime();
         $node->setCreatedTime($now);
         $node->setChangedTime($now);
+        // The fields the item set: the owner and the status only when
+        // given, the defaults are the tool's.
+        $given = array_diff(array_keys($nodeData), ['type', 'uid', 'status']);
+        foreach (['status', 'uid'] as $field) {
+          if (isset($item[$field])) {
+            $given[] = $field;
+          }
+        }
+        if (($denied = EntityAccess::fieldsDenied($node, $given)) !== NULL) {
+          throw new \InvalidArgumentException($denied['error']);
+        }
         if (($problem = EntityReferences::problem($node)) !== NULL) {
           throw new \InvalidArgumentException($problem);
         }
@@ -229,6 +241,16 @@ class BatchService {
         }
 
         $fieldDefinitions = $this->entityFieldManager->getFieldDefinitions('node', $node->bundle());
+
+        $given = [];
+        foreach (array_keys($fields) as $fieldName) {
+          $fieldName = (string) $fieldName;
+          $given[] = !isset($fieldDefinitions[$fieldName]) && isset($fieldDefinitions['field_' . $fieldName]) ? 'field_' . $fieldName : $fieldName;
+        }
+        if (($denied = EntityAccess::fieldsDenied($node, $given)) !== NULL) {
+          $errors[] = ['index' => $index, 'data' => $update, 'error' => $denied['error']];
+          continue;
+        }
 
         foreach ($fields as $fieldName => $value) {
           if ($fieldName === 'title') {
@@ -454,6 +476,10 @@ class BatchService {
           continue;
         }
 
+        if (($denied = EntityAccess::fieldsDenied($node, ['status'])) !== NULL) {
+          $errors[] = ['index' => $index, 'nid' => $nid, 'error' => $denied['error']];
+          continue;
+        }
         $publish ? $node->setPublished() : $node->setUnpublished();
         $node->setNewRevision(TRUE);
         $node->setRevisionLogMessage(ucfirst($action) . ' via MCP Tools batch operation');
@@ -696,6 +722,8 @@ class BatchService {
     $created = [];
     $skipped = [];
     $errors = [];
+    // A parent may be a term made earlier in this call, by its name.
+    $madeNow = [];
 
     foreach ($terms as $index => $termData) {
       // Normalize to array format.
@@ -746,11 +774,19 @@ class BatchService {
         ];
 
         if (isset($termData['parent'])) {
-          $termValues['parent'] = ['target_id' => $termData['parent']];
+          $parent = TermParent::resolve($this->entityTypeManager, $vocabulary, $termData['parent'], $madeNow);
+          if (is_string($parent)) {
+            $errors[] = ['index' => $index, 'error' => $parent, 'data' => $termData];
+            continue;
+          }
+          if ($parent > 0) {
+            $termValues['parent'] = ['target_id' => $parent];
+          }
         }
 
         $term = $this->entityTypeManager->getStorage('taxonomy_term')->create($termValues);
         $term->save();
+        $madeNow[$name] = (int) $term->id();
 
         $created[] = [
           'index' => $index,
@@ -821,31 +857,6 @@ class BatchService {
       'datetime' => is_array($value) ? $value : ['value' => $value],
       default => $value,
     };
-  }
-
-  /**
-   * Normalize redirect destination to proper URI format.
-   *
-   * @param string $destination
-   *   The destination path or URL.
-   *
-   * @return string
-   *   Normalized URI.
-   */
-  protected function normalizeRedirectDestination(string $destination): string {
-    // If it's already a full URL with scheme, return as-is.
-    if (preg_match('#^https?://#', $destination)) {
-      return $destination;
-    }
-
-    // If it starts with entity: or internal:, return as-is.
-    if (preg_match('#^(entity|internal|route|base):#', $destination)) {
-      return $destination;
-    }
-
-    // For internal paths, use internal: scheme.
-    $destination = '/' . ltrim($destination, '/');
-    return 'internal:' . $destination;
   }
 
   /**

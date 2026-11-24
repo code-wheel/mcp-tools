@@ -131,6 +131,29 @@ final class RedirectDestinationKernelTest extends KernelTestBase {
   }
 
   /**
+   * An update stores the destination as create does, and it still leads there.
+   *
+   * The update answered success and stored internal:/internal:/node/2, a
+   * redirect that led nowhere: the first change of a destination through
+   * MCP broke it.
+   */
+  public function testAnUpdatedDestinationLeadsThere(): void {
+    Node::create(['type' => 'news', 'title' => 'Second', 'status' => 1])->save();
+    $created = $this->service->createRedirect('old-news', '/node/1');
+    $id = (int) $created['data']['redirect']['id'];
+    $storage = $this->container->get('entity_type.manager')->getStorage('redirect');
+
+    foreach (['/node/2' => 'internal:/node/2', 'node/2' => 'internal:/node/2', 'entity:node/2' => 'entity:node/2'] as $given => $stored) {
+      $result = $this->service->updateRedirect($id, ['destination' => $given]);
+      $this->assertTrue($result['success'], (string) ($result['error'] ?? ''));
+      $storage->resetCache([$id]);
+      $redirect = $storage->load($id);
+      $this->assertSame($stored, $redirect->get('redirect_redirect')->uri, "Given $given.");
+      $this->assertSame('node/2', $redirect->getRedirectUrl()->getInternalPath(), "Given $given, the redirect does not lead to node 2.");
+    }
+  }
+
+  /**
    * The two tools declare the warning, so a client's check lets it through.
    */
   public function testTheToolsDeclareTheWarning(): void {

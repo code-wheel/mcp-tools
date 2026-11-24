@@ -6,7 +6,7 @@ namespace Drupal\Tests\mcp_tools_structure\Kernel;
 
 use Drupal\field\Entity\FieldStorageConfig;
 use Drupal\KernelTests\KernelTestBase;
-use Drupal\mcp_tools_structure\Service\FieldService;
+use Drupal\mcp_tools\Service\FieldInput;
 use Drupal\node\Entity\NodeType;
 
 /**
@@ -183,8 +183,8 @@ final class FieldTypesKernelTest extends KernelTestBase {
    * plain long text was asked for, and did not know list_integer exists.
    */
   public function testTheToolsNameEveryFieldType(): void {
-    $types = array_keys((new \ReflectionClass(FieldService::class))->getConstant('FIELD_TYPE_DEFAULTS'));
-    $this->assertCount(19, $types);
+    $types = array_keys(FieldInput::TYPES);
+    $this->assertCount(20, $types);
 
     $tools = $this->container->get('plugin.manager.tool');
     $texts = [

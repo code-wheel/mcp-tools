@@ -64,3 +64,82 @@ function mcp_tools_update_10003(): void {
     $config->set('servers', $servers)->save();
   }
 }
+
+/**
+ * Revoke five category permissions that never let anything through.
+ *
+ * "mcp_tools use site_tools", "content_tools", "config_tools", "user_tools"
+ * and "structure_tools" were older names of the categories site_health,
+ * content, config, users and structure. No code checked them, so a role
+ * that held them could do nothing more, and the permissions page listed
+ * each category twice. The remote setup granted four of them. They are
+ * removed; a role cannot be saved holding a permission nobody defines, so
+ * they are taken from every role first.
+ */
+function mcp_tools_update_10004(): string {
+  $old = [
+    'mcp_tools use site_tools',
+    'mcp_tools use content_tools',
+    'mcp_tools use config_tools',
+    'mcp_tools use user_tools',
+    'mcp_tools use structure_tools',
+  ];
+  $config_factory = \Drupal::configFactory();
+  $changed = [];
+  foreach ($config_factory->listAll('user.role.') as $name) {
+    $role = $config_factory->getEditable($name);
+    $permissions = (array) $role->get('permissions');
+    $kept = array_values(array_diff($permissions, $old));
+    if ($kept !== array_values($permissions)) {
+      $role->set('permissions', $kept)->save();
+      $changed[] = (string) $role->get('id');
+    }
+  }
+  return $changed === []
+    ? 'No role held the five old MCP Tools category permissions.'
+    : 'Took the five old MCP Tools category permissions (they never let anything through) from the roles: ' . implode(', ', $changed) . '.';
+}
+
+/**
+ * Each submodule owns its category's permission now.
+ *
+ * The base module defined the permission of every category, so the
+ * permissions page listed all of them, also for submodules that are off,
+ * and uninstalling a submodule left its permission on the roles. Each
+ * submodule defines its own now; "mcp_tools use workflows", which no tool
+ * ever checked, is gone. A role keeps the permissions whose submodule is
+ * on. The ones whose submodule is off are taken from it (a role cannot be
+ * saved holding a permission nobody defines), and each role is saved, so
+ * its dependencies name the submodules and an uninstall revokes their
+ * permission, as for any module.
+ */
+function mcp_tools_update_10005(): string {
+  $defined = array_keys(\Drupal::service('user.permissions')->getPermissions());
+  $config_factory = \Drupal::configFactory();
+  $taken = [];
+  foreach ($config_factory->listAll('user.role.') as $name) {
+    $role = $config_factory->getEditable($name);
+    $permissions = (array) $role->get('permissions');
+    $gone = array_filter($permissions, fn($p) => str_starts_with((string) $p, 'mcp_tools ') && !in_array($p, $defined, TRUE));
+    if ($gone !== []) {
+      $role->set('permissions', array_values(array_diff($permissions, $gone)))->save();
+      $taken[] = $role->get('id') . ' (' . implode(', ', $gone) . ')';
+    }
+  }
+  // Saved through the entity, so the dependencies are worked out again.
+  $storage = \Drupal::entityTypeManager()->getStorage('user_role');
+  $storage->resetCache();
+  foreach ($storage->loadMultiple() as $role) {
+    try {
+      $role->save();
+    }
+    catch (\Exception $e) {
+      // A role that holds another module's undefined permission cannot be
+      // saved; its MCP Tools permissions are right already, only its
+      // dependencies wait for its next save.
+    }
+  }
+  return $taken === []
+    ? 'Each MCP Tools submodule owns its permission now; no role held one whose submodule is off.'
+    : 'Each MCP Tools submodule owns its permission now. Taken from roles, as their submodule is off: ' . implode('; ', $taken) . '.';
+}

@@ -99,6 +99,10 @@ class MenuService {
     foreach ($tree as $element) {
       $link = $element->link;
       $item = [
+        // What a link's parent is given as: a tree with no ids left a model
+        // to guess the parent it was told to give.
+        'plugin_id' => $link->getPluginId(),
+        'id' => isset($link->getMetaData()['entity_id']) ? (int) $link->getMetaData()['entity_id'] : NULL,
         'title' => $link->getTitle(),
         'url' => $link->getUrlObject()->toString(),
         'enabled' => $link->isEnabled(),

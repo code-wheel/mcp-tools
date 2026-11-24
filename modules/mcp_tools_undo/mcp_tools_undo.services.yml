@@ -1,0 +1,26 @@
+services:
+  mcp_tools_undo.journal:
+    class: Drupal\mcp_tools_undo\Service\ChangeJournal
+    arguments:
+      - '@entity_type.manager'
+      - '@mcp_tools.tool_call_context'
+      - '@current_user'
+      - '@datetime.time'
+      - '@config.factory'
+  mcp_tools_undo.undo:
+    class: Drupal\mcp_tools_undo\Service\UndoService
+    arguments:
+      - '@mcp_tools_undo.journal'
+      - '@entity_type.manager'
+      - '@config.factory'
+      - '@config.manager'
+      - '@mcp_tools.access_manager'
+      - '@mcp_tools.audit_logger'
+      - '@current_user'
+      - '@mcp_tools.tool_call_context'
+  mcp_tools_undo.config_subscriber:
+    class: Drupal\mcp_tools_undo\EventSubscriber\ConfigJournalSubscriber
+    arguments:
+      - '@mcp_tools_undo.journal'
+    tags:
+      - { name: event_subscriber }

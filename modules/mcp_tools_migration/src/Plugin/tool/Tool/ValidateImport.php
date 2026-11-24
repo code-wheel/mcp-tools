@@ -19,7 +19,7 @@ use Drupal\tool\TypedData\InputDefinition;
 #[Tool(
   id: 'mcp_migration_validate',
   label: new TranslatableMarkup('Validate Import'),
-  description: new TranslatableMarkup('Validate data before import to check for errors and missing fields.'),
+  description: new TranslatableMarkup("Deprecated, and removed in a later release: use mcp_migration_import_json with dry_run, which runs the import's own checks (the key, references by id or name, a term's parent) and writes nothing. This older check knows fewer of them."),
   operation: ToolOperation::Read,
   input_definitions: [
     'content_type' => new InputDefinition(
@@ -36,6 +36,11 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
+    'deprecated' => new OutputDefinition(
+      data_type: 'string',
+      label: new TranslatableMarkup('Deprecated'),
+      description: new TranslatableMarkup('What to use instead.'),
+    ),
     'valid' => new OutputDefinition(
       data_type: 'boolean',
       label: new TranslatableMarkup('Valid'),
@@ -104,7 +109,13 @@ class ValidateImport extends McpToolsToolBase {
       return ['success' => FALSE, 'error' => 'Items array is required and must contain at least one item.'];
     }
 
-    return $this->migrationService->validateImport($contentType, $items);
+    $result = $this->migrationService->validateImport($contentType, $items);
+    // Said in the answer too: a model that called it reads this, not the
+    // tool list.
+    if (!empty($result['success'])) {
+      $result['data']['deprecated'] = 'mcp_migration_validate is deprecated: use mcp_migration_import_json with dry_run, which runs the checks the import itself runs and writes nothing.';
+    }
+    return $result;
   }
 
 }

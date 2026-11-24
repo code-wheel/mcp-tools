@@ -1,4 +1,4 @@
 mcp_tools use webform:
-  title: 'Use MCP webform tools'
-  description: 'Create, update, delete, and manage webforms and submissions via MCP.'
+  title: 'Use MCP webform tools (category: webform)'
+  description: 'Access Webform tools via MCP.'
   restrict access: true

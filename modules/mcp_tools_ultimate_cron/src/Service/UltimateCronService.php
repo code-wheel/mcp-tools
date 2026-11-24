@@ -6,7 +6,6 @@ namespace Drupal\mcp_tools_ultimate_cron\Service;
 
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
-use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 
 /**
  * Service for Ultimate Cron job management operations.
@@ -27,13 +26,10 @@ class UltimateCronService {
    *   The entity type manager.
    * @param \Drupal\Core\Database\Connection $database
    *   The database connection.
-   * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $loggerFactory
-   *   The logger factory.
    */
   public function __construct(
-    protected EntityTypeManagerInterface $entityTypeManager,
+    EntityTypeManagerInterface $entityTypeManager,
     protected Connection $database,
-    protected LoggerChannelFactoryInterface $loggerFactory,
   ) {
     $this->jobStorage = $entityTypeManager->getStorage('ultimate_cron_job');
   }

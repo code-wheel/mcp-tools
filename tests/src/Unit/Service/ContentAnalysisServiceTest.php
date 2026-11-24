@@ -36,7 +36,6 @@ final class ContentAnalysisServiceTest extends UnitTestCase {
     $this->service = new ContentAnalysisService(
       $this->entityTypeManager,
       $this->entityFieldManager,
-      $this->database,
     );
   }
 
@@ -44,7 +43,6 @@ final class ContentAnalysisServiceTest extends UnitTestCase {
     return new ContentAnalysisService(
       $this->createMock(EntityTypeManagerInterface::class),
       $this->createMock(EntityFieldManagerInterface::class),
-      $this->createMock(Connection::class),
     );
   }
 
@@ -90,9 +88,19 @@ final class ContentAnalysisServiceTest extends UnitTestCase {
     $storage = $this->createMock(EntityStorageInterface::class);
     $storage->method('loadMultiple')->willReturn(['article' => $nodeType]);
 
-    $this->entityTypeManager->method('getStorage')
-      ->with('node_type')
-      ->willReturn($storage);
+    // The content the user may see, counted with access checked.
+    $query = $this->createMock(QueryInterface::class);
+    $query->expects($this->once())->method('accessCheck')->with(TRUE)->willReturnSelf();
+    $query->method('condition')->with('type', 'article')->willReturnSelf();
+    $query->method('count')->willReturnSelf();
+    $query->method('execute')->willReturn(7);
+    $nodeStorage = $this->createMock(EntityStorageInterface::class);
+    $nodeStorage->method('getQuery')->willReturn($query);
+
+    $this->entityTypeManager->method('getStorage')->willReturnMap([
+      ['node_type', $storage],
+      ['node', $nodeStorage],
+    ]);
 
     $fieldStorageDef = $this->createMock(FieldStorageDefinitionInterface::class);
     $fieldStorageDef->method('isBaseField')->willReturn(FALSE);
@@ -113,6 +121,7 @@ final class ContentAnalysisServiceTest extends UnitTestCase {
     $this->assertSame('article', $result['types'][0]['id']);
     $this->assertSame('Article', $result['types'][0]['label']);
     $this->assertSame(1, $result['types'][0]['field_count']);
+    $this->assertSame(7, $result['types'][0]['content_count']);
   }
 
   public function testGetRecentContentReturnsEmptyWhenNone(): void {

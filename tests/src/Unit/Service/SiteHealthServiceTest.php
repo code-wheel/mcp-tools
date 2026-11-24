@@ -8,7 +8,6 @@ use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Config\ImmutableConfig;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Extension\ModuleExtensionList;
-use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\State\StateInterface;
 use Drupal\mcp_tools\Service\SiteHealthService;
 use Drupal\Tests\UnitTestCase;
@@ -39,7 +38,6 @@ final class SiteHealthServiceTest extends UnitTestCase {
       $state,
       $database,
       $configFactory,
-      $this->createMock(ModuleHandlerInterface::class),
     );
 
     $status = $service->getCronStatus();
@@ -62,7 +60,6 @@ final class SiteHealthServiceTest extends UnitTestCase {
       $this->createMock(StateInterface::class),
       $this->createMock(Connection::class),
       $this->createMock(ConfigFactoryInterface::class),
-      $this->createMock(ModuleHandlerInterface::class),
     );
 
     $withoutCore = $service->getInstalledModules(FALSE);
@@ -125,7 +122,6 @@ final class SiteHealthServiceTest extends UnitTestCase {
       $state,
       $database,
       $configFactory,
-      $this->createMock(ModuleHandlerInterface::class),
     );
 
     $status = $service->getSiteStatus();

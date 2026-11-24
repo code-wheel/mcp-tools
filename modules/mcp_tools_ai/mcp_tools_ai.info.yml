@@ -1,7 +1,7 @@
 name: 'MCP Tools - AI Function Calls'
 type: module
 description: 'Exposes MCP Tools (Tool API) tools as drupal/ai Function Calls, making them available to the AI Agents ecosystem.'
-package: AI
+package: MCP Tools
 core_version_requirement: ^10.5 || ^11
 lifecycle: experimental
 

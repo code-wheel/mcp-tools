@@ -12,5 +12,6 @@ services:
       - '@plugin.manager.tool'
       - '@module_installer'
       - '@extension.list.module'
+      - '%app.root%'
     tags:
       - { name: drush.command }

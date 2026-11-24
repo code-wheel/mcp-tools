@@ -1,0 +1,8 @@
+name: 'MCP Tools - Undo'
+type: module
+description: 'Undo what one MCP tool call changed: content made, changed or deleted, and config, as long as nothing changed since.'
+core_version_requirement: ^10.5 || ^11
+package: MCP Tools
+lifecycle: experimental
+dependencies:
+  - mcp_tools:mcp_tools

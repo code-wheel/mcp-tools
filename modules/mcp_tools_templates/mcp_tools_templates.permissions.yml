@@ -1,4 +1,4 @@
 mcp_tools use templates:
-  title: 'Use MCP templates tools'
-  description: 'Export, preview, and apply site templates via MCP.'
+  title: 'Use MCP templates tools (category: templates)'
+  description: 'Access site template creation and application tools via MCP.'
   restrict access: true

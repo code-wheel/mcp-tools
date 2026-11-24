@@ -39,10 +39,6 @@ final class BatchServiceTest extends UnitTestCase {
         return $this->normalizeFieldValue($fieldName, $value, $definitions);
       }
 
-      public function normalizeDestination(string $destination): string {
-        return $this->normalizeRedirectDestination($destination);
-      }
-
     };
   }
 
@@ -101,16 +97,6 @@ final class BatchServiceTest extends UnitTestCase {
 
     // If definitions are missing, return the original value.
     $this->assertSame('x', $service->normalizeField('field_missing', 'x', $definitions));
-  }
-
-  public function testNormalizeRedirectDestinationProducesInternalUris(): void {
-    $service = $this->createService();
-
-    $this->assertSame('https://example.com', $service->normalizeDestination('https://example.com'));
-    $this->assertSame('internal:/foo', $service->normalizeDestination('/foo'));
-    $this->assertSame('internal:/foo/bar', $service->normalizeDestination('foo/bar'));
-    $this->assertSame('entity:node/1', $service->normalizeDestination('entity:node/1'));
-    $this->assertSame('route:<front>', $service->normalizeDestination('route:<front>'));
   }
 
   public function testCreateMultipleContentCreatesItemsViaStorage(): void {

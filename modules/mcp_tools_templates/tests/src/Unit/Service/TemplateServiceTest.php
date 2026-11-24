@@ -43,7 +43,6 @@ final class TemplateServiceTest extends UnitTestCase {
   ): TemplateService {
     return new TemplateService(
       $entityTypeManager ?? $this->createMock(EntityTypeManagerInterface::class),
-      $this->configFactory,
       $accessManager ?? $this->createMock(AccessManager::class),
       $auditLogger ?? $this->auditLogger,
       $componentFactory ?? $this->componentFactory,

@@ -31,7 +31,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'terms' => new InputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Terms'),
-      description: new TranslatableMarkup('Array of strings (term names) or objects with {name, description, parent, weight}. More efficient than multiple mcp_structure_create_term calls.'),
+      description: new TranslatableMarkup('Array of strings (term names) or objects with {name, description, parent, weight}. parent is a term id or a term name, also of a term made earlier in this list, so a small tree goes in one call. More efficient than multiple mcp_structure_create_term calls.'),
       required: TRUE,
     ),
   ],

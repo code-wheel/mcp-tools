@@ -11,7 +11,6 @@ use Drupal\Core\Entity\Query\QueryInterface;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AuditLogger;
 use Drupal\mcp_tools_pathauto\Service\PathautoService;
-use Drupal\pathauto\AliasCleanerInterface;
 use Drupal\pathauto\PathautoGeneratorInterface;
 use Drupal\Tests\UnitTestCase;
 
@@ -23,7 +22,6 @@ final class PathautoServiceTest extends UnitTestCase {
     return new PathautoService(
       $overrides['entity_type_manager'] ?? $this->createMock(EntityTypeManagerInterface::class),
       $overrides['pathauto_generator'] ?? $this->createMock(PathautoGeneratorInterface::class),
-      $overrides['alias_cleaner'] ?? $this->createMock(AliasCleanerInterface::class),
       $overrides['access_manager'] ?? $this->createMock(AccessManager::class),
       $overrides['audit_logger'] ?? $this->createMock(AuditLogger::class),
     );

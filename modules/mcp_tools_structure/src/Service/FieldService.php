@@ -16,126 +16,6 @@ use Drupal\mcp_tools\Service\FieldInput;
  */
 class FieldService {
 
-  /**
-   * Common field type mappings with default settings.
-   */
-  protected const FIELD_TYPE_DEFAULTS = [
-    'string' => [
-      'type' => 'string',
-      'widget' => 'string_textfield',
-      'formatter' => 'string',
-      'storage_settings' => ['max_length' => 255],
-    ],
-    'string_long' => [
-      'type' => 'string_long',
-      'widget' => 'string_textarea',
-      'formatter' => 'basic_string',
-      'storage_settings' => [],
-    ],
-    'text' => [
-      'type' => 'text',
-      'widget' => 'text_textfield',
-      'formatter' => 'text_default',
-      'storage_settings' => ['max_length' => 255],
-    ],
-    'text_long' => [
-      'type' => 'text_long',
-      'widget' => 'text_textarea',
-      'formatter' => 'text_default',
-      'storage_settings' => [],
-    ],
-    'text_with_summary' => [
-      'type' => 'text_with_summary',
-      'widget' => 'text_textarea_with_summary',
-      'formatter' => 'text_default',
-      'storage_settings' => [],
-    ],
-    'integer' => [
-      'type' => 'integer',
-      'widget' => 'number',
-      'formatter' => 'number_integer',
-      'storage_settings' => [],
-    ],
-    'decimal' => [
-      'type' => 'decimal',
-      'widget' => 'number',
-      'formatter' => 'number_decimal',
-      'storage_settings' => ['precision' => 10, 'scale' => 2],
-    ],
-    'float' => [
-      'type' => 'float',
-      'widget' => 'number',
-      'formatter' => 'number_decimal',
-      'storage_settings' => [],
-    ],
-    'boolean' => [
-      'type' => 'boolean',
-      'widget' => 'boolean_checkbox',
-      'formatter' => 'boolean',
-      'storage_settings' => [],
-    ],
-    'email' => [
-      'type' => 'email',
-      'widget' => 'email_default',
-      'formatter' => 'basic_string',
-      'storage_settings' => [],
-    ],
-    'link' => [
-      'type' => 'link',
-      'widget' => 'link_default',
-      'formatter' => 'link',
-      'storage_settings' => [],
-    ],
-    'datetime' => [
-      'type' => 'datetime',
-      'widget' => 'datetime_default',
-      'formatter' => 'datetime_default',
-      'storage_settings' => ['datetime_type' => 'datetime'],
-    ],
-    'date' => [
-      'type' => 'datetime',
-      'widget' => 'datetime_default',
-      'formatter' => 'datetime_default',
-      'storage_settings' => ['datetime_type' => 'date'],
-    ],
-    'timestamp' => [
-      'type' => 'timestamp',
-      'widget' => 'datetime_timestamp',
-      'formatter' => 'timestamp',
-      'storage_settings' => [],
-    ],
-    'image' => [
-      'type' => 'image',
-      'widget' => 'image_image',
-      'formatter' => 'image',
-      'storage_settings' => ['target_type' => 'file'],
-    ],
-    'file' => [
-      'type' => 'file',
-      'widget' => 'file_generic',
-      'formatter' => 'file_default',
-      'storage_settings' => ['target_type' => 'file'],
-    ],
-    'entity_reference' => [
-      'type' => 'entity_reference',
-      'widget' => 'entity_reference_autocomplete',
-      'formatter' => 'entity_reference_label',
-      'storage_settings' => [],
-    ],
-    'list_string' => [
-      'type' => 'list_string',
-      'widget' => 'options_select',
-      'formatter' => 'list_default',
-      'storage_settings' => ['allowed_values' => []],
-    ],
-    'list_integer' => [
-      'type' => 'list_integer',
-      'widget' => 'options_select',
-      'formatter' => 'list_default',
-      'storage_settings' => ['allowed_values' => []],
-    ],
-  ];
-
   public function __construct(
     protected EntityTypeManagerInterface $entityTypeManager,
     protected EntityFieldManagerInterface $entityFieldManager,
@@ -153,10 +33,10 @@ class FieldService {
   public function getFieldTypes(): array {
     $types = [];
 
-    foreach (self::FIELD_TYPE_DEFAULTS as $alias => $config) {
+    // A type this site cannot add is not offered.
+    foreach (FieldInput::availableTypes($this->fieldTypeManager, $this->entityTypeManager) as $alias) {
+      $config = FieldInput::TYPES[$alias];
       $definition = $this->fieldTypeManager->getDefinition($config['type'], FALSE);
-      // A type whose module is not enabled cannot be added, so it is not
-      // offered: list fields need Options, dates need Datetime, and so on.
       if (!$definition) {
         continue;
       }
@@ -236,7 +116,7 @@ class FieldService {
     // meant as a list, so that is what is made. Any other type is refused.
     $typeAsked = $fieldType;
     $isList = $fieldType === 'list_string' || $fieldType === 'list_integer';
-    if (!empty($options['allowed_values']) && isset(self::FIELD_TYPE_DEFAULTS[$fieldType]) && !$isList) {
+    if (!empty($options['allowed_values']) && isset(FieldInput::TYPES[$fieldType]) && !$isList) {
       if ($fieldType !== 'string' && $fieldType !== 'integer') {
         $error = "allowed_values is for list fields, and '$fieldType' is not one. Use field_type list_string for"
           . ' options that are text or list_integer for whole numbers, or leave allowed_values out.';
@@ -254,7 +134,7 @@ class FieldService {
     }
 
     // Check field type.
-    if (!isset(self::FIELD_TYPE_DEFAULTS[$fieldType])) {
+    if (!isset(FieldInput::TYPES[$fieldType])) {
       return [
         'success' => FALSE,
         'error' => "Unknown field type '$fieldType'. Use mcp_structure_list_field_types to see available types.",
@@ -262,7 +142,7 @@ class FieldService {
       ];
     }
 
-    if (!$this->fieldTypeManager->hasDefinition(self::FIELD_TYPE_DEFAULTS[$fieldType]['type'])) {
+    if (!in_array($fieldType, FieldInput::availableTypes($this->fieldTypeManager, $this->entityTypeManager), TRUE)) {
       return [
         'success' => FALSE,
         'error' => "Field type '$fieldType' is not available on this site: the module that provides it is not enabled. Use mcp_structure_list_field_types to see available types.",
@@ -270,7 +150,7 @@ class FieldService {
       ];
     }
 
-    $typeConfig = self::FIELD_TYPE_DEFAULTS[$fieldType];
+    $typeConfig = FieldInput::TYPES[$fieldType];
 
     // The options of a list, read before anything is made.
     $allowedValues = NULL;
@@ -285,9 +165,10 @@ class FieldService {
 
     // The bundles a reference may point to, read before anything is made.
     $targetBundles = [];
-    if ($typeConfig['type'] === 'entity_reference') {
+    $targetType = FieldInput::referenceTarget($typeConfig, $options['target_type'] ?? NULL);
+    if ($targetType !== NULL) {
       try {
-        $targetBundles = FieldInput::targetBundles($options['target_bundles'] ?? NULL, (string) ($options['target_type'] ?? 'node'), $this->entityTypeManager);
+        $targetBundles = FieldInput::targetBundles($options['target_bundles'] ?? NULL, $targetType, $this->entityTypeManager);
       }
       catch (\InvalidArgumentException $e) {
         return ['success' => FALSE, 'error' => $e->getMessage()];
@@ -326,8 +207,7 @@ class FieldService {
         );
 
         // Handle entity reference target type.
-        if ($typeConfig['type'] === 'entity_reference') {
-          $targetType = $options['target_type'] ?? 'node';
+        if ($targetType !== NULL) {
           $storageSettings['target_type'] = $targetType;
         }
 
@@ -340,7 +220,7 @@ class FieldService {
           'field_name' => $fieldName,
           'entity_type' => $entityType,
           'type' => $typeConfig['type'],
-          'cardinality' => $options['cardinality'] ?? 1,
+          'cardinality' => $options['cardinality'] ?? $typeConfig['cardinality'] ?? 1,
           'settings' => $storageSettings,
         ]);
         $fieldStorage->save();
@@ -350,8 +230,7 @@ class FieldService {
       $fieldSettings = $options['settings'] ?? [];
 
       // Handle entity reference handler settings.
-      if ($typeConfig['type'] === 'entity_reference') {
-        $targetType = $options['target_type'] ?? 'node';
+      if ($targetType !== NULL) {
         $fieldSettings['handler'] = 'default:' . $targetType;
         if ($targetBundles !== []) {
           $fieldSettings['handler_settings']['target_bundles'] = $targetBundles;

@@ -10,7 +10,6 @@ use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Entity\Query\QueryInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
-use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\State\StateInterface;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AuditLogger;
@@ -42,8 +41,6 @@ final class MigrationServiceTest extends UnitTestCase {
     return new class(
       $this->createMock(EntityTypeManagerInterface::class),
       $this->createMock(EntityFieldManagerInterface::class),
-      $this->createMock(AccountProxyInterface::class),
-      $this->state,
       $this->createMock(AccessManager::class),
       $this->createMock(AuditLogger::class),
     ) extends MigrationService {
@@ -63,8 +60,6 @@ final class MigrationServiceTest extends UnitTestCase {
     return new MigrationService(
       $overrides['entity_type_manager'] ?? $this->createMock(EntityTypeManagerInterface::class),
       $overrides['entity_field_manager'] ?? $this->createMock(EntityFieldManagerInterface::class),
-      $overrides['current_user'] ?? $this->createMock(AccountProxyInterface::class),
-      $overrides['state'] ?? $this->state,
       $overrides['access_manager'] ?? $this->createMock(AccessManager::class),
       $overrides['audit_logger'] ?? $this->createMock(AuditLogger::class),
     );
@@ -77,8 +72,6 @@ final class MigrationServiceTest extends UnitTestCase {
     $service = new class(
       $this->createMock(EntityTypeManagerInterface::class),
       $this->createMock(EntityFieldManagerInterface::class),
-      $this->createMock(AccountProxyInterface::class),
-      $this->state,
       $accessManager,
       $this->createMock(AuditLogger::class),
     ) extends MigrationService {
@@ -147,7 +140,7 @@ final class MigrationServiceTest extends UnitTestCase {
     $migrate->method('run')->willReturnCallback(fn() => ['saved' => array_map('strval', array_keys($record->rows)), 'failed' => [], 'done' => TRUE, 'remaining' => 0, 'reset' => FALSE]);
     $migrate->method('exists')->willReturn(TRUE);
     $migrate->method('status')->willReturnCallback(fn(string $id) => ['import_id' => $id, 'imported' => count((array) $record->rows)]);
-    $service = new MigrationService($entityTypeManager, $entityFieldManager, $this->createMock(AccountProxyInterface::class), $this->state, $accessManager, $this->createMock(AuditLogger::class), $migrate);
+    $service = new MigrationService($entityTypeManager, $entityFieldManager, $accessManager, $this->createMock(AuditLogger::class), $migrate);
     return [$service, $record];
   }
 
@@ -282,6 +275,10 @@ final class MigrationServiceTest extends UnitTestCase {
       ['node_type', $nodeTypeStorage],
       ['node', $nodeStorage],
     ]);
+    $nodeInfo = $this->createMock(EntityTypeInterface::class);
+    $nodeInfo->method('getKey')->willReturnCallback(fn(string $key) => ['id' => 'nid', 'bundle' => 'type', 'label' => 'title'][$key] ?? FALSE);
+    $nodeInfo->method('getBundleEntityType')->willReturn('node_type');
+    $entityTypeManager->method('getDefinition')->with('node')->willReturn($nodeInfo);
 
     $service = $this->createMigrationService([
       'entity_type_manager' => $entityTypeManager,
@@ -292,6 +289,8 @@ final class MigrationServiceTest extends UnitTestCase {
     $this->assertTrue($csv['success']);
     $this->assertStringContainsString('field_tags', $csv['data']['csv_data']);
     $this->assertStringContainsString('"Hello, ""world"""', $csv['data']['csv_data']);
+    // The tag as the CSV import reads it: its id (several joined by |).
+    $this->assertStringContainsString(',123', $csv['data']['csv_data']);
 
     $json = $service->exportToJson('article', 5);
     $this->assertTrue($json['success']);
@@ -353,6 +352,10 @@ final class FakeExportFieldItemList implements \IteratorAggregate {
 
   public function getFieldDefinition(): FakeExportFieldDefinition {
     return new FakeExportFieldDefinition($this->type);
+  }
+
+  public function getValue(): array {
+    return array_map(fn($item) => $item->getValue(), $this->items);
   }
 
   public function getIterator(): \Traversable {

@@ -4,10 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools\Service;
 
-use Drupal\Core\Extension\ModuleExtensionList;
 use Drupal\Core\State\StateInterface;
-use Drupal\update\UpdateManagerInterface;
-use Drupal\update\UpdateProcessorInterface;
 
 /**
  * Service for checking security updates.
@@ -43,9 +40,6 @@ class SecurityUpdateChecker {
   ];
 
   public function __construct(
-    protected UpdateManagerInterface $updateManager,
-    protected UpdateProcessorInterface $updateProcessor,
-    protected ModuleExtensionList $moduleExtensionList,
     protected ?StateInterface $state = NULL,
   ) {}
 

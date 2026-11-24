@@ -39,6 +39,7 @@ class McpToolsCommands extends DrushCommands {
     protected ToolManager $toolManager,
     protected ModuleInstallerInterface $moduleInstaller,
     protected ModuleExtensionList $moduleList,
+    protected string $appRoot = '',
   ) {
     parent::__construct();
   }
@@ -613,8 +614,7 @@ class McpToolsCommands extends DrushCommands {
     $scope = is_string($options['scope']) ? $options['scope'] : 'read,write';
     $uid = is_string($options['uid']) ? $options['uid'] : '1';
 
-    // phpcs:ignore DrupalPractice.Objects.GlobalDrupal.GlobalDrupal
-    $drupalRoot = \Drupal::root();
+    $drupalRoot = $this->appRoot;
     $isDdev = (bool) getenv('IS_DDEV_PROJECT');
     $isLando = (bool) getenv('LANDO');
 

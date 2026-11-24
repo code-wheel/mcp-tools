@@ -51,7 +51,7 @@ class ContentService {
       return [
         'success' => FALSE,
         'error' => "Content type '$type' not found."
-          . " Use mcp_structure_list_content_types to see available types.",
+          . " Use mcp_tools_list_content_types to see available types.",
       ];
     }
 
@@ -96,6 +96,26 @@ class ContentService {
       $now = $this->time->getCurrentTime();
       $node->setCreatedTime($now);
       $node->setChangedTime($now);
+      // On moderated content the workflow's state decides the status, as
+      // updateContent() says for an update.
+      if (isset($options['status']) && $this->moderationInformation !== NULL && $this->moderationInformation->isModeratedEntity($node)) {
+        return [
+          'success' => FALSE,
+          'error' => "Content type '$type' is under a moderation workflow: its state decides whether new content is published. Leave status out, and use mcp_moderation_set_state for that. Nothing was created.",
+          'code' => 'MODERATED',
+        ];
+      }
+      // The fields the call set: the owner and the status only when given,
+      // the defaults are the tool's.
+      $given = array_diff(array_keys($nodeData), ['type', 'uid', 'status']);
+      foreach (['status', 'uid'] as $field) {
+        if (isset($options[$field])) {
+          $given[] = $field;
+        }
+      }
+      if (($denied = EntityAccess::fieldsDenied($node, $given)) !== NULL) {
+        return $denied;
+      }
       if (($problem = EntityReferences::problem($node)) !== NULL) {
         return ['success' => FALSE, 'error' => $problem];
       }
@@ -219,6 +239,14 @@ class ContentService {
       ];
     }
 
+    $given = [];
+    foreach (array_keys($updates) as $fieldName) {
+      $given[] = in_array($fieldName, ['title', 'status'], TRUE) ? (string) $fieldName : $this->resolveFieldName((string) $fieldName, $fieldDefinitions);
+    }
+    if (($denied = EntityAccess::fieldsDenied($node, $given)) !== NULL) {
+      return $denied;
+    }
+
     $sourceLangcode = $node->language()->getId();
 
     try {
@@ -252,20 +280,32 @@ class ContentService {
         'language' => $sourceLangcode,
       ]);
 
-      return [
-        'success' => TRUE,
-        'data' => [
-          'nid' => $nid,
-          'title' => $node->getTitle(),
-          'language' => $sourceLangcode,
-          'fields_updated' => $updatedFields,
-          'revision_id' => $node->getRevisionId(),
-          'message' => sprintf(
-            "Content updated successfully in '%s' (the source language).",
-            $sourceLangcode,
-          ),
-        ],
+      $data = [
+        'nid' => $nid,
+        'title' => $node->getTitle(),
+        'language' => $sourceLangcode,
+        'fields_updated' => $updatedFields,
+        'revision_id' => $node->getRevisionId(),
+        'message' => sprintf(
+          "Content updated successfully in '%s' (the source language).",
+          $sourceLangcode,
+        ),
       ];
+      // The edit went to a draft that waits, not to what is live. The answer
+      // gave the draft's title only, so a model that had found the live
+      // title "corrected" it back, and undid the draft's own change.
+      if (!$node->isDefaultRevision()) {
+        $live = $this->entityTypeManager->getStorage('node')->load($nid);
+        $data['draft'] = TRUE;
+        $data['live_title'] = $live?->getTitle();
+        $data['message'] .= sprintf(
+          " This is the draft that waits for publishing, not what is live: the draft's title is '%s', the live one stays '%s' until the draft is published (mcp_moderation_set_state). The draft's other changes are its own: leave them unless you were asked to change them.",
+          $node->getTitle(),
+          (string) $live?->getTitle(),
+        );
+      }
+
+      return ['success' => TRUE, 'data' => $data];
     }
     catch (\Exception $e) {
       $this->auditLogger->logFailure('update_content', 'node', (string) $nid, ['error' => $e->getMessage()]);
@@ -544,6 +584,9 @@ class ContentService {
     $word = $publish ? 'published' : 'unpublished';
 
     $changed = $publish !== $target->isPublished();
+    if ($changed && ($denied = EntityAccess::fieldsDenied($target, ['status'])) !== NULL) {
+      return $denied;
+    }
     if ($changed) {
       try {
         $publish ? $target->setPublished() : $target->setUnpublished();

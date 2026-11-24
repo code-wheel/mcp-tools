@@ -62,7 +62,6 @@ services:
       - '@state'
       - '@database'
       - '@config.factory'
-      - '@module_handler'
 
   mcp_tools.site_blueprint:
     class: Drupal\mcp_tools\Service\SiteBlueprintService
@@ -75,9 +74,6 @@ services:
   mcp_tools.security_update_checker:
     class: Drupal\mcp_tools\Service\SecurityUpdateChecker
     arguments:
-      - '@update.manager'
-      - '@update.processor'
-      - '@extension.list.module'
       - '@state'
 
   mcp_tools.watchdog_analyzer:
@@ -135,7 +131,6 @@ services:
     arguments:
       - '@entity_type.manager'
       - '@entity_field.manager'
-      - '@database'
 
   mcp_tools.taxonomy:
     class: Drupal\mcp_tools\Service\TaxonomyService
@@ -176,7 +171,6 @@ services:
   mcp_tools.file_system:
     class: Drupal\mcp_tools\Service\FileSystemService
     arguments:
-      - '@file_system'
       - '@stream_wrapper_manager'
       - '@entity_type.manager'
       - '@database'

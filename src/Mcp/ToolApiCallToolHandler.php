@@ -72,7 +72,6 @@ class ToolApiCallToolHandler implements RequestHandlerInterface {
    * installed along the way.
    */
   private function policy(): ToolPolicy {
-    // phpcs:ignore DrupalPractice.Objects.GlobalDrupal.GlobalDrupal
     return \Drupal::service('mcp_tools.tool_policy');
   }
 
@@ -489,12 +488,28 @@ class ToolApiCallToolHandler implements RequestHandlerInterface {
       return $argument;
     }
 
+    // A yes/no or a whole number is cast only when its meaning is plain.
+    // Anything else stays as sent, and the schema check refuses it: it was
+    // made FALSE ("garbage", 2, "1.0") or cut to a whole number ("1.9" to 1,
+    // "1e3" to 1000), and the call went on with a value nobody sent.
     if ($dataType === 'boolean') {
-      return filter_var($argument, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? FALSE;
+      if (is_bool($argument)) {
+        return $argument;
+      }
+      if (is_int($argument) || is_string($argument)) {
+        return filter_var($argument, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? $argument;
+      }
+      return $argument;
     }
 
     if ($dataType === 'integer') {
-      return is_numeric($argument) ? (int) $argument : $argument;
+      if (is_string($argument) && preg_match('/^\s*-?\d+\s*$/', $argument)) {
+        return (int) $argument;
+      }
+      if (is_float($argument) && floor($argument) === $argument && abs($argument) <= PHP_INT_MAX) {
+        return (int) $argument;
+      }
+      return $argument;
     }
 
     if ($dataType === 'float') {

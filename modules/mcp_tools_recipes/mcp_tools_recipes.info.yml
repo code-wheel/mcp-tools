@@ -1,7 +1,7 @@
 name: 'MCP Tools - Recipes'
 type: module
 description: 'MCP tools for Drupal Recipes integration.'
-package: MCP
+package: MCP Tools
 core_version_requirement: ^10.5 || ^11
 dependencies:
   - mcp_tools:mcp_tools

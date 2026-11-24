@@ -69,4 +69,46 @@ final class EntityAccessKernelTest extends KernelTestBase {
     $this->assertTrue($content->updateContent((int) $other->id(), ['title' => 'Old way'])['success']);
   }
 
+  /**
+   * An editor sets no field Drupal keeps for "administer nodes".
+   *
+   * The owner, the published status, the dates, promote and sticky: the
+   * node form shows them only to those who may administer nodes. The tools
+   * took them from any writer, so an editor made content owned by user 1.
+   */
+  public function testAnEditorSetsNoAdministrativeField(): void {
+    $editor = $this->setUpCurrentUser([], ['access content', 'create article content', 'edit own article content', 'mcp_tools use content', 'mcp_tools use batch']);
+    $content = $this->container->get('mcp_tools_content.content');
+    $batch = $this->container->get('mcp_tools_batch.batch');
+    $nodes = fn() => (int) $this->container->get('entity_type.manager')->getStorage('node')->getQuery()->accessCheck(FALSE)->count()->execute();
+
+    $result = $batch->createMultipleContent('article', [['title' => 'As user 1', 'uid' => 1]]);
+    $this->assertFalse($result['success'], 'An editor made a node owned by user 1: ' . json_encode($result));
+    $this->assertStringContainsString('may not set uid', $result['error']);
+    $result = $content->createContent('article', 'Published at once', [], ['status' => TRUE]);
+    $this->assertFalse($result['success'], 'An editor published a node, which needs "administer nodes".');
+    $this->assertSame(0, $nodes());
+
+    // Their own node, made the plain way, then its owner changed.
+    $made = $content->createContent('article', 'Mine');
+    $this->assertTrue($made['success'], json_encode($made));
+    $nid = (int) ($made['data']['nid'] ?? 0);
+    $this->assertFalse($content->updateContent($nid, ['uid' => 1])['success'], 'An editor gave their node to user 1.');
+    $this->assertSame((int) $editor->id(), (int) Node::load($nid)->getOwnerId());
+  }
+
+  /**
+   * An owner who is no user is refused, not turned into anonymous.
+   *
+   * Node::preSave makes an owner it cannot load the anonymous user, so a
+   * node given to user 999 was saved as anonymous's, with success.
+   */
+  public function testAnOwnerWhoIsNoUser(): void {
+    $this->setUpCurrentUser([], [], TRUE);
+    $result = $this->container->get('mcp_tools_batch.batch')->createMultipleContent('article', [['title' => 'Owned by nobody', 'uid' => 999]]);
+    $this->assertFalse($result['success'], 'A node owned by a user who does not exist was made: ' . json_encode($result));
+    $this->assertStringContainsString('uid: no user to refer to as 999', $result['error']);
+    $this->assertSame(0, (int) $this->container->get('entity_type.manager')->getStorage('node')->getQuery()->accessCheck(FALSE)->count()->execute());
+  }
+
 }

@@ -10,7 +10,6 @@ use Drupal\Core\Cache\CacheTagsInvalidatorInterface;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\DrupalKernelInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
-use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Menu\MenuLinkManagerInterface;
 use Drupal\Core\Routing\RouteBuilderInterface;
 use Drupal\Core\Theme\Registry;
@@ -39,7 +38,6 @@ class CacheService {
 
   public function __construct(
     protected CacheTagsInvalidatorInterface $cacheTagsInvalidator,
-    protected ModuleHandlerInterface $moduleHandler,
     protected Connection $database,
     protected CacheFactoryInterface $cacheFactory,
     protected RouteBuilderInterface $routerBuilder,

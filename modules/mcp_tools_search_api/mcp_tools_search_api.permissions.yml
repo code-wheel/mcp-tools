@@ -1,4 +1,4 @@
 mcp_tools use search_api:
-  title: 'Use MCP Search API tools'
-  description: 'Manage Search API indexes (index/reindex/clear) via MCP.'
+  title: 'Use MCP Search API tools (category: search_api)'
+  description: 'Access Search API index configuration and indexing operations via MCP.'
   restrict access: true

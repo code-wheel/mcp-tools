@@ -176,7 +176,7 @@ This page is generated. Do not edit it by hand.
 ## Moderation
 
 - `mcp_moderation_get_workflow` `{"id":"sweep_flow"}`
-- `mcp_create_content` `{"type":"sweep_moderated","title":"Sweep moderated","status":false}`
+- `mcp_create_content` `{"type":"sweep_moderated","title":"Sweep moderated"}`
 - `mcp_moderation_get_state` `{"entity_id":18}`
 - `mcp_moderation_set_state` `{"entity_id":18,"state":"published","revision_message":"Published by the sweep."}`
 - `mcp_moderation_get_history` `{"entity_id":18,"limit":5}`
@@ -199,6 +199,8 @@ This page is generated. Do not edit it by hand.
 - `mcp_migration_rollback` `{"import_id":"mcp_import_sweep_page__ref"}`
 - `mcp_migration_export_csv` `{"content_type":"sweep_page","limit":5}`
 - `mcp_migration_export_json` `{"content_type":"sweep_page","limit":5}`
+- `mcp_migration_export_json` `{"entity_type":"taxonomy_term","content_type":"sweep_tags","references":"names","limit":5}`
+- `mcp_migration_export_csv` `{"entity_type":"taxonomy_term","content_type":"sweep_tags","references":"names","limit":5}`
 
 ## JSON:API
 
@@ -259,6 +261,12 @@ This page is generated. Do not edit it by hand.
 - `mcp_ultimate_cron_enable` `{"id":"system_cron"}`
 - `mcp_ultimate_cron_run` `{"id":"system_cron"}`
 - `mcp_ultimate_cron_logs` `{"id":"system_cron","limit":5}`
+
+## Undo
+
+- `mcp_create_content` `{"type":"sweep_page","title":"Sweep undo me"}`
+- `mcp_undo_recent` `{"limit":5}`
+- `mcp_undo_call` (no arguments)
 
 ## Config
 

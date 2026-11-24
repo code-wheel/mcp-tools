@@ -3,7 +3,6 @@ services:
     class: Drupal\mcp_tools_cache\Service\CacheService
     arguments:
       - '@cache_tags.invalidator'
-      - '@module_handler'
       - '@database'
       - '@cache_factory'
       - '@router.builder'

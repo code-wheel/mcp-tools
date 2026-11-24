@@ -25,8 +25,20 @@ use Drupal\tool\TypedData\InputDefinition;
     'content_type' => new InputDefinition(
       data_type: 'string',
       label: new TranslatableMarkup('Content Type'),
-      description: new TranslatableMarkup('The machine name of the content type to export.'),
-      required: TRUE,
+      description: new TranslatableMarkup('The content type, or for terms the vocabulary. Left out for redirects.'),
+      required: FALSE,
+    ),
+    'entity_type' => new InputDefinition(
+      data_type: 'string',
+      label: new TranslatableMarkup('Entity type'),
+      description: new TranslatableMarkup('node (the default), taxonomy_term or redirect. The rows are what the import of the same type reads back.'),
+      required: FALSE,
+    ),
+    'references' => new InputDefinition(
+      data_type: 'string',
+      label: new TranslatableMarkup('References'),
+      description: new TranslatableMarkup("ids (the default) or names: tags and a term's parent by name, several joined by |, so the rows import into another site."),
+      required: FALSE,
     ),
     'limit' => new InputDefinition(
       data_type: 'integer',
@@ -42,6 +54,11 @@ use Drupal\tool\TypedData\InputDefinition;
     ),
   ],
   output_definitions: [
+    'entity_type' => new OutputDefinition(
+      data_type: 'string',
+      label: new TranslatableMarkup('Entity type'),
+      description: new TranslatableMarkup('What was exported: node, taxonomy_term or redirect.'),
+    ),
     'total' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total'),
@@ -103,11 +120,17 @@ class ExportToJson extends McpToolsToolBase {
     $limit = isset($input['limit']) ? (int) $input['limit'] : 100;
     $offset = (int) ($input['offset'] ?? 0);
 
-    if (empty($contentType)) {
+    $entityType = (string) ($input['entity_type'] ?? 'node');
+    if (empty($contentType) && $entityType !== 'redirect') {
       return ['success' => FALSE, 'error' => 'Content type is required.'];
     }
+    $references = (string) ($input['references'] ?? 'ids');
+    if (!in_array($references, ['ids', 'names'], TRUE)) {
+      return ['success' => FALSE, 'error' => "references is ids or names, not '$references'."];
+    }
 
-    return $this->migrationService->exportToJson($contentType, $limit, $offset);
+    $options = ['entity_type' => $entityType, 'references' => $references];
+    return $this->migrationService->exportToJson((string) $contentType, $limit, $offset, $options);
   }
 
 }

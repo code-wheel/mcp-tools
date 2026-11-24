@@ -9,7 +9,6 @@ use Drupal\Core\Database\Query\SelectInterface;
 use Drupal\Core\Database\StatementInterface;
 use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
-use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\mcp_tools_ultimate_cron\Service\UltimateCronService;
 use Drupal\Tests\UnitTestCase;
 
@@ -28,7 +27,6 @@ final class UltimateCronServiceTest extends UnitTestCase {
     return new UltimateCronService(
       $entityTypeManager,
       $overrides['database'] ?? $this->createMock(Connection::class),
-      $overrides['logger_factory'] ?? $this->createMock(LoggerChannelFactoryInterface::class),
     );
   }
 

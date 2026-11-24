@@ -222,7 +222,11 @@ class RedirectService {
         if (empty($values['destination'])) {
           return ['success' => FALSE, 'error' => 'Destination cannot be empty.'];
         }
-        $redirect->setRedirect($this->normalizeDestination($values['destination']));
+        // Set as create sets it: setRedirect() puts "internal:/" before
+        // anything that is not an external URL, so a destination already
+        // made a URI was stored as internal:/internal:/node/2, a redirect
+        // that led nowhere.
+        $redirect->set('redirect_redirect', ['uri' => $this->normalizeDestination($values['destination'])]);
         $updatedFields[] = 'destination';
       }
 

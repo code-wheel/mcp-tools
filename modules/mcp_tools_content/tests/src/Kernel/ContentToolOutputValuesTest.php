@@ -63,7 +63,8 @@ class ContentToolOutputValuesTest extends KernelTestBase {
 
     // An editor who may create and edit content (tools follow entity
     // access).
-    $this->setUpCurrentUser([], ['bypass node access']);
+    // Publishing is for 'administer nodes', as on the node form.
+    $this->setUpCurrentUser([], ['bypass node access', 'administer nodes']);
     $this->config('mcp_tools.settings')
       ->set('access.allowed_scopes', ['read', 'write'])
       ->set('access.read_only_mode', FALSE)
@@ -229,7 +230,7 @@ class ContentToolOutputValuesTest extends KernelTestBase {
     $this->assertSame('plain_text', Node::load($tool->getOutputValues()['nid'])->get('body')->format);
 
     // A user who may use it gets it, as before.
-    $this->setUpCurrentUser([], ['bypass node access', 'use text format basic_html']);
+    $this->setUpCurrentUser([], ['bypass node access', 'administer nodes', 'use text format basic_html']);
     $tool = $manager->createInstance('mcp_create_content');
     $tool->setInputValue('type', 'article');
     $tool->setInputValue('title', 'With basic_html');

@@ -6,8 +6,6 @@ namespace Drupal\mcp_tools_migration\Service;
 
 use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
-use Drupal\Core\Session\AccountProxyInterface;
-use Drupal\Core\State\StateInterface;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AuditLogger;
 use Drupal\mcp_tools\Service\LinkTarget;
@@ -28,10 +26,6 @@ class MigrationService {
    */
   protected const MAX_EXPORT_ITEMS = 100;
 
-  /**
-   * State key for tracking import status.
-   */
-  protected const IMPORT_STATUS_KEY = 'mcp_tools_migration.last_import';
 
   /**
    * Fields that can NEVER be set via import.
@@ -77,8 +71,6 @@ class MigrationService {
   public function __construct(
     protected EntityTypeManagerInterface $entityTypeManager,
     protected EntityFieldManagerInterface $entityFieldManager,
-    protected AccountProxyInterface $currentUser,
-    protected StateInterface $state,
     protected AccessManager $accessManager,
     protected AuditLogger $auditLogger,
     protected ?MigrateImport $migrateImport = NULL,
@@ -115,6 +107,9 @@ class MigrationService {
       return ['success' => FALSE, 'error' => 'CSV must contain a header row and at least one data row.'];
     }
     $headers = array_map(fn($h) => $fieldMapping[trim((string) $h)] ?? trim((string) $h), $headers);
+    // The key may name the column as the CSV has it, or as it is mapped:
+    // both are the same import. Given as in the CSV, every row failed.
+    $key = (string) ($fieldMapping[$key] ?? $key);
     $items = [];
     $rowErrors = [];
     $number = 0;
@@ -211,6 +206,16 @@ class MigrationService {
         'success' => FALSE,
         'error' => 'An import needs a key: the name of a column whose value names its row for good, such as an id from the source, or uuid. A later import with the same key updates what the first one made, and does not make copies.',
         'code' => 'KEY_REQUIRED',
+      ];
+    }
+
+    // A key no row has is a wrong key, not as many failed rows: the call
+    // answered success with nothing made.
+    if ($items !== [] && !array_filter($items, fn($item) => is_array($item) && array_key_exists($key, $item))) {
+      $columns = array_keys((array) reset($items));
+      return [
+        'success' => FALSE,
+        'error' => "No row has the column '$key' given as key. Nothing was imported. The rows have: " . implode(', ', $columns) . '.',
       ];
     }
     if (($missing = $this->migrateMissing()) !== NULL) {
@@ -456,6 +461,7 @@ class MigrationService {
     $defaults = $entityType === 'node' && !in_array('status', $fields, TRUE) ? ['status' => 0] : [];
     try {
       $this->migrateImport->save($importId, $entityType, $bundle, $key, $rows, $fields, $defaults, array_values($selfFields));
+      $this->migrateImport->rerunGone($importId, array_keys($rows));
       $run = $this->migrateImport->run($importId, count($rows));
     }
     catch (\Exception $e) {
@@ -861,153 +867,198 @@ class MigrationService {
   }
 
   /**
-   * Export content to CSV format.
+   * Export to CSV, in the rows the CSV import reads back.
    *
    * @param string $contentType
-   *   The content type machine name.
+   *   The content type, or for terms the vocabulary; empty for redirects.
    * @param int $limit
    *   Maximum number of items to export.
    * @param int $offset
-   *   How many nodes to skip, in id order.
+   *   How many items to skip, in id order.
+   * @param array $options
+   *   The options: 'entity_type' (node by default, taxonomy_term, redirect) and
+   *   'references' ('ids' by default, or 'names': tags and parents by
+   *   name, several with |, so the rows import into another site).
    *
    * @return array
    *   Result with CSV data string.
    */
-  public function exportToCsv(string $contentType, int $limit = 100, int $offset = 0): array {
-    $nodeType = $this->entityTypeManager->getStorage('node_type')->load($contentType);
-    if (!$nodeType) {
-      return ['success' => FALSE, 'error' => "Content type '$contentType' not found."];
+  public function exportToCsv(string $contentType, int $limit = 100, int $offset = 0, array $options = []): array {
+    $export = $this->export($contentType, $limit, $offset, $options, TRUE);
+    if (empty($export['success'])) {
+      return $export;
     }
-
-    $limit = min($limit, self::MAX_EXPORT_ITEMS);
-
-    $fieldDefinitions = $this->entityFieldManager->getFieldDefinitions('node', $contentType);
-    $exportFields = ['nid', 'uuid', 'title', 'status', 'created'];
-
-    // Add custom fields.
-    foreach (array_keys($fieldDefinitions) as $fieldName) {
-      if (str_starts_with($fieldName, 'field_') || $fieldName === 'body') {
-        $exportFields[] = $fieldName;
-      }
+    $fields = $export['fields'];
+    $rows = [implode(',', array_map([$this, 'csvEscape'], $fields))];
+    foreach ($export['items'] as $item) {
+      $rows[] = implode(',', array_map(fn($field) => $this->csvEscape((string) ($item[$field] ?? '')), $fields));
     }
-
-    [$nodes, $total] = $this->exportPage($contentType, $limit, $offset);
-
-    $rows = [];
-    $rows[] = implode(',', array_map([$this, 'csvEscape'], $exportFields));
-
-    foreach ($nodes as $node) {
-      $row = [];
-      foreach ($exportFields as $fieldName) {
-        if ($fieldName === 'nid') {
-          $row[] = $node->id();
-        }
-        elseif ($fieldName === 'uuid') {
-          $row[] = $node->uuid();
-        }
-        elseif ($fieldName === 'title') {
-          $row[] = $this->csvEscape($node->getTitle());
-        }
-        elseif ($fieldName === 'status') {
-          $row[] = $node->isPublished() ? '1' : '0';
-        }
-        elseif ($fieldName === 'created') {
-          $row[] = date('Y-m-d H:i:s', (int) $node->getCreatedTime());
-        }
-        elseif ($node->hasField($fieldName)) {
-          $value = $this->extractFieldValue($node->get($fieldName));
-          $row[] = $this->csvEscape((string) $value);
-        }
-        else {
-          $row[] = '';
-        }
-      }
-      $rows[] = implode(',', $row);
-    }
-
     return [
       'success' => TRUE,
       'data' => [
-        'content_type' => $contentType,
-        'exported_count' => count($nodes),
-        'total' => $total,
-        'next_offset' => $offset + count($nodes) < $total ? $offset + count($nodes) : NULL,
-        'fields' => $exportFields,
+        'content_type' => $export['bundle'],
+        'entity_type' => $export['entity_type'],
+        'exported_count' => count($export['items']),
+        'total' => $export['total'],
+        'next_offset' => $export['next_offset'],
+        'fields' => $fields,
         'csv_data' => implode("\n", $rows),
-        'message' => sprintf('Exported %d items of type %s.', count($nodes), $contentType),
+        'message' => sprintf('Exported %d items of type %s.', count($export['items']), $export['bundle']),
       ],
     ];
   }
 
   /**
-   * Export content to JSON format.
+   * Export to JSON, in the rows the JSON import reads back.
    *
    * @param string $contentType
-   *   The content type machine name.
+   *   The content type, or for terms the vocabulary; empty for redirects.
    * @param int $limit
    *   Maximum number of items to export.
    * @param int $offset
-   *   How many nodes to skip, in id order.
+   *   How many items to skip, in id order.
+   * @param array $options
+   *   'entity_type' and 'references', as for exportToCsv().
    *
    * @return array
    *   Result with JSON data array.
    */
-  public function exportToJson(string $contentType, int $limit = 100, int $offset = 0): array {
-    $nodeType = $this->entityTypeManager->getStorage('node_type')->load($contentType);
-    if (!$nodeType) {
-      return ['success' => FALSE, 'error' => "Content type '$contentType' not found."];
+  public function exportToJson(string $contentType, int $limit = 100, int $offset = 0, array $options = []): array {
+    $export = $this->export($contentType, $limit, $offset, $options, FALSE);
+    if (empty($export['success'])) {
+      return $export;
     }
-
-    $limit = min($limit, self::MAX_EXPORT_ITEMS);
-
-    $fieldDefinitions = $this->entityFieldManager->getFieldDefinitions('node', $contentType);
-
-    [$nodes, $total] = $this->exportPage($contentType, $limit, $offset);
-
-    $items = [];
-    foreach ($nodes as $node) {
-      $item = [
-        'nid' => $node->id(),
-        'uuid' => $node->uuid(),
-        'title' => $node->getTitle(),
-        'status' => $node->isPublished() ? 1 : 0,
-        'created' => date('c', (int) $node->getCreatedTime()),
-        'changed' => date('c', (int) $node->getChangedTime()),
-      ];
-
-      foreach (array_keys($fieldDefinitions) as $fieldName) {
-        if ((str_starts_with($fieldName, 'field_') || $fieldName === 'body') && $node->hasField($fieldName)) {
-          $item[$fieldName] = $this->extractFieldValue($node->get($fieldName), TRUE);
-        }
-      }
-
-      $items[] = $item;
-    }
-
     return [
       'success' => TRUE,
       'data' => [
-        'content_type' => $contentType,
-        'exported_count' => count($items),
-        'total' => $total,
-        'next_offset' => $offset + count($items) < $total ? $offset + count($items) : NULL,
-        'items' => $items,
-        'message' => sprintf('Exported %d items of type %s.', count($items), $contentType),
+        'content_type' => $export['bundle'],
+        'entity_type' => $export['entity_type'],
+        'exported_count' => count($export['items']),
+        'total' => $export['total'],
+        'next_offset' => $export['next_offset'],
+        'items' => $export['items'],
+        'message' => sprintf('Exported %d items of type %s.', count($export['items']), $export['bundle']),
       ],
     ];
   }
 
   /**
-   * The nodes of a type in id order, one page.
+   * One page of an export, as rows for the import.
    *
-   * @return array{0: \Drupal\node\NodeInterface[], 1: int}
-   *   The page, and how many nodes of the type there are.
+   * @return array
+   *   'success', and 'entity_type', 'bundle', 'items', 'fields', 'total'
+   *   and 'next_offset'; or a refusal.
    */
-  protected function exportPage(string $contentType, int $limit, int $offset): array {
-    $storage = $this->entityTypeManager->getStorage('node');
-    $query = fn() => $storage->getQuery()->accessCheck(TRUE)->condition('type', $contentType);
+  protected function export(string $bundle, int $limit, int $offset, array $options, bool $flat): array {
+    $entityType = (string) ($options['entity_type'] ?? 'node');
+    $type = self::IMPORT_TYPES[$entityType] ?? NULL;
+    if ($type === NULL) {
+      return [
+        'success' => FALSE,
+        'error' => sprintf("The export takes %s, not '%s'.", implode(', ', array_keys(self::IMPORT_TYPES)), $entityType),
+      ];
+    }
+    if ($type['bundles'] === NULL) {
+      $bundle = $entityType;
+    }
+    elseif (!$this->entityTypeManager->getStorage($type['bundles'])->load($bundle)) {
+      $what = $entityType === 'node' ? 'Content type' : 'Vocabulary';
+      return ['success' => FALSE, 'error' => "$what '$bundle' not found."];
+    }
+    $names = ($options['references'] ?? 'ids') === 'names';
+    $limit = min($limit, self::MAX_EXPORT_ITEMS);
+    [$entities, $total] = $this->exportPage($entityType, $bundle, $limit, $offset);
+    $definitions = $this->entityFieldManager->getFieldDefinitions($entityType, $bundle);
+    $custom = array_values(array_filter(array_keys($definitions), fn($f) => str_starts_with($f, 'field_') || ($entityType === 'node' && $f === 'body')));
+
+    $items = [];
+    foreach ($entities as $entity) {
+      $item = match ($entityType) {
+        'node' => [
+          'nid' => $entity->id(),
+          'uuid' => $entity->uuid(),
+          'title' => $entity->getTitle(),
+          'status' => $entity->isPublished() ? 1 : 0,
+          'created' => date($flat ? 'Y-m-d H:i:s' : 'c', (int) $entity->getCreatedTime()),
+          'changed' => date('c', (int) $entity->getChangedTime()),
+        ],
+        'taxonomy_term' => [
+          'uuid' => $entity->uuid(),
+          'name' => $entity->label(),
+          'description' => (string) ($entity->get('description')->value ?? ''),
+          'weight' => (int) $entity->getWeight(),
+          'parent' => $this->exportReference($entity->get('parent'), $names, $flat),
+        ],
+        'redirect' => [
+          'source' => '/' . ltrim((string) ($entity->get('redirect_source')->path ?? ''), '/'),
+          'destination' => (string) ($entity->get('redirect_redirect')->uri ?? ''),
+          'status_code' => (int) $entity->getStatusCode(),
+          'language' => (string) $entity->language()->getId(),
+        ],
+      };
+      if ($flat && $entityType === 'node') {
+        unset($item['changed']);
+      }
+      foreach ($custom as $field) {
+        if (!$entity->hasField($field)) {
+          continue;
+        }
+        $list = $entity->get($field);
+        $item[$field] = in_array($list->getFieldDefinition()->getType(), ['entity_reference'], TRUE) && ($names || $flat)
+          ? $this->exportReference($list, $names, $flat)
+          : $this->extractFieldValue($list, !$flat);
+      }
+      $items[] = $item;
+    }
+    $fields = $items ? array_keys($items[0]) : [];
+    return [
+      'success' => TRUE,
+      'entity_type' => $entityType,
+      'bundle' => $bundle,
+      'items' => $items,
+      'fields' => $fields,
+      'total' => $total,
+      'next_offset' => $offset + count($items) < $total ? $offset + count($items) : NULL,
+    ];
+  }
+
+  /**
+   * A reference field's value for an export.
+   *
+   * By name, several joined by | (what the import reads, on any site), or
+   * by id: joined by | in CSV, a list in JSON. A term's parent 0 (the top)
+   * is no reference.
+   */
+  protected function exportReference($items, bool $names, bool $flat): mixed {
+    $ids = array_values(array_filter(array_map(fn($item) => (int) ($item['target_id'] ?? 0), $items->getValue())));
+    if ($names) {
+      $labels = [];
+      foreach ($items->referencedEntities() as $target) {
+        $labels[] = (string) $target->label();
+      }
+      return implode('|', $labels);
+    }
+    return $flat ? implode('|', $ids) : $ids;
+  }
+
+  /**
+   * The entities of a type and bundle in id order, one page.
+   *
+   * @return array{0: \Drupal\Core\Entity\EntityInterface[], 1: int}
+   *   The page, and how many there are.
+   */
+  protected function exportPage(string $entityType, string $bundle, int $limit, int $offset): array {
+    $storage = $this->entityTypeManager->getStorage($entityType);
+    $info = $this->entityTypeManager->getDefinition($entityType);
+    $query = function () use ($storage, $info, $bundle) {
+      $query = $storage->getQuery()->accessCheck(TRUE);
+      if ($info->getBundleEntityType() && $info->getKey('bundle')) {
+        $query->condition((string) $info->getKey('bundle'), $bundle);
+      }
+      return $query;
+    };
     $total = (int) $query()->count()->execute();
-    $ids = $query()->sort('nid')->range(max(0, $offset), max(1, min($limit, self::MAX_EXPORT_ITEMS)))->execute();
+    $ids = $query()->sort((string) $info->getKey('id'))->range(max(0, $offset), max(1, min($limit, self::MAX_EXPORT_ITEMS)))->execute();
     return [array_values($storage->loadMultiple($ids)), $total];
   }
 

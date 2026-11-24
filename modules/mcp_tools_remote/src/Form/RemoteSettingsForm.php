@@ -9,7 +9,6 @@ use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Password\PasswordGeneratorInterface;
 use Drupal\mcp_tools_remote\Service\ApiKeyManager;
-use Drupal\user\Entity\Role;
 use Drupal\user\Entity\User;
 use Drupal\user\PermissionHandlerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -305,9 +304,9 @@ class RemoteSettingsForm extends ConfigFormBase {
    */
   public function createExecutorAccount(array &$form, FormStateInterface $form_state): void {
     // Create the mcp_executor role if it doesn't exist.
-    // phpcs:ignore DrupalPractice.Objects.GlobalClass.GlobalClass
-    if (!Role::load('mcp_executor')) {
-      $role = Role::create([
+    $roles = $this->entityTypeManager->getStorage('user_role');
+    if (!$roles->load('mcp_executor')) {
+      $role = $roles->create([
         'id' => 'mcp_executor',
         'label' => 'MCP Executor',
       ]);
@@ -317,13 +316,9 @@ class RemoteSettingsForm extends ConfigFormBase {
       // Write-heavy categories must be added manually for security.
       $safeCategories = [
         'site_health',
-        'site_tools',
         'content',
-        'content_tools',
         'config',
-        'config_tools',
         'users',
-        'user_tools',
         'discovery',
         'cache',
         'cron',

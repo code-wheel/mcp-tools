@@ -110,6 +110,31 @@ final class ImportOnMigrateKernelTest extends KernelTestBase {
   }
 
   /**
+   * The key may name a column as the CSV has it, with a mapping that renames it.
+   *
+   * Every row failed with "no value for the key", and the call answered
+   * success with nothing made. A key no row has is refused, with the
+   * columns there are.
+   */
+  public function testTheKeyFollowsTheMapping(): void {
+    $csv = "Source ID,Headline\n7,Seven\n8,Eight\n";
+    $mapping = ['Source ID' => 'source_id', 'Headline' => 'title'];
+    $result = $this->import()->importFromCsv('article', $csv, $mapping, 'Source ID');
+    $this->assertTrue($result['success'], json_encode($result));
+    $this->assertSame(2, $result['data']['created_count'], json_encode($result['data']));
+
+    // The mapped name is the same import: a second run updates.
+    $result = $this->import()->importFromCsv('article', "Source ID,Headline\n7,Seven again\n", $mapping, 'source_id');
+    $this->assertTrue($result['success'], json_encode($result));
+    $this->assertSame(0, $result['data']['created_count'], json_encode($result['data']));
+    $this->assertSame(['Seven again', 'Eight'], $this->titles());
+
+    $result = $this->import()->importFromCsv('article', $csv, $mapping, 'nid');
+    $this->assertFalse($result['success'], 'A key no row has answered success.');
+    $this->assertStringContainsString('source_id, title', $result['error']);
+  }
+
+  /**
    * A row with the wrong number of columns is an error in the answer.
    */
   public function testAShortRowIsReported(): void {
@@ -204,6 +229,26 @@ final class ImportOnMigrateKernelTest extends KernelTestBase {
     $this->assertSame(1, $this->import()->importFromJson('article', $rows, 'id')['data']['updated_count']);
     $this->assertTrue($this->import()->rollbackImport($first['data']['import_id'])['success']);
     $this->assertSame([], $this->titles(), 'The undo left a node the import made.');
+  }
+
+  /**
+   * A row whose node was deleted by hand is made again on the next run.
+   *
+   * Migrate's record still said the row was imported and unchanged, so the
+   * run skipped it and answered success with nothing made.
+   */
+  public function testARowWhoseNodeWasDeletedIsMadeAgain(): void {
+    $rows = [['id' => '1', 'title' => 'Kept'], ['id' => '2', 'title' => 'Deleted by hand']];
+    $this->import()->importFromJson('article', $rows, 'id');
+    foreach (Node::loadMultiple() as $node) {
+      if ($node->label() === 'Deleted by hand') {
+        $node->delete();
+      }
+    }
+    $again = $this->import()->importFromJson('article', $rows, 'id');
+    $this->assertTrue($again['success'], json_encode($again));
+    $this->assertSame(['Kept', 'Deleted by hand'], $this->titles(), 'The deleted node was not made again.');
+    $this->assertSame(1, $again['data']['created_count'] ?? NULL, json_encode($again['data']));
   }
 
   /**

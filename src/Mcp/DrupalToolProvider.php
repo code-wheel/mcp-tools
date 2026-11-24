@@ -109,7 +109,6 @@ class DrupalToolProvider implements ToolProviderInterface {
     try {
       $definition = $this->toolManager->getDefinition($pluginId);
       assert($definition instanceof ToolDefinition);
-      // phpcs:ignore DrupalPractice.Objects.GlobalDrupal.GlobalDrupal
       $outcome = \Drupal::service('mcp_tools.tool_policy')->run($definition, $arguments, new Invoker('mcp_tools'), $this->accessManager !== NULL);
     }
     catch (PluginException $e) {

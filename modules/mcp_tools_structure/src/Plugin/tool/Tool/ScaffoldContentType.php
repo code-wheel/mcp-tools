@@ -44,7 +44,7 @@ use Drupal\tool\TypedData\InputDefinition;
     'fields' => new InputDefinition(
       data_type: 'list',
       label: new TranslatableMarkup('Fields'),
-      description: new TranslatableMarkup('Array of field definitions. Each field: {"name": "field_name", "type": "string|string_long|text|text_long|text_with_summary|integer|decimal|float|boolean|email|link|datetime|date|timestamp|image|file|entity_reference|list_string|list_integer", "label": "Field Label", "required": false, "cardinality": 1, "description": "Help text"}. string and string_long are plain text, text and text_long are formatted. For entity_reference: add "target_type": "node|taxonomy_term|user|media", and "target_bundles": ["topics"] to allow only those bundles. For list_string and list_integer: add "allowed_values": ["option1", "option2"].'),
+      description: new TranslatableMarkup('Array of field definitions. Each field: {"name": "field_name", "type": "string|string_long|text|text_long|text_with_summary|integer|decimal|float|boolean|email|link|datetime|date|timestamp|image|file|entity_reference|paragraphs|list_string|list_integer", "label": "Field Label", "required": false, "cardinality": 1, "description": "Help text"}. string and string_long are plain text, text and text_long are formatted. For entity_reference: add "target_type": "node|taxonomy_term|user|media", and "target_bundles": ["topics"] to allow only those bundles. For paragraphs (a field that holds paragraphs): "target_bundles" names the paragraph types. For list_string and list_integer: add "allowed_values": ["option1", "option2"].'),
       required: FALSE,
     ),
     'include_body' => new InputDefinition(

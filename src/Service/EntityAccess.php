@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Drupal\mcp_tools\Service;
 
 use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Entity\FieldableEntityInterface;
 
 /**
  * Drupal's own access check for an entity a tool acts on.
@@ -40,6 +41,30 @@ final class EntityAccess {
       return NULL;
     }
     return self::refusal(sprintf('This user may not create %s%s.', $entityTypeId, $bundle !== NULL ? " of type $bundle" : ''));
+  }
+
+  /**
+   * The refusal when the current user may not set these fields, or NULL.
+   *
+   * Drupal's field access: on a node, the owner, the published status, the
+   * dates, promote and sticky are for "administer nodes", as on the node
+   * form. The tools checked the entity and took every field given.
+   *
+   * @param object $entity
+   *   The entity, new or loaded.
+   * @param string[] $fieldNames
+   *   The fields the call sets.
+   */
+  public static function fieldsDenied(object $entity, array $fieldNames): ?array {
+    // Anything without fields (a stand-in in a unit test) has none to check.
+    if (!$entity instanceof FieldableEntityInterface || !self::applies()) {
+      return NULL;
+    }
+    $denied = EntityValidation::notEditable($entity, array_values(array_unique($fieldNames)), \Drupal::currentUser());
+    if ($denied === []) {
+      return NULL;
+    }
+    return self::refusal(sprintf('This user may not set %s on %s.', implode(', ', $denied), $entity->getEntityTypeId()));
   }
 
   /**

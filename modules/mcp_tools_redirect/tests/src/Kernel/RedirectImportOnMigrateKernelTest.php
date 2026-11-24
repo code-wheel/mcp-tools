@@ -94,4 +94,29 @@ final class RedirectImportOnMigrateKernelTest extends KernelTestBase {
     $this->assertSame([(int) $handMade->id()], array_map('intval', array_keys(Redirect::loadMultiple())));
   }
 
+  /**
+   * Redirects export as the import reads them, and come back the same.
+   */
+  public function testRedirectsGoRoundTrip(): void {
+    Redirect::create(['redirect_source' => ['path' => 'old-a', 'query' => []], 'redirect_redirect' => ['uri' => 'internal:/node/1'], 'status_code' => 301, 'language' => 'und'])->save();
+    Redirect::create(['redirect_source' => ['path' => 'old-b', 'query' => []], 'redirect_redirect' => ['uri' => 'https://example.com/b'], 'status_code' => 302, 'language' => 'und'])->save();
+    $read = function (): array {
+      $out = [];
+      foreach (Redirect::loadMultiple() as $redirect) {
+        $out[$redirect->getSourcePathWithQuery()] = [$redirect->getRedirect()['uri'], (int) $redirect->getStatusCode()];
+      }
+      ksort($out);
+      return $out;
+    };
+    $before = $read();
+    $export = $this->import()->exportToCsv('', 100, 0, ['entity_type' => 'redirect']);
+    $this->assertTrue($export['success'], json_encode($export));
+    $storage = $this->container->get('entity_type.manager')->getStorage('redirect');
+    $storage->delete($storage->loadMultiple());
+    $result = $this->import()->importFromCsv('', $export['data']['csv_data'], [], '', ['entity_type' => 'redirect']);
+    $this->assertTrue($result['success'], json_encode($result));
+    $this->assertSame(2, $result['data']['created_count'], json_encode($result['data']));
+    $this->assertSame($before, $read());
+  }
+
 }

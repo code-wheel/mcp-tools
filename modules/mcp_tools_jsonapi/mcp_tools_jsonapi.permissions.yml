@@ -1,0 +1,4 @@
+mcp_tools use jsonapi:
+  title: 'Use MCP JSON:API tools (category: jsonapi)'
+  description: 'Access JSON:API CRUD operations via MCP.'
+  restrict access: true
