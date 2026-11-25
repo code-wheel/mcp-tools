@@ -476,4 +476,25 @@ final class ToolInputValidatorTest extends UnitTestCase {
     $this->assertStringNotContainsString('{', $message);
   }
 
+  /**
+   * A tool with no inputs says so, and how to call it.
+   *
+   * mcp_list_webforms refused a model's limit with only "Additional object
+   * properties are not allowed: limit", 7 times in 96 task passes of the
+   * framework's webform set; the model was asking for less.
+   */
+  public function testValidateRejectsArgumentsToAToolWithNoneAndSaysHowToCallIt(): void {
+    $definition = $this->createMockDefinition();
+    $definition->method('getInputDefinitions')->willReturn([]);
+    $this->schemaConverter->method('toolDefinitionToInputSchema')
+      ->willReturn(['type' => 'object', 'properties' => new \stdClass(), 'additionalProperties' => FALSE]);
+
+    $result = $this->createValidator()->validate($definition, ['limit' => 5]);
+
+    $this->assertFalse($result['valid']);
+    $message = (string) $result['errors'][0]['message'];
+    $this->assertStringContainsString('limit', $message);
+    $this->assertStringContainsString('takes no parameters: call it with {}', $message);
+  }
+
 }

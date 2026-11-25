@@ -248,6 +248,27 @@ class ContentServiceLanguageTest extends KernelTestBase {
   }
 
   /**
+   * An unknown field is refused with the fields the type has.
+   *
+   * "Unknown field(s) on content type 'article': body" named no way on, 5
+   * times in the framework's passes of beta29: the model was left to guess.
+   */
+  public function testUnknownFieldNamesTheFieldsThereAre(): void {
+    $none = $this->contentService->createContent('article', 'x', ['body' => 'Hello']);
+    $this->assertStringContainsString('has no fields of its own', $none['error']);
+
+    \Drupal\field\Entity\FieldStorageConfig::create(['field_name' => 'field_subtitle', 'entity_type' => 'node', 'type' => 'string'])->save();
+    \Drupal\field\Entity\FieldConfig::create(['field_name' => 'field_subtitle', 'entity_type' => 'node', 'bundle' => 'article', 'label' => 'Subtitle'])->save();
+    $this->container->get('entity_field.manager')->clearCachedFieldDefinitions();
+
+    $created = $this->contentService->createContent('article', 'x', ['body' => 'Hello']);
+    $this->assertStringContainsString('Its own fields: field_subtitle.', $created['error']);
+    $nid = (int) $this->createTranslatedNode()->id();
+    $updated = $this->contentService->updateContent($nid, ['body' => 'Hello']);
+    $this->assertStringContainsString('Its own fields: field_subtitle.', $updated['error']);
+  }
+
+  /**
    * Unknown fields in a create are rejected, and nothing is created.
    *
    * The node dropped a field it does not have without a word, so the call

@@ -49,9 +49,9 @@ The base module provides:
 - **Admin UI** for configuration
 - **McpToolsToolBase** base class for all tool plugins
 
-### Submodules (38)
+### Submodules (39)
 
-32 of them hold tools, 202 in all. The other six are our server
+33 of them hold tools, 205 in all. The other six are our server
 (`mcp_tools_stdio`, `mcp_tools_remote`) and the bridges and helpers
 (`mcp_tools_ai`, `mcp_tools_policy`, `mcp_tools_mcp_server`,
 `mcp_tools_observability`). The README has the list with the number of

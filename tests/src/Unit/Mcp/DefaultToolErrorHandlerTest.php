@@ -62,6 +62,19 @@ final class DefaultToolErrorHandlerTest extends TestCase {
   }
 
   /**
+   * An exception's long text is cut in what the model reads, not in the data.
+   */
+  public function testLongExceptionIsCutInTheTextOnly(): void {
+    $long = 'The "entity:node:gone" plugin does not exist. Valid plugin IDs are: ' . str_repeat('entity_revision:some_plugin, ', 150);
+
+    $result = $this->handler->executionFailed('test_tool', new \RuntimeException($long));
+
+    $this->assertLessThan(1700, mb_strlen($result->content[0]->text));
+    $this->assertStringContainsString('characters cut', $result->content[0]->text);
+    $this->assertSame($long, $result->structuredContent['message']);
+  }
+
+  /**
    * The text gives the problem once: it was there three times.
    */
   public function testValidationTextGivesTheProblemOnce(): void {

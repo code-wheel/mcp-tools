@@ -21,16 +21,33 @@ class WebformService {
   ) {}
 
   /**
-   * List all webforms with submission counts.
+   * List the webforms with submission counts, all or some.
+   *
+   * @param string|null $search
+   *   Only webforms with this in their id or title (any case).
+   * @param int|null $limit
+   *   At most this many.
    *
    * @return array
    *   Webforms data.
    */
-  public function listWebforms(): array {
+  public function listWebforms(?string $search = NULL, ?int $limit = NULL): array {
+    if ($limit !== NULL && $limit < 1) {
+      return ['success' => FALSE, 'error' => "limit is at least 1, not $limit. Leave it out for every webform."];
+    }
     $webformStorage = $this->entityTypeManager->getStorage('webform');
     $submissionStorage = $this->entityTypeManager->getStorage('webform_submission');
 
     $webforms = $webformStorage->loadMultiple();
+    $all = count($webforms);
+    $search = $search === NULL || trim($search) === '' ? NULL : mb_strtolower(trim($search));
+    if ($search !== NULL) {
+      $webforms = array_filter($webforms, static fn($webform): bool => str_contains(mb_strtolower($webform->id() . ' ' . $webform->label()), $search));
+    }
+    $matching = count($webforms);
+    if ($limit !== NULL) {
+      $webforms = array_slice($webforms, 0, $limit, TRUE);
+    }
 
     $result = [];
     foreach ($webforms as $webform) {
@@ -52,13 +69,11 @@ class WebformService {
       ];
     }
 
-    return [
-      'success' => TRUE,
-      'data' => [
-        'total' => count($result),
-        'webforms' => $result,
-      ],
-    ];
+    $data = ['total' => $all, 'webforms' => $result];
+    if ($search !== NULL) {
+      $data['matching'] = $matching;
+    }
+    return ['success' => TRUE, 'data' => $data];
   }
 
   /**

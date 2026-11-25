@@ -143,7 +143,7 @@ class DefaultToolErrorHandler implements ToolErrorHandlerInterface {
       'remediation' => 'Inspect logs and retry with smaller inputs or after correcting site state.',
     ];
 
-    $content = [new TextContent('Tool execution failed: ' . $message)];
+    $content = [new TextContent('Tool execution failed: ' . FailureText::short($message))];
 
     return new CallToolResult($content, TRUE, $structured);
   }

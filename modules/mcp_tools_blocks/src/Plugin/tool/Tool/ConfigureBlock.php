@@ -157,7 +157,10 @@ class ConfigureBlock extends McpToolsToolBase {
     }
 
     if (empty($config)) {
-      return ['success' => FALSE, 'error' => 'At least one configuration option must be provided.'];
+      return [
+        'success' => FALSE,
+        'error' => 'Nothing to change. Pass at least one of: region, weight, label, label_display, status, visibility, settings.',
+      ];
     }
 
     return $this->blockService->configureBlock($blockId, $config);

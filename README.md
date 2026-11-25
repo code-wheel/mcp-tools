@@ -118,8 +118,21 @@ the model works. It starts with the three tools and five common ones. A
 tool the model reads with `mcp_tools_get_tool_info` is added to its list,
 and the client is told, so the model can call it by name from then on. A
 client that does not listen for list changes works as in plain gateway
-mode. On our twelve test tasks with `gpt-oss:20b` (2026-11-24), it took
-about 17% fewer calls than plain gateway mode.
+mode.
+
+Which to choose: on 304 test tasks with `gpt-oss:20b` (a 1.0.0-beta29
+build from before its token work, 2026-11-24), no mode did more tasks
+than another (294, 289 and 290). They differ in cost, for one task:
+
+| Mode | Prompt tokens | Turns |
+|---|---|---|
+| gateway | 21,827 | 7.1 |
+| gateway with `--grow` | 24,063 | 6.7 |
+| every tool listed | 95,165 | 4.6 |
+
+So gateway mode is the cheapest. `--grow` takes fewer turns for a few more
+tokens. List every tool only for a client that loads tools on demand
+itself.
 
 A model often gets a tool's name a little wrong. When only one tool can
 be meant, it runs, through the same checks as the full name: `tools_`

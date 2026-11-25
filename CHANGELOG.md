@@ -4,6 +4,42 @@ All notable changes to the MCP Tools module will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.0.0-beta30] - 2026-11-24
+
+### Changed
+
+- **A refusal names the way on.** A tool with no inputs, given one, says
+  it takes none and to call it with `{}`. An unknown field on a content
+  type names the fields the type has. `mcp_configure_block` with nothing
+  to change lists its options.
+- **`mcp_list_webforms` takes `search` and `limit`.** A model asking for
+  fewer was refused 7 times in 96 task passes of a webform set. `total`
+  stays all webforms; `matching` comes with a search.
+- **`mcp_update_webform` says how to change one field:** `set_elements`
+  changes the fields you send and keeps the others. On a set of webform
+  tasks it cut the tokens a model writes by 16 in 100.
+- **An unknown permission names the ones it may mean,** by name or by
+  title: "use contextual links" is answered with "Did you mean: access
+  contextual links?". A metatag `group` of `all` means no filter.
+- **A long failure text is cut in its middle for the model:** over 1,500
+  characters, the text keeps its start and its end (where the way on is)
+  and says how much was cut. The structured content keeps the whole text.
+  A node of a type that is gone gave 4,153 characters (every typed data
+  plugin id).
+- **`mcp_list_webforms` refuses a `limit` below 1.** It gave every webform.
+
+### Documentation
+
+- The README says which mode to choose, from 304 test tasks: no mode did
+  more tasks, gateway is the cheapest, `--grow` takes fewer turns for a
+  few more tokens.
+- `docs/ARCHITECTURE.md` had the submodule counts wrong (38, 32 with
+  tools, 202 tools); they are 39, 33 and 205.
+- The webform README says `set_elements` changes single fields; it told a
+  model to read every element first.
+- `CONTRIBUTING.md` says only declared outputs reach the client, and that
+  an error should say how to go on.
+
 ## [1.0.0-beta29] - 2026-11-24
 
 ### Added

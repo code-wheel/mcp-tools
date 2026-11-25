@@ -294,7 +294,8 @@ class MetatagService {
     $groupDefinitions = $this->groupPluginManager->getDefinitions();
     $plain = static fn(mixed $text): string => trim(html_entity_decode(strip_tags((string) $text), ENT_QUOTES | ENT_HTML5));
 
-    $group = $group === NULL || trim($group) === '' ? NULL : trim($group);
+    // "all" is what a model sends for no filter.
+    $group = $group === NULL || in_array(strtolower(trim($group)), ['', 'all'], TRUE) ? NULL : trim($group);
     if ($group !== NULL) {
       $groupOf = static fn(array $definition): string => (string) ($definition['group'] ?? 'basic');
       $groups = array_unique(array_map($groupOf, $definitions));

@@ -188,6 +188,10 @@ final class MetatagServiceTest extends UnitTestCase {
     $this->assertSame(3, $advanced['total']);
     $this->assertSame(2, $advanced['matching']);
 
+    // "all" means no filter, as a model sends it (refused once in 20 task
+    // passes of tasks-lists).
+    $this->assertSame(3, count($service->listAvailableTags('all')['data']['all_tags']));
+
     $unknown = $service->listAvailableTags('opengraph');
     $this->assertFalse($unknown['success']);
     $this->assertStringContainsString('advanced, basic', $unknown['error']);

@@ -185,6 +185,41 @@ class RoleServiceTest extends UnitTestCase {
     $this->assertStringContainsString('fake_permission', $result['error']);
   }
 
+  /**
+   * An unknown permission is answered with the real names it may mean.
+   *
+   * A model guesses a name from the task's words: "use contextual links"
+   * is the title of "access contextual links". "Invalid permissions" alone
+   * came back 6 times in 20 task passes of tasks-lists.
+   */
+  public function testAnInvalidPermissionIsAnsweredWithTheNamesItMayMean(): void {
+    $this->accessManager->method('canWrite')->willReturn(TRUE);
+    $this->roleStorage->method('load')->with('custom_role')->willReturn(NULL);
+    $this->permissionHandler->method('getPermissions')->willReturn([
+      'access contextual links' => ['title' => 'Use contextual links', 'provider' => 'contextual'],
+      'access content' => ['title' => 'View published content', 'provider' => 'node'],
+      'administer redirects' => ['title' => 'Administer individual URL redirections', 'provider' => 'redirect'],
+      'xyzzy one' => ['title' => 'Administer settings', 'provider' => 'foo'],
+      'plugh two' => ['title' => 'Administer settings', 'provider' => 'bar'],
+    ]);
+
+    $service = $this->createRoleService();
+    $byTitle = $service->createRole('custom_role', 'Custom Role', ['use contextual links']);
+    $this->assertStringContainsString('Did you mean: access contextual links?', $byTitle['error']);
+
+    $byName = $service->createRole('custom_role', 'Custom Role', ['administer redirect']);
+    $this->assertStringContainsString('administer redirects', $byName['error']);
+
+    // Two permissions with one title: both are named, not the last one.
+    $shared = $service->createRole('custom_role', 'Custom Role', ['administer settings']);
+    $this->assertStringContainsString('xyzzy one', $shared['error']);
+    $this->assertStringContainsString('plugh two', $shared['error']);
+
+    $nothing = $service->createRole('custom_role', 'Custom Role', ['zebra crossing']);
+    $this->assertStringNotContainsString('Did you mean', $nothing['error']);
+    $this->assertStringContainsString('mcp_tools_get_permissions', $nothing['error']);
+  }
+
   public function testDeleteRoleAccessDenied(): void {
     $this->accessManager->method('canWrite')->willReturn(FALSE);
     $this->accessManager->method('getWriteAccessDenied')->willReturn([

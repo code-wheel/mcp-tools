@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools\Mcp;
 
+use Drupal\mcp_tools\Mcp\Error\FailureText;
 use Drupal\Component\Plugin\Exception\PluginException;
 use Drupal\Component\Plugin\PluginManagerInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
@@ -334,7 +335,7 @@ class ToolApiCallToolHandler implements RequestHandlerInterface {
         return $failed(ToolExecutionFailedEvent::REASON_ACCESS_DENIED, $toolErrorHandler->accessDenied($toolName));
       }
       $message = $message !== '' ? $message : 'Invalid input.';
-      return $failed(ToolExecutionFailedEvent::REASON_VALIDATION, new CallToolResult([new TextContent($message)], TRUE, [
+      return $failed(ToolExecutionFailedEvent::REASON_VALIDATION, new CallToolResult([new TextContent(FailureText::short($message))], TRUE, [
         'success' => FALSE,
         'message' => $message,
         'data' => [],
@@ -376,7 +377,9 @@ class ToolApiCallToolHandler implements RequestHandlerInterface {
 
     // The message, then the data: the message and "success" were given a
     // second time inside the JSON. The structured content keeps all three.
-    $text = $message;
+    // A failure's text is cut for the model when it is long; the structured
+    // content keeps all of it.
+    $text = $result->isSuccess() ? $message : FailureText::short($message);
     if (!empty($output)) {
       $text .= "\n" . json_encode($output, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
     }

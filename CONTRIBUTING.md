@@ -136,6 +136,14 @@ return [
 ];
 ```
 
+Only the keys of `data` that the tool declares in `output_definitions` reach
+the client. Declare every key you return, with a description that says what
+it holds. Our release checks fail on a key a tool returns and does not
+declare. A `message` in `data` becomes the answer's message.
+
+An error should say how to go on: name the inputs, fields or values there
+are, not only what was wrong.
+
 ### 4. Categories and Permissions
 
 Each tool must define `protected const MCP_CATEGORY = '<category>';`.

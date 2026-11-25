@@ -6,6 +6,7 @@ namespace Drupal\mcp_tools_webform\Plugin\tool\Tool;
 
 use Drupal\mcp_tools_webform\Service\WebformService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Drupal\tool\TypedData\InputDefinition;
 use Drupal\tool\TypedData\OutputDefinition;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Tool\McpToolsToolBase;
@@ -20,12 +21,30 @@ use Drupal\tool\Tool\ToolOperation;
   label: new TranslatableMarkup('List Webforms'),
   description: new TranslatableMarkup('List all webforms with submission counts.'),
   operation: ToolOperation::Read,
-  input_definitions: [],
+  input_definitions: [
+    'search' => new InputDefinition(
+      data_type: 'string',
+      label: new TranslatableMarkup('Search'),
+      description: new TranslatableMarkup('Only webforms with this in their id or title, any case.'),
+      required: FALSE,
+    ),
+    'limit' => new InputDefinition(
+      data_type: 'integer',
+      label: new TranslatableMarkup('Limit'),
+      description: new TranslatableMarkup('At most this many webforms.'),
+      required: FALSE,
+    ),
+  ],
   output_definitions: [
     'total' => new OutputDefinition(
       data_type: 'integer',
       label: new TranslatableMarkup('Total Webforms'),
       description: new TranslatableMarkup('Total number of webforms in the system.'),
+    ),
+    'matching' => new OutputDefinition(
+      data_type: 'integer',
+      label: new TranslatableMarkup('Matching'),
+      description: new TranslatableMarkup('With search: how many webforms matched.'),
     ),
     'webforms' => new OutputDefinition(
       data_type: 'list',
@@ -59,7 +78,10 @@ class ListWebforms extends McpToolsToolBase {
    * {@inheritdoc}
    */
   protected function executeLegacy(array $input): array {
-    return $this->webformService->listWebforms();
+    return $this->webformService->listWebforms(
+      isset($input['search']) ? (string) $input['search'] : NULL,
+      isset($input['limit']) ? (int) $input['limit'] : NULL,
+    );
   }
 
 }

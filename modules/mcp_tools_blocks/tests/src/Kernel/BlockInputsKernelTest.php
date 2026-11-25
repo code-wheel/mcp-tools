@@ -140,4 +140,29 @@ final class BlockInputsKernelTest extends KernelTestBase {
     $this->assertFalse($service->configureBlock('quiet', ['label_display' => 'sometimes'])['success']);
   }
 
+  /**
+   * A call with nothing to change names the options there are.
+   *
+   * "At least one configuration option must be provided." named none, 5
+   * times in the framework's passes of beta29.
+   */
+  public function testNothingToChangeNamesTheOptions(): void {
+    $this->container->get('mcp_tools_blocks.block')->placeBlock('system_powered_by_block', 'content', ['id' => 'p4']);
+    $handler = new \Drupal\mcp_tools\Mcp\ToolApiCallToolHandler(
+      $this->container->get('plugin.manager.tool'),
+      new \Psr\Log\NullLogger(),
+      FALSE,
+      'mcp_tools',
+      new \Drupal\mcp_tools\Mcp\ToolInputValidator(new \Drupal\mcp_tools\Mcp\ToolApiSchemaConverter(), new \Psr\Log\NullLogger()),
+    );
+    $session = $this->createMock(\Mcp\Server\Session\SessionInterface::class);
+    $session->method('get')->willReturnArgument(1);
+    $session->method('getId')->willReturn(\Symfony\Component\Uid\Uuid::v4());
+
+    $result = $handler->handle((new \Mcp\Schema\Request\CallToolRequest('mcp_configure_block', ['block_id' => 'p4']))->withId(1), $session)->result;
+
+    $this->assertTrue($result->isError);
+    $this->assertStringContainsString('Pass at least one of: region, weight, label, label_display, status, visibility, settings.', $result->content[0]->text);
+  }
+
 }

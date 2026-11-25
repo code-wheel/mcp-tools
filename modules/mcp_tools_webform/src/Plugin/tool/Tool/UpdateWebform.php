@@ -19,7 +19,7 @@ use Drupal\tool\TypedData\InputDefinition;
 #[Tool(
   id: 'mcp_update_webform',
   label: new TranslatableMarkup('Update Webform'),
-  description: new TranslatableMarkup('Update webform settings and elements.'),
+  description: new TranslatableMarkup('Update a webform: its title, status and settings, or its form fields. To add or change single fields use set_elements: only the fields you send change and the others are kept, so there is no need to fetch or resend them.'),
   operation: ToolOperation::Write,
   input_definitions: [
     'id' => new InputDefinition(

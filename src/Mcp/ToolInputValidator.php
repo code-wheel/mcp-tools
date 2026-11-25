@@ -82,15 +82,15 @@ class ToolInputValidator {
    */
   private function describeAllowedParameters(array $errors, ToolDefinition $definition): array {
     $allowed = array_keys($definition->getInputDefinitions());
-    if (empty($allowed)) {
-      return $errors;
-    }
+    // A tool with no inputs says so: "not allowed: limit" alone left a
+    // model that asked for less without a way on.
+    $wayOn = $allowed === []
+      ? '. This tool takes no parameters: call it with {}.'
+      : '. Unknown parameters are rejected; allowed parameters: ' . implode(', ', $allowed) . '.';
 
     foreach ($errors as &$error) {
       if (($error['keyword'] ?? '') === 'additionalProperties') {
-        $error['message'] = rtrim((string) $error['message'], '.')
-          . '. Unknown parameters are rejected; allowed parameters: '
-          . implode(', ', $allowed) . '.';
+        $error['message'] = rtrim((string) $error['message'], '.') . $wayOn;
       }
     }
 

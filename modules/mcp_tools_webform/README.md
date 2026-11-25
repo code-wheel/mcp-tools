@@ -6,7 +6,7 @@ Webform creation and submission management for MCP Tools.
 
 | Tool | Description |
 |------|-------------|
-| `mcp_list_webforms` | List all webforms |
+| `mcp_list_webforms` | List webforms, all or by `search` and `limit` |
 | `mcp_get_webform` | Get webform details |
 | `mcp_get_webform_submissions` | Get form submissions |
 | `mcp_create_webform` | Create new webforms |
@@ -106,8 +106,9 @@ Elements are keyed by name. Each one needs a `#type`. Properties can be
 written as webform's YAML has them (`#title`) or without the `#`
 (`title`): both are stored as `#title`. An element inside a fieldset
 goes inside it, keyed by its name. An element with no type is refused.
-`mcp_update_webform` replaces all elements: read them first with
-`mcp_get_webform`.
+To add or change some elements and keep the others, pass them to
+`mcp_update_webform` as `set_elements`: there is no need to read or resend
+the rest. `elements` replaces all of them.
 
 ## Supported Element Types
 

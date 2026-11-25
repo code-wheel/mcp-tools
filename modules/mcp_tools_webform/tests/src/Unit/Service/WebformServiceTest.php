@@ -67,6 +67,83 @@ class WebformServiceTest extends UnitTestCase {
     $this->assertEmpty($result['data']['webforms']);
   }
 
+  /**
+   * A search and a limit give fewer webforms; total stays all of them.
+   *
+   * The list took no inputs, and refused a model's limit (7 times in 96
+   * task passes of the framework's webform set) and query: it asked for
+   * less.
+   */
+  public function testListWebformsTakesSearchAndLimit(): void {
+    $forms = [];
+    foreach (['contact' => 'Contact us', 'job_apply' => 'Apply for a job', 'newsletter' => 'Newsletter sign-up'] as $id => $title) {
+      // A stand-in with what the service reads: the Webform module is not
+      // there on every test site, so its interface cannot be mocked.
+      $forms[$id] = new class($id, $title) {
+
+        public function __construct(private string $id, private string $title) {}
+
+        /**
+         * The webform's id.
+         */
+        public function id(): string {
+          return $this->id;
+        }
+
+        /**
+         * The webform's title.
+         */
+        public function label(): string {
+          return $this->title;
+        }
+
+        /**
+         * No description.
+         */
+        public function getDescription(): string {
+          return '';
+        }
+
+        /**
+         * Open for submissions.
+         */
+        public function isOpen(): bool {
+          return TRUE;
+        }
+
+        /**
+         * No created or updated time.
+         */
+        public function get(string $key): mixed {
+          return NULL;
+        }
+
+      };
+    }
+    $this->webformStorage->method('loadMultiple')->willReturn($forms);
+    $query = $this->createMock(\Drupal\Core\Entity\Query\QueryInterface::class);
+    $query->method('accessCheck')->willReturnSelf();
+    $query->method('condition')->willReturnSelf();
+    $query->method('count')->willReturnSelf();
+    $query->method('execute')->willReturn(0);
+    $this->submissionStorage->method('getQuery')->willReturn($query);
+    $service = $this->createService();
+
+    $searched = $service->listWebforms('JOB')['data'];
+    $this->assertSame(['job_apply'], array_column($searched['webforms'], 'id'));
+    $this->assertSame(3, $searched['total']);
+    $this->assertSame(1, $searched['matching']);
+
+    $limited = $service->listWebforms(NULL, 2)['data'];
+    $this->assertCount(2, $limited['webforms']);
+    $this->assertSame(3, $limited['total']);
+
+    // A limit below 1 is refused: it gave every webform.
+    $refused = $service->listWebforms(NULL, 0);
+    $this->assertFalse($refused['success']);
+    $this->assertStringContainsString('at least 1', $refused['error']);
+  }
+
   public function testGetWebformNotFound(): void {
     $this->webformStorage->method('load')->willReturn(NULL);
 

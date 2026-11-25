@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools_structure\Service;
 
+use Drupal\mcp_tools\Mcp\ToolNameSuggester;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\mcp_tools\Service\AccessManager;
@@ -593,7 +594,7 @@ class RoleService {
     if (!empty($invalid)) {
       return [
         'valid' => FALSE,
-        'error' => 'Invalid permissions: ' . implode(', ', $invalid),
+        'error' => 'Invalid permissions: ' . implode(', ', $invalid) . '. ' . $this->meant($invalid, $allPermissions),
       ];
     }
 
@@ -660,6 +661,41 @@ class RoleService {
       ['restrict_access' => $restricted],
       ' Drupal marks these for trusted roles only: ' . implode(', ', $restricted) . '. The audit log names them.',
     ];
+  }
+
+  /**
+   * The real permission names an unknown one may mean, as a way on.
+   *
+   * A model guesses a name from a task's words, which are often the title
+   * ("use contextual links" for access contextual links). Names and titles
+   * are both looked at; the answer gives names, since a grant takes those.
+   *
+   * @param string[] $invalid
+   *   The names that do not exist.
+   * @param array $allPermissions
+   *   The site's permissions, by name.
+   */
+  private function meant(array $invalid, array $allPermissions): string {
+    // A title can be shared: each title gives every name that has it.
+    $titles = [];
+    foreach ($allPermissions as $name => $permission) {
+      $titles[trim(strip_tags((string) ($permission['title'] ?? '')))][] = (string) $name;
+    }
+    $names = array_map('strval', array_keys($allPermissions));
+    $meant = [];
+    foreach ($invalid as $unknown) {
+      foreach (ToolNameSuggester::closest($unknown, $names) as $name) {
+        $meant[$name] = $name;
+      }
+      foreach (ToolNameSuggester::closest($unknown, array_map('strval', array_keys($titles))) as $title) {
+        foreach ($titles[$title] as $name) {
+          $meant[$name] = $name;
+        }
+      }
+    }
+    return $meant === []
+      ? 'Find the names with mcp_tools_get_permissions (search for a word of the title).'
+      : 'Did you mean: ' . implode(', ', array_slice(array_values($meant), 0, 5)) . '?';
   }
 
 }

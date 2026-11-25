@@ -67,7 +67,7 @@ class ContentService {
     if (!empty($unknown)) {
       return [
         'success' => FALSE,
-        'error' => sprintf("Unknown field(s) on content type '%s': %s. Nothing was created.", $type, implode(', ', $unknown)),
+        'error' => sprintf("Unknown field(s) on content type '%s': %s. Nothing was created. %s", $type, implode(', ', $unknown), $this->ownFields($fieldDefinitions)),
       ];
     }
 
@@ -228,10 +228,11 @@ class ContentService {
       return [
         'success' => FALSE,
         'error' => sprintf(
-          "Unknown field(s) on node %d (%s): %s. Nothing was updated.",
+          "Unknown field(s) on node %d (%s): %s. Nothing was updated. %s",
           $nid,
           $node->bundle(),
           implode(', ', $unknown),
+          $this->ownFields($fieldDefinitions),
         ),
       ];
     }
@@ -627,6 +628,19 @@ class ContentService {
       return $value;
     }
     return FieldValue::normalize($this->entityTypeManager, $fieldDefinitions[$fieldName], $value, $this->entityFieldManager);
+  }
+
+  /**
+   * The fields a content type has besides the base ones, as a way on.
+   *
+   * @param \Drupal\Core\Field\FieldDefinitionInterface[] $fieldDefinitions
+   *   The type's field definitions.
+   */
+  private function ownFields(array $fieldDefinitions): string {
+    $own = array_keys(array_filter($fieldDefinitions, static fn($definition): bool => !$definition->getFieldStorageDefinition()->isBaseField()));
+    return $own === []
+      ? 'It has no fields of its own, only the base ones such as title and status.'
+      : 'Its own fields: ' . implode(', ', $own) . '.';
   }
 
 }
