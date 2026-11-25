@@ -17,7 +17,8 @@ use Drupal\user\RoleInterface;
  * account is a third, with a password or an address the connection chose.
  * So the tools that assign roles ask here first. Drupal asks "administer
  * permissions" for giving roles; with it, a connection gives any role to
- * others, and still none above its own to itself.
+ * others, and still none above its own to itself, nor to an account it can
+ * act as (ControlledAccounts).
  */
 final class OwnRoles {
 
@@ -42,7 +43,7 @@ final class OwnRoles {
     if ($actor === NULL || !$entityTypeManager->hasDefinition('user_role')) {
       return [];
     }
-    if ((int) $actor->id() !== $uid && $actor->hasPermission('administer permissions')) {
+    if ((int) $actor->id() !== $uid && !ControlledAccounts::has($uid) && $actor->hasPermission('administer permissions')) {
       return [];
     }
     $raising = [];
@@ -66,8 +67,11 @@ final class OwnRoles {
    * Why such a role is not given, for the answer.
    */
   public static function why(?AccountInterface $actor, int $uid): string {
-    return $actor !== NULL && (int) $actor->id() === $uid
-      ? 'a connection does not give its own user more permissions'
+    if ($actor !== NULL && (int) $actor->id() === $uid) {
+      return 'a connection does not give its own user more permissions';
+    }
+    return ControlledAccounts::has($uid)
+      ? 'a connection does not give an account it made, or whose address it set, more permissions than its own user has'
       : "a role with permissions the connection's own user lacks needs the permission \"administer permissions\"";
   }
 

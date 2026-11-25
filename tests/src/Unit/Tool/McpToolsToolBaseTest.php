@@ -281,8 +281,9 @@ final class McpToolsToolBaseTest extends UnitTestCase {
 
     // One fixed source string, so locale records no string per message.
     $this->assertSame('@message', $message->getUntranslatedString());
-    // The text reaches clients as built, not escaped.
-    $this->assertSame("Node 274 has no 'it' translation & <b>no</b> \"draft\".", (string) $message);
+    // The text reaches clients as built, and a page escapes it.
+    $this->assertSame("Node 274 has no 'it' translation & <b>no</b> \"draft\".", McpToolsToolBase::plainMessage($message));
+    $this->assertStringNotContainsString('<b>', (string) $message);
   }
 
   /**
@@ -311,7 +312,7 @@ final class McpToolsToolBaseTest extends UnitTestCase {
     $result = $tool->getResult();
 
     $this->assertFalse($result->isSuccess());
-    $this->assertSame("Tool execution failed: no such table: \"cache_backend\".sqlite_master, it's <gone> & lost", (string) $result->getMessage());
+    $this->assertSame("Tool execution failed: no such table: \"cache_backend\".sqlite_master, it's <gone> & lost", McpToolsToolBase::plainMessage($result->getMessage()));
     // Still one fixed source string for locale.
     $this->assertSame('@message', $result->getMessage()->getUntranslatedString());
   }

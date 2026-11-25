@@ -4,6 +4,37 @@ All notable changes to the MCP Tools module will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.0.0-beta32] - 2026-11-24
+
+### Security
+
+From a second review of the access code. No report of use is known.
+
+- A connection no longer makes an account with more permissions than its
+  own user has, also with "administer permissions". Nor does it give such
+  a role to an account it made or whose address it changed, or fill a role
+  that account has. Accounts made before this version are not tracked.
+- A connection gives no permission its user lacks to a role its user has,
+  or to "authenticated". This held for trusted-role permissions only.
+- The e-mail address of an account with permissions the connection's user
+  lacks is not changed.
+- A blocked user 1 is not activated.
+- Config-only mode blocks the JSON:API and metatag write tools, the
+  taxonomy setup tool, and an undo of content. A tool category on no list
+  counts as content, so a tool of your own may need `MCP_WRITE_KIND`.
+- The remote settings form takes user 1 only with its box ticked, and does
+  not tick it by itself.
+- Tool messages are escaped on web pages. MCP clients get them as before.
+  PHP code that reads them as text calls `McpToolsToolBase::plainMessage()`.
+- The audit log redacts the same secrets as tool events, in JSON text too.
+- Calls at the same time no longer get past a rate limit together.
+
+### Added
+
+- **Creating or updating content says what its text format does not let
+  through,** such as a table or a heading in Basic HTML, and when a format
+  the user may not use was replaced. The text is stored as before.
+
 ## [1.0.0-beta31] - 2026-11-24
 
 ### Security

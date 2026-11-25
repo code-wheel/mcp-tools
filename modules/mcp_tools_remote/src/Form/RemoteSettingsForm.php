@@ -128,9 +128,10 @@ class RemoteSettingsForm extends ConfigFormBase {
       '#type' => 'checkbox',
       '#title' => $this->t('Use site admin (uid 1)'),
       '#description' => $this->t('Run tools as the main admin account. For local/dev only; enables the uid 1 override.'),
-      // Ticked only when uid 1 is the user in use. "uid 1 is allowed" with
-      // another user set must not switch the user to uid 1 on save.
-      '#default_value' => $uid === 1,
+      // Ticked only when uid 1 is the user in use and somebody allowed it.
+      // "uid 1 is allowed" with another user set must not switch the user
+      // to uid 1 on save, and uid 1 alone must not allow it.
+      '#default_value' => $uid === 1 && (bool) $config->get('allow_uid1'),
     ];
 
     if (!$executorExists) {
@@ -265,6 +266,10 @@ class RemoteSettingsForm extends ConfigFormBase {
     $useUid1 = (bool) $form_state->getValue(['execution_user_wrapper', 'use_uid1']);
     $uid = $useUid1 ? 1 : (int) $form_state->getValue(['execution_user_wrapper', 'execution_user']);
     $enabled = (bool) $form_state->getValue('enabled');
+
+    if ($uid === 1 && !$useUid1) {
+      $form_state->setErrorByName('execution_user_wrapper][execution_user', $this->t('To run tools as uid 1, tick "Use site admin (uid 1)". Or select another user.'));
+    }
 
     if ($enabled && $uid === 0) {
       $form_state->setErrorByName('execution_user_wrapper][execution_user', $this->t('An execution user is required when the endpoint is enabled.'));

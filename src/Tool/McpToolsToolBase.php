@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Drupal\mcp_tools\Tool;
 
-use Drupal\Component\Render\FormattableMarkup;
 use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Access\AccessResultInterface;
 use Drupal\Core\Session\AccountInterface;
@@ -341,6 +340,8 @@ abstract class McpToolsToolBase extends ToolBase {
       'scheduler',
       'redirect',
       'entity_clone',
+      'jsonapi',
+      'metatag',
       'remote media',
       // Default menus to content because menu links are content entities.
       'menus',
@@ -353,8 +354,27 @@ abstract class McpToolsToolBase extends ToolBase {
       'search_api',
         => AccessManager::WRITE_KIND_OPS,
 
-      // Everything else is treated as configuration changes.
-      default => AccessManager::WRITE_KIND_CONFIG,
+      // Configuration.
+      'blocks',
+      'config',
+      'image_styles',
+      'layout_builder',
+      'paragraphs',
+      'pathauto',
+      'recipes',
+      'sitemap',
+      'structure',
+      'templates',
+      'theme',
+      'translation',
+      'views',
+      'webform',
+      // The undo service checks the kind of each change it would undo.
+      'undo',
+        => AccessManager::WRITE_KIND_CONFIG,
+
+      // A category that nobody put on a list is not let through as config.
+      default => AccessManager::WRITE_KIND_CONTENT,
     };
   }
 
@@ -363,8 +383,9 @@ abstract class McpToolsToolBase extends ToolBase {
    *
    * The message carries IDs and exception text, so it must not be the source
    * string: the locale module would record every message as a string to
-   * translate. It is passed as a placeholder instead, as markup so that it is
-   * not escaped: the rendered text is the message as built.
+   * translate. It is passed as a placeholder instead, as plain text, so that
+   * a page that shows it escapes it: it may hold a title or an ID that
+   * somebody typed. A client that reads text asks plainMessage().
    *
    * @param string $message
    *   The message.
@@ -373,7 +394,26 @@ abstract class McpToolsToolBase extends ToolBase {
    *   The message for the result.
    */
   private static function resultMessage(string $message): TranslatableMarkup {
-    return new TranslatableMarkup('@message', ['@message' => new FormattableMarkup($message, [])]);
+    return new TranslatableMarkup('@message', ['@message' => $message]);
+  }
+
+  /**
+   * A result's message as text, for a client that does not render HTML.
+   *
+   * @param \Stringable|string $message
+   *   The message of a result.
+   *
+   * @return string
+   *   The message as built. It is not safe to print as HTML.
+   */
+  public static function plainMessage(\Stringable|string $message): string {
+    if ($message instanceof TranslatableMarkup && $message->getUntranslatedString() === '@message') {
+      $text = $message->getArguments()['@message'] ?? NULL;
+      if (is_string($text)) {
+        return $text;
+      }
+    }
+    return (string) $message;
   }
 
 }

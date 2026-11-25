@@ -188,28 +188,7 @@ class AuditLogger implements AuditLoggerInterface {
    * Sanitize details to remove sensitive information.
    */
   protected function sanitizeDetails(array $details): array {
-    $sensitiveKeys = ['password', 'pass', 'secret', 'token', 'key', 'credentials', 'api_key'];
-
-    foreach ($details as $key => $value) {
-      // Array keys may be integers (lists); strtolower() rejects non-strings
-      // under strict_types.
-      $lowerKey = strtolower((string) $key);
-      $isSensitive = FALSE;
-      foreach ($sensitiveKeys as $sensitiveKey) {
-        if (str_contains($lowerKey, $sensitiveKey)) {
-          $details[$key] = '[REDACTED]';
-          $isSensitive = TRUE;
-          break;
-        }
-      }
-
-      // Only recurse into arrays if the key itself wasn't sensitive.
-      if (!$isSensitive && is_array($value)) {
-        $details[$key] = $this->sanitizeDetails($value);
-      }
-    }
-
-    return $details;
+    return SecretRedactor::redactOpened($details);
   }
 
 }

@@ -6,6 +6,7 @@ namespace Drupal\mcp_tools\Service;
 
 use CodeWheel\McpErrorCodes\ErrorCode;
 use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\KeyValueStore\KeyValueFactoryInterface;
 use Drupal\Core\Lock\LockBackendInterface;
 use Drupal\Core\PrivateKey;
 use Drupal\Core\State\StateInterface;
@@ -41,12 +42,23 @@ class RateLimiter implements RateLimiterInterface {
    */
   protected const READ_STATE_PREFIX = 'mcp_tools.read_rate_limit.';
 
+  /**
+   * The answer when another call of the client holds the lock.
+   */
+  protected const BUSY = [
+    'allowed' => FALSE,
+    'error' => 'Rate limit: another call of this client is being counted. Try again in a second.',
+    'retry_after' => 1,
+    'code' => ErrorCode::RATE_LIMIT_EXCEEDED,
+  ];
+
   public function __construct(
     protected ConfigFactoryInterface $configFactory,
     protected StateInterface $state,
     protected RequestStack $requestStack,
     protected ?PrivateKey $privateKey = NULL,
     protected ?LockBackendInterface $lock = NULL,
+    protected ?KeyValueFactoryInterface $keyValue = NULL,
   ) {}
 
   /**
@@ -82,24 +94,41 @@ class RateLimiter implements RateLimiterInterface {
 
     // One check and count at a time per client: the counters are read and
     // written in two steps, and two calls at once both got under the limit.
+    return $this->locked($clientId, fn(): array => $this->checkAndRecord($clientId, $operationType, $now, $items)) ?? self::BUSY;
+  }
+
+  /**
+   * Runs a check or a count under the client's lock.
+   *
+   * @return mixed
+   *   What it gave back, or NULL when the lock was not free.
+   */
+  protected function locked(string $clientId, callable $count): mixed {
     $lockName = 'mcp_tools_rate_limit:' . $clientId;
     if ($this->lock !== NULL && !$this->lock->acquire($lockName, 5)) {
       $this->lock->wait($lockName, 1);
       if (!$this->lock->acquire($lockName, 5)) {
-        return [
-          'allowed' => FALSE,
-          'error' => 'Rate limit: another call of this client is being counted. Try again in a second.',
-          'retry_after' => 1,
-          'code' => ErrorCode::RATE_LIMIT_EXCEEDED,
-        ];
+        return NULL;
       }
     }
     try {
-      return $this->checkAndRecord($clientId, $operationType, $now, $items);
+      return $count();
     }
     finally {
       $this->lock?->release($lockName);
     }
+  }
+
+  /**
+   * A counter as it is stored now.
+   *
+   * State keeps a copy per request. Read through it, the counter was the one
+   * from before the call that held the lock.
+   */
+  protected function counter(string $stateKey, mixed $default = NULL): mixed {
+    return $this->keyValue !== NULL
+      ? $this->keyValue->get('state')->get($stateKey, $default)
+      : $this->state->get($stateKey, $default);
   }
 
   /**
@@ -183,27 +212,29 @@ class RateLimiter implements RateLimiterInterface {
     $clientId = $this->getClientIdentifier();
     $now = time();
 
-    $stateKey = self::READ_STATE_PREFIX . "$clientId.$operation.$window";
-    $windowData = $this->state->get($stateKey, ['count' => 0, 'window_start' => $now]);
+    return $this->locked($clientId, function () use ($clientId, $operation, $window, $windowSeconds, $limit, $now): array {
+      $stateKey = self::READ_STATE_PREFIX . "$clientId.$operation.$window";
+      $windowData = $this->counter($stateKey, ['count' => 0, 'window_start' => $now]);
 
-    if ($now - $windowData['window_start'] >= $windowSeconds) {
-      $windowData = ['count' => 0, 'window_start' => $now];
-    }
+      if ($now - $windowData['window_start'] >= $windowSeconds) {
+        $windowData = ['count' => 0, 'window_start' => $now];
+      }
 
-    if ($windowData['count'] >= $limit) {
-      $retryAfter = $windowData['window_start'] + $windowSeconds - $now;
-      return [
-        'allowed' => FALSE,
-        'error' => "Rate limit exceeded: Maximum $limit $operation operations per $window. Try again in $retryAfter seconds.",
-        'retry_after' => $retryAfter,
-        'code' => ErrorCode::RATE_LIMIT_EXCEEDED,
-      ];
-    }
+      if ($windowData['count'] >= $limit) {
+        $retryAfter = $windowData['window_start'] + $windowSeconds - $now;
+        return [
+          'allowed' => FALSE,
+          'error' => "Rate limit exceeded: Maximum $limit $operation operations per $window. Try again in $retryAfter seconds.",
+          'retry_after' => $retryAfter,
+          'code' => ErrorCode::RATE_LIMIT_EXCEEDED,
+        ];
+      }
 
-    $windowData['count']++;
-    $this->state->set($stateKey, $windowData);
+      $windowData['count']++;
+      $this->state->set($stateKey, $windowData);
 
-    return ['allowed' => TRUE, 'error' => NULL, 'retry_after' => NULL, 'code' => NULL];
+      return ['allowed' => TRUE, 'error' => NULL, 'retry_after' => NULL, 'code' => NULL];
+    }) ?? self::BUSY;
   }
 
   /**
@@ -234,7 +265,7 @@ class RateLimiter implements RateLimiterInterface {
 
     // Get current count for this window.
     $stateKey = self::STATE_PREFIX . "$clientId.$operationType.$window";
-    $windowData = $this->state->get($stateKey, ['count' => 0, 'window_start' => $now]);
+    $windowData = $this->counter($stateKey, ['count' => 0, 'window_start' => $now]);
 
     // Check if we're in a new window.
     if ($now - $windowData['window_start'] >= $windowSeconds) {
@@ -311,7 +342,7 @@ class RateLimiter implements RateLimiterInterface {
    */
   protected function incrementWindow(string $clientId, string $operationType, string $window, int $windowSeconds, int $now, int $items = 1): void {
     $stateKey = self::STATE_PREFIX . "$clientId.$operationType.$window";
-    $windowData = $this->state->get($stateKey, ['count' => 0, 'window_start' => $now]);
+    $windowData = $this->counter($stateKey, ['count' => 0, 'window_start' => $now]);
 
     // Check if we're in a new window.
     if ($now - $windowData['window_start'] >= $windowSeconds) {
@@ -341,16 +372,19 @@ class RateLimiter implements RateLimiterInterface {
     }
     $clientId = $this->getClientIdentifier();
     $types = $operationType === 'write' ? ['write'] : [$operationType, 'write'];
-    foreach ($types as $type) {
-      foreach (['minute', 'hour'] as $window) {
-        $stateKey = self::STATE_PREFIX . "$clientId.$type.$window";
-        $windowData = $this->state->get($stateKey);
-        if (is_array($windowData) && ($windowData['count'] ?? 0) > 0) {
-          $windowData['count']--;
-          $this->state->set($stateKey, $windowData);
+    // Without the lock the count stays: too many, never too few.
+    $this->locked($clientId, function () use ($clientId, $types): void {
+      foreach ($types as $type) {
+        foreach (['minute', 'hour'] as $window) {
+          $stateKey = self::STATE_PREFIX . "$clientId.$type.$window";
+          $windowData = $this->counter($stateKey);
+          if (is_array($windowData) && ($windowData['count'] ?? 0) > 0) {
+            $windowData['count']--;
+            $this->state->set($stateKey, $windowData);
+          }
         }
       }
-    }
+    });
   }
 
   /**

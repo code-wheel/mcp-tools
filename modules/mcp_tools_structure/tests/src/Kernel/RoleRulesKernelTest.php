@@ -192,9 +192,10 @@ final class RoleRulesKernelTest extends KernelTestBase {
       $this->assertFalse(Role::load($role)->hasPermission('administer nodes'), "The role \"$role\" got a permission for trusted roles only through MCP.");
       $this->assertStringContainsString('administer nodes', $message);
       $this->assertStringContainsString($role, $message);
-      // An everyday permission still goes to them.
+      // An everyday permission still goes to visitors. The connection's own
+      // user is a logged-in user, so "authenticated" gets none it lacks.
       [$success, $message] = $this->callTool('mcp_structure_grant_permissions', ['role' => $role, 'permissions' => ['access content']]);
-      $this->assertTrue($success, $message);
+      $this->assertSame($role === 'anonymous', $success, $message);
     }
 
     // A role the user of this connection has: the connection would raise

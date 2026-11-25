@@ -22,6 +22,7 @@ services:
       - '@request_stack'
       - '@private_key'
       - '@lock'
+      - '@keyvalue'
 
   # Shared Audit Logger for all MCP write submodules
   mcp_tools.audit_logger:

@@ -12,6 +12,7 @@ use Drupal\ai\Service\FunctionCalling\FunctionCallInterface;
 use Drupal\Component\Plugin\PluginManagerInterface;
 use Drupal\mcp_tools\Policy\ToolPolicy;
 use Drupal\mcp_tools\Policy\ToolRefusal;
+use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\FailureCategory;
 use Drupal\tool\Tool\Invoker;
 use Drupal\tool\Tool\ToolDefinition;
@@ -166,7 +167,7 @@ final class ToolApiFunctionCall extends FunctionCallBase implements ExecutableFu
           'success' => $result->isSuccess(),
           // A denial says no more than that. Tool API's own text names
           // the permission that is missing.
-          'message' => $denied ? 'Access denied.' : (string) $result->getMessage(),
+          'message' => $denied ? 'Access denied.' : McpToolsToolBase::plainMessage($result->getMessage()),
           'data' => $result->getContextValues(),
         ];
       }

@@ -85,6 +85,8 @@ class SetupTaxonomy extends McpToolsToolBase {
 
   protected const MCP_CATEGORY = 'structure';
 
+  protected const MCP_WRITE_KIND = 'content';
+
   /**
    * The taxonomy service.
    *

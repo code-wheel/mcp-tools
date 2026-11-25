@@ -15,6 +15,7 @@ use Drupal\Component\Plugin\Exception\PluginException;
 use Drupal\Component\Plugin\PluginManagerInterface;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\mcp_tools\Policy\ToolRefusal;
+use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\tool\FailureCategory;
 use Drupal\tool\Tool\Invoker;
 use Drupal\tool\Tool\ToolDefinition;
@@ -133,7 +134,7 @@ class DrupalToolProvider implements ToolProviderInterface {
     if (!$outcome->hasExecuted() && $result->getFailureCategory() === FailureCategory::Access) {
       return ToolResult::error('Access denied.');
     }
-    $message = (string) $result->getMessage();
+    $message = McpToolsToolBase::plainMessage($result->getMessage());
     if (!$result->isSuccess()) {
       return ToolResult::error($message !== '' ? $message : 'Tool execution failed');
     }

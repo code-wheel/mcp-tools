@@ -15,6 +15,7 @@ use Drupal\mcp_tools\Service\EntityAccess;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AuditLogger;
 use Drupal\mcp_tools\Service\EntityReferences;
+use Drupal\mcp_tools\Service\TextLoss;
 use Drupal\node\NodeInterface;
 
 /**
@@ -79,6 +80,7 @@ class ContentService {
         'status' => $options['status'] ?? 0,
       ];
 
+      $asGiven = [];
       foreach ($fields as $fieldName => $value) {
         if (!str_starts_with($fieldName, 'field_') && !in_array($fieldName, ['body'])) {
           $checkName = 'field_' . $fieldName;
@@ -86,6 +88,7 @@ class ContentService {
             $fieldName = $checkName;
           }
         }
+        $asGiven[$fieldName] = $value;
         $nodeData[$fieldName] = $this->normalizeFieldValue($fieldName, $value, $fieldDefinitions);
       }
 
@@ -129,6 +132,9 @@ class ContentService {
       $message = $node->isPublished()
         ? "Content '$title' created and published."
         : "Content '$title' created as an unpublished draft. Publish it with mcp_publish_content.";
+      if (($notice = TextLoss::notice($node, $asGiven)) !== '') {
+        $message .= ' ' . $notice;
+      }
       // And say when nothing but the title was given. A model that was
       // asked for a body text sent none and reported it as set.
       if ($fields === []) {
@@ -289,6 +295,13 @@ class ContentService {
           $sourceLangcode,
         ),
       ];
+      $asGiven = [];
+      foreach ($updates as $fieldName => $value) {
+        $asGiven[$this->resolveFieldName((string) $fieldName, $fieldDefinitions)] = $value;
+      }
+      if (($notice = TextLoss::notice($node, $asGiven)) !== '') {
+        $data['message'] .= ' ' . $notice;
+      }
       // The edit went to a draft that waits, not to what is live. The answer
       // gave the draft's title only, so a model that had found the live
       // title "corrected" it back, and undid the draft's own change.

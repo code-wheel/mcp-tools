@@ -20,6 +20,7 @@ use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\McpClientBridge;
 use Drupal\mcp_tools\Service\McpToolCallContext;
 use Drupal\mcp_tools\Tool\AsksFirstInterface;
+use Drupal\mcp_tools\Tool\McpToolsToolBase;
 use Drupal\mcp_tools\Service\SecretRedactor;
 use Drupal\tool\FailureCategory;
 use Drupal\tool\Tool\Invoker;
@@ -330,7 +331,7 @@ class ToolApiCallToolHandler implements RequestHandlerInterface {
     }
 
     $result = $outcome->getResult();
-    $message = (string) $result->getMessage();
+    $message = McpToolsToolBase::plainMessage($result->getMessage());
 
     // Refused by Tool API before the tool ran: by its declared permission,
     // by its own access check, or for an input Tool API could not take.
@@ -919,15 +920,7 @@ class ToolApiCallToolHandler implements RequestHandlerInterface {
    *   Sanitized arguments.
    */
   private function sanitizeArguments(array $arguments): array {
-    // JSON text is looked into like the list or map it is.
-    $opened = static function (mixed $value) use (&$opened): mixed {
-      if (is_string($value) && preg_match('/^\s*[\[{]/', $value)) {
-        $decoded = json_decode($value, TRUE);
-        $value = is_array($decoded) ? $decoded : $value;
-      }
-      return is_array($value) ? array_map($opened, $value) : $value;
-    };
-    return SecretRedactor::redact($opened($arguments));
+    return SecretRedactor::redactOpened($arguments);
   }
 
   /**

@@ -106,6 +106,23 @@ final class UndoKernelTest extends KernelTestBase {
   }
 
   /**
+   * Config-only mode holds for what an undo writes.
+   */
+  public function testConfigOnlyModeHoldsForAnUndo(): void {
+    $node = NULL;
+    $call = $this->call(function () use (&$node) {
+      $node = Node::create(['type' => 'page', 'title' => 'Made by the call']);
+      $node->save();
+    });
+    $this->config('mcp_tools.settings')->set('access.config_only_mode', TRUE)->set('access.config_only_allowed_write_kinds', ['config'])->save();
+    $this->assertFalse($this->undo($call)['success']);
+    $this->assertNotNull($this->node((int) $node->id()), 'The undo deleted content in config-only mode.');
+    $this->config('mcp_tools.settings')->set('access.config_only_mode', FALSE)->save();
+    $this->assertTrue($this->undo($call)['success']);
+    $this->assertNull($this->node((int) $node->id()));
+  }
+
+  /**
    * Config set and config made in a call: undone.
    */
   public function testConfigIsUndone(): void {

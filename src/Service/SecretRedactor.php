@@ -59,6 +59,20 @@ final class SecretRedactor {
   }
 
   /**
+   * The same, and JSON text is looked into like the list or map it is.
+   */
+  public static function redactOpened(array $data): array {
+    $opened = static function (mixed $value) use (&$opened): mixed {
+      if (is_string($value) && preg_match('/^\s*[\[{]/', $value)) {
+        $decoded = json_decode($value, TRUE);
+        $value = is_array($decoded) ? $decoded : $value;
+      }
+      return is_array($value) ? array_map($opened, $value) : $value;
+    };
+    return self::redact($opened($data));
+  }
+
+  /**
    * The data with every value under a secret's key replaced, at any depth.
    */
   public static function redact(array $data): array {

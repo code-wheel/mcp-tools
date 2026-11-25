@@ -91,6 +91,18 @@ class UndoService {
       return $this->accessManager->getWriteAccessDenied();
     }
 
+    // Config-only mode holds for what an undo writes.
+    foreach ($byPerson ? [] : $record['changes'] as $change) {
+      $kind = $change['kind'] === 'config' ? AccessManager::WRITE_KIND_CONFIG : AccessManager::WRITE_KIND_CONTENT;
+      if (!$this->accessManager->isWriteKindAllowed($kind)) {
+        return [
+          'success' => FALSE,
+          'error' => "Nothing was undone: the call changed $kind, and config-only mode does not allow that.",
+          'code' => 'ACCESS_DENIED',
+        ];
+      }
+    }
+
     $changes = array_reverse($record['changes']);
     $conflicts = [];
     foreach ($changes as $change) {

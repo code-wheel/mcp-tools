@@ -7,11 +7,13 @@ namespace Drupal\mcp_tools_users\Service;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Password\PasswordGeneratorInterface;
 use Drupal\Core\Session\AccountInterface;
+use Drupal\mcp_tools\Service\ControlledAccounts;
 use Drupal\mcp_tools\Service\EntityAccess;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AdminRoles;
 use Drupal\mcp_tools\Service\AuditLogger;
 use Drupal\mcp_tools\Service\OwnRoles;
+use Drupal\user\UserInterface;
 
 /**
  * Service for user management operations.
@@ -70,12 +72,13 @@ class UserService {
       return ['success' => FALSE, 'error' => 'Unable to create user. Email may already be in use or be invalid.'];
     }
 
-    // Not an account above the connection: it may choose the password.
-    $raising = empty($options['roles']) ? [] : OwnRoles::raising($this->entityTypeManager, $this->currentUser, 0, $this->filterRoles($options['roles']));
+    // Not an account above the connection: it may choose the password, and
+    // it chooses the address. So the account counts as the connection's own.
+    $raising = empty($options['roles']) ? [] : OwnRoles::raising($this->entityTypeManager, $this->currentUser, (int) $this->currentUser?->id(), $this->filterRoles($options['roles']));
     if ($raising !== []) {
       return [
         'success' => FALSE,
-        'error' => ucfirst(OwnRoles::why($this->currentUser, 0)) . ': ' . implode(', ', $raising) . '. Leave these roles out, and a person can assign them. No user was made.',
+        'error' => 'A connection does not make an account with more permissions than its own user has: ' . implode(', ', $raising) . '. Leave these roles out, and a person can assign them. No user was made.',
       ];
     }
 
@@ -102,6 +105,7 @@ class UserService {
       }
 
       $user->save();
+      ControlledAccounts::add((int) $user->id());
 
       $this->auditLogger->logSuccess('create_user', 'user', (string) $user->id(), [
         'username' => $username,
@@ -203,6 +207,37 @@ class UserService {
         if ($existingEmail && $existingEmail->id() != $uid) {
           return ['success' => FALSE, 'error' => "Email '{$updates['email']}' is already in use."];
         }
+        // A new address and a password reset is that account: not for one
+        // with permissions this connection's own user lacks.
+        $above = $this->rolesAbove($user);
+        if ($above !== []) {
+          return [
+            'success' => FALSE,
+            'error' => 'The e-mail address of an account with more permissions than the connection\'s own user is not changed via MCP. Roles: ' . implode(', ', $above) . '. A person can change it. Nothing was changed.',
+          ];
+        }
+        $addressChanged = $updates['email'] !== $user->getEmail();
+      }
+
+      // Every check is before the first change: a refused call must not leave
+      // a changed account in memory for the next one.
+      if (isset($updates['roles'])) {
+        $newRoles = $this->filterRoles($updates['roles']);
+        $currentRoles = $user->getRoles(TRUE);
+
+        // Not more permissions for the user this connection runs as.
+        // An address changed in this same call makes it such an account.
+        $asUid = !empty($addressChanged) ? (int) $this->currentUser?->id() : $uid;
+        $raising = OwnRoles::raising($this->entityTypeManager, $this->currentUser, $asUid, array_diff($newRoles, $currentRoles));
+        if ($raising !== []) {
+          return [
+            'success' => FALSE,
+            'error' => ucfirst(OwnRoles::why($this->currentUser, $asUid)) . ': ' . implode(', ', $raising) . '. A person can assign these roles. Nothing was changed.',
+          ];
+        }
+      }
+
+      if (isset($updates['email'])) {
         $user->setEmail($updates['email']);
         $changedFields[] = 'email';
       }
@@ -215,18 +250,6 @@ class UserService {
 
       // Update roles.
       if (isset($updates['roles'])) {
-        $newRoles = $this->filterRoles($updates['roles']);
-        $currentRoles = $user->getRoles(TRUE);
-
-        // Not more permissions for the user this connection runs as.
-        $raising = OwnRoles::raising($this->entityTypeManager, $this->currentUser, $uid, array_diff($newRoles, $currentRoles));
-        if ($raising !== []) {
-          return [
-            'success' => FALSE,
-            'error' => ucfirst(OwnRoles::why($this->currentUser, $uid)) . ': ' . implode(', ', $raising) . '. A person can assign these roles. Nothing was changed.',
-          ];
-        }
-
         // Remove roles not in the new list.
         foreach ($currentRoles as $role) {
           if (!in_array($role, $newRoles)) {
@@ -244,6 +267,9 @@ class UserService {
       }
 
       $user->save();
+      if (!empty($addressChanged)) {
+        ControlledAccounts::add($uid);
+      }
 
       $this->auditLogger->logSuccess('update_user', 'user', (string) $uid, ['updates' => $changedFields]);
 
@@ -352,6 +378,11 @@ class UserService {
   public function activateUser(int $uid): array {
     if (!$this->accessManager->canWrite()) {
       return $this->accessManager->getWriteAccessDenied();
+    }
+
+    // Protect uid 1 (super admin): somebody blocked it on purpose.
+    if ($uid === 1) {
+      return ['success' => FALSE, 'error' => 'Cannot activate the super admin user (uid 1).'];
     }
 
     $user = $this->entityTypeManager->getStorage('user')->load($uid);
@@ -534,6 +565,13 @@ class UserService {
   public function isRoleBlocked(string $role): bool {
     $filtered = $this->filterRoles([$role]);
     return empty($filtered);
+  }
+
+  /**
+   * The roles of an account that are above the connection's own user.
+   */
+  protected function rolesAbove(UserInterface $user): array {
+    return OwnRoles::raising($this->entityTypeManager, $this->currentUser, (int) $this->currentUser?->id(), $user->getRoles(TRUE));
   }
 
   /**

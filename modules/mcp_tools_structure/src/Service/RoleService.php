@@ -10,6 +10,7 @@ use Drupal\Core\Session\AccountInterface;
 use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\AdminRoles;
 use Drupal\mcp_tools\Service\AuditLogger;
+use Drupal\mcp_tools\Service\ControlledAccounts;
 use Drupal\user\Entity\Role;
 use Drupal\user\PermissionHandlerInterface;
 use Drupal\user\RoleInterface;
@@ -534,6 +535,30 @@ class RoleService {
   }
 
   /**
+   * Whether a permission of this role is one the connection can use.
+   *
+   * Its own user has the role, or an account it can act as.
+   */
+  protected function reachesTheCaller(string $roleId): bool {
+    if ($this->currentUser === NULL) {
+      return FALSE;
+    }
+    if (in_array($roleId, $this->currentUser->getRoles(), TRUE)) {
+      return TRUE;
+    }
+    $controlled = ControlledAccounts::all();
+    if ($controlled === []) {
+      return FALSE;
+    }
+    foreach ($this->entityTypeManager->getStorage('user')->loadMultiple($controlled) as $user) {
+      if (in_array($roleId, $user->getRoles(), TRUE)) {
+        return TRUE;
+      }
+    }
+    return FALSE;
+  }
+
+  /**
    * Validate permissions.
    *
    * @param array $permissions
@@ -554,6 +579,7 @@ class RoleService {
     $forEveryone = [];
     $raisesTheCaller = [];
     $restricted = [];
+    $isOwn = $roleId !== NULL && $this->reachesTheCaller($roleId);
 
     foreach ($permissions as $permission) {
       if (!isset($allPermissions[$permission])) {
@@ -578,16 +604,18 @@ class RoleService {
         elseif (in_array($roleId, [RoleInterface::ANONYMOUS_ID, RoleInterface::AUTHENTICATED_ID], TRUE)) {
           $forEveryone[] = $permission;
         }
-        // And a connection does not raise itself: not for a role its own
-        // user has, unless that user has the permission already.
-        elseif ($roleId !== NULL && $this->currentUser !== NULL
-          && in_array($roleId, $this->currentUser->getRoles(), TRUE)
-          && !$this->currentUser->hasPermission($permission)) {
+        elseif ($isOwn && !$this->currentUser->hasPermission($permission)) {
           $raisesTheCaller[] = $permission;
         }
         else {
           $restricted[] = $permission;
         }
+      }
+      // And a connection does not raise itself, by any permission: not for
+      // a role its own user has, or an account it can act as, unless that
+      // user has the permission already.
+      elseif ($isOwn && !$this->currentUser->hasPermission($permission)) {
+        $raisesTheCaller[] = $permission;
       }
     }
 
@@ -609,7 +637,7 @@ class RoleService {
       $refused[] = 'Not granted to the role "' . $roleId . '", which is every visitor or every logged-in user. These are for trusted roles only: ' . implode(', ', $forEveryone) . '.';
     }
     if (!empty($raisesTheCaller)) {
-      $refused[] = 'Not granted to the role "' . $roleId . '": the user this connection runs as has that role, and a connection does not raise itself. These are for trusted roles only: ' . implode(', ', $raisesTheCaller) . '. A person can grant them on the permissions page.';
+      $refused[] = 'Not granted to the role "' . $roleId . '": the user this connection runs as has that role, or an account it made or whose address it set has it, and a connection does not raise itself. Its user lacks: ' . implode(', ', $raisesTheCaller) . '. A person can grant them on the permissions page.';
     }
     if (!empty($refused)) {
       return ['valid' => FALSE, 'error' => implode(' ', $refused)];
