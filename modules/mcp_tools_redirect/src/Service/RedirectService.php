@@ -282,7 +282,7 @@ class RedirectService {
    *   Result of the operation.
    */
   public function deleteRedirect(int $id): array {
-    if (!$this->accessManager->canWrite()) {
+    if (!$this->accessManager->canWrite('delete')) {
       return $this->accessManager->getWriteAccessDenied();
     }
 

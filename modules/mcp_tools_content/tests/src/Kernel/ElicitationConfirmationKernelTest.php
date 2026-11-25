@@ -279,4 +279,24 @@ class ElicitationConfirmationKernelTest extends KernelTestBase {
     $this->assertNull($storage->load($nid));
   }
 
+  /**
+   * The model's own confirm flag, or a language, does not skip the question.
+   */
+  public function testAFlagFromTheModelIsNotAYes(): void {
+    $storage = $this->container->get('entity_type.manager')->getStorage('node');
+    foreach ([['confirm_delete_all' => TRUE], ['language' => 'en']] as $i => $extra) {
+      $node = Node::create(['type' => 'article', 'title' => 'Kept', 'langcode' => 'en']);
+      $node->save();
+      $nid = (int) $node->id();
+      $handler = $this->buildHandler();
+      $request = (new CallToolRequest('mcp_delete_content', ['nid' => $nid] + $extra))->withId(20 + $i);
+      $fiber = new \Fiber(fn() => $handler->handle($request, $this->buildSession(TRUE)));
+      $this->assertInstanceOf(ElicitRequest::class, $this->pumpToElicit($fiber), json_encode($extra));
+      $response = $this->finish($fiber, new Response(20 + $i, ['action' => 'accept', 'content' => ['confirm' => FALSE]]));
+      $this->assertFalse($response->result->structuredContent['success']);
+      $storage->resetCache([$nid]);
+      $this->assertNotNull($storage->load($nid));
+    }
+  }
+
 }

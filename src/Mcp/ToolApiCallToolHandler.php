@@ -20,6 +20,7 @@ use Drupal\mcp_tools\Service\AccessManager;
 use Drupal\mcp_tools\Service\McpClientBridge;
 use Drupal\mcp_tools\Service\McpToolCallContext;
 use Drupal\mcp_tools\Tool\AsksFirstInterface;
+use Drupal\mcp_tools\Service\SecretRedactor;
 use Drupal\tool\FailureCategory;
 use Drupal\tool\Tool\Invoker;
 use Drupal\tool\Tool\InvokerCapability;
@@ -223,6 +224,9 @@ class ToolApiCallToolHandler implements RequestHandlerInterface {
     // Elicitation-based destructive confirmation: when the client can ask
     // its human, a bare destructive call elicits a native confirmation
     // instead of returning the refusal round-trip.
+    // The question is about the values that will run: a list sent as JSON
+    // text was asked about as text, which is no list, and then ran as one.
+    $arguments = $this->normalizeArgumentsForValidation($inputDefinitions, $arguments);
     $elicited = $this->maybeElicitDestructiveConfirmation($pluginId, $arguments, $session, $requestId);
     if ($elicited instanceof Response) {
       return $elicited;
@@ -827,12 +831,14 @@ class ToolApiCallToolHandler implements RequestHandlerInterface {
     if ($confirmation === NULL) {
       return $this->maybeAskFirst($pluginId, $arguments, $session, $requestId);
     }
+    // The flag comes from the model, so it is not the user's yes: such a
+    // call, and one the flag is not for, is asked about like any other.
     if (!empty($arguments[$confirmation['confirm_argument']])) {
-      return $arguments;
+      return $this->maybeAskFirst($pluginId, $arguments, $session, $requestId);
     }
     foreach ($confirmation['bypass_arguments'] as $bypass) {
       if (isset($arguments[$bypass]) && $arguments[$bypass] !== '') {
-        return $arguments;
+        return $this->maybeAskFirst($pluginId, $arguments, $session, $requestId);
       }
     }
     if (!class_exists(ElicitationSchema::class) || \Fiber::getCurrent() === NULL) {
@@ -861,12 +867,13 @@ class ToolApiCallToolHandler implements RequestHandlerInterface {
       ), 300);
     }
     catch (\Throwable $e) {
-      // Client-side failure or timeout: fall back to the refusal-based flow.
+      // The question was put and no answer came back. That is not a yes, and
+      // the tool's own refusal would name the flag that skips it.
       $this->logger->warning('Elicitation failed for @plugin: @message', [
         '@plugin' => $pluginId,
         '@message' => $e->getMessage(),
       ]);
-      return $arguments;
+      return $this->confirmationRefusal($requestId, McpToolsServerFactory::pluginIdToMcpName($pluginId), 'The user was asked to confirm the deletion and no answer came back, so nothing was deleted.');
     }
 
     if ($result->action === ElicitAction::Accept && !empty($result->content['confirm'])) {
@@ -912,19 +919,15 @@ class ToolApiCallToolHandler implements RequestHandlerInterface {
    *   Sanitized arguments.
    */
   private function sanitizeArguments(array $arguments): array {
-    $sensitiveKeys = ['password', 'pass', 'secret', 'token', 'key', 'api_key', 'apikey'];
-    $sanitized = $arguments;
-
-    array_walk_recursive($sanitized, static function (&$value, $key) use ($sensitiveKeys): void {
-      foreach ($sensitiveKeys as $sensitiveKey) {
-        if (stripos((string) $key, $sensitiveKey) !== FALSE) {
-          $value = '[REDACTED]';
-          return;
-        }
+    // JSON text is looked into like the list or map it is.
+    $opened = static function (mixed $value) use (&$opened): mixed {
+      if (is_string($value) && preg_match('/^\s*[\[{]/', $value)) {
+        $decoded = json_decode($value, TRUE);
+        $value = is_array($decoded) ? $decoded : $value;
       }
-    });
-
-    return $sanitized;
+      return is_array($value) ? array_map($opened, $value) : $value;
+    };
+    return SecretRedactor::redact($opened($arguments));
   }
 
   /**

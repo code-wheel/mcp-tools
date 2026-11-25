@@ -9,17 +9,20 @@ use Drupal\Core\Session\AccountInterface;
 use Drupal\user\RoleInterface;
 
 /**
- * A connection does not give its own user more permissions.
+ * A connection does not give out more permissions than it has.
  *
  * The role tools refuse to give a permission for trusted roles only to a
  * role the user of the connection has. A role is the other way to the
- * same end: make a role with the permission, then take the role. So the
- * tools that assign roles ask here first.
+ * same end: make a role with the permission, then take the role. Another
+ * account is a third, with a password or an address the connection chose.
+ * So the tools that assign roles ask here first. Drupal asks "administer
+ * permissions" for giving roles; with it, a connection gives any role to
+ * others, and still none above its own to itself.
  */
 final class OwnRoles {
 
   /**
-   * The roles that would give the acting user a permission it lacks.
+   * The roles that hold a permission the acting user lacks and may not give.
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
    *   The entity type manager.
@@ -31,11 +34,15 @@ final class OwnRoles {
    *   The roles.
    *
    * @return string[]
-   *   Those of the roles that raise the actor. Empty when the roles are for
-   *   another user, or add nothing the actor does not have already.
+   *   Those of the roles that are above the actor. Empty when they add nothing
+   *   the actor does not have, or are for another user and the actor has
+   *   "administer permissions".
    */
   public static function raising(EntityTypeManagerInterface $entityTypeManager, ?AccountInterface $actor, int $uid, array $roleIds): array {
-    if ($actor === NULL || (int) $actor->id() !== $uid || !$entityTypeManager->hasDefinition('user_role')) {
+    if ($actor === NULL || !$entityTypeManager->hasDefinition('user_role')) {
+      return [];
+    }
+    if ((int) $actor->id() !== $uid && $actor->hasPermission('administer permissions')) {
       return [];
     }
     $raising = [];
@@ -53,6 +60,15 @@ final class OwnRoles {
       }
     }
     return $raising;
+  }
+
+  /**
+   * Why such a role is not given, for the answer.
+   */
+  public static function why(?AccountInterface $actor, int $uid): string {
+    return $actor !== NULL && (int) $actor->id() === $uid
+      ? 'a connection does not give its own user more permissions'
+      : "a role with permissions the connection's own user lacks needs the permission \"administer permissions\"";
   }
 
 }

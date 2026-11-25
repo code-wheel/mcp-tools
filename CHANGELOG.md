@@ -4,6 +4,40 @@ All notable changes to the MCP Tools module will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.0.0-beta31] - 2026-11-24
+
+### Security
+
+From a review of the access code. No report of use is known.
+
+- The question before a strong call is about the values that will run, and
+  a flag set by the model does not take its place. No answer is a no.
+- With no default scope set, a connection gets read, not every scope the
+  site allows. Check `access.default_scopes` if you had left it empty.
+- A blocked execution user stops the HTTP endpoint.
+- Noting the use of an API key no longer writes back a key that was
+  revoked in the meantime.
+- Each API key has sessions of its own. Sessions open at the update end.
+- Remote setup does not take an account that is there already, unless it
+  has the role.
+- A role with permissions the connection's own user lacks is given to
+  another account only with Drupal's "administer permissions". If your
+  execution user assigns such roles, give it that permission.
+- Structure and role changes count against the structure limit, and every
+  delete against the delete or the structure limit.
+- Secrets in lists, maps and JSON text are redacted in tool events and in
+  the question.
+
+### Fixed
+
+- **A long failure text with a long run without spaces keeps its start and
+  its end.** The cut backed up to the nearest space and dropped the run.
+- **An import without a key names the columns the rows have,** up to 20,
+  names only, and says a column can be added.
+- **`mcp_structure_add_field` refuses a bundle that is not there and names
+  the ones there are.** Its check never fired, and the answer was Drupal's
+  own "Missing bundle entity". Given `node_type`, it says to use `node`.
+
 ## [1.0.0-beta30] - 2026-11-24
 
 ### Changed

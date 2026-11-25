@@ -333,4 +333,23 @@ final class AsksFirstKernelTest extends KernelTestBase {
     $this->assertTrue($fiber->getReturn()->result->structuredContent['success']);
   }
 
+  /**
+   * A list sent as JSON text is asked about like a list.
+   *
+   * The question was put about the raw text and the call ran with the list
+   * made from it, so nobody was asked.
+   */
+  public function testAPermissionListAsTextIsAskedAbout(): void {
+    foreach ([
+      ['mcp_structure_grant_permissions', ['role' => 'builder', 'permissions' => json_encode([self::RESTRICTED])]],
+      ['mcp_structure_create_role', ['id' => 'helper', 'label' => 'Helper', 'permissions' => json_encode([self::RESTRICTED])]],
+    ] as [$tool, $call]) {
+      [$fiber, $asked] = $this->start($tool, $call, TRUE);
+      $this->assertInstanceOf(ElicitRequest::class, $asked, "$tool asks about a list sent as text.");
+      $this->answer($fiber, ['action' => 'accept', 'content' => ['confirm' => FALSE]]);
+    }
+    $this->assertFalse($this->has('builder', self::RESTRICTED));
+    $this->assertNull(Role::load('helper'));
+  }
+
 }

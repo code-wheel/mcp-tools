@@ -181,6 +181,28 @@ final class MigrationServiceTest extends UnitTestCase {
     $this->assertNull($record->rows, 'An import without a key reached the migration.');
   }
 
+  /**
+   * The refusal names the columns there are, over all rows, with no values.
+   *
+   * It said what a key is and not which columns could be one, 11 times in
+   * a set of import tasks.
+   */
+  public function testAnImportWithoutAKeyNamesTheColumns(): void {
+    [$service] = $this->importingService();
+    $result = $service->importFromJson('article', [
+      ['title' => 'One', 'sku' => 'secret-1'],
+      ['title' => 'Two', 'sku' => 'secret-2', 'note' => 'x'],
+    ]);
+    $this->assertStringContainsString('The rows have: title, sku, note.', $result['error']);
+    $this->assertStringContainsString('add a column', $result['error']);
+    $this->assertStringNotContainsString('secret', $result['error']);
+
+    $wide = array_fill_keys(array_map(static fn(int $i): string => "c$i", range(1, 25)), 'x');
+    $result = $service->importFromJson('article', [$wide]);
+    $this->assertStringContainsString('c20 and 5 more.', $result['error']);
+    $this->assertStringNotContainsString('c21', $result['error']);
+  }
+
   public function testValidateImportReportsMissingTitleAndUnknownFields(): void {
     $nodeType = new class() {
       public function label(): string { return 'Article'; }

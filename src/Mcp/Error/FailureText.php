@@ -39,7 +39,10 @@ final class FailureText {
    */
   private static function toWord(string $piece, bool $atEnd): string {
     $space = $atEnd ? mb_strrpos($piece, ' ') : mb_strpos($piece, ' ');
-    if ($space === FALSE) {
+    // A long run without spaces is cut in the run: backing up to a far space
+    // would drop most of what was to be kept.
+    $length = mb_strlen($piece);
+    if ($space === FALSE || ($atEnd ? $length - $space : $space) > $length / 4) {
       return $piece;
     }
     return $atEnd ? mb_substr($piece, 0, $space) : mb_substr($piece, $space + 1);

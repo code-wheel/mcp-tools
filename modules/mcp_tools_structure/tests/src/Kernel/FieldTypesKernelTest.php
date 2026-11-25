@@ -197,4 +197,28 @@ final class FieldTypesKernelTest extends KernelTestBase {
     }
   }
 
+  /**
+   * A bundle that is not there is refused with the ones there are.
+   *
+   * Drupal gives the base fields of any bundle name, so the check never
+   * fired: the answer was "Missing bundle entity, entity type node_type,
+   * entity id ..." or "Getting the base fields is not supported ...".
+   */
+  public function testAnUnknownBundleNamesTheOnesThereAre(): void {
+    $service = $this->container->get('mcp_tools_structure.field');
+
+    $unknown = $service->addField('node', 'no_such_type', 'subtitle', 'string', 'Subtitle');
+    $this->assertFalse($unknown['success']);
+    $this->assertStringContainsString("Bundle 'no_such_type' does not exist for entity type 'node'", $unknown['error']);
+    $this->assertStringContainsString('It has: news', $unknown['error']);
+
+    $config = $service->addField('node_type', 'news', 'subtitle', 'string', 'Subtitle');
+    $this->assertFalse($config['success']);
+    $this->assertStringContainsString("entity_type 'node' and bundle 'news'", $config['error']);
+
+    $this->assertTrue($service->addField('node', 'news', 'subtitle', 'string', 'Subtitle')['success']);
+    $user = $service->addField('user', 'user', 'nickname', 'string', 'Nickname');
+    $this->assertTrue($user['success'], (string) ($user['error'] ?? ''));
+  }
+
 }

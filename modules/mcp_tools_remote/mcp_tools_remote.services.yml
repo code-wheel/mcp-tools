@@ -9,6 +9,7 @@ services:
       - '@state'
       - '@private_key'
       - '@datetime.time'
+      - '@lock'
 
   mcp_tools_remote.access_checker:
     class: Drupal\mcp_tools_remote\Access\McpRemoteAccessCheck

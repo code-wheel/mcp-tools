@@ -11,6 +11,7 @@ use Drupal\Core\Password\PasswordGeneratorInterface;
 use Drupal\mcp_tools_remote\Service\ApiKeyManager;
 use Drupal\user\Entity\User;
 use Drupal\user\PermissionHandlerInterface;
+use Drupal\mcp_tools_remote\Service\ExecutionAccount;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -303,6 +304,15 @@ class RemoteSettingsForm extends ConfigFormBase {
    * Submit handler for creating the MCP executor account.
    */
   public function createExecutorAccount(array &$form, FormStateInterface $form_state): void {
+    // Look at the account before anything is made.
+    $existing = $this->entityTypeManager->getStorage('user')
+      ->loadByProperties(['name' => 'mcp_executor']);
+    $refusal = ExecutionAccount::refusal(reset($existing) ?: NULL, 'mcp_executor');
+    if ($refusal !== NULL) {
+      $this->messenger()->addError($refusal);
+      return;
+    }
+
     // Create the mcp_executor role if it doesn't exist.
     $roles = $this->entityTypeManager->getStorage('user_role');
     if (!$roles->load('mcp_executor')) {
@@ -349,9 +359,6 @@ class RemoteSettingsForm extends ConfigFormBase {
     }
 
     // Create the mcp_executor user if it doesn't exist.
-    $existing = $this->entityTypeManager->getStorage('user')
-      ->loadByProperties(['name' => 'mcp_executor']);
-
     if (empty($existing)) {
       $user = User::create([
         'name' => 'mcp_executor',

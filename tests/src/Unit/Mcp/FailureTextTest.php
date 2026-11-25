@@ -39,4 +39,15 @@ final class FailureTextTest extends UnitTestCase {
     $this->assertMatchesRegularExpression('/ \.\.\. \([\d,]+ characters cut\) \.\.\. /', $cut);
   }
 
+  /**
+   * A long run without spaces is cut in the run, not dropped whole.
+   */
+  public function testLongRunWithoutSpacesIsKeptInPart(): void {
+    $cut = FailureText::short('Failed: ' . str_repeat('a', 3000) . ' ' . str_repeat('b', 10));
+    $this->assertGreaterThan(900, substr_count($cut, 'a'));
+    $end = FailureText::short(str_repeat('word ', 500) . str_repeat('c', 390) . ' d');
+    $this->assertStringEndsWith('c d', $end);
+    $this->assertGreaterThan(300, substr_count($end, 'c'));
+  }
+
 }

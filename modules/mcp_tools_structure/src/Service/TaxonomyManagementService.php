@@ -167,7 +167,7 @@ class TaxonomyManagementService {
    *   Result with success status.
    */
   public function createVocabulary(string $id, string $label, string $description = ''): array {
-    if (!$this->accessManager->canWrite()) {
+    if (!$this->accessManager->canWrite('structure')) {
       return $this->accessManager->getWriteAccessDenied();
     }
 

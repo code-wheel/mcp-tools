@@ -394,4 +394,22 @@ class RoleServiceTest extends UnitTestCase {
     $this->assertContains('create article', $result['data']['didnt_have']);
   }
 
+  /**
+   * Role changes count against the limits for what they are.
+   */
+  public function testRoleChangesUseTheStricterLimits(): void {
+    $asked = [];
+    $this->accessManager->method('canWrite')->willReturnCallback(function (string $type = 'write') use (&$asked): bool {
+      $asked[] = $type;
+      return FALSE;
+    });
+    $this->accessManager->method('getWriteAccessDenied')->willReturn(['success' => FALSE, 'error' => 'no']);
+    $service = $this->createRoleService();
+    $service->createRole('r', 'R');
+    $service->deleteRole('r');
+    $service->grantPermissions('r', ['access content']);
+    $service->revokePermissions('r', ['access content']);
+    $this->assertSame(['structure', 'delete', 'structure', 'structure'], $asked);
+  }
+
 }

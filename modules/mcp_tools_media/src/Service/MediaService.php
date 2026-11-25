@@ -113,7 +113,7 @@ class MediaService {
    * Delete a media type.
    */
   public function deleteMediaType(string $id): array {
-    if (!$this->accessManager->canWrite()) {
+    if (!$this->accessManager->canWrite('delete')) {
       return $this->accessManager->getWriteAccessDenied();
     }
 
@@ -342,7 +342,7 @@ class MediaService {
    * Delete a media entity.
    */
   public function deleteMedia(int $mid): array {
-    if (!$this->accessManager->canWrite()) {
+    if (!$this->accessManager->canWrite('delete')) {
       return $this->accessManager->getWriteAccessDenied();
     }
 

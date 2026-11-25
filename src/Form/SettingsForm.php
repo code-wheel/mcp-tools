@@ -410,8 +410,9 @@ class SettingsForm extends ConfigFormBase {
     $scopes = array_filter($form_state->getValue('default_scopes'));
     // Ensure defaults cannot exceed allowed scopes.
     $defaultScopes = array_values(array_intersect($scopes, $allowedScopes));
+    // None ticked is read only, as the access manager takes it.
     if (empty($defaultScopes)) {
-      $defaultScopes = array_values($allowedScopes);
+      $defaultScopes = array_values(array_intersect(['read'], $allowedScopes));
     }
     $config->set('access.default_scopes', $defaultScopes);
 

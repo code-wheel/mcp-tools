@@ -536,6 +536,7 @@ final class McpToolsRemoteControllerTest extends UnitTestCase {
     ]);
 
     $user = $this->createMock(UserInterface::class);
+    $user->method('isActive')->willReturn(TRUE);
     $userStorage = $this->createMock(EntityStorageInterface::class);
     $userStorage->method('load')->with(5)->willReturn($user);
     $this->entityTypeManager->method('getStorage')->with('user')->willReturn($userStorage);
@@ -567,6 +568,7 @@ final class McpToolsRemoteControllerTest extends UnitTestCase {
     ]);
 
     $user = $this->createMock(UserInterface::class);
+    $user->method('isActive')->willReturn(TRUE);
     $userStorage = $this->createMock(EntityStorageInterface::class);
     $userStorage->method('load')->with(5)->willReturn($user);
     $this->entityTypeManager->method('getStorage')->with('user')->willReturn($userStorage);
@@ -596,6 +598,7 @@ final class McpToolsRemoteControllerTest extends UnitTestCase {
     ]);
 
     $user = $this->createMock(UserInterface::class);
+    $user->method('isActive')->willReturn(TRUE);
     $userStorage = $this->createMock(EntityStorageInterface::class);
     $userStorage->method('load')->with(5)->willReturn($user);
     $this->entityTypeManager->method('getStorage')->with('user')->willReturn($userStorage);
@@ -623,6 +626,7 @@ final class McpToolsRemoteControllerTest extends UnitTestCase {
     ]);
 
     $user = $this->createMock(UserInterface::class);
+    $user->method('isActive')->willReturn(TRUE);
     $userStorage = $this->createMock(EntityStorageInterface::class);
     $userStorage->method('load')->with(5)->willReturn($user);
     $this->entityTypeManager->method('getStorage')->with('user')->willReturn($userStorage);
@@ -672,6 +676,38 @@ final class McpToolsRemoteControllerTest extends UnitTestCase {
       ['localhost', '127.0.0.1', '[::1]'],
       $method->invoke($controller, $remoteConfig),
     );
+  }
+
+  /**
+   * A blocked execution user stops the endpoint.
+   */
+  public function testHandleReturns500WhenExecutionUserIsBlocked(): void {
+    $configFactory = $this->setupConfigFactory($this->createRemoteConfig(['enabled' => TRUE, 'uid' => 5]));
+    $this->apiKeyManager->method('validate')->willReturn(['key_id' => 'test', 'scopes' => ['read']]);
+    $user = $this->createMock(UserInterface::class);
+    $user->method('isActive')->willReturn(FALSE);
+    $userStorage = $this->createMock(EntityStorageInterface::class);
+    $userStorage->method('load')->with(5)->willReturn($user);
+    $this->entityTypeManager->method('getStorage')->with('user')->willReturn($userStorage);
+    $this->accountSwitcher->expects($this->never())->method('switchTo');
+    $request = Request::create('/_mcp_tools', 'POST');
+    $request->headers->set('Authorization', 'Bearer test-key');
+    $request->headers->set('Accept', 'application/json, text/event-stream');
+    $response = $this->createController($configFactory)->handle($request);
+    $this->assertSame(500, $response->getStatusCode());
+    $this->assertStringContainsString('blocked', $response->getContent());
+  }
+
+  /**
+   * Each API key has sessions of its own.
+   */
+  public function testSessionsAreKeptApartByKey(): void {
+    $folder = new \ReflectionMethod(McpToolsRemoteController::class, 'sessionFolder');
+    $controller = $this->createController($this->setupConfigFactory($this->createRemoteConfig()));
+    $a = $folder->invoke($controller, 'read-key');
+    $this->assertNotSame($a, $folder->invoke($controller, 'admin-key'));
+    $this->assertSame($a, $folder->invoke($controller, 'read-key'));
+    $this->assertStringNotContainsString('read-key', $a);
   }
 
 }

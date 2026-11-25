@@ -206,7 +206,7 @@ class RoleService {
    *   Result with success status.
    */
   public function createRole(string $id, string $label, array $permissions = []): array {
-    if (!$this->accessManager->canWrite()) {
+    if (!$this->accessManager->canWrite('structure')) {
       return $this->accessManager->getWriteAccessDenied();
     }
 
@@ -310,7 +310,7 @@ class RoleService {
    *   Result with success status.
    */
   public function deleteRole(string $id): array {
-    if (!$this->accessManager->canWrite()) {
+    if (!$this->accessManager->canWrite('delete')) {
       return $this->accessManager->getWriteAccessDenied();
     }
 
@@ -394,7 +394,7 @@ class RoleService {
    *   Result with success status.
    */
   public function grantPermissions(string $roleId, array $permissions): array {
-    if (!$this->accessManager->canWrite()) {
+    if (!$this->accessManager->canWrite('structure')) {
       return $this->accessManager->getWriteAccessDenied();
     }
 
@@ -475,7 +475,7 @@ class RoleService {
    *   Result with success status.
    */
   public function revokePermissions(string $roleId, array $permissions): array {
-    if (!$this->accessManager->canWrite()) {
+    if (!$this->accessManager->canWrite('structure')) {
       return $this->accessManager->getWriteAccessDenied();
     }
 

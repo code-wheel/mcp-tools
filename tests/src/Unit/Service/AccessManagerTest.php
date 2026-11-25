@@ -406,4 +406,20 @@ class AccessManagerTest extends UnitTestCase {
     $this->assertFalse($accessManager->hasScope(AccessManager::SCOPE_ADMIN));
   }
 
+  /**
+   * No default scope means read, not everything the site allows.
+   */
+  public function testNoDefaultScopeIsReadOnly(): void {
+    foreach ([[], ['nonsense']] as $default) {
+      $this->setUp();
+      $this->config->method('get')->willReturnMap([
+        ['access.read_only_mode', FALSE],
+        ['access.allowed_scopes', AccessManager::ALL_SCOPES],
+        ['access.default_scopes', $default],
+      ]);
+      $this->requestStack->method('getCurrentRequest')->willReturn(NULL);
+      $this->assertSame([AccessManager::SCOPE_READ], $this->createAccessManager()->getCurrentScopes());
+    }
+  }
+
 }

@@ -329,8 +329,9 @@ class AccessManager implements AccessManagerInterface {
     // Default scopes (used when no trusted override is present).
     $defaultScopes = $config->get('access.default_scopes') ?? [self::SCOPE_READ];
     $defaultScopes = array_values(array_intersect($defaultScopes, $allowedScopes));
+    // None, or none that is allowed, is not a wish for all of them.
     if (empty($defaultScopes)) {
-      $defaultScopes = $allowedScopes;
+      $defaultScopes = array_values(array_intersect([self::SCOPE_READ], $allowedScopes));
     }
 
     // Check for scope in request header (for HTTP transport).

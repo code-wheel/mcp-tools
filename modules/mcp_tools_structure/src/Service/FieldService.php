@@ -89,7 +89,7 @@ class FieldService {
     string $label,
     array $options = [],
   ): array {
-    if (!$this->accessManager->canWrite()) {
+    if (!$this->accessManager->canWrite('structure')) {
       return $this->accessManager->getWriteAccessDenied();
     }
 
@@ -177,7 +177,28 @@ class FieldService {
       }
     }
 
-    // Check if bundle exists.
+    // A bundle's own entity type ("node_type") given for what it bundles.
+    $definition = $this->entityTypeManager->getDefinition($entityType, FALSE);
+    if ($definition !== NULL && ($of = $definition->getBundleOf())) {
+      return [
+        'success' => FALSE,
+        'error' => "'$entityType' takes no fields: it is what makes the bundles of '$of'. Use entity_type '$of' and bundle '$bundle'.",
+      ];
+    }
+    // Check if bundle exists. Drupal gives the base fields of any bundle
+    // name, so the bundle itself is looked for.
+    $bundleType = $definition?->getBundleEntityType();
+    if ($bundleType) {
+      $bundles = array_keys($this->entityTypeManager->getStorage($bundleType)->loadMultiple());
+      if (!in_array($bundle, array_map('strval', $bundles), TRUE)) {
+        $more = count($bundles) - 20;
+        return [
+          'success' => FALSE,
+          'error' => "Bundle '$bundle' does not exist for entity type '$entityType'. It has: "
+            . ($bundles === [] ? 'none yet' : implode(', ', array_slice($bundles, 0, 20))) . ($more > 0 ? " and $more more" : '') . '.',
+        ];
+      }
+    }
     $bundleInfo = $this->entityFieldManager->getFieldDefinitions($entityType, $bundle);
     if (empty($bundleInfo)) {
       return [
@@ -310,7 +331,7 @@ class FieldService {
    *   Result with success status.
    */
   public function deleteField(string $entityType, string $bundle, string $fieldName): array {
-    if (!$this->accessManager->canWrite()) {
+    if (!$this->accessManager->canWrite('delete')) {
       return $this->accessManager->getWriteAccessDenied();
     }
 

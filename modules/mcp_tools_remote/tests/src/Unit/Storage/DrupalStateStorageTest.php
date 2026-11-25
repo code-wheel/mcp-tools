@@ -170,4 +170,44 @@ final class DrupalStateStorageTest extends TestCase {
     $this->assertFalse($result);
   }
 
+  /**
+   * A key's use, noted after the key was revoked, does not bring it back.
+   *
+   * Each request notes when its key was last used, and wrote all keys back
+   * as it had read them: a key revoked in between was there again.
+   */
+  public function testUseOfAKeyDoesNotBringBackARevokedOne(): void {
+    // What is stored, and this request's older copy of it.
+    $stored = ['a' => ['hash' => 'x'], 'b' => ['hash' => 'y']];
+    $copy = $stored;
+    $state = $this->createMock(StateInterface::class);
+    $state->method('get')->willReturnCallback(function () use (&$copy) {
+      return $copy;
+    });
+    $state->method('resetCache')->willReturnCallback(function () use (&$copy, &$stored): void {
+      $copy = $stored;
+    });
+    $state->method('set')->willReturnCallback(function (string $key, array $value) use (&$copy, &$stored): void {
+      $copy = $stored = $value;
+    });
+    $storage = new DrupalStateStorage($state);
+
+    // Another process revokes b. Then this one notes that a was used.
+    unset($stored['b']);
+    $storage->set('a', ['hash' => 'x', 'last_used' => 5]);
+    $this->assertSame(['a'], array_keys($stored), 'A revoked key came back.');
+
+    // And a request of b itself, let in before, ends after the revocation.
+    $storage->set('b', ['hash' => 'y', 'last_used' => 6]);
+    $this->assertSame(['a'], array_keys($stored), 'A revoked key came back by its own use.');
+
+    // A key made elsewhere stays, and a new one is stored.
+    $stored['c'] = ['hash' => 'z'];
+    $storage->set('d', ['hash' => 'w', 'last_used' => NULL]);
+    $this->assertSame(['a', 'c', 'd'], array_keys($stored));
+    $stored['e'] = ['hash' => 'v'];
+    $this->assertTrue($storage->delete('a'));
+    $this->assertSame(['c', 'd', 'e'], array_keys($stored));
+  }
+
 }

@@ -349,7 +349,7 @@ class ContentService {
    *   Legacy MCP result naming the affected language version(s).
    */
   public function deleteContent(int $nid, ?string $langcode = NULL, bool $confirmDeleteAll = FALSE): array {
-    if (!$this->accessManager->canWrite()) {
+    if (!$this->accessManager->canWrite('delete')) {
       return $this->accessManager->getWriteAccessDenied();
     }
 

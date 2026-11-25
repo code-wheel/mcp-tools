@@ -10,6 +10,7 @@ use Drupal\user\PermissionHandlerInterface;
 use Drupal\user\Entity\Role;
 use Drupal\user\Entity\User;
 use Drupal\mcp_tools_remote\Service\ApiKeyManager;
+use Drupal\mcp_tools_remote\Service\ExecutionAccount;
 use Drush\Attributes as CLI;
 use Drush\Commands\DrushCommands;
 
@@ -129,6 +130,21 @@ final class McpToolsRemoteCommands extends DrushCommands {
 
     $allowUid1 = (bool) ($options['allow-uid1'] ?? $options['allow_uid1'] ?? FALSE);
 
+    // Look at the account before anything is made or granted.
+    $existing = $this->entityTypeManager->getStorage('user')->loadByProperties(['name' => $username]);
+    /** @var \Drupal\user\Entity\User|null $user */
+    $user = $existing ? reset($existing) : NULL;
+    if ($user && (int) $user->id() === 1) {
+      if (!$allowUid1) {
+        $this->io()->error('Refusing to use uid 1 for remote execution. Re-run with --allow-uid1 to override.');
+        return;
+      }
+    }
+    elseif (($refusal = ExecutionAccount::refusal($user, $roleId)) !== NULL) {
+      $this->io()->error($refusal);
+      return;
+    }
+
     // Ensure role exists and has MCP Tools category permissions.
     $role = $this->entityTypeManager->getStorage('user_role')->load($roleId);
     if (!$role) {
@@ -157,11 +173,6 @@ final class McpToolsRemoteCommands extends DrushCommands {
     }
     $role->save();
 
-    // Create or load the user.
-    $existing = $this->entityTypeManager->getStorage('user')->loadByProperties(['name' => $username]);
-    /** @var \Drupal\user\Entity\User|null $user */
-    $user = $existing ? reset($existing) : NULL;
-
     if (!$user) {
       $user = User::create([
         'name' => $username,
@@ -172,11 +183,6 @@ final class McpToolsRemoteCommands extends DrushCommands {
     }
 
     $uid = (int) $user->id();
-    if ($uid === 1 && !$allowUid1) {
-      $this->io()->error('Refusing to use uid 1 for remote execution. Re-run with --allow-uid1 to override.');
-      return;
-    }
-
     $user->addRole($roleId);
     $user->save();
 

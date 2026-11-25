@@ -182,7 +182,7 @@ class ContentTypeService {
    *   Result with success status and data or error.
    */
   public function createContentType(string $id, string $label, array $options = []): array {
-    if (!$this->accessManager->canWrite()) {
+    if (!$this->accessManager->canWrite('structure')) {
       return $this->accessManager->getWriteAccessDenied();
     }
 
@@ -269,7 +269,7 @@ class ContentTypeService {
    *   Result with success status.
    */
   public function deleteContentType(string $id, bool $force = FALSE): array {
-    if (!$this->accessManager->canWrite()) {
+    if (!$this->accessManager->canWrite('delete')) {
       return $this->accessManager->getWriteAccessDenied();
     }
 

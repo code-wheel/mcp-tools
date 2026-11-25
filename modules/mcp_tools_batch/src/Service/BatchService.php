@@ -579,8 +579,6 @@ class BatchService {
     $assigned = [];
     $already_has = [];
     $errors = [];
-    $me = (int) $this->currentUser->id();
-    $raisesMe = OwnRoles::raising($this->entityTypeManager, $this->currentUser, $me, [$role]) !== [];
 
     foreach ($userIds as $index => $uid) {
       // Skip uid 1 (super admin).
@@ -593,12 +591,12 @@ class BatchService {
         continue;
       }
 
-      // Not more permissions for the user this connection runs as.
-      if ($raisesMe && (int) $uid === $me) {
+      // Not a role above the connection.
+      if (OwnRoles::raising($this->entityTypeManager, $this->currentUser, (int) $uid, [$role]) !== []) {
         $errors[] = [
           'index' => $index,
           'uid' => $uid,
-          'error' => 'A connection does not give its own user more permissions. A person can assign this role.',
+          'error' => ucfirst(OwnRoles::why($this->currentUser, (int) $uid)) . '. A person can assign this role.',
         ];
         continue;
       }

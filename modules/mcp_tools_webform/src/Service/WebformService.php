@@ -401,7 +401,7 @@ class WebformService {
    *   Result of the operation.
    */
   public function deleteWebform(string $id): array {
-    if (!$this->accessManager->canWrite()) {
+    if (!$this->accessManager->canWrite('delete')) {
       return $this->accessManager->getWriteAccessDenied();
     }
 
@@ -455,7 +455,7 @@ class WebformService {
    *   Result of the operation.
    */
   public function deleteSubmission(int $sid): array {
-    if (!$this->accessManager->canWrite()) {
+    if (!$this->accessManager->canWrite('delete')) {
       return $this->accessManager->getWriteAccessDenied();
     }
 

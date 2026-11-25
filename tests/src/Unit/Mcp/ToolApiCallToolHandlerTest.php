@@ -287,4 +287,21 @@ final class ToolApiCallToolHandlerTest extends UnitTestCase {
     $this->assertNotContains('tags', $paths, 'The list of strings is accepted.');
   }
 
+  /**
+   * A secret's list, map or JSON text is redacted whole.
+   */
+  public function testSecretsInListsAndMapsAreRedacted(): void {
+    $sanitize = new \ReflectionMethod(ToolApiCallToolHandler::class, 'sanitizeArguments');
+    $handler = (new \ReflectionClass(ToolApiCallToolHandler::class))->newInstanceWithoutConstructor();
+    $out = json_encode($sanitize->invoke($handler, [
+      'credentials' => ['user' => 'a', 'value' => 's3cret-1'],
+      'token' => ['s3cret-2'],
+      'fields' => '{"pass":"s3cret-3","title":"shown"}',
+      'title' => 'kept',
+    ]));
+    $this->assertStringNotContainsString('s3cret', $out);
+    $this->assertStringContainsString('shown', $out);
+    $this->assertStringContainsString('kept', $out);
+  }
+
 }

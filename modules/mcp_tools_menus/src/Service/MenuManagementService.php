@@ -157,7 +157,7 @@ class MenuManagementService {
    *   Result with success status.
    */
   public function deleteMenu(string $id): array {
-    if (!$this->accessManager->canWrite()) {
+    if (!$this->accessManager->canWrite('delete')) {
       return $this->accessManager->getWriteAccessDenied();
     }
 
@@ -410,7 +410,7 @@ class MenuManagementService {
    *   Result with success status.
    */
   public function deleteMenuLink(int $linkId): array {
-    if (!$this->accessManager->canWrite()) {
+    if (!$this->accessManager->canWrite('delete')) {
       return $this->accessManager->getWriteAccessDenied();
     }
 

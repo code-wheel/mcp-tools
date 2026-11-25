@@ -291,7 +291,7 @@ class ViewsService {
    *   Result with success status.
    */
   public function deleteView(string $id): array {
-    if (!$this->accessManager->canWrite()) {
+    if (!$this->accessManager->canWrite('delete')) {
       return $this->accessManager->getWriteAccessDenied();
     }
 

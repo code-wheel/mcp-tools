@@ -471,7 +471,7 @@ class JsonApiService {
    *   Success status or error.
    */
   public function deleteEntity(string $entityType, string $uuid): array {
-    if (!$this->accessManager->canWrite()) {
+    if (!$this->accessManager->canWrite('delete')) {
       return $this->accessManager->getWriteAccessDenied();
     }
 

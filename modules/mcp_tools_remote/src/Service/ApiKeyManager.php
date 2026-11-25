@@ -9,6 +9,7 @@ use CodeWheel\McpSecurity\ApiKey\ApiKeyManager as BaseApiKeyManager;
 use CodeWheel\McpSecurity\ApiKey\ApiKeyManagerInterface;
 use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Core\PrivateKey;
+use Drupal\Core\Lock\LockBackendInterface;
 use Drupal\Core\State\StateInterface;
 use Drupal\mcp_tools_remote\Clock\DrupalClock;
 use Drupal\mcp_tools_remote\Storage\DrupalStateStorage;
@@ -32,8 +33,9 @@ class ApiKeyManager {
     StateInterface $state,
     PrivateKey $privateKey,
     TimeInterface $time,
+    ?LockBackendInterface $lock = NULL,
   ) {
-    $storage = new DrupalStateStorage($state);
+    $storage = new DrupalStateStorage($state, $lock);
     $clock = new DrupalClock($time);
     $pepper = (string) $privateKey->get();
 

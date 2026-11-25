@@ -204,7 +204,7 @@ class MigrationService {
     if ($key === '') {
       return [
         'success' => FALSE,
-        'error' => 'An import needs a key: the name of a column whose value names its row for good, such as an id from the source, or uuid. A later import with the same key updates what the first one made, and does not make copies.',
+        'error' => 'An import needs a key: the name of a column whose value names its row for good, such as an id from the source, or uuid. A later import with the same key updates what the first one made, and does not make copies.' . self::keyColumns($items),
         'code' => 'KEY_REQUIRED',
       ];
     }
@@ -1204,6 +1204,28 @@ class MigrationService {
       'patterns' => self::PROTECTED_FIELD_PATTERNS,
       'note' => 'These fields cannot be set via import for security reasons.',
     ];
+  }
+
+  /**
+   * The columns the rows have, as a way on for an import without a key.
+   *
+   * Names only: a value can be anything.
+   *
+   * @param array<int, mixed> $items
+   *   The rows.
+   */
+  private static function keyColumns(array $items): string {
+    $columns = [];
+    foreach ($items as $item) {
+      $columns += is_array($item) ? array_fill_keys(array_keys($item), TRUE) : [];
+    }
+    if ($columns === []) {
+      return '';
+    }
+    $names = array_map('strval', array_keys($columns));
+    $more = count($names) - 20;
+    return ' The rows have: ' . implode(', ', array_slice($names, 0, 20)) . ($more > 0 ? " and $more more" : '')
+      . '. Pass the one that names a row as key, or add a column that does.';
   }
 
 }

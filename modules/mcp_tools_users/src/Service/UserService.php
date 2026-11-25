@@ -70,6 +70,15 @@ class UserService {
       return ['success' => FALSE, 'error' => 'Unable to create user. Email may already be in use or be invalid.'];
     }
 
+    // Not an account above the connection: it may choose the password.
+    $raising = empty($options['roles']) ? [] : OwnRoles::raising($this->entityTypeManager, $this->currentUser, 0, $this->filterRoles($options['roles']));
+    if ($raising !== []) {
+      return [
+        'success' => FALSE,
+        'error' => ucfirst(OwnRoles::why($this->currentUser, 0)) . ': ' . implode(', ', $raising) . '. Leave these roles out, and a person can assign them. No user was made.',
+      ];
+    }
+
     try {
       // Generate password if not provided.
       $password = $options['password'] ?? $this->passwordGenerator->generate(16);
@@ -214,7 +223,7 @@ class UserService {
         if ($raising !== []) {
           return [
             'success' => FALSE,
-            'error' => 'A connection does not give its own user more permissions: ' . implode(', ', $raising) . '. A person can assign these roles. Nothing was changed.',
+            'error' => ucfirst(OwnRoles::why($this->currentUser, $uid)) . ': ' . implode(', ', $raising) . '. A person can assign these roles. Nothing was changed.',
           ];
         }
 
@@ -481,7 +490,7 @@ class UserService {
         $result['data']['message'] .= ' Not assigned, because an administrator role cannot be assigned via MCP: ' . implode(', ', $blockedRoles) . '.';
       }
       if ($raisingRoles !== []) {
-        $result['data']['message'] .= ' Not assigned, because a connection does not give its own user more permissions: ' . implode(', ', $raisingRoles) . '. A person can assign them.';
+        $result['data']['message'] .= ' Not assigned, because ' . OwnRoles::why($this->currentUser, $uid) . ': ' . implode(', ', $raisingRoles) . '. A person can assign them.';
       }
       if ($unknownRoles !== []) {
         $result['data']['message'] .= ' Not assigned, because there is no such role: ' . implode(', ', $unknownRoles) . '. Use mcp_tools_get_roles to see the roles.';

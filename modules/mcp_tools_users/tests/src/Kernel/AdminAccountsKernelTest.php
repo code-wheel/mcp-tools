@@ -200,9 +200,10 @@ final class AdminAccountsKernelTest extends KernelTestBase {
     [$success, $user] = $this->callTool('mcp_batch_assign_role', ['role' => 'power', 'user_ids' => [$me, (int) $this->users['plain']->id()]], $me);
     $this->assertFalse($user->hasRole('power'));
 
-    // Another user gets the role, by all three (the batch tool did above).
+    // Nor does another user get it from a connection without Drupal's
+    // permission for it (testRolesAboveTheConnectionAreNotGivenToOthers).
     $plain = (int) $this->users['plain']->id();
-    $this->assertTrue(User::load($plain)->hasRole('power'));
+    $this->assertFalse(User::load($plain)->hasRole('power'));
     [$success, $user] = $this->callTool('mcp_assign_user_roles', ['uid' => $plain, 'roles' => ['editor']], $plain);
     $this->assertTrue($success);
     $this->assertTrue($user->hasRole('editor'));
@@ -211,6 +212,48 @@ final class AdminAccountsKernelTest extends KernelTestBase {
     [$success, $user, $message] = $this->callTool('mcp_assign_user_roles', ['uid' => $me, 'roles' => ['nothing_new']], $me);
     $this->assertTrue($success, $message);
     $this->assertTrue($user->hasRole('nothing_new'));
+  }
+
+  /**
+   * A role above the connection's own is not given to any account.
+   *
+   * The rule looked at the connection's own account only: it could make
+   * another one with the role, and a password it chose. Drupal asks
+   * "administer permissions" for giving roles.
+   */
+  public function testRolesAboveTheConnectionAreNotGivenToOthers(): void {
+    Role::create(['id' => 'manager', 'label' => 'Manager'])->grantPermission('administer permissions')->save();
+    $users = $this->container->get('mcp_tools_users.user');
+    $storage = $this->container->get('entity_type.manager')->getStorage('user');
+    $roles = function (int $uid) use ($storage): array {
+      $storage->resetCache([$uid]);
+      return $storage->load($uid)->getRoles(TRUE);
+    };
+    $plain = (int) $this->users['plain']->id();
+
+    $made = $users->createUser('puppet', 'puppet@example.com', ['password' => 'chosen-by-caller', 'roles' => ['manager']]);
+    $this->assertFalse($made['success']);
+    $this->assertStringContainsString('administer permissions', $made['error']);
+    $this->assertSame([], $storage->loadByProperties(['name' => 'puppet']), 'No account was made.');
+
+    $this->assertFalse($users->updateUser($plain, ['roles' => ['manager']])['success']);
+    $users->assignRoles($plain, ['manager']);
+    $this->assertSame([], $roles($plain));
+    $this->container->get('mcp_tools_batch.batch')->assignRoleToUsers('manager', [$plain]);
+    $this->assertSame([], $roles($plain));
+
+    // A role that adds nothing is given as before.
+    $this->assertTrue($users->createUser('writer', 'writer@example.com', ['roles' => ['editor']])['success']);
+    $users->assignRoles($plain, ['editor']);
+    $this->assertSame(['editor'], $roles($plain));
+
+    // Drupal's permission for it gives roles to others, not to oneself.
+    Role::create(['id' => 'strong', 'label' => 'Strong'])->grantPermission('access user profiles')->save();
+    $me = $this->setUpCurrentUser([], ['mcp_tools use users', 'mcp_tools use batch', 'administer users', 'administer permissions']);
+    $this->assertTrue($users->createUser('second', 'second@example.com', ['roles' => ['strong']])['success']);
+    $this->container->get('mcp_tools_batch.batch')->assignRoleToUsers('strong', [$plain]);
+    $this->assertContains('strong', $roles($plain));
+    $this->assertFalse($users->updateUser((int) $me->id(), ['roles' => array_merge($me->getRoles(TRUE), ['strong'])])['success']);
   }
 
 }

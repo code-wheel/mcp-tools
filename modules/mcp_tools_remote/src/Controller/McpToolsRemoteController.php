@@ -285,8 +285,23 @@ final class McpToolsRemoteController implements ContainerInjectionInterface {
     if (!$account) {
       return new Response('Configured execution user (uid ' . $uid . ') not found.', 500);
     }
+    // Drupal's permission checks do not look at this: a blocked account kept
+    // all its permissions here.
+    if (!$account->isActive()) {
+      return new Response('Configured execution user (uid ' . $uid . ') is blocked.', 500);
+    }
 
     return $account;
+  }
+
+  /**
+   * The folder of a key's sessions.
+   *
+   * A session is found by its id alone, so one key could answer a question
+   * put to the session of another. Each key has a folder of its own.
+   */
+  private function sessionFolder(string $client): string {
+    return rtrim(sys_get_temp_dir(), \DIRECTORY_SEPARATOR) . \DIRECTORY_SEPARATOR . 'mcp_tools_remote_sessions_' . substr(hash('sha256', $this->appRoot . "\0" . $client), 0, 24);
   }
 
   /**
@@ -318,7 +333,7 @@ final class McpToolsRemoteController implements ContainerInjectionInterface {
       $serverParams['pagination_limit'],
       $serverParams['include_all_tools'],
       new FileSessionStore(
-        rtrim(sys_get_temp_dir(), \DIRECTORY_SEPARATOR) . \DIRECTORY_SEPARATOR . 'mcp_tools_remote_sessions_' . substr(hash('sha256', $this->appRoot), 0, 12),
+        $this->sessionFolder((string) $request->attributes->get('mcp_tools.client_id', '')),
         3600,
       ),
       3600,
